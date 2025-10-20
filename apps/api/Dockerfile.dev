@@ -1,0 +1,15 @@
+FROM golang:1.25
+
+WORKDIR /app
+
+# Air for live reload
+RUN go install github.com/air-verse/air@latest
+
+# (optional) prime module cache for faster first run
+COPY go.mod go.sum ./
+RUN go mod download
+
+# bring in the source (also mounted as a volume in compose)
+COPY . .
+
+EXPOSE 8080
