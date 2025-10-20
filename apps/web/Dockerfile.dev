@@ -1,0 +1,12 @@
+FROM node:20
+
+WORKDIR /app
+
+# Install deps separately to leverage Docker cache
+COPY package*.json ./
+RUN npm ci
+
+# Copy the rest (source is also mounted as a volume for live edits)
+COPY . .
+
+EXPOSE 5173
