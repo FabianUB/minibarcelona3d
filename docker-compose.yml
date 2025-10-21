@@ -8,7 +8,7 @@ services:
     command: air
     volumes:
       - ./apps/api:/app
-      - aircache:/root/.cache # speed up module/cache
+      - aircache:/root/.cache 
     environment:
       - PORT=8080
     ports:
@@ -24,7 +24,6 @@ services:
       - ./apps/web:/app
       - webnode:/app/node_modules
     environment:
-      # Helps file-watching in some Docker hosts (WSL2/Windows/macOS)
       - CHOKIDAR_USEPOLLING=true
     ports:
       - "5173:5173"
