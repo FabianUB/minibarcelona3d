@@ -77,3 +77,4 @@ coverage/
 # Ignore local dev volumes (if bind-mounted)
 webnode/
 aircache/
+.codex/
