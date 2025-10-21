@@ -7,18 +7,10 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-<!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
-  
-  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
-  Think of each story as a standalone slice of functionality that can be:
-  - Developed independently
-  - Tested independently
-  - Deployed independently
-  - Demonstrated to users independently
--->
+Prioritize journeys that deliver a usable, map-first experience. Each user story must:
+- Keep the Mapbox layer visible and interactive.
+- Surface real-time train state/timestamp data and stale-data handling.
+- Be independently testable with pre-written automated tests (Vitest/Playwright or Go integration tests).
 
 ### User Story 1 - [Brief Title] (Priority: P1)
 
@@ -67,50 +59,33 @@
 
 ### Edge Cases
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
--->
-
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+- Mapbox token missing, expired, or rate-limited.
+- Backend poll skips (no new snapshot within two intervals).
+- Train status transitions to UNKNOWN or receives conflicting trip data.
+- User loads the site on a narrow viewport or with reduced motion preferences.
 
 ## Requirements *(mandatory)*
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
--->
-
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
+- **FR-001**: API MUST expose Rodalies train positions, statuses, and timestamps derived from `rt_rodalies_vehicle_current`.
+- **FR-002**: Frontend MUST render trains on the Mapbox layer with overlays that remain usable at ≥320 px width.
+- **FR-003**: UI MUST surface stale-data warnings when backend snapshots exceed two poll intervals.
+- **FR-004**: System MUST log structured events (request ID, poll cycle) for traceability.
+- **FR-005**: CI MUST run Go tests, Vitest, Playwright, lint, accessibility, and bundle-budget checks before merge.
 
-*Example of marking unclear requirements:*
-
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+*Mark uncertain requirements with `TODO(<context>): clarification needed` so they appear in follow-up lists.*
 
 ### Key Entities *(include if feature involves data)*
 
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
+- **Train**: Represents a Rodalies vehicle with id, label, position, status, and timestamps.
+- **Snapshot**: Represents a poll iteration that groups train updates and feeds stale-data logic.
 
 ## Success Criteria *(mandatory)*
 
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
--->
-
 ### Measurable Outcomes
 
-- **SC-001**: [Measurable metric, e.g., "Users can complete account creation in under 2 minutes"]
-- **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
-- **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
-
+- **SC-001**: Users see current train positions and states within two poll intervals of data availability.
+- **SC-002**: API endpoints deliver <300 ms p95 latency under expected load in staging.
+- **SC-003**: Accessibility audits (axe/Playwright) report zero critical violations on map overlays.
+- **SC-004**: Frontend bundle-size delta stays within ±10% of baseline unless explicitly approved.

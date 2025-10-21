@@ -9,7 +9,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://api:8080', // service name from docker-compose
+        target: 'http://api:8080', 
         changeOrigin: true,
       },
     },
