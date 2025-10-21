@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+**/node_modules/
+# Builds
+build/
+dist/
+coverage/
+.vite/
+# VCS
+.git/
+.gitignore
+# Env & config
+.env*
+Dockerfile*
+*.log*

@@ -72,6 +72,8 @@ coverage/
 *.prof
 *.pprof
 *.coverprofile
+playwright-report/
+test-results/
 
 # === Misc ===
 # Ignore local dev volumes (if bind-mounted)
