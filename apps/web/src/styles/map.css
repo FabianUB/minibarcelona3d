@@ -1,0 +1,164 @@
+:root {
+  --rodalies-map-font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --rodalies-map-shell-bg: #0f172a;
+  --rodalies-map-shell-border: rgba(148, 163, 184, 0.18);
+  --rodalies-map-shell-shadow: 0 16px 32px rgba(15, 23, 42, 0.32);
+  --rodalies-map-overlay-bg: rgba(15, 23, 42, 0.72);
+  --rodalies-map-overlay-text: #f8fafc;
+  --rodalies-map-overlay-border: rgba(148, 163, 184, 0.35);
+  --rodalies-map-control-bg: rgba(15, 23, 42, 0.78);
+  --rodalies-map-control-border: rgba(148, 163, 184, 0.25);
+  --rodalies-map-control-text: #f8fafc;
+  --rodalies-map-control-hover: rgba(30, 41, 59, 0.95);
+  --rodalies-map-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.45);
+  --rodalies-map-highlight: #f59e0b;
+  --rodalies-map-alert-bg: rgba(239, 68, 68, 0.92);
+  --rodalies-map-alert-text: #fee2e2;
+  --rodalies-map-legend-bg: rgba(15, 23, 42, 0.92);
+  --rodalies-map-legend-border: rgba(94, 234, 212, 0.35);
+}
+
+:root[data-map-theme='high-contrast'] {
+  --rodalies-map-shell-bg: #030712;
+  --rodalies-map-overlay-bg: rgba(2, 6, 23, 0.9);
+  --rodalies-map-overlay-text: #f9fafb;
+  --rodalies-map-control-bg: rgba(2, 6, 23, 0.92);
+  --rodalies-map-control-hover: rgba(8, 47, 73, 0.95);
+  --rodalies-map-highlight: #22d3ee;
+  --rodalies-map-alert-bg: rgba(22, 101, 52, 0.92);
+  --rodalies-map-alert-text: #f0fdf4;
+}
+
+.map-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  font-family: var(--rodalies-map-font-family);
+  background-color: var(--rodalies-map-shell-bg);
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.map-canvas__container {
+  position: absolute;
+  inset: 0;
+}
+
+.map-canvas__error {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--rodalies-map-alert-bg);
+  color: var(--rodalies-map-alert-text);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  max-width: min(90%, 480px);
+  text-align: center;
+  border: 1px solid var(--rodalies-map-overlay-border);
+  box-shadow: var(--rodalies-map-shell-shadow);
+}
+
+.map-canvas__status {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--rodalies-map-overlay-bg);
+  color: var(--rodalies-map-overlay-text);
+  font-size: 0.85rem;
+  border: 1px solid var(--rodalies-map-overlay-border);
+  box-shadow: var(--rodalies-map-shell-shadow);
+}
+
+.map-canvas__status--warning {
+  background: rgba(244, 114, 182, 0.9);
+  border-color: rgba(244, 114, 182, 0.4);
+  color: #fff;
+}
+
+.mapboxgl-map {
+  font-family: var(--rodalies-map-font-family);
+  background-color: transparent;
+}
+
+.mapboxgl-canvas {
+  outline: none !important;
+}
+
+.mapboxgl-ctrl {
+  font-family: var(--rodalies-map-font-family);
+}
+
+.mapboxgl-ctrl-group {
+  border-radius: 12px;
+  border: 1px solid var(--rodalies-map-control-border);
+  background-color: var(--rodalies-map-control-bg);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+.mapboxgl-ctrl-group button {
+  width: 40px;
+  height: 40px;
+  background-color: transparent;
+  color: var(--rodalies-map-control-text);
+  border: none;
+  transition: background-color 120ms ease-in-out;
+}
+
+.mapboxgl-ctrl-group button:hover,
+.mapboxgl-ctrl-group button:focus-visible {
+  background-color: var(--rodalies-map-control-hover);
+}
+
+.mapboxgl-ctrl button:focus-visible {
+  outline: none;
+  box-shadow: var(--rodalies-map-focus-ring);
+}
+
+.mapboxgl-ctrl-attrib.mapboxgl-compact {
+  border-radius: 10px;
+  border: 1px solid var(--rodalies-map-control-border);
+  background-color: var(--rodalies-map-control-bg);
+  color: var(--rodalies-map-control-text);
+  backdrop-filter: blur(6px);
+}
+
+.mapboxgl-ctrl-attrib button,
+.mapboxgl-ctrl-attrib {
+  color: inherit;
+}
+
+.rodalies-ctrl-group {
+  margin-bottom: 8px;
+}
+
+.rodalies-ctrl-recenter {
+  font-size: 1.3rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rodalies-ctrl-recenter span {
+  pointer-events: none;
+}
+
+[data-map-theme='high-contrast'] .mapboxgl-ctrl-group button svg path {
+  stroke: var(--rodalies-map-control-text);
+}
+
+[data-map-theme='high-contrast'] .mapboxgl-ctrl-attrib.mapboxgl-compact {
+  border-color: rgba(125, 211, 252, 0.35);
+}

@@ -18,10 +18,11 @@ cd apps/web
 pnpm dev
 ```
 Visit `http://localhost:5173` and confirm:
-- Map centers on Rodalies network
+- Map fills the viewport and centers on the Rodalies network (manifest default: lat `41.527316`, lng `1.806473`, zoom `8.2`)
+- Recenter control (top-right) returns the map to the default manifest viewport after any pan/zoom
 - Legend drawer renders via ShadCN `Sheet` (mobile) / `Card` (desktop)
 - High-contrast toggle swaps line styling
-- Time a legend-based line identification (target ≤10 s) and record findings alongside Playwright evidence.
+- Legend-based line identification completes within 10 s; record observations with Playwright evidence.
 
 ## Test-Driven Development Flow
 1. Add failing tests first:
@@ -31,6 +32,11 @@ Visit `http://localhost:5173` and confirm:
    ```
 2. Implement map, legend, and accessibility features.
 3. Re-run tests until they pass; capture initial failures in commit/PR notes.
+
+To exercise the default viewport journey with the dev server, run:
+```bash
+PLAYWRIGHT_WEB_SERVER_CMD="pnpm dev -- --host=127.0.0.1 --port=5173" pnpm playwright test map-default-view.spec.ts
+```
 
 ## Bundle & Accessibility Checks
 ```bash

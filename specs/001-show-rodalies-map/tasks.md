@@ -35,11 +35,11 @@
 
 **⚠️ CRITICAL**: No user story work may begin until this phase is complete.
 
-- [ ] T005 Define manifest, line, station, and UI types in apps/web/src/types/rodalies.ts.
-- [ ] T006 [P] Implement reusable data loader utilities for manifest/GeoJSON in apps/web/src/lib/rodalies/dataLoader.ts.
-- [ ] T007 Establish Map state provider with reducer actions in apps/web/src/state/map/MapStateProvider.tsx.
-- [ ] T008 [P] Build Mapbox canvas shell component and style imports in apps/web/src/features/map/MapCanvas.tsx.
-- [ ] T009 Initialize global Mapbox styles and CSS variables in apps/web/src/styles/map.css.
+- [X] T005 Define manifest, line, station, and UI types in apps/web/src/types/rodalies.ts.
+- [X] T006 [P] Implement reusable data loader utilities for manifest/GeoJSON in apps/web/src/lib/rodalies/dataLoader.ts.
+- [X] T007 Establish Map state provider with reducer actions in apps/web/src/state/map/MapStateProvider.tsx.
+- [X] T008 [P] Build Mapbox canvas shell component and style imports in apps/web/src/features/map/MapCanvas.tsx.
+- [X] T009 Initialize global Mapbox styles and CSS variables in apps/web/src/styles/map.css.
 
 **Checkpoint**: Foundation ready — user stories can proceed in parallel.
 
@@ -52,16 +52,16 @@
 
 ### Tests for User Story 1 (write first)
 
-- [ ] T010 [P] [US1] Add failing Playwright journey covering default viewport + recenter in apps/web/e2e/map-default-view.spec.ts.
-- [ ] T011 [P] [US1] Author Vitest map state test ensuring reset behavior in apps/web/src/state/map/__tests__/mapViewport.test.ts.
+- [X] T010 [P] [US1] Add failing Playwright journey covering default viewport + recenter in apps/web/e2e/map-default-view.spec.ts.
+- [X] T011 [P] [US1] Author Vitest map state test ensuring reset behavior in apps/web/src/state/map/__tests__/mapViewport.test.ts.
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Expose typed default viewport from manifest via apps/web/src/lib/rodalies/dataLoader.ts.
-- [ ] T013 [US1] Wire Mapbox map initialization and aggregated line layers in apps/web/src/features/map/MapCanvas.tsx.
-- [ ] T014 [US1] Implement default viewport hook and recenter control in apps/web/src/features/map/useDefaultViewport.ts.
-- [ ] T015 [US1] Mount map shell and controls in the main layout within apps/web/src/App.tsx.
-- [ ] T016 [US1] Update quickstart checks to document viewport verification in specs/001-show-rodalies-map/quickstart.md.
+- [X] T012 [P] [US1] Expose typed default viewport from manifest via apps/web/src/lib/rodalies/dataLoader.ts.
+- [X] T013 [US1] Wire Mapbox map initialization and aggregated line layers in apps/web/src/features/map/MapCanvas.tsx.
+- [X] T014 [US1] Implement default viewport hook and recenter control in apps/web/src/features/map/useDefaultViewport.ts.
+- [X] T015 [US1] Mount map shell and controls in the main layout within apps/web/src/App.tsx.
+- [X] T016 [US1] Update quickstart checks to document viewport verification in specs/001-show-rodalies-map/quickstart.md.
 
 **Checkpoint**: User Story 1 is fully functional and testable independently.
 
@@ -74,17 +74,17 @@
 
 ### Tests for User Story 2 (write first)
 
-- [ ] T017 [P] [US2] Add Vitest legend store tests validating highlight/isolate behavior in apps/web/src/features/legend/__tests__/legend-store.test.tsx.
-- [ ] T018 [P] [US2] Create Playwright scenario verifying legend toggles in apps/web/e2e/legend-highlight.spec.ts.
-- [ ] T019 [P] [US2] Automate legend identification timing in apps/web/e2e/legend-identification.spec.ts (assert selection completes ≤10 s for SC-002 evidence).
+- [X] T017 [P] [US2] Add Vitest legend store tests validating highlight/isolate behavior in apps/web/src/features/legend/__tests__/legend-store.test.tsx.
+- [X] T018 [P] [US2] Create Playwright scenario verifying legend toggles in apps/web/e2e/legend-highlight.spec.ts.
+- [X] T019 [P] [US2] Automate legend identification timing in apps/web/e2e/legend-identification.spec.ts (assert selection completes ≤10 s for SC-002 evidence).
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Extend map state actions/selectors for highlighted lines in apps/web/src/state/map/MapStateProvider.tsx.
-- [ ] T021 [P] [US2] Build accessible legend UI with ShadCN components in apps/web/src/features/legend/LegendPanel.tsx.
-- [ ] T022 [US2] Implement Mapbox line layer styling + emphasis tokens in apps/web/src/features/map/layers/lineLayers.ts.
-- [ ] T023 [US2] Connect legend interactions to map highlight logic in apps/web/src/features/map/useLineHighlight.ts.
-- [ ] T024 [US2] Surface line-geometry load warnings in apps/web/src/features/map/MapCanvas.tsx and cover the alert path in apps/web/e2e/map-default-view.spec.ts.
+- [X] T020 [US2] Extend map state actions/selectors for highlighted lines in apps/web/src/state/map/MapStateProvider.tsx.
+- [X] T021 [P] [US2] Build accessible legend UI with ShadCN components in apps/web/src/features/legend/LegendPanel.tsx.
+- [X] T022 [US2] Implement Mapbox line layer styling + emphasis tokens in apps/web/src/features/map/layers/lineLayers.ts.
+- [X] T023 [US2] Connect legend interactions to map highlight logic in apps/web/src/features/map/useLineHighlight.ts.
+- [X] T024 [US2] Surface line-geometry load warnings in apps/web/src/features/map/MapCanvas.tsx and cover the alert path in apps/web/e2e/map-default-view.spec.ts.
 
 **Checkpoint**: User Stories 1 and 2 both function independently.
 
