@@ -21,9 +21,76 @@ jobs:
       - name: Lint
         run: npm run lint
         working-directory: apps/web
-      - name: Build
+      - name: Type Check & Build
         run: npm run build
         working-directory: apps/web
+      - name: Analyze Bundle
+        run: npm run analyze-bundle
+        working-directory: apps/web
+        env:
+          ANALYZE_BUNDLE: 1
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis
+          path: apps/web/dist/bundle-analysis.html
+          retention-days: 7
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install dependencies
+        run: npm install
+        working-directory: apps/web
+      - name: Run unit tests
+        run: npm test -- --run --reporter=verbose
+        working-directory: apps/web
+        env:
+          CI: true
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: apps/web/coverage/
+          retention-days: 7
+
+  e2e:
+    name: E2E & Accessibility Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install dependencies
+        run: npm install
+        working-directory: apps/web
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: Run E2E tests
+        run: npm run test:e2e:ci
+        working-directory: apps/web
+        env:
+          CI: true
+      - name: Run accessibility tests
+        run: npm run test:accessibility
+        working-directory: apps/web
+        env:
+          CI: true
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/test-results/
+          retention-days: 7
 
   api:
     name: API Tests
