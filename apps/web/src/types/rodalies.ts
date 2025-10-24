@@ -104,12 +104,15 @@ export interface LegendEntry {
 
 export type MapHighlightMode = 'none' | 'highlight' | 'isolate';
 
+export type ActivePanel = 'none' | 'legend' | 'settings';
+
 export interface MapUIState {
   selectedLineId: string | null; // Deprecated: kept for backwards compatibility
   selectedLineIds: string[]; // New: support multiple line selection
   highlightMode: MapHighlightMode;
   isHighContrast: boolean;
-  isLegendOpen: boolean;
+  isLegendOpen: boolean; // Deprecated: use activePanel instead
+  activePanel: ActivePanel; // Which panel is currently expanded on desktop
 }
 
 export interface ManifestLineEntry {

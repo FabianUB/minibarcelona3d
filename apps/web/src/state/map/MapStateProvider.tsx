@@ -1,4 +1,4 @@
-import { useMemo, useReducer } from 'react';
+import { useMemo, useReducer, useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 
 import {
@@ -16,6 +16,7 @@ import type {
   MapUIState,
   MapViewport,
 } from '../../types/rodalies';
+import { getPreference, savePreferences } from './persistence';
 
 type MapAction =
   | { type: 'set-default-viewport'; payload: MapViewport }
@@ -32,24 +33,33 @@ type MapAction =
   | { type: 'set-high-contrast'; payload: boolean }
   | { type: 'toggle-high-contrast' }
   | { type: 'set-legend-open'; payload: boolean }
+  | { type: 'set-active-panel'; payload: import('../../types/rodalies').ActivePanel }
   | { type: 'set-map-instance'; payload: Map | null }
   | { type: 'set-map-loaded'; payload: boolean };
 
-const initialUiState: MapUIState = {
-  selectedLineId: null,
-  selectedLineIds: [],
-  highlightMode: 'none',
-  isHighContrast: false,
-  isLegendOpen: false,
-};
+/**
+ * Create initial UI state with preferences loaded from localStorage
+ */
+function createInitialUiState(): MapUIState {
+  return {
+    selectedLineId: null,
+    selectedLineIds: [],
+    highlightMode: 'none',
+    isHighContrast: getPreference('isHighContrast', false),
+    isLegendOpen: getPreference('isLegendOpen', false),
+    activePanel: 'none', // Don't persist - always start with no panel open
+  };
+}
 
-const initialState: MapState = {
-  defaultViewport: null,
-  viewport: null,
-  ui: initialUiState,
-  mapInstance: null,
-  isMapLoaded: false,
-};
+function createInitialState(): MapState {
+  return {
+    defaultViewport: null,
+    viewport: null,
+    ui: createInitialUiState(),
+    mapInstance: null,
+    isMapLoaded: false,
+  };
+}
 
 function mapReducer(state: MapState, action: MapAction): MapState {
   switch (action.type) {
@@ -107,6 +117,14 @@ function mapReducer(state: MapState, action: MapAction): MapState {
           isLegendOpen: action.payload,
         },
       };
+    case 'set-active-panel':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          activePanel: action.payload,
+        },
+      };
     case 'set-map-instance':
       return {
         ...state,
@@ -123,7 +141,21 @@ function mapReducer(state: MapState, action: MapAction): MapState {
 }
 
 export function MapStateProvider({ children }: PropsWithChildren) {
-  const [state, dispatch] = useReducer(mapReducer, initialState);
+  const [state, dispatch] = useReducer(mapReducer, undefined, createInitialState);
+
+  // Persist high contrast preference to localStorage when it changes
+  useEffect(() => {
+    savePreferences({
+      isHighContrast: state.ui.isHighContrast,
+    });
+  }, [state.ui.isHighContrast]);
+
+  // Persist legend open state to localStorage when it changes
+  useEffect(() => {
+    savePreferences({
+      isLegendOpen: state.ui.isLegendOpen,
+    });
+  }, [state.ui.isLegendOpen]);
 
   const actions = useMemo<MapActions>(
     () => ({
@@ -166,6 +198,9 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       setLegendOpen(value) {
         dispatch({ type: 'set-legend-open', payload: value });
+      },
+      setActivePanel(panel) {
+        dispatch({ type: 'set-active-panel', payload: panel });
       },
       setMapInstance(map) {
         dispatch({ type: 'set-map-instance', payload: map });

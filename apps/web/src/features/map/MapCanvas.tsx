@@ -5,7 +5,7 @@ import type { FeatureCollection } from 'geojson';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '../../styles/map.css';
 
-import { useMapActions, useMapHighlightSelectors } from '../../state/map';
+import { useMapActions, useMapHighlightSelectors, useMapState } from '../../state/map';
 import { loadLineGeometryCollection } from '../../lib/rodalies/dataLoader';
 import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
@@ -80,12 +80,15 @@ export function MapCanvas() {
 
   const { setMapInstance, setMapLoaded, setViewport } = useMapActions();
   const { highlightMode, highlightedLineId, highlightedLineIds } = useMapHighlightSelectors();
+  const { ui } = useMapState();
   const {
     effectiveViewport,
     isLoading: isViewportLoading,
     error: viewportError,
     recenter,
   } = useDefaultViewport();
+
+  const isHighContrast = ui.isHighContrast;
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -120,6 +123,16 @@ export function MapCanvas() {
   const hasStatus = statusSegments.length > 0;
   const statusText = statusSegments.join(' • ');
   const statusIsWarning = Boolean(viewportError || geometryWarning);
+
+  // Apply high contrast theme to document root
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isHighContrast) {
+      root.setAttribute('data-map-theme', 'high-contrast');
+    } else {
+      root.removeAttribute('data-map-theme');
+    }
+  }, [isHighContrast]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -219,6 +232,7 @@ export function MapCanvas() {
               highlightMode: 'none',
               highlightedLineId: null,
               highlightedLineIds: [],
+              isHighContrast,
             }),
           });
         }
@@ -380,7 +394,7 @@ export function MapCanvas() {
     };
   }, [effectiveViewport, setViewport]);
 
-  // Update line layer styling when highlight state changes
+  // Update line layer styling when highlight state or contrast mode changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.getLayer(RODALIES_LINE_LAYER_ID)) {
@@ -392,13 +406,14 @@ export function MapCanvas() {
       highlightMode,
       highlightedLineId,
       highlightedLineIds,
+      isHighContrast,
     });
 
     // Update each paint property
     Object.entries(paintProperties).forEach(([property, value]) => {
       map.setPaintProperty(RODALIES_LINE_LAYER_ID, property, value);
     });
-  }, [highlightMode, highlightedLineId, highlightedLineIds]);
+  }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
 
   return (
     <div className="map-canvas">

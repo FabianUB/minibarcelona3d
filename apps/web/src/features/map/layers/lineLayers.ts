@@ -10,6 +10,7 @@ export interface LineLayerStyleConfig {
   highlightMode: MapHighlightMode;
   highlightedLineId: string | null; // Deprecated: use highlightedLineIds
   highlightedLineIds?: string[]; // New: support multiple highlighted lines
+  isHighContrast?: boolean; // Enable high contrast mode with enhanced visibility
 }
 
 /**
@@ -63,27 +64,30 @@ export function getLineOpacityExpression(
 export function getLineWidthExpression(
   config: LineLayerStyleConfig,
 ): Expression {
-  const { highlightMode, highlightedLineIds = [], highlightedLineId } = config;
+  const { highlightMode, highlightedLineIds = [], highlightedLineId, isHighContrast = false } = config;
 
   // Use new array if provided, otherwise fall back to single ID
   const activeLineIds = highlightedLineIds.length > 0
     ? highlightedLineIds
     : highlightedLineId ? [highlightedLineId] : [];
 
+  // High contrast mode: increase all line widths by 1.5x for better visibility
+  const widthMultiplier = isHighContrast ? 1.5 : 1;
+
   if (highlightMode === 'none' || activeLineIds.length === 0) {
-    // No highlight: standard zoom-based width
+    // No highlight: standard zoom-based width (with optional high contrast boost)
     return [
       'interpolate',
       ['exponential', 2],
       ['zoom'],
       10,
-      2,
+      2 * widthMultiplier,
       12,
-      4,
+      4 * widthMultiplier,
       14,
-      6,
+      6 * widthMultiplier,
       16,
-      8,
+      8 * widthMultiplier,
     ] as Expression;
   }
 
@@ -94,13 +98,13 @@ export function getLineWidthExpression(
     ['exponential', 2],
     ['zoom'],
     10,
-    ['case', isHighlighted, 4, 2],
+    ['case', isHighlighted, 4 * widthMultiplier, 2 * widthMultiplier],
     12,
-    ['case', isHighlighted, 8, 4],
+    ['case', isHighlighted, 8 * widthMultiplier, 4 * widthMultiplier],
     14,
-    ['case', isHighlighted, 12, 6],
+    ['case', isHighlighted, 12 * widthMultiplier, 6 * widthMultiplier],
     16,
-    ['case', isHighlighted, 16, 8],
+    ['case', isHighlighted, 16 * widthMultiplier, 8 * widthMultiplier],
   ] as Expression;
 }
 
