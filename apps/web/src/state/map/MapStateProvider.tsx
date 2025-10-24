@@ -1,5 +1,6 @@
 import { useMemo, useReducer, useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
+import type { Map as MapboxMap } from 'mapbox-gl';
 
 import {
   MapActionsContext,
@@ -34,7 +35,7 @@ type MapAction =
   | { type: 'toggle-high-contrast' }
   | { type: 'set-legend-open'; payload: boolean }
   | { type: 'set-active-panel'; payload: import('../../types/rodalies').ActivePanel }
-  | { type: 'set-map-instance'; payload: Map | null }
+  | { type: 'set-map-instance'; payload: MapboxMap | null }
   | { type: 'set-map-loaded'; payload: boolean };
 
 /**
@@ -199,7 +200,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       setLegendOpen(value) {
         dispatch({ type: 'set-legend-open', payload: value });
       },
-      setActivePanel(panel) {
+      setActivePanel(panel: import('../../types/rodalies').ActivePanel) {
         dispatch({ type: 'set-active-panel', payload: panel });
       },
       setMapInstance(map) {
@@ -238,7 +239,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         return Boolean(candidate && !activeLineIds.includes(candidate));
       },
     };
-  }, [state.ui.highlightMode, state.ui.selectedLineIds]);
+  }, [state.ui]);
 
   // Note: Map viewport syncing is handled by MapCanvas component
   // to avoid circular updates between map events and state changes

@@ -178,12 +178,6 @@ export function MapCanvas() {
       maxBounds: initialViewportRef.current!.max_bounds,
       maxPitch: 60,
       attributionControl: true,
-      locale: 'en',
-      fog: {
-        range: [1, 10],
-        color: 'rgb(220, 220, 220)',
-        'horizon-blend': 0.01,
-      },
     });
 
     map.addControl(
@@ -452,7 +446,7 @@ export function MapCanvas() {
 
     // Update each paint property
     Object.entries(paintProperties).forEach(([property, value]) => {
-      map.setPaintProperty(RODALIES_LINE_LAYER_ID, property, value);
+      map.setPaintProperty(RODALIES_LINE_LAYER_ID, property as any, value);
     });
   }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
 

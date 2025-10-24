@@ -1,6 +1,7 @@
-import type { Map } from 'mapbox-gl';
+import type { Map as MapboxMap } from 'mapbox-gl';
 
 import type {
+  ActivePanel,
   MapHighlightMode,
   MapUIState,
   MapViewport,
@@ -10,7 +11,7 @@ export interface MapState {
   defaultViewport: MapViewport | null;
   viewport: MapViewport | null;
   ui: MapUIState;
-  mapInstance: Map | null;
+  mapInstance: MapboxMap | null;
   isMapLoaded: boolean;
 }
 
@@ -26,7 +27,8 @@ export interface MapActions {
   setHighContrast(value: boolean): void;
   toggleHighContrast(): void;
   setLegendOpen(value: boolean): void;
-  setMapInstance(map: Map | null): void;
+  setActivePanel(panel: ActivePanel): void;
+  setMapInstance(map: MapboxMap | null): void;
   setMapLoaded(isLoaded: boolean): void;
 }
 
