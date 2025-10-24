@@ -212,7 +212,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
     [dispatch],
   );
   const highlightSelectors = useMemo<MapHighlightSelectors>(() => {
-    const { highlightMode, selectedLineId, selectedLineIds } = state.ui;
+    const { highlightMode, selectedLineIds } = state.ui;
     const activeLineIds = selectedLineIds.map(normaliseLineId).filter((id): id is string => id !== null);
     const isAnyLineHighlighted =
       highlightMode !== 'none' && activeLineIds.length > 0;
@@ -238,7 +238,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         return Boolean(candidate && !activeLineIds.includes(candidate));
       },
     };
-  }, [state.ui.highlightMode, state.ui.selectedLineId, state.ui.selectedLineIds]);
+  }, [state.ui.highlightMode, state.ui.selectedLineIds]);
 
   // Note: Map viewport syncing is handled by MapCanvas component
   // to avoid circular updates between map events and state changes

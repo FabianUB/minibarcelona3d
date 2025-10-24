@@ -115,12 +115,12 @@
 
 **Purpose**: Tasks that sharpen the experience across stories.
 
-- [ ] T031 [P] Refresh documentation with bundle/a11y instructions in specs/001-show-rodalies-map/quickstart.md.
-- [ ] T032 Verify bundle analysis + accessibility pipelines in apps/web/package.json and CI configuration.
-- [ ] T033 [P] Run and document Playwright/Vitest regression evidence in apps/web/e2e/README.md.
-- [ ] T034 Harden Mapbox token handling and error messaging in apps/web/src/lib/rodalies/dataLoader.ts.
-- [ ] T035 [P] Inject tile-load failure banner and retry control in apps/web/src/features/map/MapCanvas.tsx with coverage in apps/web/e2e/map-default-view.spec.ts.
-- [ ] T036 Record initial render timing + geometry load metrics via apps/web/src/lib/analytics/perf.ts and assert thresholds in apps/web/e2e/perf-budget.spec.ts.
+- [X] T031 [P] Refresh documentation with bundle/a11y instructions in specs/001-show-rodalies-map/quickstart.md.
+- [X] T032 Verify bundle analysis + accessibility pipelines in apps/web/package.json and CI configuration.
+- [X] T033 [P] Run and document Playwright/Vitest regression evidence in apps/web/e2e/README.md.
+- [X] T034 Harden Mapbox token handling and error messaging in apps/web/src/lib/rodalies/dataLoader.ts.
+- [X] T035 [P] Inject tile-load failure banner and retry control in apps/web/src/features/map/MapCanvas.tsx with coverage in apps/web/e2e/map-default-view.spec.ts.
+- [X] T036 Record initial render timing + geometry load metrics via apps/web/src/lib/analytics/perf.ts and assert thresholds in apps/web/e2e/perf-budget.spec.ts.
 
 ---
 

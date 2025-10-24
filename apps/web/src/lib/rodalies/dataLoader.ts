@@ -218,13 +218,45 @@ function resolveManifestAssetUrl(path: string): string {
 }
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { credentials: 'same-origin' });
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
-    );
+  try {
+    const response = await fetch(url, {
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      // Provide more specific error messages based on status code
+      let errorMessage = `Failed to fetch ${url}: ${response.status} ${response.statusText}`;
+
+      if (response.status === 404) {
+        errorMessage = `Resource not found: ${url}. Check that the file exists in the public/rodalies_data directory.`;
+      } else if (response.status === 403) {
+        errorMessage = `Access forbidden: ${url}. Check file permissions.`;
+      } else if (response.status >= 500) {
+        errorMessage = `Server error loading ${url}: ${response.status}. Please try again later.`;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    try {
+      return (await response.json()) as T;
+    } catch (parseError) {
+      throw new Error(
+        `Invalid JSON in ${url}: ${parseError instanceof Error ? parseError.message : 'Parse error'}`,
+      );
+    }
+  } catch (error) {
+    // Handle network errors
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(
+        `Network error loading ${url}. Check your internet connection.`,
+      );
+    }
+    throw error;
   }
-  return (await response.json()) as T;
 }
 
 function resolveFromBase(path: string): string {

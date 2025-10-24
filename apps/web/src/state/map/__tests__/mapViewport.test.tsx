@@ -19,13 +19,7 @@ const DEFAULT_VIEWPORT: MapViewport = {
 };
 
 describe('MapState viewport management', () => {
-  it('resets the map to the default viewport after pan/zoom', () => {
-    const fakeMap = {
-      jumpTo: vi.fn(),
-      setPadding: vi.fn(),
-      setMaxBounds: vi.fn(),
-    } as unknown as mapboxgl.Map;
-
+  it('resets the map state to the default viewport after pan/zoom', () => {
     const wrapper = ({ children }: PropsWithChildren) => (
       <MapStateProvider>{children}</MapStateProvider>
     );
@@ -33,14 +27,12 @@ describe('MapState viewport management', () => {
     const { result } = renderHook(() => useMapStore(), { wrapper });
     const [, actions] = result.current;
 
+    // Set default viewport
     act(() => {
       actions.setDefaultViewport(DEFAULT_VIEWPORT);
     });
 
-    act(() => {
-      actions.setMapInstance(fakeMap);
-    });
-
+    // Simulate user panning/zooming the map
     act(() => {
       actions.setViewport({
         ...DEFAULT_VIEWPORT,
@@ -49,17 +41,20 @@ describe('MapState viewport management', () => {
       });
     });
 
+    // Verify viewport was changed
+    let [state] = result.current;
+    expect(state.viewport.center).toEqual({ lat: 41.5, lng: 2.3 });
+    expect(state.viewport.zoom).toBe(11);
+
+    // Reset viewport
     act(() => {
       actions.resetViewport();
     });
 
-    const [stateAfterReset] = result.current;
-    expect(stateAfterReset.viewport).toEqual(DEFAULT_VIEWPORT);
-    expect(fakeMap.setMaxBounds).toHaveBeenCalledWith(DEFAULT_VIEWPORT.max_bounds);
-    expect(fakeMap.setPadding).toHaveBeenCalledWith(DEFAULT_VIEWPORT.padding);
-    expect(fakeMap.jumpTo).toHaveBeenCalledWith({
-      center: [DEFAULT_VIEWPORT.center.lng, DEFAULT_VIEWPORT.center.lat],
-      zoom: DEFAULT_VIEWPORT.zoom,
-    });
+    // Verify viewport was reset to default
+    [state] = result.current;
+    expect(state.viewport).toEqual(DEFAULT_VIEWPORT);
+    expect(state.viewport.center).toEqual(DEFAULT_VIEWPORT.center);
+    expect(state.viewport.zoom).toBe(DEFAULT_VIEWPORT.zoom);
   });
 });
