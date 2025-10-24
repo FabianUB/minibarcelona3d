@@ -97,15 +97,15 @@
 
 ### Tests for User Story 3 (write first)
 
-- [ ] T025 [P] [US3] Create Playwright mobile scenario asserting responsive legend + contrast in apps/web/e2e/mobile-accessibility.spec.ts.
-- [ ] T026 [P] [US3] Add Vitest tests for contrast toggle state persistence in apps/web/src/features/accessibility/__tests__/contrast-toggle.test.tsx.
+- [X] T025 [P] [US3] Create Playwright mobile scenario asserting responsive legend + contrast in apps/web/e2e/mobile-accessibility.spec.ts.
+- [X] T026 [P] [US3] Add Vitest tests for contrast toggle state persistence in apps/web/src/features/accessibility/__tests__/contrast-toggle.test.tsx.
 
 ### Implementation for User Story 3
 
-- [ ] T027 [US3] Implement high-contrast toggle component in apps/web/src/features/accessibility/ContrastToggle.tsx.
-- [ ] T028 [P] [US3] Build mobile legend sheet experience in apps/web/src/features/legend/LegendSheet.tsx.
-- [ ] T029 [US3] Persist contrast preference to localStorage in apps/web/src/state/map/persistence.ts.
-- [ ] T030 [US3] Finalize responsive layout and contrast styles in apps/web/src/styles/map.css.
+- [X] T027 [US3] Implement high-contrast toggle component in apps/web/src/features/accessibility/ContrastToggle.tsx.
+- [X] T028 [P] [US3] Build mobile legend sheet experience in apps/web/src/features/legend/LegendSheet.tsx.
+- [X] T029 [US3] Persist contrast preference to localStorage in apps/web/src/state/map/persistence.ts.
+- [X] T030 [US3] Finalize responsive layout and contrast styles in apps/web/src/styles/map.css.
 
 **Checkpoint**: All selected user stories are independently functional.
 

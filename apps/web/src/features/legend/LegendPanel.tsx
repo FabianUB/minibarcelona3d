@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { useLegendStore } from './legendStore';
+import { useMapActions, useMapState } from '../../state/map';
+import { LegendSheet } from './LegendSheet';
 
 /**
  * LegendPanel - Accessible legend UI for line selection
@@ -16,9 +16,11 @@ import { useLegendStore } from './legendStore';
  */
 export function LegendPanel() {
   const legend = useLegendStore();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { ui } = useMapState();
+  const { setActivePanel } = useMapActions();
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+
+  const isExpanded = ui.activePanel === 'legend';
 
   if (legend.isLoading) {
     return (
@@ -44,6 +46,7 @@ export function LegendPanel() {
     );
   }
 
+  // Desktop-only handlers
   const handleMouseDown = (lineId: string) => {
     const timer = setTimeout(() => {
       legend.isolateLine(lineId);
@@ -110,37 +113,13 @@ export function LegendPanel() {
     <>
       {/* Mobile: Sheet (≤768px) */}
       <div className="block md:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="secondary"
-              size="lg"
-              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-10 shadow-lg"
-            >
-              Lines ({legend.items.length})
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto max-h-[80vh]">
-            <SheetHeader>
-              <SheetTitle>Rodalies Lines</SheetTitle>
-            </SheetHeader>
-            <Separator className="my-4" />
-            <div className="pb-6">
-              <LegendContent />
-            </div>
-            {legend.mode !== 'all' && (
-              <div className="mt-4 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => legend.clearSelection()}
-                >
-                  Clear Selection
-                </Button>
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
+        <LegendSheet
+          items={legend.items}
+          mode={legend.mode}
+          onLineClick={(lineId) => legend.highlightLine(lineId)}
+          onLinePress={(lineId) => legend.isolateLine(lineId)}
+          onClearSelection={() => legend.clearSelection()}
+        />
       </div>
 
       {/* Desktop: Expandable legend (>768px) */}
@@ -148,7 +127,7 @@ export function LegendPanel() {
         {!isExpanded ? (
           // Collapsed: Circular rail icon button
           <button
-            onClick={() => setIsExpanded(true)}
+            onClick={() => setActivePanel('legend')}
             className="fixed top-4 left-4 w-12 h-12 rounded-full bg-card shadow-lg z-10 flex items-center justify-center hover:scale-105 transition-transform border border-border"
             aria-label="Show legend"
             title="Show Rodalies Lines legend"
@@ -194,7 +173,7 @@ export function LegendPanel() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsExpanded(false)}
+                    onClick={() => setActivePanel('none')}
                     className="h-6 w-6 p-0"
                     aria-label="Hide legend"
                   >
@@ -202,6 +181,9 @@ export function LegendPanel() {
                   </Button>
                 </div>
               </CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Click to highlight, hold to isolate
+              </CardDescription>
             </CardHeader>
             <CardContent className="pt-0 pb-3">
               <LegendContent />
