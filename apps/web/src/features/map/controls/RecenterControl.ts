@@ -3,8 +3,12 @@ import type { IControl, Map } from 'mapbox-gl';
 type RecenterHandler = () => void;
 
 export class RecenterControl implements IControl {
-  #container: HTMLElement | null = null;
-  constructor(private readonly onRecenter: RecenterHandler) {}
+  private container: HTMLElement | null = null;
+  private readonly onRecenter: RecenterHandler;
+
+  constructor(onRecenter: RecenterHandler) {
+    this.onRecenter = onRecenter;
+  }
 
   onAdd(map: Map): HTMLElement {
     void map;
@@ -22,23 +26,23 @@ export class RecenterControl implements IControl {
     button.addEventListener('keydown', this.handleKeyDown);
 
     container.appendChild(button);
-    this.#container = container;
+    this.container = container;
     return container;
   }
 
   onRemove(): void {
-    if (!this.#container) {
+    if (!this.container) {
       return;
     }
 
-    const button = this.#container.querySelector('button');
+    const button = this.container.querySelector('button');
     if (button) {
       button.removeEventListener('click', this.handleClick);
       button.removeEventListener('keydown', this.handleKeyDown);
     }
 
-    this.#container.remove();
-    this.#container = null;
+    this.container.remove();
+    this.container = null;
   }
 
   private handleClick = () => {

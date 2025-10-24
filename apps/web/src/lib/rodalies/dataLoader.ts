@@ -171,9 +171,11 @@ export async function loadMapUiState(
       if (!path) {
         return {
           selectedLineId: null,
+          selectedLineIds: [],
           highlightMode: 'none',
           isHighContrast: false,
           isLegendOpen: false,
+          activePanel: 'none',
         };
       }
       const url = resolveManifestAssetUrl(path);
@@ -285,11 +287,16 @@ function normaliseMapUiState(
     candidate.selectedLineId.trim().length > 0
       ? candidate.selectedLineId.trim()
       : null;
+  const selectedLineIds = Array.isArray(candidate?.selectedLineIds)
+    ? candidate.selectedLineIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+    : selectedLineId ? [selectedLineId] : [];
   return {
     selectedLineId,
+    selectedLineIds,
     highlightMode,
     isHighContrast: Boolean(candidate?.isHighContrast),
     isLegendOpen: Boolean(candidate?.isLegendOpen),
+    activePanel: candidate?.activePanel === 'legend' || candidate?.activePanel === 'settings' ? candidate.activePanel : 'none',
   };
 }
 

@@ -23,7 +23,7 @@ export interface LineLayerStyleConfig {
  */
 export function getLineOpacityExpression(
   config: LineLayerStyleConfig,
-): Expression {
+): Expression | number {
   const { highlightMode, highlightedLineIds = [], highlightedLineId } = config;
 
   // Use new array if provided, otherwise fall back to single ID
@@ -118,7 +118,7 @@ export function getLineWidthExpression(
  */
 export function getLinePaintProperties(config: LineLayerStyleConfig) {
   return {
-    'line-color': ['coalesce', ['get', 'brand_color'], '#f97316'],
+    'line-color': ['coalesce', ['get', 'brand_color'], '#f97316'] as Expression,
     'line-width': getLineWidthExpression(config),
     'line-opacity': getLineOpacityExpression(config),
   };

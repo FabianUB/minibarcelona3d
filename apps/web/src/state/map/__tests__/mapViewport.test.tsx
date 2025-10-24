@@ -2,7 +2,7 @@
 
 import { renderHook, act } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { MapStateProvider } from '../MapStateProvider';
 import { useMapStore } from '../useMapStore';
@@ -43,8 +43,8 @@ describe('MapState viewport management', () => {
 
     // Verify viewport was changed
     let [state] = result.current;
-    expect(state.viewport.center).toEqual({ lat: 41.5, lng: 2.3 });
-    expect(state.viewport.zoom).toBe(11);
+    expect(state.viewport?.center).toEqual({ lat: 41.5, lng: 2.3 });
+    expect(state.viewport?.zoom).toBe(11);
 
     // Reset viewport
     act(() => {
@@ -54,7 +54,7 @@ describe('MapState viewport management', () => {
     // Verify viewport was reset to default
     [state] = result.current;
     expect(state.viewport).toEqual(DEFAULT_VIEWPORT);
-    expect(state.viewport.center).toEqual(DEFAULT_VIEWPORT.center);
-    expect(state.viewport.zoom).toBe(DEFAULT_VIEWPORT.zoom);
+    expect(state.viewport?.center).toEqual(DEFAULT_VIEWPORT.center);
+    expect(state.viewport?.zoom).toBe(DEFAULT_VIEWPORT.zoom);
   });
 });

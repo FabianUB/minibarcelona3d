@@ -21,7 +21,7 @@ export default defineConfig({
             template: 'treemap',
             gzipSize: true,
             brotliSize: true,
-          }),
+          }) as any,
         ]
       : []),
   ],

@@ -34,11 +34,17 @@ const mockRodaliesLines = [
     id: 'R1',
     name: 'R1 - Coastal',
     brand_color: 'ff6600',
+    short_code: 'R1',
+    default_pattern: 'solid',
+    high_contrast_pattern: 'solid',
   },
   {
     id: 'R2',
     name: 'R2 - Valles',
     brand_color: '00cc00',
+    short_code: 'R2',
+    default_pattern: 'solid',
+    high_contrast_pattern: 'solid',
   },
 ];
 
@@ -55,7 +61,7 @@ vi.mock('../../../lib/rodalies/dataLoader', () => ({
   getFallbackViewport: vi.fn(),
 }));
 
-function createWrapper(): (props: PropsWithChildren) => JSX.Element {
+function createWrapper() {
   return function LegendStoreTestProvider({ children }: PropsWithChildren) {
     return <MapStateProvider>{children}</MapStateProvider>;
   };
