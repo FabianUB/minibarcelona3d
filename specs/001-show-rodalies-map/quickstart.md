@@ -39,11 +39,52 @@ PLAYWRIGHT_WEB_SERVER_CMD="pnpm dev -- --host=127.0.0.1 --port=5173" pnpm playwr
 ```
 
 ## Bundle & Accessibility Checks
+
+### Bundle Analysis
+Build and analyze the production bundle to ensure optimal performance:
 ```bash
-pnpm run build
-pnpm run analyze-bundle    # bundlesize threshold + rollup visualizer
-pnpm playwright test --project=chromium --grep @axe  # axe assertions
+cd apps/web
+pnpm run build                    # Create optimized production build
+pnpm run analyze-bundle           # Generate bundle visualization and stats
 ```
+
+**Expected Outcomes**:
+- Bundle size should be under 500KB gzipped (excluding Mapbox GL JS)
+- Check `dist/stats.html` for bundle composition
+- Largest chunks should be: vendor (React, Mapbox), app code, styles
+- Look for unexpected duplications or large dependencies
+
+**Bundle Size Monitoring**:
+- Record bundle size in PR descriptions
+- Compare against previous builds
+- Flag any increases >10% for review
+
+### Accessibility Testing
+Run automated accessibility checks with axe-core:
+```bash
+cd apps/web
+pnpm test:accessibility           # Run axe checks on all pages
+```
+
+**Coverage Areas**:
+- Color contrast ratios (WCAG AA minimum 4.5:1 for text)
+- Keyboard navigation (all interactive elements reachable)
+- ARIA labels and roles (screen reader compatibility)
+- Touch target sizes (≥44x44px for mobile)
+- Focus indicators (visible on all interactive elements)
+
+**Manual Accessibility Verification**:
+1. **Keyboard Navigation**: Tab through all controls (legend, settings, map controls)
+2. **Screen Reader**: Test with VoiceOver (macOS) or NVDA (Windows)
+3. **High Contrast Mode**: Toggle "Enhance Line Visibility" and verify line thickness increases
+4. **Mobile Touch Targets**: Verify all buttons/toggles are easily tappable (≥44x44px)
+5. **Color Blindness**: Test legend colors with color blindness simulators
+
+**Expected Results**:
+- Zero critical axe violations
+- All interactive elements keyboard-accessible
+- Screen reader announces all controls with clear labels
+- High contrast mode makes lines 1.5x thicker
 
 ## Regression Smoke Tests
 Ensure backend remains healthy even without direct changes:

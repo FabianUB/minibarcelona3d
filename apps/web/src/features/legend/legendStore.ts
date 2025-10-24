@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useMapActions, useMapHighlightSelectors } from '../../state/map';
 import { loadLegendEntries, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
-import type { LegendEntry, RodaliesLine } from '../../types/rodalies';
+import type { LegendEntry } from '../../types/rodalies';
 
 export interface LegendItem {
   lineId: string;

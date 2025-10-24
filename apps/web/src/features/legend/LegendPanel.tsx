@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useLegendStore } from './legendStore';
 import { useMapActions, useMapState } from '../../state/map';
 import { LegendSheet } from './LegendSheet';
@@ -55,7 +54,7 @@ export function LegendPanel() {
     setLongPressTimer(timer);
   };
 
-  const handleMouseUp = (lineId: string, isActive: boolean) => {
+  const handleMouseUp = (lineId: string) => {
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
@@ -71,42 +70,60 @@ export function LegendPanel() {
     }
   };
 
-  const LegendContent = () => (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2">
-      {legend.items.map((item) => {
-        const isActive = item.isHighlighted;
-        const dimmed = item.isDimmed;
+  // Get the selected lines for the status banner
+  const selectedLines = legend.items.filter((item) => item.isHighlighted);
+  const selectionText = selectedLines.length === 1
+    ? selectedLines[0].label  // Show full name for single selection
+    : selectedLines.map((item) => item.lineId).join(', '); // Show IDs for multiple selections
 
-        return (
-          <button
-            key={item.lineId}
-            data-testid={`legend-entry-${item.lineId}`}
-            aria-pressed={isActive}
-            aria-label={`${item.lineId}: ${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')}`}
-            onMouseDown={() => handleMouseDown(item.lineId)}
-            onMouseUp={() => handleMouseUp(item.lineId, isActive)}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={() => handleMouseDown(item.lineId)}
-            onTouchEnd={() => handleMouseUp(item.lineId, isActive)}
-            onTouchCancel={handleMouseLeave}
-            className={`
-              relative rounded-md px-3 py-2 text-sm font-semibold
-              transition-all cursor-pointer
-              border-[3px]
-              ${isActive ? 'border-yellow-400 scale-110 shadow-lg ring-2 ring-yellow-400/50' : 'border-transparent'}
-              ${dimmed ? 'opacity-20' : 'opacity-100 hover:scale-105'}
-            `}
-            style={{
-              backgroundColor: item.brandColor,
-              color: '#ffffff',
-            }}
-            title={`${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')} (hold to isolate)`}
-          >
-            {item.lineId}
-          </button>
-        );
-      })}
-    </div>
+  const LegendContent = () => (
+    <>
+      {selectedLines.length > 0 && (
+        <div
+          data-testid="legend-selection-status"
+          className="mb-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md text-sm text-yellow-900 dark:text-yellow-100"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="font-medium">Selected:</span> {selectionText}
+        </div>
+      )}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2">
+        {legend.items.map((item) => {
+          const isActive = item.isHighlighted;
+          const dimmed = item.isDimmed;
+
+          return (
+            <button
+              key={item.lineId}
+              data-testid={`legend-entry-${item.lineId}`}
+              aria-pressed={isActive}
+              aria-label={`${item.lineId}: ${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')}`}
+              onMouseDown={() => handleMouseDown(item.lineId)}
+              onMouseUp={() => handleMouseUp(item.lineId)}
+              onMouseLeave={handleMouseLeave}
+              onTouchStart={() => handleMouseDown(item.lineId)}
+              onTouchEnd={() => handleMouseUp(item.lineId)}
+              onTouchCancel={handleMouseLeave}
+              className={`
+                relative rounded-md px-3 py-2 text-sm font-semibold
+                transition-all cursor-pointer
+                border-[3px]
+                ${isActive ? 'border-yellow-400 scale-110 shadow-lg ring-2 ring-yellow-400/50' : 'border-transparent'}
+                ${dimmed ? 'opacity-20' : 'opacity-100 hover:scale-105'}
+              `}
+              style={{
+                backgroundColor: item.brandColor,
+                color: '#ffffff',
+              }}
+              title={`${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')} (hold to isolate)`}
+            >
+              {item.lineId}
+            </button>
+          );
+        })}
+      </div>
+    </>
   );
 
   return (

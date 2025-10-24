@@ -11,6 +11,7 @@ import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
 import { getLinePaintProperties } from './layers/lineLayers';
 import type { MapViewport } from '../../types/rodalies';
+import { startMetric, endMetric } from '../../lib/analytics/perf';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
 // Similar to MiniTokyo3D's custom style but with built-in 3D building support
@@ -77,13 +78,14 @@ export function MapCanvas() {
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [geometryWarning, setGeometryWarning] = useState<string | null>(null);
+  const [tileError, setTileError] = useState<string | null>(null);
+  const [tileErrorCount, setTileErrorCount] = useState(0);
 
   const { setMapInstance, setMapLoaded, setViewport } = useMapActions();
   const { highlightMode, highlightedLineId, highlightedLineIds } = useMapHighlightSelectors();
   const { ui } = useMapState();
   const {
     effectiveViewport,
-    isLoading: isViewportLoading,
     error: viewportError,
     recenter,
   } = useDefaultViewport();
@@ -117,12 +119,15 @@ export function MapCanvas() {
     if (geometryWarning && geometryWarning !== viewportError) {
       messages.push(geometryWarning);
     }
+    if (tileError) {
+      messages.push(tileError);
+    }
     return Array.from(new Set(messages));
-  }, [geometryWarning, statusMessage, viewportError]);
+  }, [geometryWarning, statusMessage, viewportError, tileError]);
 
   const hasStatus = statusSegments.length > 0;
   const statusText = statusSegments.join(' • ');
-  const statusIsWarning = Boolean(viewportError || geometryWarning);
+  const statusIsWarning = Boolean(viewportError || geometryWarning || tileError);
 
   // Apply high contrast theme to document root
   useEffect(() => {
@@ -141,13 +146,24 @@ export function MapCanvas() {
 
     if (!MAPBOX_TOKEN) {
       setError(
-        'Missing Mapbox token. Define VITE_MAPBOX_TOKEN to render the map.',
+        'Missing Mapbox token. Add VITE_MAPBOX_TOKEN=your_token_here to your .env file. Get your token at https://account.mapbox.com/access-tokens/',
+      );
+      return;
+    }
+
+    // Validate token format (basic check)
+    if (!MAPBOX_TOKEN.startsWith('pk.') && !MAPBOX_TOKEN.startsWith('sk.')) {
+      setError(
+        'Invalid Mapbox token format. Tokens should start with "pk." (public) or "sk." (secret). Check your VITE_MAPBOX_TOKEN value.',
       );
       return;
     }
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
     setError(null);
+
+    // Start tracking initial map render time
+    startMetric('initial-render', { viewport: initialViewportRef.current });
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
@@ -193,6 +209,7 @@ export function MapCanvas() {
 
     const attachLineGeometry = async () => {
       try {
+        startMetric('geometry-load');
         const collection = await loadLineGeometryCollection();
         const normalisedCollection: FeatureCollection = {
           type: 'FeatureCollection',
@@ -236,8 +253,12 @@ export function MapCanvas() {
             }),
           });
         }
+        endMetric('geometry-load', {
+          featureCount: normalisedCollection.features.length,
+        });
         setGeometryWarning(null);
       } catch (err) {
+        endMetric('geometry-load', { error: true });
         setGeometryWarning(
           'Rodalies line geometry failed to load. Base map shown only.',
         );
@@ -250,6 +271,7 @@ export function MapCanvas() {
     };
 
     const handleLoad = () => {
+      endMetric('initial-render');
       setMapLoaded(true);
 
       // Add 3D buildings layer explicitly (similar to MiniTokyo3D)
@@ -325,9 +347,26 @@ export function MapCanvas() {
       setViewport(getViewportFromMap(map, baseViewport));
     };
 
+    // Handle tile load errors
+    const handleTileError = (event: { error?: Error; tile?: { tileID: { canonical: { x: number; y: number; z: number } } }; source?: { id: string } }) => {
+      const errorCount = tileErrorCount + 1;
+      setTileErrorCount(errorCount);
+
+      if (errorCount <= 3) {
+        // Show warning for first 3 errors
+        setTileError(`Map tiles failed to load (attempt ${errorCount}/3). Retrying...`);
+        console.warn('Tile load error:', event.error?.message || 'Unknown tile error');
+      } else {
+        // After 3 errors, show persistent error message
+        setTileError('Map tiles failed to load. Check your internet connection.');
+      }
+    };
+
+    map.on('error', handleTileError);
     map.on('load', handleLoad);
 
     return () => {
+      map.off('error', handleTileError);
       map.off('load', handleLoad);
       if (map.getLayer(RODALIES_LINE_LAYER_ID)) {
         map.removeLayer(RODALIES_LINE_LAYER_ID);
@@ -345,11 +384,13 @@ export function MapCanvas() {
       setMapInstance(null);
       setStatusMessage(null);
       setGeometryWarning(null);
+      setTileError(null);
+      setTileErrorCount(0);
       if (globalWindow.__MAPBOX_INSTANCE__ === map) {
         delete globalWindow.__MAPBOX_INSTANCE__;
       }
     };
-  }, [effectiveViewport, setMapInstance, setMapLoaded, setViewport]);
+  }, [effectiveViewport, setMapInstance, setMapLoaded, setViewport, tileErrorCount, isHighContrast]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -415,6 +456,24 @@ export function MapCanvas() {
     });
   }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
 
+  const handleRetryTiles = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Reset tile error state
+    setTileError(null);
+    setTileErrorCount(0);
+
+    // Force reload of map tiles by calling map.resize() and triggering a re-render
+    map.resize();
+
+    // Optionally reload style to force fresh tile requests
+    const currentStyle = map.getStyle();
+    if (currentStyle) {
+      map.setStyle(currentStyle);
+    }
+  };
+
   return (
     <div className="map-canvas">
       {error ? (
@@ -428,8 +487,19 @@ export function MapCanvas() {
             statusIsWarning ? ' map-canvas__status--warning' : ''
           }`}
           role="status"
+          data-testid="map-status-banner"
         >
           {statusText}
+          {tileError && tileErrorCount > 3 ? (
+            <button
+              onClick={handleRetryTiles}
+              className="map-canvas__retry-button"
+              data-testid="tile-retry-button"
+              aria-label="Retry loading map tiles"
+            >
+              Retry
+            </button>
+          ) : null}
         </div>
       ) : null}
       <div

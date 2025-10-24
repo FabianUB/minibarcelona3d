@@ -29,6 +29,19 @@ const mockLegendEntries: LegendEntry[] = [
   },
 ];
 
+const mockRodaliesLines = [
+  {
+    id: 'R1',
+    name: 'R1 - Coastal',
+    brand_color: 'ff6600',
+  },
+  {
+    id: 'R2',
+    name: 'R2 - Valles',
+    brand_color: '00cc00',
+  },
+];
+
 vi.mock('../../../lib/rodalies/dataLoader', () => ({
   loadLegendEntries: vi.fn(),
   loadManifest: vi.fn(),
@@ -49,17 +62,19 @@ function createWrapper(): (props: PropsWithChildren) => JSX.Element {
 }
 
 // Import the mocked module
-const { loadLegendEntries: loadLegendEntriesMock } = await import(
+const { loadLegendEntries: loadLegendEntriesMock, loadRodaliesLines: loadRodaliesLinesMock } = await import(
   '../../../lib/rodalies/dataLoader'
 );
 
 describe('Legend store highlight and isolate behaviour', () => {
   beforeEach(() => {
     vi.mocked(loadLegendEntriesMock).mockResolvedValue(mockLegendEntries);
+    vi.mocked(loadRodaliesLinesMock).mockResolvedValue(mockRodaliesLines);
   });
 
   afterEach(() => {
     vi.mocked(loadLegendEntriesMock).mockReset();
+    vi.mocked(loadRodaliesLinesMock).mockReset();
   });
 
   it('highlights a requested line without dimming the rest', async () => {

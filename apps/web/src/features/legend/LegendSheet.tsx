@@ -66,6 +66,12 @@ export function LegendSheet({
     }
   };
 
+  // Get the selected lines for the status banner
+  const selectedLines = items.filter((item) => item.isHighlighted);
+  const selectionText = selectedLines.length === 1
+    ? selectedLines[0].label  // Show full name for single selection
+    : selectedLines.map((item) => item.lineId).join(', '); // Show IDs for multiple selections
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -77,7 +83,7 @@ export function LegendSheet({
           Lines ({items.length})
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-auto max-h-[80vh]">
+      <SheetContent side="bottom" className="h-auto max-h-[80vh] flex flex-col">
         <SheetHeader>
           <SheetTitle>Rodalies Lines</SheetTitle>
           <SheetDescription>
@@ -85,7 +91,17 @@ export function LegendSheet({
           </SheetDescription>
         </SheetHeader>
         <Separator className="my-3" />
-        <div className="pb-6 px-2">
+        <div className="flex-1 overflow-y-auto pb-6 px-2">
+          {selectedLines.length > 0 && (
+            <div
+              data-testid="legend-selection-status"
+              className="mb-3 px-3 py-2 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md text-sm text-yellow-900 dark:text-yellow-100"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="font-medium">Selected:</span> {selectionText}
+            </div>
+          )}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2">
             {items.map((item) => {
               const isActive = item.isHighlighted;
@@ -123,7 +139,7 @@ export function LegendSheet({
           </div>
         </div>
         {mode !== 'all' && (
-          <div className="mt-4 flex justify-center">
+          <div className="pt-2 pb-4 flex justify-center border-t">
             <Button
               variant="outline"
               size="sm"
