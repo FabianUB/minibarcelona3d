@@ -1,0 +1,295 @@
+openapi: 3.1.0
+info:
+  title: Rodalies Static Map Assets
+  version: 0.1.0
+  summary: Delivery contract for bundled Rodalies map assets (lines + stations) served by the web frontend.
+servers:
+  - url: https://mini-rodalies.local
+    description: Local development via Vite/Compose
+  - url: https://mini-rodalies.app
+    description: Production CDN / frontend host
+paths:
+  /rodalies_data/manifest.json:
+    get:
+      summary: Retrieve manifest describing bundled Rodalies assets (lines, stations, viewport defaults).
+      operationId: getRodaliesManifest
+      responses:
+        "200":
+          description: Manifest listing bundled GeoJSON assets and default viewport.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RodaliesManifest"
+        "304":
+          description: Cached manifest still valid (Etag respected).
+  /rodalies_data/lines/{lineId}.geojson:
+    get:
+      summary: Retrieve GeoJSON feature collection for a single Rodalies line.
+      operationId: getRodaliesLineGeojson
+      parameters:
+        - name: lineId
+          in: path
+          required: true
+          description: Stable line identifier, e.g. R1, R7.
+          schema:
+            type: string
+            pattern: "^R[0-9A-Z]+$"
+      responses:
+        "200":
+          description: GeoJSON payload for the requested line.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/RodaliesLineFeatureCollection"
+        "404":
+          description: Line not bundled in current release.
+  /rodalies_data/Station.geojson:
+    get:
+      summary: Retrieve GeoJSON point features for Rodalies stations.
+      operationId: getRodaliesStations
+      responses:
+        "200":
+          description: Station collection delivering coordinates and line memberships.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/StationFeatureCollection"
+components:
+  schemas:
+    RodaliesManifest:
+      type: object
+      required:
+        - lines
+        - stations
+        - updated_at
+        - viewport
+      properties:
+        updated_at:
+          type: string
+          format: date-time
+        viewport:
+          $ref: "#/components/schemas/MapViewportDefaults"
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManifestLineEntry"
+        stations:
+          $ref: "#/components/schemas/StationsEntry"
+        rodalies_lines_path:
+          type: string
+          description: Relative path to `RodaliesLine.json`.
+        legend_entries_path:
+          type: string
+          description: Relative path to `LegendEntry.json`.
+        line_geometries_path:
+          type: string
+          description: Relative path to aggregated line geometry (`LineGeometry.geojson`).
+        map_viewport_path:
+          type: string
+          description: Relative path to `MapViewport.json`.
+        map_ui_state_path:
+          type: string
+          description: Relative path to `MapUIState.json`.
+    ManifestLineEntry:
+      type: object
+      required:
+        - id
+        - checksum
+        - path
+      properties:
+        id:
+          type: string
+          description: Matches `RodaliesLine.id`.
+        checksum:
+          type: string
+          description: SHA-256 of the GeoJSON payload.
+          pattern: "^[A-Fa-f0-9]{64}$"
+        path:
+          type: string
+          description: Relative path to the GeoJSON file (e.g., `lines/R1.geojson`).
+    StationsEntry:
+      type: object
+      required:
+        - path
+        - checksum
+      properties:
+        path:
+          type: string
+          description: Relative path to the station collection (e.g., `Station.geojson`).
+        checksum:
+          type: string
+          description: SHA-256 of the station GeoJSON payload.
+          pattern: "^[A-Fa-f0-9]{64}$"
+    MapViewportDefaults:
+      type: object
+      required:
+        - center
+        - zoom
+        - max_bounds
+        - padding
+      properties:
+        center:
+          type: object
+          required: [lat, lng]
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        zoom:
+          type: number
+        max_bounds:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+        padding:
+          type: object
+          required: [top, right, bottom, left]
+          properties:
+            top: { type: number }
+            right: { type: number }
+            bottom: { type: number }
+            left: { type: number }
+    RodaliesLineFeatureCollection:
+      type: object
+      required:
+        - type
+        - features
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/RodaliesLineFeature"
+    RodaliesLineFeature:
+      type: object
+      required:
+        - type
+        - properties
+        - geometry
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        properties:
+          type: object
+          required:
+            - id
+            - name
+            - short_code
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            short_code:
+              type: string
+            brand_color:
+              type: string
+            default_pattern:
+              type: string
+            high_contrast_pattern:
+              type: string
+        geometry:
+          type: object
+          oneOf:
+            - $ref: "#/components/schemas/LineString"
+            - $ref: "#/components/schemas/MultiLineString"
+    LineString:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [LineString]
+        coordinates:
+          type: array
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+    MultiLineString:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [MultiLineString]
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: number
+    StationFeatureCollection:
+      type: object
+      required:
+        - type
+        - features
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/StationFeature"
+    StationFeature:
+      type: object
+      required:
+        - type
+        - properties
+        - geometry
+      properties:
+        type:
+          type: string
+          enum: [Feature]
+        properties:
+          type: object
+          required:
+            - id
+            - name
+            - lines
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            code:
+              type:
+                - string
+                - "null"
+            lines:
+              type: array
+              minItems: 1
+              items:
+                type: string
+        geometry:
+          $ref: "#/components/schemas/Point"
+    Point:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Point]
+        coordinates:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
