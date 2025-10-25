@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "codex": "^0.2.3",
+    "uninstall": "^0.0.0"
+  }
+}
