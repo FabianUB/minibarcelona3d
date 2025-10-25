@@ -187,3 +187,9 @@ const { isLineHighlighted } = useMapHighlightSelectors();
 // Or get all at once
 const [state, actions, selectors] = useMapStore();
 ```
+
+## Active Technologies
+- PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`) (002-realtime-train-tracking)
+
+## Recent Changes
+- 002-realtime-train-tracking: Added PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`)
