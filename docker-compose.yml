@@ -1,6 +1,53 @@
 version: "3.9"
 
 services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-renfe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-9PqvU85v}
+      POSTGRES_DB: ${POSTGRES_DB:-renfe_gtfs}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-renfe} -d ${POSTGRES_DB:-renfe_gtfs}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  poller:
+    build:
+      context: ./apps/poller
+      dockerfile: docker/poller.Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-renfe}:${POSTGRES_PASSWORD:-9PqvU85v}@db:5432/${POSTGRES_DB:-renfe_gtfs}
+      RENFE_GTFS_FEEDS: ${RENFE_GTFS_FEEDS}
+      POLL_INTERVAL: ${POLL_INTERVAL:-30}
+      POLL_ALIGN_INTERVAL: ${POLL_ALIGN_INTERVAL}
+      POLL_ALIGN_OFFSET: ${POLL_ALIGN_OFFSET}
+      FAILURE_ALERT_THRESHOLD: ${FAILURE_ALERT_THRESHOLD}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+      DISCORD_USERNAME: ${DISCORD_USERNAME}
+      DISCORD_AVATAR_URL: ${DISCORD_AVATAR_URL}
+      DISCORD_REPORT_WEBHOOK_URL: ${DISCORD_REPORT_WEBHOOK_URL}
+      DISCORD_REPORT_USERNAME: ${DISCORD_REPORT_USERNAME}
+      DISCORD_REPORT_AVATAR_URL: ${DISCORD_REPORT_AVATAR_URL}
+      AUTO_REFRESH_STATIC: "true"
+      STATIC_REFRESH_TIME: "10:00"
+      STATIC_REFRESH_ZIP_URL: ${RENFE_STATIC_ZIP_URL}
+      STATIC_REFRESH_ZIP_PATH: "/tmp/fomento_transit.zip"
+    networks:
+      - app_network
+    restart: unless-stopped
+
   api:
     build:
       context: ./apps/api
@@ -8,11 +55,17 @@ services:
     command: air
     volumes:
       - ./apps/api:/app
-      - aircache:/root/.cache 
+      - aircache:/root/.cache
     environment:
       - PORT=8080
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-renfe}:${POSTGRES_PASSWORD:-9PqvU85v}@db:5432/${POSTGRES_DB:-renfe_gtfs}
     ports:
       - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
     restart: unless-stopped
 
   web:
@@ -29,8 +82,15 @@ services:
       - "5173:5173"
     depends_on:
       - api
+    networks:
+      - app_network
     restart: unless-stopped
 
 volumes:
   aircache:
   webnode:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge

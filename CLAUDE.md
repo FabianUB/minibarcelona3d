@@ -188,6 +188,51 @@ const { isLineHighlighted } = useMapHighlightSelectors();
 const [state, actions, selectors] = useMapStore();
 ```
 
+## Coding Standards
+
+### Comments and Code Clarity
+
+**Good comments should explain why, not what.**
+
+- The code should make it clear exactly what you're doing, it should be as readable as possible
+- Comments should explain why you're doing something a certain way
+- Only use them when absolutely necessary
+
+**Examples:**
+
+```typescript
+// BAD: Comment explains what (code already shows this)
+// Set the user's name to "John"
+const name = "John";
+
+// GOOD: Comment explains why (provides context)
+// Default to "John" for demo accounts created before user profile migration
+const name = "John";
+```
+
+```go
+// BAD: Comment restates the obvious
+// Create a new train repository
+repo := repository.NewTrainRepository(databaseURL)
+
+// GOOD: Comment explains why we use pointers
+// Use *float64 for nullable coordinates - some trains don't report GPS
+type Train struct {
+    Latitude  *float64  `db:"latitude"`
+    Longitude *float64  `db:"longitude"`
+}
+```
+
+```typescript
+// BAD: Comment describes implementation
+// Loop through all trains and filter by route
+const routeTrains = trains.filter(t => t.routeId === selectedRoute);
+
+// GOOD: Comment explains business logic reasoning
+// Only show trains on selected route to reduce visual clutter on map
+const routeTrains = trains.filter(t => t.routeId === selectedRoute);
+```
+
 ## Active Technologies
 - PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`) (002-realtime-train-tracking)
 
