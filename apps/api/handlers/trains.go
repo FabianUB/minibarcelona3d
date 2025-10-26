@@ -1,0 +1,164 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+
+	"github.com/you/myapp/apps/api/models"
+	"github.com/you/myapp/apps/api/repository"
+)
+
+// TrainHandler handles HTTP requests for train data
+// Implements the API contract defined in contracts/api.yaml
+type TrainHandler struct {
+	repo *repository.TrainRepository
+}
+
+// NewTrainHandler creates a new handler with the given repository
+func NewTrainHandler(repo *repository.TrainRepository) *TrainHandler {
+	return &TrainHandler{repo: repo}
+}
+
+// GetAllTrainsResponse is the JSON response structure for GET /api/trains
+type GetAllTrainsResponse struct {
+	Trains   []models.Train `json:"trains"`
+	Count    int            `json:"count"`
+	PolledAt time.Time      `json:"polledAt"`
+}
+
+// GetAllTrainPositionsResponse is the JSON response structure for GET /api/trains/positions
+type GetAllTrainPositionsResponse struct {
+	Positions []models.TrainPosition `json:"positions"`
+	Count     int                    `json:"count"`
+	PolledAt  time.Time              `json:"polledAt"`
+}
+
+// ErrorResponse is the JSON error response structure
+type ErrorResponse struct {
+	Error   string                 `json:"error"`
+	Details map[string]interface{} `json:"details,omitempty"`
+}
+
+// GetAllTrains handles GET /api/trains
+// Returns all active trains or filters by route_id query parameter
+// Performance target: <100ms for ~100 trains
+func (h *TrainHandler) GetAllTrains(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	routeID := r.URL.Query().Get("route_id")
+
+	var trains []models.Train
+	var err error
+
+	if routeID != "" {
+		// Filter by route
+		trains, err = h.repo.GetTrainsByRoute(ctx, routeID)
+	} else {
+		// Get all trains
+		trains, err = h.repo.GetAllTrains(ctx)
+	}
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "Failed to retrieve trains",
+			Details: map[string]interface{}{
+				"internal": err.Error(),
+			},
+		})
+		return
+	}
+
+	// Build response
+	response := GetAllTrainsResponse{
+		Trains:   trains,
+		Count:    len(trains),
+		PolledAt: time.Now().UTC(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// GetTrainByKey handles GET /api/trains/{vehicleKey}
+// Returns full details for a specific train by vehicle key
+// Performance target: <10ms (primary key lookup)
+func (h *TrainHandler) GetTrainByKey(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	vehicleKey := chi.URLParam(r, "vehicleKey")
+
+	if vehicleKey == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "vehicleKey parameter is required",
+		})
+		return
+	}
+
+	train, err := h.repo.GetTrainByKey(ctx, vehicleKey)
+	if err != nil {
+		// Check if it's a "not found" error
+		if err.Error() == "train not found: "+vehicleKey {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(ErrorResponse{
+				Error: "Train not found",
+				Details: map[string]interface{}{
+					"vehicleKey": vehicleKey,
+				},
+			})
+			return
+		}
+
+		// Internal server error
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "Failed to retrieve train",
+			Details: map[string]interface{}{
+				"internal": err.Error(),
+			},
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(train)
+}
+
+// GetAllTrainPositions handles GET /api/trains/positions
+// Returns lightweight position data optimized for frequent polling
+// Performance target: <50ms for ~100 trains
+func (h *TrainHandler) GetAllTrainPositions(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	positions, err := h.repo.GetAllTrainPositions(ctx)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "Failed to retrieve train positions",
+			Details: map[string]interface{}{
+				"internal": err.Error(),
+			},
+		})
+		return
+	}
+
+	// Build response
+	response := GetAllTrainPositionsResponse{
+		Positions: positions,
+		Count:     len(positions),
+		PolledAt:  time.Now().UTC(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}

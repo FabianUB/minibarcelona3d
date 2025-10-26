@@ -42,43 +42,43 @@
 
 **⚠️ TDD REQUIREMENT**: These tests MUST be written first and MUST fail before implementation begins.
 
-- [ ] T005 [P] [Phase A] Create integration test for GetAllTrains in apps/api/tests/integration/trains_test.go (expect failure - no implementation yet)
-- [ ] T006 [P] [Phase A] Create integration test for GetTrainByKey in apps/api/tests/integration/trains_test.go (expect failure - no implementation yet)
-- [ ] T007 [Phase A] Create performance test: verify API responds in <100ms for ~100 trains in apps/api/tests/integration/trains_test.go (expect failure)
+- [X] T005 [P] [Phase A] Create integration test for GetAllTrains in apps/api/tests/integration/trains_test.go (expect failure - no implementation yet)
+- [X] T006 [P] [Phase A] Create integration test for GetTrainByKey in apps/api/tests/integration/trains_test.go (expect failure - no implementation yet)
+- [X] T007 [Phase A] Create performance test: verify API responds in <100ms for ~100 trains in apps/api/tests/integration/trains_test.go (expect failure)
 
 **Checkpoint**: All tests written and failing (RED state) - ready to implement
 
 ### Backend Models
 
-- [ ] T008 [P] [Phase A] Create Train model struct in apps/api/models/train.go mapping to rt_rodalies_vehicle_current columns
-- [ ] T009 [P] [Phase A] Create TrainPosition model struct in apps/api/models/train.go for lightweight polling
-- [ ] T010 [P] [Phase A] Add Validate() method to Train model in apps/api/models/train.go
+- [X] T008 [P] [Phase A] Create Train model struct in apps/api/models/train.go mapping to rt_rodalies_vehicle_current columns
+- [X] T009 [P] [Phase A] Create TrainPosition model struct in apps/api/models/train.go for lightweight polling
+- [X] T010 [P] [Phase A] Add Validate() method to Train model in apps/api/models/train.go
 
 ### Database Repository
 
-- [ ] T011 [Phase A] Create TrainRepository struct with pgxpool connection in apps/api/repository/postgres.go
-- [ ] T012 [Phase A] Implement GetAllTrains() query method in apps/api/repository/postgres.go
-- [ ] T013 [P] [Phase A] Implement GetTrainByKey(vehicleKey) query method in apps/api/repository/postgres.go
-- [ ] T014 [P] [Phase A] Implement GetTrainsByRoute(routeId) query method in apps/api/repository/postgres.go
-- [ ] T015 [Phase A] Implement GetAllTrainPositions() lightweight query in apps/api/repository/postgres.go
+- [X] T011 [Phase A] Create TrainRepository struct with pgxpool connection in apps/api/repository/postgres.go
+- [X] T012 [Phase A] Implement GetAllTrains() query method in apps/api/repository/postgres.go
+- [X] T013 [P] [Phase A] Implement GetTrainByKey(vehicleKey) query method in apps/api/repository/postgres.go
+- [X] T014 [P] [Phase A] Implement GetTrainsByRoute(routeId) query method in apps/api/repository/postgres.go
+- [X] T015 [Phase A] Implement GetAllTrainPositions() lightweight query in apps/api/repository/postgres.go
 
 ### HTTP Handlers
 
-- [ ] T016 [Phase A] Create TrainHandler struct in apps/api/handlers/trains.go
-- [ ] T017 [P] [Phase A] Implement GetAllTrains handler (GET /api/trains) in apps/api/handlers/trains.go
-- [ ] T018 [P] [Phase A] Implement GetTrainByKey handler (GET /api/trains/{vehicleKey}) in apps/api/handlers/trains.go
-- [ ] T019 [P] [Phase A] Implement GetAllTrainPositions handler (GET /api/trains/positions) in apps/api/handlers/trains.go
+- [X] T016 [Phase A] Create TrainHandler struct in apps/api/handlers/trains.go
+- [X] T017 [P] [Phase A] Implement GetAllTrains handler (GET /api/trains) in apps/api/handlers/trains.go
+- [X] T018 [P] [Phase A] Implement GetTrainByKey handler (GET /api/trains/{vehicleKey}) in apps/api/handlers/trains.go
+- [X] T019 [P] [Phase A] Implement GetAllTrainPositions handler (GET /api/trains/positions) in apps/api/handlers/trains.go
 
 ### API Wiring
 
-- [ ] T020 [Phase A] Update apps/api/main.go to initialize database connection from DATABASE_URL env var
-- [ ] T021 [Phase A] Wire train routes to TrainHandler in apps/api/main.go
-- [ ] T022 [Phase A] Add health check endpoint (GET /health) that tests database connectivity in apps/api/main.go
-- [ ] T023 [Phase A] Configure CORS for http://localhost:5173 origin in apps/api/main.go
+- [X] T020 [Phase A] Update apps/api/main.go to initialize database connection from DATABASE_URL env var
+- [X] T021 [Phase A] Wire train routes to TrainHandler in apps/api/main.go
+- [X] T022 [Phase A] Add health check endpoint (GET /health) that tests database connectivity in apps/api/main.go
+- [X] T023 [Phase A] Configure CORS for http://localhost:5173 origin in apps/api/main.go
 
 ### Verify Tests Pass (Green)
 
-- [ ] T024 [Phase A] Run integration tests - verify all pass (GREEN state achieved)
+- [X] T024 [Phase A] Run integration tests - verify all pass (GREEN state achieved)
 
 **Checkpoint**: Run API locally, verify /api/trains returns JSON with real train data AND all tests pass
 
