@@ -12,6 +12,9 @@ import { RecenterControl } from './controls/RecenterControl';
 import { getLinePaintProperties } from './layers/lineLayers';
 import type { MapViewport } from '../../types/rodalies';
 import { startMetric, endMetric } from '../../lib/analytics/perf';
+// import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
+import { TrainLayer3D } from '../trains/TrainLayer3D';
+import { setModelOrigin } from '../../lib/map/coordinates';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
 // Similar to MiniTokyo3D's custom style but with built-in 3D building support
@@ -83,7 +86,7 @@ export function MapCanvas() {
 
   const { setMapInstance, setMapLoaded, setViewport } = useMapActions();
   const { highlightMode, highlightedLineId, highlightedLineIds } = useMapHighlightSelectors();
-  const { ui } = useMapState();
+  const { ui, mapInstance, isMapLoaded } = useMapState();
   const {
     effectiveViewport,
     error: viewportError,
@@ -268,6 +271,10 @@ export function MapCanvas() {
       endMetric('initial-render');
       setMapLoaded(true);
 
+      // Initialize model origin for Three.js coordinate system (T052e)
+      // MUST be called before any 3D objects are positioned
+      setModelOrigin(map.getCenter());
+
       // Add 3D buildings layer explicitly (similar to MiniTokyo3D)
       const layers = map.getStyle().layers;
       // Find the first symbol layer to insert buildings before labels
@@ -288,10 +295,12 @@ export function MapCanvas() {
       });
 
       // Add 3D building extrusions if not already present
-      if (!map.getLayer('3d-buildings')) {
+      const buildingLayerId = '3d-buildings';
+
+      if (!map.getLayer(buildingLayerId)) {
         map.addLayer(
           {
-            id: '3d-buildings',
+            id: buildingLayerId,
             source: 'composite',
             'source-layer': 'building',
             filter: ['==', 'extrude', 'true'],
@@ -327,11 +336,17 @@ export function MapCanvas() {
                 14.5,
                 ['get', 'min_height'],
               ],
-              'fill-extrusion-opacity': 0.6,
+              'fill-extrusion-opacity': 0.45,
             },
           },
           firstSymbolId,
         );
+      }
+
+      // T052f: Reduce opacity to 40-50% for better train visibility
+      // Based on Mini Tokyo 3D patterns (see /docs/MINI-TOKYO-3D.md)
+      if (map.getLayer(buildingLayerId)) {
+        map.setPaintProperty(buildingLayerId, 'fill-extrusion-opacity', 0.45);
       }
 
       setStatusMessage('Loading Rodalies network…');
@@ -502,6 +517,9 @@ export function MapCanvas() {
         data-testid="map-canvas"
         aria-hidden={Boolean(error)}
       />
+      {/* Phase B 2D markers replaced by Phase C 3D models */}
+      {/* {mapInstance && isMapLoaded ? <TrainMarkers map={mapInstance} /> : null} */}
+      {mapInstance && isMapLoaded ? <TrainLayer3D map={mapInstance} /> : null}
     </div>
   );
 }

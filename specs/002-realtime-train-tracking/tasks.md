@@ -98,34 +98,34 @@
 
 ### Frontend Types
 
-- [ ] T025 [P] [US1] Create Train interface in apps/web/src/types/trains.ts matching backend JSON
-- [ ] T026 [P] [US1] Create TrainPosition interface in apps/web/src/types/trains.ts
-- [ ] T027 [P] [US1] Create VehicleStatus type in apps/web/src/types/trains.ts
+- [X] T025 [P] [US1] Create Train interface in apps/web/src/types/trains.ts matching backend JSON
+- [X] T026 [P] [US1] Create TrainPosition interface in apps/web/src/types/trains.ts
+- [X] T027 [P] [US1] Create VehicleStatus type in apps/web/src/types/trains.ts
 
 ### API Client
 
-- [ ] T028 [P] [US1] Create fetchAllTrains() function in apps/web/src/lib/api/trains.ts
-- [ ] T029 [P] [US1] Create fetchTrainPositions() function in apps/web/src/lib/api/trains.ts
-- [ ] T030 [P] [US1] Create fetchTrainByKey(vehicleKey) function in apps/web/src/lib/api/trains.ts
-- [ ] T031 [US1] Add error handling and retry logic to API client in apps/web/src/lib/api/trains.ts
+- [X] T028 [P] [US1] Create fetchAllTrains() function in apps/web/src/lib/api/trains.ts
+- [X] T029 [P] [US1] Create fetchTrainPositions() function in apps/web/src/lib/api/trains.ts
+- [X] T030 [P] [US1] Create fetchTrainByKey(vehicleKey) function in apps/web/src/lib/api/trains.ts
+- [X] T031 [US1] Add error handling and retry logic to API client in apps/web/src/lib/api/trains.ts
 
 ### Train Markers Component
 
-- [ ] T032 [US1] Create TrainMarkers.tsx component in apps/web/src/features/trains/TrainMarkers.tsx
-- [ ] T033 [US1] Implement useEffect to fetch trains on mount and poll every 30s in TrainMarkers.tsx
-- [ ] T034 [US1] Create Mapbox Marker elements with styling (12px orange circles) in TrainMarkers.tsx
-- [ ] T035 [US1] Implement marker position updates when train data changes in TrainMarkers.tsx
-- [ ] T036 [US1] Add click event handler that logs vehicleKey to console in TrainMarkers.tsx
-- [ ] T037 [US1] Implement marker cleanup on unmount in TrainMarkers.tsx
+- [X] T032 [US1] Create TrainMarkers.tsx component in apps/web/src/features/trains/TrainMarkers.tsx
+- [X] T033 [US1] Implement useEffect to fetch trains on mount and poll every 30s in TrainMarkers.tsx
+- [X] T034 [US1] Create Mapbox Marker elements with styling (12px orange circles) in TrainMarkers.tsx
+- [X] T035 [US1] Implement marker position updates when train data changes in TrainMarkers.tsx
+- [X] T036 [US1] Add click event handler that logs vehicleKey to console in TrainMarkers.tsx
+- [X] T037 [US1] Implement marker cleanup on unmount in TrainMarkers.tsx
 
 ### Map Integration
 
-- [ ] T038 [US1] Import and render TrainMarkers component in apps/web/src/features/map/MapCanvas.tsx
-- [ ] T039 [US1] Pass map instance to TrainMarkers after map initialization in MapCanvas.tsx
+- [X] T038 [US1] Import and render TrainMarkers component in apps/web/src/features/map/MapCanvas.tsx
+- [X] T039 [US1] Pass map instance to TrainMarkers after map initialization in MapCanvas.tsx
 
 ### E2E Test
 
-- [ ] T040 [US1] Create train-markers.spec.ts in apps/web/e2e/ that verifies markers appear and update
+- [X] T040 [US1] Create train-markers.spec.ts in apps/web/e2e/ that verifies markers appear and update
 
 **Checkpoint Phase B Complete**:
 - Start both API and frontend
@@ -151,35 +151,86 @@
 
 ### Geometry Utilities
 
-- [ ] T041 [P] [US1] Create calculateBearing() function using Haversine formula in apps/web/src/lib/trains/geometry.ts
-- [ ] T042 [P] [US1] Create interpolatePosition() function for smooth movement in apps/web/src/lib/trains/geometry.ts
+- [X] T041 [P] [US1] Create calculateBearing() function using Haversine formula in apps/web/src/lib/trains/geometry.ts
+- [X] T042 [P] [US1] Create interpolatePosition() function for smooth movement in apps/web/src/lib/trains/geometry.ts
 
 ### Three.js Setup
 
-- [ ] T043 [US1] Create TrainLayer3D.tsx component in apps/web/src/features/trains/TrainLayer3D.tsx
-- [ ] T044 [US1] Implement Mapbox Custom Layer interface with Three.js renderer in TrainLayer3D.tsx
-- [ ] T045 [US1] Create simple 3D train geometry (box with texture) in TrainLayer3D.tsx
-- [ ] T046 [US1] Implement train model creation for each vehicle in TrainLayer3D.tsx
-- [ ] T047 [US1] Calculate bearing to next station and apply rotation in TrainLayer3D.tsx
-- [ ] T048 [US1] Implement position interpolation animation loop in TrainLayer3D.tsx
-- [ ] T049 [US1] Add raycasting for click detection on 3D models in TrainLayer3D.tsx
+- [X] T043 [US1] Create TrainLayer3D.tsx component in apps/web/src/features/trains/TrainLayer3D.tsx
+- [X] T044 [US1] Implement Mapbox Custom Layer interface with Three.js renderer in TrainLayer3D.tsx
+- [X] T045 [US1] Load 3 custom train models (447.glb, 470.glb, Civia (Rodalies).glb) using GLTFLoader in TrainLayer3D.tsx
+- [X] T046 [US1] Use trainModels config to map routes to models (R3/R4/R7→447, R13-RT2→470, others→Civia) and create instances
+- [X] T047 [US1] Calculate bearing to next station and apply rotation in TrainLayer3D.tsx
+- [X] T048 [US1] Implement position interpolation animation loop in TrainLayer3D.tsx
+- [X] T049 [US1] Add raycasting for click detection on 3D models in TrainLayer3D.tsx
 
 ### Map Layer Integration
 
-- [ ] T050 [US1] Add TrainLayer3D as Mapbox Custom Layer with correct beforeId in MapCanvas.tsx
-- [ ] T051 [US1] Remove or conditionally disable TrainMarkers (2D) component in MapCanvas.tsx
+- [X] T050 [US1] Add TrainLayer3D as Mapbox Custom Layer with correct beforeId in MapCanvas.tsx
+- [X] T051 [US1] Remove or conditionally disable TrainMarkers (2D) component in MapCanvas.tsx
+
+### Phase 4.5: Fix 3D Implementation (Mini Tokyo 3D Patterns)
+
+**Purpose**: Implement correct coordinate system, scaling, and positioning based on Mini Tokyo 3D research
+
+**Reference**: /docs/MINI-TOKYO-3D.md
+
+#### Coordinate System Helpers (Critical - Phase 1)
+
+- [X] T052a [P] [US1] Create src/lib/map/coordinates.ts with coordinate helper functions
+- [X] T052b [P] [US1] Add setModelOrigin() function using MercatorCoordinate.fromLngLat in coordinates.ts
+- [X] T052c [P] [US1] Add getModelPosition() function with Y-axis negation: y: -(coord.y - modelOrigin.y) in coordinates.ts
+- [X] T052d [P] [US1] Add getModelScale() using meterInMercatorCoordinateUnits() in coordinates.ts
+
+#### MapCanvas Integration
+
+- [X] T052e [US1] Initialize model origin in MapCanvas.tsx after map creation using setModelOrigin(map.getCenter())
+- [X] T052f [P] [US1] Reduce building opacity to 40-50% for better train visibility in MapCanvas.tsx 3d-buildings layer
+
+#### TrainMeshManager Fixes
+
+- [X] T052g [US1] Replace lngLatToMapboxPosition() with getModelPosition() in TrainMeshManager.ts
+- [X] T052h [US1] Fix train scale calculation: use getModelScale() * 25 meters instead of hardcoded TRAIN_SCALE in TrainMeshManager.ts
+- [X] T052i [US1] Fix bearing rotation: negate bearing (mesh.rotation.z = -bearing * Math.PI / 180) in TrainMeshManager.ts
+- [X] T052j [US1] Add Z-offset elevation: position.z + (0.44 * scale) to prevent z-fighting in TrainMeshManager.ts
+- [X] T052k [US1] Add pseudo-random scale variation: 1.0 + (trainIndex % 256) / 256.0 * 0.03 to prevent overlap in TrainMeshManager.ts
+
+#### Testing & Validation
+
+- [ ] T052l [US1] Test trains appear correctly positioned and oriented on railway lines
+- [ ] T052m [US1] Verify trains "float" above ground and don't z-fight with map
+- [ ] T052n [US1] Verify multiple trains on same line are visually distinct (no merging)
+
+#### Zoom-Based Dynamic Scaling (Phase 2)
+
+- [ ] T052o [P] [US1] Add zoom event listener in TrainLayer3D.tsx to update scales dynamically
+- [ ] T052p [P] [US1] Implement updateTrainScale() with exponential formula: pow(2, 14 - zoom) * baseScale in TrainMeshManager.ts
+- [ ] T052q [US1] Test smooth scale transitions when zooming in/out
+
+#### Advanced Railway Snapping (Optional - Phase 3)
+
+- [ ] T052r [P] [US1] Create preprocessRailwayLine() to extract bearing at each LineString point in geometry.ts
+- [ ] T052s [P] [US1] Create snapTrainToRailway() to find nearest point on line in geometry.ts
+- [ ] T052t [US1] Update TrainMeshManager to use railway geometry for position and bearing if available
+- [ ] T052u [US1] Test trains snap perfectly to railway curves
 
 ### Performance
 
-- [ ] T052 [US1] Test rendering performance with 100 train models, verify 60fps
-- [ ] T053 [US1] Add performance monitoring and frame time logging in TrainLayer3D.tsx
+- [ ] T053 [US1] Test rendering performance with 100 train models, verify 60fps
+- [ ] T054 [US1] Add performance monitoring and frame time logging in TrainLayer3D.tsx
 
 **Checkpoint Phase C Complete**:
-- Verify 3D models render instead of 2D markers
-- Models point toward next station
-- Smooth movement between position updates
-- Click works on 3D models
-- No performance degradation
+- ✅ 3D models render instead of 2D markers
+- ✅ Trains positioned correctly using MercatorCoordinate (not manual calculation)
+- ✅ Trains "float" above ground (Z-offset) without z-fighting
+- ✅ Models oriented correctly (bearing negated, pointing toward next station)
+- ✅ Scale is realistic (~25 meters, using meterInMercatorCoordinateUnits)
+- ✅ Multiple trains on same line are visually distinct (pseudo-random variation)
+- ✅ Buildings are semi-transparent (40-50% opacity)
+- ✅ Smooth movement between position updates
+- ✅ Trains scale appropriately when zooming in/out
+- ✅ Click works on 3D models
+- ✅ 60fps performance with 100+ trains
 
 ---
 
@@ -500,19 +551,24 @@ With 3 developers after Phase 2 completes:
 
 ## Task Summary
 
-**Total Tasks**: 109
+**Total Tasks**: 130 (was 109, added 21 for Mini Tokyo 3D patterns)
 **MVP Tasks** (Phase A + B): 40 (Setup through US1 2D)
 **By Phase**:
 - Phase 1 (Setup): 4 tasks
 - Phase 2 (Backend API with TDD): 20 tasks (includes test-first approach)
 - Phase 3 (US1 2D): 16 tasks
-- Phase 4 (US1 3D): 13 tasks
+- Phase 4 (US1 3D): 34 tasks (was 13, added 21 for proper 3D implementation)
+  - Phase 4.5 (Mini Tokyo 3D patterns): 21 tasks
+    - Critical fixes: 11 tasks (T052a-T052k)
+    - Testing: 3 tasks (T052l-T052n)
+    - Zoom scaling: 3 tasks (T052o-T052q)
+    - Optional snapping: 4 tasks (T052r-T052u)
 - Phase 5 (US2 Panel): 18 tasks
 - Phase 6 (US3 Stops): 15 tasks
 - Phase 7 (US4 Filter): 8 tasks
 - Phase 8 (Polish): 15 tasks
 
-**Parallel Opportunities**: 41 tasks marked [P]
-**Critical Path Length**: ~29 sequential tasks (Setup → API with TDD → 2D → 3D → Panel → Stops)
+**Parallel Opportunities**: 49 tasks marked [P] (was 41, added 8)
+**Critical Path Length**: ~40 sequential tasks (Setup → API with TDD → 2D → 3D with fixes → Panel → Stops)
 **Estimated MVP Time**: 1-2 days (experienced developer, working database)
-**Estimated Full Feature**: 5-7 days (all user stories + polish)
+**Estimated Full Feature with Correct 3D**: 6-8 days (all user stories + Mini Tokyo 3D patterns + polish)

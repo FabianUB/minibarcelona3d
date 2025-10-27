@@ -10,17 +10,24 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 
 	"github.com/you/myapp/apps/api/handlers"
 	"github.com/you/myapp/apps/api/repository"
 )
 
 func main() {
+	// Load .env files from repository root
+	// Load base .env first, then .env.local (which overrides for local development)
+	_ = godotenv.Load("../../.env")
+	_ = godotenv.Overload("../../.env.local") // Overload forces override of existing values
+
 	// Initialize database connection from DATABASE_URL environment variable
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
 		log.Fatal("DATABASE_URL environment variable is required")
 	}
+	log.Printf("Connecting to database: %s", databaseURL)
 
 	// Create repository with connection pool
 	repo, err := repository.NewTrainRepository(databaseURL)
@@ -95,14 +102,20 @@ func main() {
 		r.Handle("/*", fs)
 	}
 
-	log.Println("API server starting on :8080")
+	// Get port from environment variable, default to 8081
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8081"
+	}
+
+	log.Printf("API server starting on :%s", port)
 	log.Println("Train endpoints:")
 	log.Println("  GET /api/trains")
 	log.Println("  GET /api/trains/positions")
 	log.Println("  GET /api/trains/{vehicleKey}")
 	log.Println("  GET /health (with database check)")
 
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
