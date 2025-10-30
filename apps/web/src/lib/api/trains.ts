@@ -5,7 +5,6 @@
 
 import type {
   Train,
-  TrainPosition,
   GetAllTrainsResponse,
   GetAllTrainPositionsResponse,
   ApiError,

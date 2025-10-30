@@ -20,7 +20,8 @@ import {
   type PreprocessedRailwayLine,
   type RailwaySnapResult,
 } from './geometry';
-import { getModelPosition, getModelScale } from '../map/coordinates';
+import { getModelPosition, getModelScale, getLngLatFromModelPosition } from '../map/coordinates';
+import mapboxgl from 'mapbox-gl';
 
 /**
  * Metadata stored with each train mesh
@@ -34,12 +35,29 @@ interface TrainMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
   routeId: string;
-  currentPosition: [number, number]; // [lng, lat]
-  targetPosition: [number, number]; // [lng, lat]
-  lastUpdate: number; // timestamp
+  currentPosition: [number, number];
+  targetPosition: [number, number];
+  lastUpdate: number;
+  interpolationDuration: number;
   currentSnap?: RailwaySnapState;
   targetSnap?: RailwaySnapState;
   lateralOffsetIndex: number;
+  baseScale: number;
+  boundingCenterOffset: THREE.Vector3;
+  boundingRadius: number;
+}
+
+interface PollSnapshotMetadata {
+  currentPolledAtMs?: number;
+  previousPolledAtMs?: number;
+  receivedAtMs?: number;
+}
+
+export interface ScreenSpaceCandidate {
+  vehicleKey: string;
+  routeId: string;
+  screenPoint: mapboxgl.Point;
+  radiusPx: number;
 }
 
 /**
@@ -68,13 +86,16 @@ export class TrainMeshManager {
   private stationMap: Map<string, Station>;
   private railwayLines: Map<string, PreprocessedRailwayLine>;
   private debugCount = 0;
-  private readonly DEBUG_LIMIT = 5;
+  private readonly DEBUG_LIMIT = 0;
   private readonly debugMeshes: THREE.Object3D[] = [];
   private debugWorldLogsRemaining = 3;
   private readonly MAX_SNAP_DISTANCE_METERS = 200;
+  private readonly INTERPOLATION_DURATION_MS = 30000;
+  private readonly MIN_INTERPOLATION_DURATION_MS = 1000;
   private readonly MODEL_FORWARD_OFFSET = Math.PI; // Train models face negative X by default
   private readonly LATERAL_OFFSET_BUCKETS = 5;
   private readonly LATERAL_OFFSET_STEP_METERS = 1.6; // meters between trains laterally
+  private highlightedVehicleKey: string | null = null;
   /**
    * Deterministic variation per train to reduce visual overlaps
    */
@@ -193,6 +214,24 @@ export class TrainMeshManager {
     position.y += offsetY;
   }
 
+  private calculateEffectiveInterpolationDuration(
+    pollMetadata?: PollSnapshotMetadata
+  ): number {
+    if (
+      pollMetadata?.currentPolledAtMs !== undefined &&
+      pollMetadata?.previousPolledAtMs !== undefined &&
+      Number.isFinite(pollMetadata.currentPolledAtMs) &&
+      Number.isFinite(pollMetadata.previousPolledAtMs)
+    ) {
+      const interval = pollMetadata.currentPolledAtMs - pollMetadata.previousPolledAtMs;
+      if (Number.isFinite(interval) && interval > 0) {
+        return Math.max(interval, this.MIN_INTERPOLATION_DURATION_MS);
+      }
+    }
+
+    return this.INTERPOLATION_DURATION_MS;
+  }
+
   /**
    * Calculate and apply rotation to train mesh based on next station bearing
    *
@@ -262,7 +301,11 @@ export class TrainMeshManager {
   private createTrainMesh(
     train: TrainPosition,
     initialPosition: [number, number],
-    snapState: RailwaySnapState | null
+    targetPosition: [number, number],
+    initialSnapState: RailwaySnapState | null,
+    targetSnapState: RailwaySnapState | null,
+    lastUpdateTimestamp: number,
+    interpolationDuration: number
   ): TrainMeshData | null {
     // Determine which model to use based on route
     const modelType = getModelTypeForRoute(train.routeId);
@@ -329,40 +372,62 @@ export class TrainMeshManager {
             mat.needsUpdate = true;
           }
         });
+        child.userData = {
+          vehicleKey: train.vehicleKey,
+          routeId: train.routeId,
+          modelType,
+          isTrain: true,
+        };
       }
     });
 
     // Add the rotated model to the parent group
+    trainModel.userData = {
+      vehicleKey: train.vehicleKey,
+      routeId: train.routeId,
+      modelType,
+      isTrain: true,
+    };
     mesh.add(trainModel);
 
     // T047: Apply rotation based on bearing to next station
     // This rotates the parent group around Z-axis to point toward next station
     this.applyBearingRotation(mesh, train);
 
-    if (snapState) {
-      this.applyRailwayBearing(mesh, snapState.bearing);
+    if (targetSnapState || initialSnapState) {
+      const bearingSource = targetSnapState ?? (initialSnapState as RailwaySnapState);
+      const reversed =
+        Boolean(
+          initialSnapState &&
+            targetSnapState &&
+            initialSnapState.lineId === targetSnapState.lineId &&
+            targetSnapState.distance < initialSnapState.distance
+        );
+
+      this.applyRailwayBearing(mesh, bearingSource.bearing, reversed);
     }
 
-    // Add custom user data for debugging
-    mesh.userData = {
-      vehicleKey: train.vehicleKey,
-      routeId: train.routeId,
-      modelType,
-      isTrain: true, // Useful for raycasting (T049)
-    };
-
     const lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
+
+    mesh.updateMatrixWorld(true);
+    const boundingBox = new THREE.Box3().setFromObject(mesh);
+    const boundingSphere = new THREE.Sphere();
+    boundingBox.getBoundingSphere(boundingSphere);
 
     const meshData: TrainMeshData = {
       mesh,
       vehicleKey: train.vehicleKey,
       routeId: train.routeId,
       currentPosition: initialPosition,
-      targetPosition: initialPosition,
-      lastUpdate: Date.now(),
-      currentSnap: snapState ?? undefined,
-      targetSnap: snapState ?? undefined,
+      targetPosition,
+      lastUpdate: lastUpdateTimestamp,
+      interpolationDuration,
+      currentSnap: (initialSnapState ?? targetSnapState) ?? undefined,
+      targetSnap: targetSnapState ?? undefined,
       lateralOffsetIndex,
+      baseScale: mesh.scale.x,
+      boundingCenterOffset: boundingSphere.center.clone(),
+      boundingRadius: boundingSphere.radius,
     };
 
     return meshData;
@@ -378,8 +443,18 @@ export class TrainMeshManager {
    *
    * Task: T046 - Create instances based on route mapping
    */
-  updateTrainMeshes(trains: TrainPosition[]): void {
+  updateTrainMeshes(
+    trains: TrainPosition[],
+    previousPositions?: Map<string, TrainPosition>,
+    pollMetadata?: PollSnapshotMetadata
+  ): void {
     const activeTrainKeys = new Set<string>();
+    const now = Date.now();
+    const interpolationDuration = this.calculateEffectiveInterpolationDuration(pollMetadata);
+    const baseLastUpdate =
+      pollMetadata?.receivedAtMs && Number.isFinite(pollMetadata.receivedAtMs)
+        ? pollMetadata.receivedAtMs
+        : now;
 
     // Create or update meshes for each train
     for (const train of trains) {
@@ -390,10 +465,25 @@ export class TrainMeshManager {
 
       activeTrainKeys.add(train.vehicleKey);
 
-      const snapState = this.snapPositionToRailway(train);
-      const targetLngLat: [number, number] = snapState
-        ? [snapState.position[0], snapState.position[1]]
+      const targetSnapState = this.snapPositionToRailway(train);
+      const targetLngLat: [number, number] = targetSnapState
+        ? [targetSnapState.position[0], targetSnapState.position[1]]
         : [train.longitude!, train.latitude!];
+
+      const previousPosition = previousPositions?.get(train.vehicleKey);
+      let previousLngLat: [number, number] | null = null;
+      let previousSnapState: RailwaySnapState | null = null;
+
+      if (
+        previousPosition &&
+        previousPosition.latitude !== null &&
+        previousPosition.longitude !== null
+      ) {
+        previousLngLat = [previousPosition.longitude, previousPosition.latitude];
+        previousSnapState = this.snapPositionToRailway(previousPosition);
+      }
+
+      const initialLngLat: [number, number] = previousLngLat ?? targetLngLat;
 
       const existing = this.trainMeshes.get(train.vehicleKey);
 
@@ -401,59 +491,85 @@ export class TrainMeshManager {
         if (typeof existing.lateralOffsetIndex !== 'number') {
           existing.lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
         }
-        if (existing.targetSnap) {
-          existing.currentSnap = existing.targetSnap;
-        } else if (!existing.currentSnap && snapState) {
-          existing.currentSnap = snapState;
+
+        if (previousLngLat) {
+          existing.currentPosition = previousLngLat;
         }
 
-        // Update target position for smooth interpolation (T048)
-        // The animatePositions() method will handle the smooth transition
-        existing.targetPosition = targetLngLat;
-        existing.lastUpdate = Date.now();
+        if (previousSnapState) {
+          existing.currentSnap = previousSnapState;
+        } else if (!existing.currentSnap && existing.targetSnap) {
+          existing.currentSnap = existing.targetSnap;
+        }
 
-        existing.targetSnap = snapState ?? undefined;
+        existing.targetPosition = targetLngLat;
+        existing.targetSnap = targetSnapState ?? undefined;
+        existing.lastUpdate = baseLastUpdate;
+        existing.interpolationDuration = interpolationDuration;
 
         // T047: Update rotation based on (potentially new) next station
         this.applyBearingRotation(existing.mesh, train);
 
-        if (snapState) {
-          const previous = existing.currentSnap ?? snapState;
-          const travellingForward = snapState.distance >= previous.distance;
-          this.applyRailwayBearing(existing.mesh, snapState.bearing, !travellingForward);
+        if (targetSnapState) {
+          const travellingForward =
+            previousSnapState &&
+            targetSnapState &&
+            previousSnapState.lineId === targetSnapState.lineId
+              ? targetSnapState.distance >= previousSnapState.distance
+              : existing.currentSnap &&
+                  existing.targetSnap &&
+                  existing.currentSnap.lineId === existing.targetSnap.lineId
+                ? existing.targetSnap.distance >= existing.currentSnap.distance
+                : true;
+
+          this.applyRailwayBearing(existing.mesh, targetSnapState.bearing, !travellingForward);
         }
       } else {
         // Create new mesh for this train
-      const meshData = this.createTrainMesh(train, targetLngLat, snapState);
+        const meshData = this.createTrainMesh(
+          train,
+          initialLngLat,
+          targetLngLat,
+          previousSnapState,
+          targetSnapState,
+          baseLastUpdate,
+          interpolationDuration
+        );
 
-      if (meshData) {
-        const nextStationBearing = this.calculateBearingToNextStation(train);
-        // T052g, T052j: Position using correct coordinate system with Z-offset
-        // getModelPosition returns position relative to model origin with Y negated
-        const position = getModelPosition(targetLngLat[0], targetLngLat[1], 0);
+        if (meshData) {
+          const nextStationBearing = this.calculateBearingToNextStation(train);
+          // T052g, T052j: Position using correct coordinate system with Z-offset
+          // getModelPosition returns position relative to model origin with Y negated
+          const position = getModelPosition(initialLngLat[0], initialLngLat[1], 0);
 
-        // Calculate Z-offset elevation to prevent z-fighting with map surface
-        // Based on Mini Tokyo 3D: trains "float" 0.44 * scale above ground
-        const modelScale = getModelScale();
-        const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-        const zOffset = this.Z_OFFSET_FACTOR * baseScale;
+          // Calculate Z-offset elevation to prevent z-fighting with map surface
+          // Based on Mini Tokyo 3D: trains "float" 0.44 * scale above ground
+          const modelScale = getModelScale();
+          const baseScale = this.TRAIN_SIZE_METERS * modelScale;
+          const zOffset = this.Z_OFFSET_FACTOR * baseScale;
 
-        const lateralBearingInfo = snapState
-          ? { bearing: snapState.bearing, reversed: false }
-          : nextStationBearing !== null
-            ? { bearing: nextStationBearing, reversed: false }
-            : null;
+          const lateralBearingInfo = targetSnapState
+            ? {
+                bearing: targetSnapState.bearing,
+                reversed: Boolean(
+                  previousSnapState &&
+                    targetSnapState &&
+                    previousSnapState.lineId === targetSnapState.lineId &&
+                    targetSnapState.distance < previousSnapState.distance
+                ),
+              }
+            : previousSnapState
+              ? { bearing: previousSnapState.bearing, reversed: false }
+              : nextStationBearing !== null
+                ? { bearing: nextStationBearing, reversed: false }
+                : null;
 
-        this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex);
+          this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex);
 
-        meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+          meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
-        // Add to scene
-        this.scene.add(meshData.mesh);
-
-        if (snapState) {
-          this.applyRailwayBearing(meshData.mesh, snapState.bearing, false);
-        }
+          // Add to scene
+          this.scene.add(meshData.mesh);
 
           if (this.debugCount < this.DEBUG_LIMIT) {
             this.debugMeshes.push(meshData.mesh);
@@ -497,6 +613,9 @@ export class TrainMeshManager {
     if (meshData) {
       // Remove from scene
       this.scene.remove(meshData.mesh);
+      if (this.highlightedVehicleKey === vehicleKey) {
+        this.highlightedVehicleKey = null;
+      }
 
       // Dispose of geometry and materials to free GPU memory
       meshData.mesh.traverse((child) => {
@@ -515,6 +634,29 @@ export class TrainMeshManager {
       this.trainMeshes.delete(vehicleKey);
 
       console.log(`Removed mesh for train ${vehicleKey}`);
+    }
+  }
+
+  setHighlightedTrain(vehicleKey?: string): void {
+    const nextKey = vehicleKey ?? null;
+    if (this.highlightedVehicleKey === nextKey) {
+      return;
+    }
+
+    if (this.highlightedVehicleKey) {
+      const prev = this.trainMeshes.get(this.highlightedVehicleKey);
+      if (prev) {
+        prev.mesh.scale.setScalar(prev.baseScale);
+      }
+    }
+
+    this.highlightedVehicleKey = nextKey;
+
+    if (nextKey) {
+      const next = this.trainMeshes.get(nextKey);
+      if (next) {
+        next.mesh.scale.setScalar(next.baseScale * 1.12);
+      }
     }
   }
 
@@ -556,6 +698,48 @@ export class TrainMeshManager {
     return this.trainMeshes.size;
   }
 
+  getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
+    const candidates: ScreenSpaceCandidate[] = [];
+
+    this.trainMeshes.forEach((meshData) => {
+      const { mesh, vehicleKey, routeId, boundingRadius } = meshData;
+
+      // Use mesh position directly (already in correct world space)
+      const centerLngLat = getLngLatFromModelPosition(
+        mesh.position.x,
+        mesh.position.y,
+        mesh.position.z
+      );
+      const centerPoint = map.project(centerLngLat);
+
+      // Use actual bounding radius from mesh (accounts for real model geometry)
+      const currentScale = mesh.scale.x;
+      const worldRadius = boundingRadius * currentScale;
+
+      // Project radius to screen space
+      const edgeLngLat = getLngLatFromModelPosition(
+        mesh.position.x + worldRadius,
+        mesh.position.y,
+        mesh.position.z
+      );
+      const edgePoint = map.project(edgeLngLat);
+
+      // Calculate distance manually (map.project returns plain {x, y} object)
+      const dx = edgePoint.x - centerPoint.x;
+      const dy = edgePoint.y - centerPoint.y;
+      const radiusPx = Math.max(Math.hypot(dx, dy), 10);
+
+      candidates.push({
+        vehicleKey,
+        routeId,
+        screenPoint: centerPoint,
+        radiusPx,
+      });
+    });
+
+    return candidates;
+  }
+
   /**
    * Animate train positions with smooth interpolation
    *
@@ -583,10 +767,15 @@ export class TrainMeshManager {
 
       // Calculate time elapsed since position update
       const elapsed = now - lastUpdate;
+      if (elapsed === 0) {
+        return;
+      }
 
-      // Interpolation duration: 2 seconds for smooth movement
-      // This gives a nice visual transition between 30-second updates
-      const interpolationDuration = 2000;
+      // Interpolation duration matches polling interval for continuous motion
+      const interpolationDuration = Math.max(
+        meshData.interpolationDuration ?? this.INTERPOLATION_DURATION_MS,
+        this.MIN_INTERPOLATION_DURATION_MS
+      );
 
       // Calculate progress (0 to 1)
       const progress = Math.min(elapsed / interpolationDuration, 1.0);

@@ -108,6 +108,26 @@ export function getModelScale(): number {
   return modelOrigin.meterInMercatorCoordinateUnits();
 }
 
+export function getLngLatFromModelPosition(
+  x: number,
+  y: number,
+  z: number = 0
+): mapboxgl.LngLat {
+  if (!modelOrigin) {
+    throw new Error(
+      'Model origin not initialized. Call setModelOrigin() first.'
+    );
+  }
+
+  const coord = new mapboxgl.MercatorCoordinate(
+    modelOrigin.x + x,
+    modelOrigin.y - y,
+    modelOrigin.z + z
+  );
+
+  return coord.toLngLat();
+}
+
 /**
  * Get the current model origin (for debugging)
  *

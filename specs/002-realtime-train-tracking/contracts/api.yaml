@@ -111,11 +111,20 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/TrainPosition'
+                  previousPositions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrainPosition'
+                    description: Previous snapshot of positions (if available) for immediate animation on load
                   count:
                     type: integer
                   polledAt:
                     type: string
                     format: date-time
+                  previousPolledAt:
+                    type: string
+                    format: date-time
+                    description: Poll timestamp for the previous snapshot when `previousPositions` is present
         '500':
           $ref: '#/components/responses/InternalError'
 

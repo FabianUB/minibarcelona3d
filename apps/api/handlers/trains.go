@@ -31,9 +31,11 @@ type GetAllTrainsResponse struct {
 
 // GetAllTrainPositionsResponse is the JSON response structure for GET /api/trains/positions
 type GetAllTrainPositionsResponse struct {
-	Positions []models.TrainPosition `json:"positions"`
-	Count     int                    `json:"count"`
-	PolledAt  time.Time              `json:"polledAt"`
+	Positions         []models.TrainPosition `json:"positions"`
+	PreviousPositions []models.TrainPosition `json:"previousPositions,omitempty"`
+	Count             int                    `json:"count"`
+	PolledAt          time.Time              `json:"polledAt"`
+	PreviousPolledAt  *time.Time             `json:"previousPolledAt,omitempty"`
 }
 
 // ErrorResponse is the JSON error response structure
@@ -138,7 +140,7 @@ func (h *TrainHandler) GetTrainByKey(w http.ResponseWriter, r *http.Request) {
 func (h *TrainHandler) GetAllTrainPositions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	positions, err := h.repo.GetAllTrainPositions(ctx)
+	positions, previousPositions, polledAt, previousPolledAt, err := h.repo.GetTrainPositionsWithHistory(ctx)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -155,7 +157,12 @@ func (h *TrainHandler) GetAllTrainPositions(w http.ResponseWriter, r *http.Reque
 	response := GetAllTrainPositionsResponse{
 		Positions: positions,
 		Count:     len(positions),
-		PolledAt:  time.Now().UTC(),
+		PolledAt:  polledAt,
+	}
+
+	if len(previousPositions) > 0 && previousPolledAt != nil {
+		response.PreviousPositions = previousPositions
+		response.PreviousPolledAt = previousPolledAt
 	}
 
 	w.Header().Set("Content-Type", "application/json")

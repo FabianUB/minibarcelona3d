@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite"
 import { visualizer } from 'rollup-plugin-visualizer'
 import { configDefaults } from 'vitest/config'
+import type { PluginOption } from 'vite'
 
 const shouldVisualizeBundle =
   typeof process.env.ANALYZE_BUNDLE !== 'undefined' &&
@@ -14,16 +15,16 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    ...(shouldVisualizeBundle
-      ? [
-          visualizer({
-            filename: 'dist/bundle-analysis.html',
-            template: 'treemap',
-            gzipSize: true,
-            brotliSize: true,
-          }) as any,
-        ]
-      : []),
+	    ...(shouldVisualizeBundle
+	      ? [
+	          visualizer({
+	            filename: 'dist/bundle-analysis.html',
+	            template: 'treemap',
+	            gzipSize: true,
+	            brotliSize: true,
+	          }) as PluginOption,
+	        ]
+	      : []),
   ],
   server: {
     host: true,

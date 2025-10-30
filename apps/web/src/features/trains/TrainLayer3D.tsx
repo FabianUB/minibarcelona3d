@@ -9,14 +9,14 @@
  * - 3D train models loaded from GLB files
  * - Models oriented toward next station using bearing calculations
  * - Smooth position interpolation between updates
- * - Click detection via raycasting
+ * - Screen-space hit testing for accurate hover/click detection
  * - Optimized for 100+ concurrent trains at 60fps
  *
  * Implementation: Phase C (User Story 1 Enhanced)
  * Related tasks: T043, T044, T045
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
@@ -43,6 +43,20 @@ export interface TrainLayer3DProps {
    * Example: 'line-pattern-layer' to render trains above lines
    */
   beforeId?: string;
+
+  /**
+   * Debug callback invoked whenever the screen-space picker resolves a selection
+   * Useful for verifying hover/click detection during development
+   */
+  onRaycastResult?: (result: RaycastDebugInfo) => void;
+}
+
+export interface RaycastDebugInfo {
+  hit: boolean;
+  vehicleKey?: string;
+  routeId?: string;
+  objectsHit: number;
+  timestamp: number;
 }
 
 /**
@@ -83,7 +97,7 @@ const LAYER_ID = 'train-layer-3d';
  * Task: T046 - Create model instances based on route mapping
  * Task: T047 - Apply bearing-based rotation
  */
-export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
+export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DProps) {
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,9 +119,12 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
 
   // Reference for train mesh manager (T046, T047)
   const meshManagerRef = useRef<TrainMeshManager | null>(null);
+  const previousPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
+  const lastPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
+  const loggedDistinctPreviousRef = useRef(false);
+  const pollTimestampsRef = useRef<{ current?: number; previous?: number; receivedAt?: number }>({});
 
   // Reference for Three.js Raycaster for click detection (T049)
-  const raycasterRef = useRef<THREE.Raycaster | null>(null);
 
   // Store polling interval reference for cleanup
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,11 +140,87 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
     try {
       setIsLoading(true);
       const response = await fetchTrainPositions();
+      const previousPolledAtMs = pollTimestampsRef.current.current;
+      const parsedPolledAt = Date.parse(response.polledAt);
+      pollTimestampsRef.current.current = Number.isFinite(parsedPolledAt) ? parsedPolledAt : undefined;
+
+      let resolvedPreviousPolledAt: number | undefined;
+      if (response.previousPolledAt) {
+        const parsedPrevious = Date.parse(response.previousPolledAt);
+        if (Number.isFinite(parsedPrevious)) {
+          resolvedPreviousPolledAt = parsedPrevious;
+        }
+      }
+
+      const snapshotPreviousPositions = new Map<string, TrainPosition>();
+      if (response.previousPositions) {
+        response.previousPositions.forEach((position) => {
+          if (position.latitude !== null && position.longitude !== null) {
+            snapshotPreviousPositions.set(position.vehicleKey, position);
+          }
+        });
+      }
+
+      if (snapshotPreviousPositions.size === 0 && lastPositionsRef.current.size > 0) {
+        lastPositionsRef.current.forEach((position, key) => {
+          snapshotPreviousPositions.set(key, position);
+        });
+        if (!resolvedPreviousPolledAt && previousPolledAtMs !== undefined) {
+          resolvedPreviousPolledAt = previousPolledAtMs;
+        }
+      }
+
+      if (!loggedDistinctPreviousRef.current && snapshotPreviousPositions.size > 0) {
+        const previousStats = Array.from(snapshotPreviousPositions.values()).reduce(
+          (acc, previous) => {
+            const current = response.positions.find((pos) => pos.vehicleKey === previous.vehicleKey);
+            if (
+              current &&
+              current.latitude !== null &&
+              current.longitude !== null &&
+              previous.latitude !== null &&
+              previous.longitude !== null
+            ) {
+              const unchanged =
+                current.latitude === previous.latitude && current.longitude === previous.longitude;
+              return {
+                total: acc.total + 1,
+                unchanged: acc.unchanged + (unchanged ? 1 : 0),
+              };
+            }
+            return acc;
+          },
+          { total: 0, unchanged: 0 }
+        );
+
+        if (previousStats.total > 0) {
+          const changedCount = previousStats.total - previousStats.unchanged;
+          console.log('TrainLayer3D: previous snapshot comparison', {
+            totalCompared: previousStats.total,
+            unchangedCount: previousStats.unchanged,
+            changedCount,
+          });
+          if (changedCount > 0) {
+            loggedDistinctPreviousRef.current = true;
+          }
+        }
+      }
+
+      pollTimestampsRef.current.previous = resolvedPreviousPolledAt;
+      pollTimestampsRef.current.receivedAt = Date.now();
+
+      previousPositionsRef.current = snapshotPreviousPositions;
 
       // Filter out trains without valid GPS coordinates
       const validTrains = response.positions.filter(
         (train) => train.latitude !== null && train.longitude !== null
       );
+
+      const currentPositionsMap = new Map<string, TrainPosition>();
+      validTrains.forEach((train) => {
+        currentPositionsMap.set(train.vehicleKey, train);
+      });
+      lastPositionsRef.current = currentPositionsMap;
 
       setTrains(validTrains);
       setError(null);
@@ -153,66 +246,223 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
   //   return [x, y];
   // };
 
-  /**
-   * Handle click events on the map canvas to detect train model clicks
-   *
-   * Task: T049
-   *
-   * Uses Three.js raycasting to detect clicks on 3D train models.
-   * Converts mouse coordinates to normalized device coordinates and
-   * casts a ray to check for intersections with train meshes.
-   *
-   * @param event - Mouse click event
-   */
-  const handleCanvasClick = useCallback((event: MouseEvent) => {
-    if (!cameraRef.current || !raycasterRef.current || !meshManagerRef.current) {
+  const resolveScreenHit = useCallback(
+    (point: { x: number; y: number }, paddingPx: number) => {
+      const meshManager = meshManagerRef.current;
+      if (!meshManager) {
+        return null;
+      }
+
+      const candidates = meshManager.getScreenCandidates(map);
+      let nearest: {
+        vehicleKey: string;
+        routeId: string;
+        distance: number;
+      } | null = null;
+
+      const debugEnabled = debugEnabledRef.current;
+      if (debugEnabled) {
+        console.log(`[resolveScreenHit] Checking ${candidates.length} candidates at (${point.x.toFixed(1)}, ${point.y.toFixed(1)})`);
+      }
+
+      for (const candidate of candidates) {
+        const dx = candidate.screenPoint.x - point.x;
+        const dy = candidate.screenPoint.y - point.y;
+        const distance = Math.hypot(dx, dy);
+        const threshold = Math.max(candidate.radiusPx, 14) + paddingPx;
+
+        if (debugEnabled && distance <= threshold * 2) {
+          console.log(
+            `  ${candidate.vehicleKey}: distance=${distance.toFixed(1)}px, threshold=${threshold.toFixed(1)}px`,
+            distance <= threshold ? '✓ HIT' : '✗ miss'
+          );
+        }
+
+        if (distance <= threshold) {
+          if (!nearest || distance < nearest.distance) {
+            nearest = {
+              vehicleKey: candidate.vehicleKey,
+              routeId: candidate.routeId,
+              distance,
+            };
+          }
+        }
+      }
+
+      if (debugEnabled) {
+        console.log(`[resolveScreenHit] Result:`, nearest ? `${nearest.vehicleKey} (${nearest.distance.toFixed(1)}px)` : 'none');
+      }
+
+      return nearest;
+    },
+    [map]
+  );
+
+  const hoveredVehicleRef = useRef<string | null>(null);
+  useEffect(() => {
+    const meshManager = meshManagerRef.current;
+    if (!meshManager) {
+      return;
+    }
+    const hoveredKey = hoveredVehicleRef.current;
+    if (!hoveredKey) {
+      return;
+    }
+    const stillPresent = trains.some((train) => train.vehicleKey === hoveredKey);
+    if (!stillPresent) {
+      hoveredVehicleRef.current = null;
+      meshManager.setHighlightedTrain(undefined);
+    }
+  }, [trains]);
+
+  // Debug overlay canvas (can be toggled with URL parameter ?debug=true)
+  const debugCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const debugEnabledRef = useRef(
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
+  );
+
+  useEffect(() => {
+    if (!debugEnabledRef.current) {
       return;
     }
 
-    // Get canvas element and its bounding rectangle
-    const canvas = map.getCanvas();
-    const rect = canvas.getBoundingClientRect();
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '1000';
+    canvas.width = map.getCanvas().width;
+    canvas.height = map.getCanvas().height;
+    map.getCanvasContainer().appendChild(canvas);
+    debugCanvasRef.current = canvas;
 
-    // Calculate mouse position relative to canvas
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    console.log('🔍 Debug overlay enabled - red circles show click areas');
 
-    // Convert to normalized device coordinates (NDC) [-1, 1]
-    const mouse = new THREE.Vector2(
-      (x / rect.width) * 2 - 1,
-      -(y / rect.height) * 2 + 1  // Invert Y axis for Three.js
-    );
-
-    // Update raycaster with camera and mouse position
-    raycasterRef.current.setFromCamera(mouse, cameraRef.current);
-
-    // Get all train meshes from the manager
-    const trainMeshes = meshManagerRef.current.getAllMeshes();
-    const meshObjects = trainMeshes.map((meshData) => meshData.mesh);
-
-    // Check for intersections
-    const intersects = raycasterRef.current.intersectObjects(meshObjects, true);
-
-    if (intersects.length > 0) {
-      // Get the first intersected object
-      const intersectedObject = intersects[0].object;
-
-      // Traverse up to find the parent Group with userData
-      let current = intersectedObject;
-      while (current) {
-        if (current.userData && current.userData.isTrain) {
-          const vehicleKey = current.userData.vehicleKey;
-          const routeId = current.userData.routeId;
-
-          console.log(`Train clicked: ${vehicleKey} (Route: ${routeId})`);
-
-          // TODO: In US2, this will call selectTrain() action to open info panel
-          break;
-        }
-        current = current.parent as THREE.Object3D;
+    return () => {
+      if (debugCanvasRef.current && debugCanvasRef.current.parentNode) {
+        debugCanvasRef.current.parentNode.removeChild(debugCanvasRef.current);
       }
-    }
+    };
   }, [map]);
+
+  const drawDebugOverlay = useCallback(() => {
+    if (!debugEnabledRef.current) {
+      return;
+    }
+
+    const canvas = debugCanvasRef.current;
+    if (!canvas || !meshManagerRef.current) {
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return;
+    }
+
+    canvas.width = map.getCanvas().width;
+    canvas.height = map.getCanvas().height;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const candidates = meshManagerRef.current.getScreenCandidates(map);
+
+    candidates.forEach((candidate) => {
+      const isHovered = hoveredVehicleRef.current === candidate.vehicleKey;
+
+      ctx.beginPath();
+      ctx.arc(candidate.screenPoint.x, candidate.screenPoint.y, candidate.radiusPx, 0, 2 * Math.PI);
+      ctx.strokeStyle = isHovered ? '#00ff00' : '#ff0000';
+      ctx.lineWidth = isHovered ? 3 : 1.5;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(candidate.screenPoint.x, candidate.screenPoint.y, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = isHovered ? '#00ff00' : '#ffff00';
+      ctx.fill();
+
+      if (isHovered) {
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.font = 'bold 14px monospace';
+        const text = `${candidate.vehicleKey} (${candidate.routeId})`;
+        ctx.strokeText(text, candidate.screenPoint.x + 10, candidate.screenPoint.y - 10);
+        ctx.fillText(text, candidate.screenPoint.x + 10, candidate.screenPoint.y - 10);
+      }
+    });
+
+    requestAnimationFrame(drawDebugOverlay);
+  }, [map]);
+
+  useEffect(() => {
+    if (debugEnabledRef.current && debugCanvasRef.current) {
+      drawDebugOverlay();
+    }
+  }, [drawDebugOverlay]);
+
+/**
+ * Screen-space helpers for hover/click
+ *
+ * Projects train coordinates into screen space and does simple
+ * distance checks to determine hover/click candidates.
+ */
+  const handlePointerMove = useCallback(
+    (event: MouseEvent) => {
+      const canvas = map.getCanvas();
+      const rect = canvas.getBoundingClientRect();
+      const point = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+
+      const hit = resolveScreenHit(point, 6);
+      const vehicleKey = hit?.vehicleKey ?? null;
+
+      if (hoveredVehicleRef.current !== vehicleKey) {
+        hoveredVehicleRef.current = vehicleKey;
+        meshManagerRef.current?.setHighlightedTrain(vehicleKey ?? undefined);
+      }
+    },
+    [map, resolveScreenHit]
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    hoveredVehicleRef.current = null;
+    meshManagerRef.current?.setHighlightedTrain(undefined);
+  }, []);
+
+  const handlePointerClick = useCallback(
+    (event: MouseEvent) => {
+      const canvas = map.getCanvas();
+      const rect = canvas.getBoundingClientRect();
+      const point = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+
+      const hit = resolveScreenHit(point, 4);
+
+      if (hit) {
+        console.log(`🎯 Train clicked: ${hit.vehicleKey} (route: ${hit.routeId})`);
+        onRaycastResult?.({
+          hit: true,
+          vehicleKey: hit.vehicleKey,
+          routeId: hit.routeId,
+          objectsHit: 1,
+          timestamp: Date.now(),
+        });
+      } else {
+        onRaycastResult?.({
+          hit: false,
+          objectsHit: 0,
+          timestamp: Date.now(),
+        });
+      }
+    },
+    [map, onRaycastResult, resolveScreenHit]
+  );
 
   /**
    * Mapbox Custom Layer Interface Implementation
@@ -221,7 +471,7 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
    * This object implements the CustomLayerInterface required by Mapbox GL JS
    * Reference: https://docs.mapbox.com/mapbox-gl-js/api/properties/#customlayerinterface
    */
-  const customLayer: mapboxgl.CustomLayerInterface = {
+  const customLayer = useMemo<mapboxgl.CustomLayerInterface>(() => ({
     id: LAYER_ID,
     type: 'custom',
     renderingMode: '3d',
@@ -238,7 +488,6 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
       sceneRef.current = scene;
 
       // Create camera synchronized with Mapbox camera
-      // Mapbox provides combined projection * view matrix, so we use THREE.Camera
       const camera = new THREE.Camera();
       cameraRef.current = camera;
 
@@ -294,10 +543,6 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
 
       console.log('TrainLayer3D: Three.js scene initialized');
 
-      // T049: Initialize Raycaster for click detection
-      raycasterRef.current = new THREE.Raycaster();
-      console.log('TrainLayer3D: Raycaster initialized for click detection');
-
       // Mark scene as ready for mesh manager initialization
       setSceneReady(true);
 
@@ -335,32 +580,34 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
         return;
       }
 
-      // T048: Animate train positions with smooth interpolation
+      const renderCamera = cameraRef.current;
+      const renderer = rendererRef.current;
+      if (!renderCamera) {
+        return;
+      }
+
       if (meshManagerRef.current) {
         meshManagerRef.current.animatePositions();
       }
 
-      // Synchronize Three.js camera with Mapbox camera
-      // Mapbox matrix converts Mercator coordinates to clip space.
-      // We inject translation for our modelOrigin and flip Y-axis to match Three.js.
-      const camera = cameraRef.current;
       const mapboxMatrix = new THREE.Matrix4().fromArray(matrix);
-      const transform = new THREE.Matrix4()
+      const modelTransform = new THREE.Matrix4()
         .makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z ?? 0)
         .scale(new THREE.Vector3(1, -1, 1));
 
-      const projectionMatrix = mapboxMatrix.clone().multiply(transform);
-      camera.projectionMatrix.copy(projectionMatrix);
-      if ('projectionMatrixInverse' in camera) {
-        camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+      renderCamera.projectionMatrix.copy(mapboxMatrix.clone().multiply(modelTransform));
+      if ('projectionMatrixInverse' in renderCamera) {
+        (renderCamera as THREE.Camera & { projectionMatrixInverse: THREE.Matrix4 }).projectionMatrixInverse
+          .copy(renderCamera.projectionMatrix)
+          .invert();
       }
-      camera.matrixWorld.identity();
-      camera.matrixWorldInverse.identity();
+      renderCamera.matrixWorld.identity();
+      renderCamera.matrixWorldInverse.identity();
+
 
       // Render the Three.js scene
-      const renderer = rendererRef.current;
       renderer.resetState();
-      renderer.render(sceneRef.current, camera);
+      renderer.render(sceneRef.current, renderCamera);
 
       // Request next frame to continue animation loop
       map.triggerRepaint();
@@ -374,7 +621,7 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
       // Cleanup will be handled in component unmount
       console.log('TrainLayer3D: Layer removed from map');
     },
-  };
+  }), [map]);
 
   /**
    * Effect: Load station data for bearing calculations
@@ -545,7 +792,7 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
       sceneRef.current = null;
       cameraRef.current = null;
     };
-  }, [map, beforeId]);
+  }, [map, beforeId, customLayer]);
 
   /**
    * Effect: Create mesh manager when stations and scene are ready
@@ -556,28 +803,30 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
       !stationsLoaded ||
       !railwaysLoaded ||
       !sceneReady ||
-      !sceneRef.current ||
-      meshManagerRef.current
+      !sceneRef.current
     ) {
-      console.log('TrainLayer3D: Waiting to create mesh manager', {
-        stationsLoaded,
-        railwaysLoaded,
-        sceneReady,
-        hasScene: !!sceneRef.current,
-        hasManager: !!meshManagerRef.current,
-      });
       return;
     }
 
-    meshManagerRef.current = new TrainMeshManager(
-      sceneRef.current,
-      stationsRef.current,
-      railwaysRef.current
-    );
-    console.log(
-      `TrainLayer3D: Mesh manager initialized with ${stationsRef.current.length} stations and ${railwaysRef.current.size} railway lines`
-    );
-  }, [stationsLoaded, railwaysLoaded, sceneReady]);
+    if (!meshManagerRef.current) {
+      meshManagerRef.current = new TrainMeshManager(
+        sceneRef.current,
+        stationsRef.current,
+        railwaysRef.current
+      );
+      console.log(
+        `TrainLayer3D: Mesh manager initialized with ${stationsRef.current.length} stations and ${railwaysRef.current.size} railway lines`
+      );
+    }
+
+    if (modelsLoaded && trains.length > 0 && meshManagerRef.current) {
+      meshManagerRef.current.updateTrainMeshes(trains, previousPositionsRef.current, {
+        currentPolledAtMs: pollTimestampsRef.current.current,
+        previousPolledAtMs: pollTimestampsRef.current.previous,
+        receivedAtMs: pollTimestampsRef.current.receivedAt,
+      });
+    }
+  }, [stationsLoaded, railwaysLoaded, sceneReady, modelsLoaded, trains]);
 
   /**
    * Effect: Update train meshes when train data or models change
@@ -601,7 +850,11 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
 
     // Update train meshes based on current train positions
     // This will apply bearing-based rotation automatically (T047)
-    meshManagerRef.current.updateTrainMeshes(trains);
+    meshManagerRef.current.updateTrainMeshes(trains, previousPositionsRef.current, {
+      currentPolledAtMs: pollTimestampsRef.current.current,
+      previousPolledAtMs: pollTimestampsRef.current.previous,
+      receivedAtMs: pollTimestampsRef.current.receivedAt,
+    });
 
     if (trains.length > 0) {
       console.log(
@@ -611,27 +864,21 @@ export function TrainLayer3D({ map, beforeId }: TrainLayer3DProps) {
   }, [trains, modelsLoaded, stationsLoaded]);
 
   /**
-   * Effect: Attach click event listener for raycasting
-   * Task: T049
+   * Effect: Handle pointer hover/click using screen-space distance
    */
   useEffect(() => {
-    // Only attach listener when raycaster is initialized
-    if (!raycasterRef.current) {
-      return;
-    }
-
     const canvas = map.getCanvas();
 
-    // Attach click event listener
-    canvas.addEventListener('click', handleCanvasClick);
-    console.log('TrainLayer3D: Click event listener attached for raycasting');
+    canvas.addEventListener('mousemove', handlePointerMove);
+    canvas.addEventListener('mouseleave', handlePointerLeave);
+    canvas.addEventListener('click', handlePointerClick);
 
-    // Cleanup: remove event listener on unmount
     return () => {
-      canvas.removeEventListener('click', handleCanvasClick);
-      console.log('TrainLayer3D: Click event listener removed');
+      canvas.removeEventListener('mousemove', handlePointerMove);
+      canvas.removeEventListener('mouseleave', handlePointerLeave);
+      canvas.removeEventListener('click', handlePointerClick);
     };
-  }, [map, handleCanvasClick]);
+  }, [map, handlePointerMove, handlePointerLeave, handlePointerClick]);
 
   // Log error state
   if (error && !isLoading && trains.length === 0) {

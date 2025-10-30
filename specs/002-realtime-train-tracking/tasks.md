@@ -162,7 +162,9 @@
 - [X] T046 [US1] Use trainModels config to map routes to models (R3/R4/R7→447, R13-RT2→470, others→Civia) and create instances
 - [X] T047 [US1] Calculate bearing to next station and apply rotation in TrainLayer3D.tsx
 - [X] T048 [US1] Implement position interpolation animation loop in TrainLayer3D.tsx
-- [X] T049 [US1] Add raycasting for click detection on 3D models in TrainLayer3D.tsx
+- [X] T049 [US1] Implement screen-space hit testing for train hover/click in apps/web/src/features/trains/TrainLayer3D.tsx and apps/web/src/lib/trains/trainMeshManager.ts
+- [ ] T049a [US1] Document screen-space selection heuristics and QA checklist in docs/MINI-TOKYO-3D.md
+- [ ] T049b [US1] Validate screen-space thresholds across zoom levels and record findings in tasks log
 
 ### Map Layer Integration
 
@@ -197,22 +199,32 @@
 
 #### Testing & Validation
 
-- [ ] T052l [US1] Test trains appear correctly positioned and oriented on railway lines
-- [ ] T052m [US1] Verify trains "float" above ground and don't z-fight with map
-- [ ] T052n [US1] Verify multiple trains on same line are visually distinct (no merging)
+- [X] T052l [US1] Test trains appear correctly positioned and oriented on railway lines
+- [X] T052m [US1] Verify trains "float" above ground and don't z-fight with map
+- [X] T052n [US1] Verify multiple trains on same line are visually distinct (no merging)
 
-#### Zoom-Based Dynamic Scaling (Phase 2)
+<details>
+<summary>Zoom-Based Dynamic Scaling (Deferred)</summary>
 
 - [ ] T052o [P] [US1] Add zoom event listener in TrainLayer3D.tsx to update scales dynamically
 - [ ] T052p [P] [US1] Implement updateTrainScale() with exponential formula: pow(2, 14 - zoom) * baseScale in TrainMeshManager.ts
 - [ ] T052q [US1] Test smooth scale transitions when zooming in/out
 
+_Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan.
+
+</details>
+
+#### Animation Duration (Phase 2)
+
+- [X] T052v [US1] Extend TrainMeshManager interpolation to match the 30s polling interval
+- [X] T052w [US1] Validate continuous motion between polls with a visual test
+
 #### Advanced Railway Snapping (Optional - Phase 3)
 
-- [ ] T052r [P] [US1] Create preprocessRailwayLine() to extract bearing at each LineString point in geometry.ts
-- [ ] T052s [P] [US1] Create snapTrainToRailway() to find nearest point on line in geometry.ts
-- [ ] T052t [US1] Update TrainMeshManager to use railway geometry for position and bearing if available
-- [ ] T052u [US1] Test trains snap perfectly to railway curves
+- [X] T052r [P] [US1] Create preprocessRailwayLine() to extract bearing at each LineString point in geometry.ts
+- [X] T052s [P] [US1] Create snapTrainToRailway() to find nearest point on line in geometry.ts
+- [X] T052t [US1] Update TrainMeshManager to use railway geometry for position and bearing if available
+- [X] T052u [US1] Test trains snap perfectly to railway curves
 
 ### Performance
 
