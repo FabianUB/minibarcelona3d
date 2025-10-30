@@ -747,6 +747,33 @@ function updateTrainScale(zoom: number, baseScale: number) {
 }
 ```
 
+#### Camera-Aware Scaling Notes (Reference)
+
+- `mini-tokyo-3d-master/src/mesh-sets/shaders.js:9` keeps trains at a consistent physical size by evaluating `pow(2, 14 - clamp(zoom, 13, 19)) * modelScale * 100`. The `modelScale` term is the meters-to-Mercator factor passed in from Mapbox.
+- `mini-tokyo-3d-master/src/mesh-sets/shaders.js:93` refines that zoom with `log2(cameraZ / abs(cameraZ - translation.z))`, so pitching the map or changing altitude does not make trains “float” or sink visually.
+- `mini-tokyo-3d-master/src/mesh-sets/shaders.js:120` lifts every vehicle by `0.44 * scale0`, matching the body height of the GLB. The offset is applied after rotation so the chassis always sits just above the tile surface.
+
+#### Multi-Zoom Railway Snapping
+
+- `mini-tokyo-3d-master/src/loader/features.js:301` precomputes “station offsets” and densified LineStrings for each railway at zoom levels 13–18. Both overground and underground segments are stored separately so altitude and opacity remain correct.
+- `mini-tokyo-3d-master/src/gpgpu/compute-renderer.js:150` packs those multi-zoom polylines into GPU textures. For every vertex the loader stores Mercator X/Y/Z, bearing, and pitch relative to the map’s `modelOrigin`.
+- `mini-tokyo-3d-master/src/gpgpu/compute-fragment.glsl:53` performs a binary search (`indexOfNodeAt`) against the packed distances per zoom level, then interpolates between the nearest two samples. That guarantees the train is snapped to the surveyed rail geometry for the active zoom, without CPU work.
+- `mini-tokyo-3d-master/src/gpgpu/compute-fragment.glsl:120` uses the stored bearings and pitch to rotate the mesh so headlights/doors line up with the right-of-way even when the track climbs or dives underground.
+
+#### Overlap Mitigation in Dense Corridors
+
+- `mini-tokyo-3d-master/src/mesh-sets/shaders.js:108` scales each instance by `1 + (instanceID % 256) * 0.03 / 256`, creating a subtle size jitter so stacked trains do not z-fight or look identical.
+- `mini-tokyo-3d-master/src/gpgpu/compute-renderer.js:142` reorders instance IDs by `(id % 256)` before pushing them to the instanced geometry. The stable ordering stops the GPU fade-in/fade-out from swapping overlapping trains every frame.
+- `mini-tokyo-3d-master/src/loader/features.js:324` splits every route section into separate ground and underground feature buckets. Combined with altitude metadata, that lets the renderer raise later arrivals into the correct “lane” when two services share a portal.
+
+#### When We Implement This
+
+1. Extend our data loader to emit multi-zoom railway geometries with station offsets (mirror `loader/features.js` pipeline).
+2. Build a lightweight GPU/CPU buffer that exposes interpolated Mercator coordinates, bearing, and pitch per zoom (reuse `compute-renderer.js` logic or a simplified CPU cache).
+3. Wire a Mapbox zoom/pitch listener that feeds `zoom`, `cameraZ`, and `modelScale` uniforms into a shader-based train renderer (or equivalent CPU transform).
+4. Replace the current per-train scale/offset math with the shader-driven formula so models stay glued to the track regardless of zoom depth.
+5. Preserve overlap mitigation by applying deterministic scale jitter and stable instance ordering when assigning mesh IDs.
+
 ---
 
 ### 7. See-Through Buildings for Better Visibility

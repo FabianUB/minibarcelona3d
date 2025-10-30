@@ -88,8 +88,10 @@ export interface GetAllTrainsResponse {
  */
 export interface GetAllTrainPositionsResponse {
   positions: TrainPosition[];
+  previousPositions?: TrainPosition[];
   count: number;
   polledAt: string;
+  previousPolledAt?: string;
 }
 
 /**

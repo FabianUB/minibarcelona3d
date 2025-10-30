@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -266,7 +268,78 @@ func (r *TrainRepository) GetTrainsByRoute(ctx context.Context, routeID string) 
 }
 
 func (r *TrainRepository) GetAllTrainPositions(ctx context.Context) ([]models.TrainPosition, error) {
-	query := `
+	current, _, _, _, err := r.GetTrainPositionsWithHistory(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return current, nil
+}
+
+// GetTrainPositionsWithHistory returns the latest snapshot of train positions along with the immediately
+// preceding snapshot (if available). The previous snapshot is useful for frontend interpolation so trains
+// can animate smoothly as soon as the UI loads.
+func (r *TrainRepository) GetTrainPositionsWithHistory(
+	ctx context.Context,
+) ([]models.TrainPosition, []models.TrainPosition, time.Time, *time.Time, error) {
+	const currentSnapshotQuery = `
+		SELECT c.snapshot_id, s.polled_at_utc
+		FROM rt_rodalies_vehicle_current c
+		JOIN rt_snapshots s ON s.snapshot_id = c.snapshot_id
+		ORDER BY s.polled_at_utc DESC
+		LIMIT 1
+	`
+
+	var currentSnapshotID uuid.UUID
+	var currentPolledAt time.Time
+
+	if err := r.pool.QueryRow(ctx, currentSnapshotQuery).Scan(&currentSnapshotID, &currentPolledAt); err != nil {
+		return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch current snapshot: %w", err)
+	}
+
+	currentPositions, err := r.fetchPositionsForSnapshot(ctx, "rt_rodalies_vehicle_current", currentSnapshotID)
+	if err != nil {
+		return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch current train positions: %w", err)
+	}
+
+	const previousSnapshotQuery = `
+		SELECT s.snapshot_id, s.polled_at_utc
+		FROM rt_rodalies_vehicle_history h
+		JOIN rt_snapshots s ON s.snapshot_id = h.snapshot_id
+		WHERE s.polled_at_utc < $1
+		GROUP BY s.snapshot_id, s.polled_at_utc
+		ORDER BY s.polled_at_utc DESC
+		LIMIT 1
+	`
+
+	var previousPositions []models.TrainPosition
+	var previousPolledAtPtr *time.Time
+
+	var previousSnapshotID uuid.UUID
+	var previousPolledAt time.Time
+
+	err = r.pool.QueryRow(ctx, previousSnapshotQuery, currentPolledAt).Scan(&previousSnapshotID, &previousPolledAt)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch previous snapshot: %w", err)
+		}
+	} else {
+		previousPolledAtPtr = &previousPolledAt
+
+		previousPositions, err = r.fetchPositionsForSnapshot(ctx, "rt_rodalies_vehicle_history", previousSnapshotID)
+		if err != nil {
+			return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch previous train positions: %w", err)
+		}
+	}
+
+	return currentPositions, previousPositions, currentPolledAt, previousPolledAtPtr, nil
+}
+
+func (r *TrainRepository) fetchPositionsForSnapshot(
+	ctx context.Context,
+	table string,
+	snapshotID uuid.UUID,
+) ([]models.TrainPosition, error) {
+	query := fmt.Sprintf(`
 		SELECT
 			vehicle_key,
 			latitude,
@@ -275,12 +348,12 @@ func (r *TrainRepository) GetAllTrainPositions(ctx context.Context) ([]models.Tr
 			route_id,
 			status,
 			polled_at_utc
-		FROM rt_rodalies_vehicle_current
-		WHERE updated_at > NOW() - INTERVAL '10 minutes'
+		FROM %s
+		WHERE snapshot_id = $1
 		ORDER BY vehicle_key
-	`
+	`, table)
 
-	rows, err := r.pool.Query(ctx, query)
+	rows, err := r.pool.Query(ctx, query, snapshotID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query train positions: %w", err)
 	}
@@ -289,7 +362,7 @@ func (r *TrainRepository) GetAllTrainPositions(ctx context.Context) ([]models.Tr
 	var positions []models.TrainPosition
 	for rows.Next() {
 		var p models.TrainPosition
-		err := rows.Scan(
+		if err := rows.Scan(
 			&p.VehicleKey,
 			&p.Latitude,
 			&p.Longitude,
@@ -297,8 +370,7 @@ func (r *TrainRepository) GetAllTrainPositions(ctx context.Context) ([]models.Tr
 			&p.RouteID,
 			&p.Status,
 			&p.PolledAtUTC,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, fmt.Errorf("failed to scan position row: %w", err)
 		}
 		positions = append(positions, p)

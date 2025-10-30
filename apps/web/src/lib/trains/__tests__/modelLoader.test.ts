@@ -8,10 +8,10 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 
 // Mock the GLTFLoader
-vi.mock('three/examples/jsm/loaders/GLTFLoader.js', () => {
-  return {
-    GLTFLoader: vi.fn().mockImplementation(() => ({
-      load: vi.fn((path, onLoad, onProgress, onError) => {
+  vi.mock('three/examples/jsm/loaders/GLTFLoader.js', () => {
+    return {
+      GLTFLoader: vi.fn().mockImplementation(() => ({
+        load: vi.fn((_path, onLoad) => {
         // Simulate successful load after a short delay
         setTimeout(() => {
           const mockGLTF = {

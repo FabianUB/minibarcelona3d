@@ -168,14 +168,16 @@ describe('rodalies dataLoader', () => {
     const uiState = await loadMapUiState();
     expect(uiState).toEqual({
       selectedLineId: null,
+      selectedLineIds: [],
       highlightMode: 'none',
       isHighContrast: false,
       isLegendOpen: false,
+      activePanel: 'none',
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+});
 
-  it('normalises remote Map UI state defaults and invalid highlight modes', async () => {
+it('normalises remote Map UI state defaults and invalid highlight modes', async () => {
     const manifest = createManifest({ map_ui_state_path: 'MapUIState.json' });
     const remoteState = {
       selectedLineId: '',
@@ -195,11 +197,13 @@ describe('rodalies dataLoader', () => {
     const uiState = await loadMapUiState();
     expect(uiState).toEqual({
       selectedLineId: null,
+      selectedLineIds: [],
       highlightMode: 'none',
       isLegendOpen: true,
       isHighContrast: true,
+      activePanel: 'none',
     });
-  });
+});
 
   it('exposes an immutable fallback viewport helper', async () => {
     const { getFallbackViewport } = await import('../dataLoader');
