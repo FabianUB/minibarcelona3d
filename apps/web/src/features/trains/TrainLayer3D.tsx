@@ -22,12 +22,14 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
 import type { TrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
-import { fetchTrainPositions } from '../../lib/api/trains';
+import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
 import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
 import { loadStations, loadLineGeometryCollection } from '../../lib/rodalies/dataLoader';
 import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
+import { useTrainActions } from '../../state/trains';
+import { useMapActions } from '../../state/map';
 
 export interface TrainLayer3DProps {
   /**
@@ -98,6 +100,9 @@ const LAYER_ID = 'train-layer-3d';
  * Task: T047 - Apply bearing-based rotation
  */
 export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DProps) {
+  const { selectTrain } = useTrainActions();
+  const { setActivePanel } = useMapActions();
+
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,6 +136,17 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
+
+  // Performance monitoring (T054)
+  const performanceRef = useRef({
+    frameCount: 0,
+    lastFrameTime: performance.now(),
+    frameTimes: [] as number[],
+    fps: 60,
+    avgFrameTime: 16.67,
+    lastLogTime: performance.now(),
+    renderCount: 0,
+  });
 
   /**
    * Fetches latest train positions from the API
@@ -434,7 +450,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
   }, []);
 
   const handlePointerClick = useCallback(
-    (event: MouseEvent) => {
+    async (event: MouseEvent) => {
       const canvas = map.getCanvas();
       const rect = canvas.getBoundingClientRect();
       const point = {
@@ -453,6 +469,14 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
           objectsHit: 1,
           timestamp: Date.now(),
         });
+
+        try {
+          const trainData = await fetchTrainByKey(hit.vehicleKey);
+          selectTrain(trainData);
+          setActivePanel('trainInfo');
+        } catch (error) {
+          console.error('Failed to fetch train details:', error);
+        }
       } else {
         onRaycastResult?.({
           hit: false,
@@ -461,7 +485,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
         });
       }
     },
-    [map, onRaycastResult, resolveScreenHit]
+    [map, onRaycastResult, resolveScreenHit, selectTrain, setActivePanel]
   );
 
   /**
@@ -568,8 +592,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
      * Update camera matrices and render the Three.js scene
      *
      * Task: T048 - Animation loop integration
+     * Task: T054 - Performance monitoring
      */
     render(_gl: WebGLRenderingContext, matrix: Array<number>) {
+      // T054: Start frame time measurement
+      const frameStartTime = performance.now();
+
       if (!sceneRef.current || !cameraRef.current || !rendererRef.current) {
         return;
       }
@@ -608,6 +636,40 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
       // Render the Three.js scene
       renderer.resetState();
       renderer.render(sceneRef.current, renderCamera);
+
+      // T054: End frame time measurement and calculate performance metrics
+      const frameEndTime = performance.now();
+      const frameTime = frameEndTime - frameStartTime;
+      const perf = performanceRef.current;
+
+      perf.renderCount++;
+      perf.frameCount++;
+      perf.frameTimes.push(frameTime);
+
+      // Keep only last 60 frames for rolling average
+      if (perf.frameTimes.length > 60) {
+        perf.frameTimes.shift();
+      }
+
+      // Calculate FPS and average frame time
+      const timeSinceLastFrame = frameStartTime - perf.lastFrameTime;
+      perf.lastFrameTime = frameStartTime;
+      perf.fps = timeSinceLastFrame > 0 ? 1000 / timeSinceLastFrame : 60;
+      perf.avgFrameTime = perf.frameTimes.reduce((a, b) => a + b, 0) / perf.frameTimes.length;
+
+      // Log performance every 5 seconds
+      const timeSinceLastLog = frameStartTime - perf.lastLogTime;
+      if (timeSinceLastLog >= 5000) {
+        const trainCount = meshManagerRef.current?.getMeshCount() ?? 0;
+        const avgFps = 1000 / perf.avgFrameTime;
+        const minFrameTime = Math.min(...perf.frameTimes);
+        const maxFrameTime = Math.max(...perf.frameTimes);
+
+        console.log(`[Performance] Trains: ${trainCount} | FPS: ${avgFps.toFixed(1)} | Frame: ${perf.avgFrameTime.toFixed(2)}ms (min: ${minFrameTime.toFixed(2)}ms, max: ${maxFrameTime.toFixed(2)}ms) | Renders: ${perf.renderCount}`);
+
+        perf.lastLogTime = frameStartTime;
+        perf.renderCount = 0;
+      }
 
       // Request next frame to continue animation loop
       map.triggerRepaint();

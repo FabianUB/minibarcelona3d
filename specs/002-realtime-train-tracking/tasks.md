@@ -228,8 +228,8 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### Performance
 
-- [ ] T053 [US1] Test rendering performance with 100 train models, verify 60fps
-- [ ] T054 [US1] Add performance monitoring and frame time logging in TrainLayer3D.tsx
+- [X] T053 [US1] Test rendering performance with 100 train models, verify 60fps
+- [X] T054 [US1] Add performance monitoring and frame time logging in TrainLayer3D.tsx
 
 **Checkpoint Phase C Complete**:
 - ✅ 3D models render instead of 2D markers
@@ -261,26 +261,26 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### State Management
 
-- [ ] T054 [P] [US2] Create TrainStateProvider.tsx with Context + Reducer in apps/web/src/state/trains/TrainStateProvider.tsx
-- [ ] T055 [P] [US2] Define TrainState interface (selectedTrain, isPanelOpen) in apps/web/src/state/trains/types.ts
-- [ ] T056 [P] [US2] Define TrainActions (selectTrain, closePanel) in apps/web/src/state/trains/types.ts
-- [ ] T057 [US2] Implement reducer with select-train and close-panel actions in TrainStateProvider.tsx
-- [ ] T058 [US2] Create useTrainState(), useTrainActions() hooks in apps/web/src/state/trains/hooks.ts
+- [X] T054 [P] [US2] Create TrainStateProvider.tsx with Context + Reducer in apps/web/src/state/trains/TrainStateProvider.tsx
+- [X] T055 [P] [US2] Define TrainState interface (selectedTrain, isPanelOpen) in apps/web/src/state/trains/types.ts
+- [X] T056 [P] [US2] Define TrainActions (selectTrain, closePanel) in apps/web/src/state/trains/types.ts
+- [X] T057 [US2] Implement reducer with select-train and close-panel actions in TrainStateProvider.tsx
+- [X] T058 [US2] Create useTrainState(), useTrainActions() hooks in apps/web/src/state/trains/hooks.ts
 
 ### Info Panel Component
 
-- [ ] T059 [US2] Create TrainInfoPanel.tsx component in apps/web/src/features/trains/TrainInfoPanel.tsx
-- [ ] T060 [US2] Implement panel layout with route header and close button in TrainInfoPanel.tsx
-- [ ] T061 [US2] Display vehicle label, route ID from selected train in TrainInfoPanel.tsx
-- [ ] T062 [US2] Implement formatDelay() helper and display delay prominently in TrainInfoPanel.tsx
-- [ ] T063 [US2] Add placeholder for stop list (will be implemented in US3) in TrainInfoPanel.tsx
-- [ ] T064 [US2] Add click-outside detection to close panel in TrainInfoPanel.tsx
-- [ ] T065 [US2] Add escape key handler to close panel in TrainInfoPanel.tsx
+- [X] T059 [US2] Create TrainInfoPanel.tsx component in apps/web/src/features/trains/TrainInfoPanel.tsx
+- [X] T060 [US2] Implement panel layout with route header and close button in TrainInfoPanel.tsx
+- [X] T061 [US2] Display vehicle label, route ID from selected train in TrainInfoPanel.tsx
+- [X] T062 [US2] Implement formatDelay() helper and display delay prominently in TrainInfoPanel.tsx
+- [X] T063 [US2] Add placeholder for stop list (will be implemented in US3) in TrainInfoPanel.tsx
+- [X] T064 [US2] Add click-outside detection to close panel in TrainInfoPanel.tsx
+- [X] T065 [US2] Add escape key handler to close panel in TrainInfoPanel.tsx
 
 ### Click Integration
 
-- [ ] T066 [US2] Update TrainLayer3D click handler to call selectTrain() action
-- [ ] T067 [US2] Fetch full train details on selection if needed in TrainInfoPanel.tsx
+- [X] T066 [US2] Update TrainLayer3D click handler to call selectTrain() action
+- [X] T067 [US2] Fetch full train details on selection if needed in TrainInfoPanel.tsx
 
 ### Styling
 
@@ -293,7 +293,7 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 - [ ] T071 [US2] Render TrainInfoPanel in MapCanvas when panel is open
 
 **Checkpoint US2 Complete**:
-- Click train → panel slides in from right
+- Click train → panel slides in from below
 - Shows route, vehicle label, delay
 - Click outside or ESC → panel closes
 - Performance: Opens in <500ms
