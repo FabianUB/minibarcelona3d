@@ -5,6 +5,7 @@
 
 import type {
   Train,
+  TripDetails,
   GetAllTrainsResponse,
   GetAllTrainPositionsResponse,
   ApiError,
@@ -185,6 +186,37 @@ export async function fetchTrainByKey(vehicleKey: string): Promise<Train> {
   if (!response.ok) {
     if (response.status === 404) {
       throw new Error(`Train not found: ${vehicleKey}`);
+    }
+
+    const errorMessage = await parseErrorResponse(response);
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetches complete trip details including all stops with schedules and delays
+ * Joins static GTFS schedule data with real-time updates
+ *
+ * Automatically retries on transient failures (5xx errors, network issues)
+ * Does NOT retry on 404 Not Found (trip doesn't exist)
+ *
+ * @param tripId - GTFS trip identifier
+ * @returns Promise with trip details including all stops
+ * @throws Error if trip not found (404) or request fails after retries
+ */
+export async function fetchTripDetails(tripId: string): Promise<TripDetails> {
+  if (!tripId) {
+    throw new Error('tripId is required');
+  }
+
+  const url = `${API_BASE}/trips/${encodeURIComponent(tripId)}`;
+  const response = await fetchWithRetry(url);
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error(`Trip not found: ${tripId}`);
     }
 
     const errorMessage = await parseErrorResponse(response);

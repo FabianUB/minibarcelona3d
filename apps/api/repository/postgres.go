@@ -382,3 +382,108 @@ func (r *TrainRepository) fetchPositionsForSnapshot(
 
 	return positions, nil
 }
+
+func (r *TrainRepository) GetTripDetails(ctx context.Context, tripID string) (*models.TripDetails, error) {
+	query := `
+		WITH latest_snapshot AS (
+			SELECT snapshot_id
+			FROM rt_snapshots
+			ORDER BY polled_at_utc DESC
+			LIMIT 1
+		)
+		SELECT
+			st.trip_id,
+			t.route_id,
+			st.stop_id,
+			st.stop_sequence,
+			s.name AS stop_name,
+			st.arrival_seconds,
+			st.departure_seconds,
+			td.predicted_arrival_utc,
+			td.predicted_departure_utc,
+			td.arrival_delay_seconds,
+			td.departure_delay_seconds,
+			td.schedule_relationship,
+			NOW() as updated_at
+		FROM dim_stop_times st
+		INNER JOIN dim_trips t ON st.trip_id = t.trip_id
+		INNER JOIN dim_stops s ON st.stop_id = s.stop_id
+		LEFT JOIN rt_trip_delays td ON st.trip_id = td.trip_id
+			AND st.stop_id = td.stop_id
+			AND td.snapshot_id = (SELECT snapshot_id FROM latest_snapshot)
+		WHERE st.trip_id = $1
+		ORDER BY st.stop_sequence
+	`
+
+	rows, err := r.pool.Query(ctx, query, tripID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query trip details: %w", err)
+	}
+	defer rows.Close()
+
+	var tripDetails *models.TripDetails
+	var stopTimes []models.StopTime
+
+	for rows.Next() {
+		var st models.StopTime
+		var tripID, routeID string
+		var arrivalSec, departureSec *int
+		var updatedAt time.Time
+
+		err := rows.Scan(
+			&tripID,
+			&routeID,
+			&st.StopID,
+			&st.StopSequence,
+			&st.StopName,
+			&arrivalSec,
+			&departureSec,
+			&st.PredictedArrivalUTC,
+			&st.PredictedDepartureUTC,
+			&st.ArrivalDelaySeconds,
+			&st.DepartureDelaySeconds,
+			&st.ScheduleRelationship,
+			&updatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan stop time row: %w", err)
+		}
+
+		if arrivalSec != nil {
+			arrivalTime := formatSecondsToTime(*arrivalSec)
+			st.ScheduledArrival = &arrivalTime
+		}
+		if departureSec != nil {
+			departureTime := formatSecondsToTime(*departureSec)
+			st.ScheduledDeparture = &departureTime
+		}
+
+		stopTimes = append(stopTimes, st)
+
+		if tripDetails == nil {
+			tripDetails = &models.TripDetails{
+				TripID:    tripID,
+				RouteID:   routeID,
+				UpdatedAt: &updatedAt,
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating stop time rows: %w", err)
+	}
+
+	if tripDetails == nil {
+		return nil, errors.New("trip not found")
+	}
+
+	tripDetails.StopTimes = stopTimes
+	return tripDetails, nil
+}
+
+func formatSecondsToTime(seconds int) string {
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	secs := seconds % 60
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, secs)
+}
