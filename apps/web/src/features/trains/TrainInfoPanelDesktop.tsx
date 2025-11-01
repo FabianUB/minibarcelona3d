@@ -5,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useMapActions } from '@/state/map';
 import { useTrainState, useTrainActions } from '@/state/trains';
-import { formatDelay } from '@/lib/trains/formatters';
 import { loadStations, loadRodaliesLines } from '@/lib/rodalies/dataLoader';
+import { fetchTripDetails } from '@/lib/api/trains';
 import { cn } from '@/lib/utils';
 import type { RodaliesLine } from '@/types/rodalies';
+import type { TripDetails } from '@/types/trains';
+import { StopList } from './StopList';
 
 export function TrainInfoPanelDesktop() {
   const { setActivePanel } = useMapActions();
@@ -17,6 +19,7 @@ export function TrainInfoPanelDesktop() {
   const panelRef = useRef<HTMLDivElement>(null);
   const [stationNames, setStationNames] = useState<Map<string, string>>(new Map());
   const [lines, setLines] = useState<RodaliesLine[]>([]);
+  const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
 
   useEffect(() => {
     loadStations().then((stationCollection) => {
@@ -33,6 +36,21 @@ export function TrainInfoPanelDesktop() {
       setLines(lineData);
     });
   }, []);
+
+  useEffect(() => {
+    if (selectedTrain?.tripId) {
+      fetchTripDetails(selectedTrain.tripId)
+        .then((details) => {
+          setTripDetails(details);
+        })
+        .catch((err) => {
+          console.error('Failed to fetch trip details for delay calculation:', err);
+          setTripDetails(null);
+        });
+    } else {
+      setTripDetails(null);
+    }
+  }, [selectedTrain?.tripId]);
 
   const handleClose = () => {
     clearSelection();
@@ -65,7 +83,49 @@ export function TrainInfoPanelDesktop() {
     return null;
   }
 
-  const delay = formatDelay(selectedTrain);
+  // Calculate delay from trip schedule
+  const calculateScheduleDelay = (): { text: string; status: 'on-time' | 'delayed' | 'early' | 'unknown' } => {
+    if (!tripDetails || !selectedTrain.currentStopId) {
+      return { text: 'Unknown', status: 'unknown' };
+    }
+
+    const currentStop = tripDetails.stopTimes.find(st => st.stopId === selectedTrain.currentStopId);
+    if (!currentStop) {
+      return { text: 'Unknown', status: 'unknown' };
+    }
+
+    const scheduledTime = currentStop.scheduledArrival || currentStop.scheduledDeparture;
+    if (!scheduledTime) {
+      return { text: 'Unknown', status: 'unknown' };
+    }
+
+    const now = new Date();
+    const [hours, minutes, seconds] = scheduledTime.split(':').map(Number);
+    const scheduled = new Date(now);
+    scheduled.setHours(hours, minutes, seconds || 0, 0);
+
+    if (hours < 12 && now.getHours() > 12) {
+      scheduled.setDate(scheduled.getDate() + 1);
+    }
+
+    const delaySeconds = Math.floor((now.getTime() - scheduled.getTime()) / 1000);
+
+    if (delaySeconds === 0) {
+      return { text: 'On time', status: 'on-time' };
+    }
+
+    if (delaySeconds > 0) {
+      const minutes = Math.floor(delaySeconds / 60);
+      const text = minutes > 0 ? `${minutes} min late` : `${delaySeconds}s late`;
+      return { text, status: 'delayed' };
+    }
+
+    const absMinutes = Math.floor(Math.abs(delaySeconds) / 60);
+    const text = absMinutes > 0 ? `${absMinutes} min early` : `${Math.abs(delaySeconds)}s early`;
+    return { text, status: 'early' };
+  };
+
+  const delay = calculateScheduleDelay();
   const nextStopName = selectedTrain.nextStopId
     ? stationNames.get(selectedTrain.nextStopId) || selectedTrain.nextStopId
     : null;
@@ -150,109 +210,14 @@ export function TrainInfoPanelDesktop() {
 
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-foreground">Stops</h3>
-          {/* <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Stops</h3>
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-xs font-medium",
-                isStoppedAtStation
-                  ? "bg-red-50 dark:bg-red-950 border-red-300 dark:border-red-800 text-red-700 dark:text-red-300"
-                  : "bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-800 text-green-700 dark:text-green-300"
-              )}
-            >
-              {isStoppedAtStation ? "Stopped" : "Moving"}
-            </Badge>
-          </div> */}
-          {isStoppedAtStation && currentStopName ? (
-            <div className="px-2 py-3">
-              <div className="flex items-start justify-between gap-2">
-                {previousStopName && (
-                  <>
-                    <div className="flex-1 flex flex-col items-start gap-1">
-                      <div className="w-3 h-3 rounded-full border-2 bg-muted-foreground border-muted-foreground self-center" />
-                      <span
-                        className="text-xs text-center text-muted-foreground max-w-[120px] line-clamp-3 w-full"
-                        title={previousStopName}
-                      >
-                        {previousStopName}
-                      </span>
-                    </div>
-                    <div className="flex-1 h-0.5 bg-muted" />
-                  </>
-                )}
-
-                <div className="flex-1 flex flex-col items-start gap-1">
-                  <div className="text-2xl self-center -mt-2" style={{ transform: 'scaleX(-1)' }} title="Train stopped at station">🚂</div>
-                  <span
-                    className="text-xs text-center font-medium max-w-[120px] line-clamp-3 w-full"
-                    title={currentStopName}
-                  >
-                    {currentStopName}
-                  </span>
-                </div>
-
-                {nextStopName && (
-                  <>
-                    <div className="flex-1 h-0.5 bg-muted" />
-                    <div className="flex-1 flex flex-col items-start gap-1">
-                      <div className="w-3 h-3 rounded-full border-2 bg-primary border-primary self-center" />
-                      <span
-                        className="text-xs text-center text-muted-foreground max-w-[120px] line-clamp-3 w-full"
-                        title={nextStopName}
-                      >
-                        {nextStopName}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : previousStopName || nextStopName ? (
-            <div className="px-2 py-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 flex flex-col items-start gap-1">
-                  <div className={cn(
-                    "w-3 h-3 rounded-full border-2 self-center",
-                    previousStopName ? "bg-muted-foreground border-muted-foreground" : "bg-muted border-muted"
-                  )} />
-                  {previousStopName && (
-                    <span
-                      className="text-xs text-center text-muted-foreground max-w-[120px] line-clamp-3 w-full"
-                      title={previousStopName}
-                    >
-                      {previousStopName}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex-1 flex items-center gap-1 -mt-1">
-                  <div className="flex-1 h-0.5 bg-muted" />
-                  <div className="text-lg" style={{ transform: 'scaleX(-1)' }} title="Train">🚂</div>
-                  <div className="flex-1 h-0.5 bg-muted" />
-                </div>
-
-                <div className="flex-1 flex flex-col items-start gap-1">
-                  <div className={cn(
-                    "w-3 h-3 rounded-full border-2 self-center",
-                    nextStopName ? "bg-primary border-primary" : "bg-muted border-muted"
-                  )} />
-                  {nextStopName && (
-                    <span
-                      className="text-xs text-center font-medium max-w-[120px] line-clamp-3 w-full"
-                      title={nextStopName}
-                    >
-                      {nextStopName}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="px-3 py-4 bg-muted/50 rounded-md text-sm text-muted-foreground text-center">
-              Journey information unavailable
-            </div>
-          )}
+          <StopList
+            tripId={selectedTrain.tripId}
+            currentStopId={selectedTrain.currentStopId}
+            previousStopName={previousStopName}
+            currentStopName={currentStopName}
+            nextStopName={nextStopName}
+            isStoppedAtStation={isStoppedAtStation}
+          />
         </div>
       </CardContent>
     </Card>

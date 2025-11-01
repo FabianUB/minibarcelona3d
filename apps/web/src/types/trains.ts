@@ -101,3 +101,29 @@ export interface ApiError {
   error: string;
   details?: Record<string, unknown>;
 }
+
+/**
+ * Stop time information for a specific stop on a trip
+ */
+export interface StopTime {
+  stopId: string;
+  stopSequence: number;
+  stopName: string | null;
+  scheduledArrival: string | null;
+  scheduledDeparture: string | null;
+  predictedArrivalUtc: string | null;
+  predictedDepartureUtc: string | null;
+  arrivalDelaySeconds: number | null;
+  departureDelaySeconds: number | null;
+  scheduleRelationship: string | null;
+}
+
+/**
+ * Complete trip details including all stops
+ */
+export interface TripDetails {
+  tripId: string;
+  routeId: string;
+  stopTimes: StopTime[];
+  updatedAt: string | null;
+}

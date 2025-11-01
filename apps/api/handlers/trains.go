@@ -169,3 +169,46 @@ func (h *TrainHandler) GetAllTrainPositions(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+func (h *TrainHandler) GetTripDetails(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tripID := chi.URLParam(r, "tripId")
+
+	if tripID == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "tripId parameter is required",
+		})
+		return
+	}
+
+	tripDetails, err := h.repo.GetTripDetails(ctx, tripID)
+	if err != nil {
+		if err.Error() == "trip not found" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(ErrorResponse{
+				Error: "Trip not found",
+				Details: map[string]interface{}{
+					"tripId": tripID,
+				},
+			})
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "Failed to retrieve trip details",
+			Details: map[string]interface{}{
+				"internal": err.Error(),
+			},
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tripDetails)
+}

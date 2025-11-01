@@ -108,8 +108,6 @@ type TrainPosition struct {
 	PolledAtUTC time.Time `json:"polledAtUtc"`
 }
 
-// ToTrainPosition converts a full Train model to a lightweight TrainPosition
-// Useful for reducing JSON payload size in polling endpoints
 func (t *Train) ToTrainPosition() TrainPosition {
 	return TrainPosition{
 		VehicleKey:  t.VehicleKey,
@@ -120,4 +118,28 @@ func (t *Train) ToTrainPosition() TrainPosition {
 		Status:      t.Status,
 		PolledAtUTC: t.PolledAtUTC,
 	}
+}
+
+type StopTime struct {
+	StopID       string  `json:"stopId"`
+	StopSequence int     `json:"stopSequence"`
+	StopName     *string `json:"stopName"`
+
+	ScheduledArrival   *string `json:"scheduledArrival"`
+	ScheduledDeparture *string `json:"scheduledDeparture"`
+
+	PredictedArrivalUTC   *time.Time `json:"predictedArrivalUtc"`
+	PredictedDepartureUTC *time.Time `json:"predictedDepartureUtc"`
+
+	ArrivalDelaySeconds   *int `json:"arrivalDelaySeconds"`
+	DepartureDelaySeconds *int `json:"departureDelaySeconds"`
+
+	ScheduleRelationship *string `json:"scheduleRelationship"`
+}
+
+type TripDetails struct {
+	TripID    string      `json:"tripId"`
+	RouteID   string      `json:"routeId"`
+	StopTimes []StopTime  `json:"stopTimes"`
+	UpdatedAt *time.Time  `json:"updatedAt"`
 }

@@ -94,6 +94,7 @@ func main() {
 	r.Get("/api/trains", trainHandler.GetAllTrains)
 	r.Get("/api/trains/positions", trainHandler.GetAllTrainPositions)
 	r.Get("/api/trains/{vehicleKey}", trainHandler.GetTrainByKey)
+	r.Get("/api/trips/{tripId}", trainHandler.GetTripDetails)
 
 	// Static file serving (if configured)
 	staticDir := os.Getenv("STATIC_DIR")
@@ -113,6 +114,7 @@ func main() {
 	log.Println("  GET /api/trains")
 	log.Println("  GET /api/trains/positions")
 	log.Println("  GET /api/trains/{vehicleKey}")
+	log.Println("  GET /api/trips/{tripId}")
 	log.Println("  GET /health (with database check)")
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {
