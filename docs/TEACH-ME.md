@@ -159,3 +159,81 @@ func (h *TrainHandler) GetAllTrains(w http.ResponseWriter, r *http.Request) {
 ```
 
 ---
+
+## Q: How are unrealistic train position jumps detected and prevented?
+
+**Question (verbatim):**
+> Sometimes trains go at great speeds through the map on a updated, with what I assume is bad information. Can we check this somehow?
+
+### Answer — Explanation
+
+The application validates train position updates to detect unrealistic GPS data that would cause trains to appear to "teleport" across the map at impossible speeds. The validation is performed in `TrainMeshManager.validatePositionUpdate()` (`apps/web/src/lib/trains/trainMeshManager.ts:183-230`) and uses **railway-based distance calculation** rather than straight-line distance. When unrealistic speeds are detected, a warning is logged and a red exclamation mark (!) indicator is displayed above the train.
+
+**Why railway distance instead of straight-line distance?**
+
+Trains follow rail paths, not straight lines. A train traveling from Barcelona to Girona follows the railway route (approximately 100km), not a straight line (approximately 75km). Using straight-line distance would:
+- Allow unrealistic shortcuts through cities
+- Miss cases where a train jumps to a different part of the same line
+- Fail to detect position errors that are still along the railway corridor
+
+**How the validation works:**
+
+1. **Snap both positions to railways**: When a new position arrives, snap both the previous position and current position to their respective railway lines using `snapTrainToRailway()`. This gives us a `distance` value representing how far along the railway line each position is.
+
+2. **Check if positions are on the same line**: If the train changed lines (e.g., at a transfer point), validation is skipped as this is expected behavior.
+
+3. **Calculate distance traveled along the railway**: `distanceTraveled = |currentSnap.distance - previousSnap.distance|`
+
+4. **Calculate speed**: `speed = distanceTraveled / timeDelta`
+
+5. **Compare against maximum realistic speed**: The maximum is set to 300 km/h (~83 m/s), which is 50% higher than Rodalies trains' actual maximum of 140 km/h (~39 m/s). This buffer accounts for:
+   - GPS timing inaccuracies
+   - Brief high-speed sections
+   - Network latency in position updates
+
+6. **Log and mark**: If speed exceeds the maximum, a warning is logged with details about the calculated speed, and a red exclamation mark indicator is displayed above the train. The position update is still applied to avoid trains getting stuck with stale data.
+
+### Key Takeaways
+
+- Position validation uses **railway distance**, not straight-line distance, because trains follow rail paths
+- Validation only applies when both positions snap to the **same railway line**
+- Maximum speed is set to 300 km/h with a 50% safety buffer above realistic speeds
+- Unrealistic speeds trigger a **warning log and visual indicator** (red exclamation mark above train)
+- Position updates are **still applied** to prevent trains from getting stuck with stale data
+- Warning indicators are **automatically removed** when subsequent updates have realistic speeds
+- The validation happens in `updateTrainMeshes()` before updating the warning indicator state
+
+### Code References
+
+- Validation method: `apps/web/src/lib/trains/trainMeshManager.ts:183-230`
+- Warning indicator creation: `apps/web/src/lib/trains/trainMeshManager.ts:235-263`
+- Validation call and indicator update: `apps/web/src/lib/trains/trainMeshManager.ts:592-619`
+- Railway snapping: `apps/web/src/lib/trains/trainMeshManager.ts:144-175`
+- Distance calculation: `apps/web/src/lib/trains/geometry.ts:167-182` (internal `distanceBetween`)
+
+### Example
+
+```typescript
+// Bad GPS data: train appears to jump 50km in 30 seconds
+// Previous: 25.5km along R2 line
+// Current: 75.5km along R2 line
+// Time: 30 seconds
+// Speed: 50,000m / 30s = 1,666 m/s = 6,000 km/h ❌
+
+// Console output:
+// "TrainMeshManager: Unrealistic speed detected for train 12345"
+// {
+//   lineId: "R2",
+//   distanceTraveled: "50000m",
+//   timeDelta: "30.0s",
+//   calculatedSpeed: "1666.7 m/s (6000 km/h)",
+//   maxAllowed: "83.3 m/s (300 km/h)"
+// }
+
+// Result:
+// - Train moves to new position (75.5km) to avoid getting stuck
+// - Red exclamation mark (!) appears above the train
+// - Warning indicator removed when next update has realistic speed
+```
+
+---

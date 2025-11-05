@@ -181,6 +181,23 @@ function distanceBetween(a: Position, b: Position): number {
   return EARTH_RADIUS_METERS * c;
 }
 
+/**
+ * Calculate straight-line distance between two geographic points using Haversine formula
+ *
+ * Note: For train position validation, use railway distance (via snapping) instead,
+ * as trains follow rail paths, not straight lines
+ *
+ * @param position1 - First position as [lng, lat]
+ * @param position2 - Second position as [lng, lat]
+ * @returns Straight-line distance in meters
+ */
+export function calculateDistance(
+  position1: [number, number],
+  position2: [number, number]
+): number {
+  return distanceBetween(position1, position2);
+}
+
 function flattenLineGeometry(geometry: RodaliesLineGeometry): Position[][] {
   if (geometry.type === 'LineString') {
     return [geometry.coordinates];

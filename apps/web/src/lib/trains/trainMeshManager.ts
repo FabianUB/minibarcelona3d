@@ -45,6 +45,8 @@ interface TrainMeshData {
   baseScale: number;
   boundingCenterOffset: THREE.Vector3;
   boundingRadius: number;
+  hasUnrealisticSpeed: boolean;
+  warningIndicator?: THREE.Sprite;
 }
 
 interface PollSnapshotMetadata {
@@ -95,6 +97,12 @@ export class TrainMeshManager {
   private readonly MODEL_FORWARD_OFFSET = Math.PI; // Train models face negative X by default
   private readonly LATERAL_OFFSET_BUCKETS = 5;
   private readonly LATERAL_OFFSET_STEP_METERS = 1.6; // meters between trains laterally
+
+  // Maximum realistic train speed: 200 km/h = ~55.6 m/s
+  // Rodalies trains typically max out at 140 km/h (~39 m/s)
+  // Add 50% buffer for high-speed sections and GPS/timing inaccuracies
+  private readonly MAX_TRAIN_SPEED_MS = 55.6 * 1.5; // ~83 m/s or ~300 km/h
+
   private highlightedVehicleKey: string | null = null;
   /**
    * Deterministic variation per train to reduce visual overlaps
@@ -164,6 +172,94 @@ export class TrainMeshManager {
       lineId: lineId.toUpperCase(),
       ...result,
     };
+  }
+
+  /**
+   * Validate position update by checking railway distance and speed
+   * Logs warning for unrealistic jumps but allows the update
+   *
+   * Returns true if speed is unrealistic (should show warning indicator)
+   */
+  private validatePositionUpdate(
+    vehicleKey: string,
+    previousSnap: RailwaySnapState | null,
+    currentSnap: RailwaySnapState | null,
+    timeDeltaMs: number
+  ): boolean {
+    // If we can't snap either position to railway, we can't validate
+    if (!previousSnap || !currentSnap) {
+      return false;
+    }
+
+    // If train changed lines, we can't validate distance along the railway
+    // This is expected at transfer points
+    if (previousSnap.lineId !== currentSnap.lineId) {
+      return false;
+    }
+
+    // Calculate distance traveled along the railway
+    const distanceTraveled = Math.abs(currentSnap.distance - previousSnap.distance);
+
+    // Calculate time elapsed in seconds
+    const timeDeltaS = timeDeltaMs / 1000;
+
+    // Avoid division by zero
+    if (timeDeltaS <= 0) {
+      return false;
+    }
+
+    // Calculate speed in m/s
+    const speedMS = distanceTraveled / timeDeltaS;
+
+    // Check if speed exceeds maximum realistic train speed
+    if (speedMS > this.MAX_TRAIN_SPEED_MS) {
+      console.warn(
+        `TrainMeshManager: Unrealistic speed detected for train ${vehicleKey}`,
+        {
+          lineId: currentSnap.lineId,
+          distanceTraveled: `${distanceTraveled.toFixed(0)}m`,
+          timeDelta: `${timeDeltaS.toFixed(1)}s`,
+          calculatedSpeed: `${speedMS.toFixed(1)} m/s (${(speedMS * 3.6).toFixed(0)} km/h)`,
+          maxAllowed: `${this.MAX_TRAIN_SPEED_MS.toFixed(1)} m/s (${(this.MAX_TRAIN_SPEED_MS * 3.6).toFixed(0)} km/h)`,
+        }
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Create a warning indicator sprite (exclamation mark) for trains with unrealistic speeds
+   */
+  private createWarningIndicator(): THREE.Sprite {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext('2d')!;
+
+    // Draw red circle background
+    context.fillStyle = '#ff4444';
+    context.beginPath();
+    context.arc(32, 32, 28, 0, Math.PI * 2);
+    context.fill();
+
+    // Draw white exclamation mark
+    context.fillStyle = '#ffffff';
+    context.font = 'bold 48px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText('!', 32, 32);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+    const sprite = new THREE.Sprite(material);
+
+    const modelScale = getModelScale();
+    const spriteSize = 8 * modelScale; // 8 meters
+    sprite.scale.set(spriteSize, spriteSize, 1);
+
+    return sprite;
   }
 
   private applyRailwayBearing(
@@ -428,6 +524,7 @@ export class TrainMeshManager {
       baseScale: mesh.scale.x,
       boundingCenterOffset: boundingSphere.center.clone(),
       boundingRadius: boundingSphere.radius,
+      hasUnrealisticSpeed: false,
     };
 
     return meshData;
@@ -490,6 +587,35 @@ export class TrainMeshManager {
       if (existing) {
         if (typeof existing.lateralOffsetIndex !== 'number') {
           existing.lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
+        }
+
+        // Validate position update to detect unrealistic jumps
+        const effectivePreviousSnap = previousSnapState ?? existing.currentSnap ?? null;
+        const timeSinceLastUpdate = baseLastUpdate - existing.lastUpdate;
+        const hasUnrealisticSpeed = this.validatePositionUpdate(
+          train.vehicleKey,
+          effectivePreviousSnap,
+          targetSnapState,
+          timeSinceLastUpdate
+        );
+
+        // Update warning indicator based on validation
+        if (hasUnrealisticSpeed && !existing.warningIndicator) {
+          // Add warning indicator
+          const indicator = this.createWarningIndicator();
+          const modelScale = getModelScale();
+          const zOffset = this.Z_OFFSET_FACTOR * this.TRAIN_SIZE_METERS * modelScale;
+          indicator.position.set(0, 0, zOffset + 10 * modelScale); // 10 meters above train
+          existing.mesh.add(indicator);
+          existing.warningIndicator = indicator;
+          existing.hasUnrealisticSpeed = true;
+        } else if (!hasUnrealisticSpeed && existing.warningIndicator) {
+          // Remove warning indicator
+          existing.mesh.remove(existing.warningIndicator);
+          existing.warningIndicator.material.map?.dispose();
+          existing.warningIndicator.material.dispose();
+          existing.warningIndicator = undefined;
+          existing.hasUnrealisticSpeed = false;
         }
 
         if (previousLngLat) {
@@ -615,6 +741,12 @@ export class TrainMeshManager {
       this.scene.remove(meshData.mesh);
       if (this.highlightedVehicleKey === vehicleKey) {
         this.highlightedVehicleKey = null;
+      }
+
+      // Clean up warning indicator if present
+      if (meshData.warningIndicator) {
+        meshData.warningIndicator.material.map?.dispose();
+        meshData.warningIndicator.material.dispose();
       }
 
       // Dispose of geometry and materials to free GPU memory
