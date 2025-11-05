@@ -769,6 +769,48 @@ export class TrainMeshManager {
     }
   }
 
+  /**
+   * Set opacity for all materials in a mesh
+   * Recursively traverses the mesh and updates all materials
+   *
+   * @param mesh - The mesh to update
+   * @param opacity - Opacity value between 0 (invisible) and 1 (fully visible)
+   */
+  private setMeshOpacity(mesh: THREE.Group, opacity: number): void {
+    mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const material = child.material;
+
+        if (Array.isArray(material)) {
+          // Handle multi-material meshes
+          material.forEach((mat) => {
+            mat.transparent = opacity < 1.0;
+            mat.opacity = opacity;
+          });
+        } else if (material) {
+          // Handle single material
+          material.transparent = opacity < 1.0;
+          material.opacity = opacity;
+        }
+      }
+    });
+  }
+
+  /**
+   * Set opacity for multiple trains based on line selection
+   * Task: T089 - Filter trains by line selection
+   *
+   * @param opacities - Map of vehicleKey to opacity (0.0 - 1.0)
+   */
+  setTrainOpacities(opacities: Map<string, number>): void {
+    opacities.forEach((opacity, vehicleKey) => {
+      const meshData = this.trainMeshes.get(vehicleKey);
+      if (meshData) {
+        this.setMeshOpacity(meshData.mesh, opacity);
+      }
+    });
+  }
+
   setHighlightedTrain(vehicleKey?: string): void {
     const nextKey = vehicleKey ?? null;
     if (this.highlightedVehicleKey === nextKey) {
