@@ -284,13 +284,13 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### Styling
 
-- [ ] T068 [P] [US2] Create panel CSS with slide-in animation in apps/web/src/features/trains/TrainInfoPanel.module.css
-- [ ] T069 [P] [US2] Add responsive design for mobile in TrainInfoPanel.module.css
+- [X] T068 [P] [US2] Create panel CSS with slide-in animation in apps/web/src/features/trains/TrainInfoPanel.module.css
+- [X] T069 [P] [US2] Add responsive design for mobile in TrainInfoPanel.module.css
 
 ### State Provider Integration
 
-- [ ] T070 [US2] Wrap MapCanvas with TrainStateProvider in apps/web/src/App.tsx
-- [ ] T071 [US2] Render TrainInfoPanel in MapCanvas when panel is open
+- [X] T070 [US2] Wrap MapCanvas with TrainStateProvider in apps/web/src/App.tsx
+- [X] T071 [US2] Render TrainInfoPanel in MapCanvas when panel is open
 
 **Checkpoint US2 Complete**:
 - Click train → panel slides in from below
@@ -314,30 +314,30 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### Backend Extension (if needed)
 
-- [ ] T072 [US3] Assess if rt_rodalies_vehicle_current provides enough stop data or if additional query needed
-- [ ] T073 [US3] If needed: Create GetTripDetails(tripId) endpoint in apps/api/handlers/trains.go
-- [ ] T074 [US3] If needed: Add TripDetails and StopTime models in apps/api/models/train.go
+- [X] T072 [US3] Assess if rt_rodalies_vehicle_current provides enough stop data or if additional query needed
+- [X] T073 [US3] If needed: Create GetTripDetails(tripId) endpoint in apps/api/handlers/trains.go
+- [X] T074 [US3] If needed: Add TripDetails and StopTime models in apps/api/models/train.go
 
 ### Frontend Types
 
-- [ ] T075 [P] [US3] Create StopTime interface in apps/web/src/types/trains.ts
-- [ ] T076 [P] [US3] Add stops array to train data structure
+- [X] T075 [P] [US3] Create StopTime interface in apps/web/src/types/trains.ts
+- [X] T076 [P] [US3] Add stops array to train data structure
 
 ### Stop List Component
 
-- [ ] T077 [US3] Create StopList.tsx component in apps/web/src/features/trains/StopList.tsx
-- [ ] T078 [US3] Implement logic to determine stop status (completed/current/upcoming) in StopList.tsx
-- [ ] T079 [US3] Render stop list with station names and times in StopList.tsx
-- [ ] T080 [US3] Apply visual styling for completed stops (gray) in StopList.tsx
-- [ ] T081 [US3] Apply visual styling for current stop (highlighted/bold) in StopList.tsx
-- [ ] T082 [US3] Apply visual styling for upcoming stops (default) in StopList.tsx
-- [ ] T083 [US3] Display actual vs scheduled times when different in StopList.tsx
-- [ ] T084 [US3] Calculate and display delay duration per stop in StopList.tsx
+- [X] T077 [US3] Create StopList.tsx component in apps/web/src/features/trains/StopList.tsx
+- [X] T078 [US3] Implement logic to determine stop status (completed/current/upcoming) in StopList.tsx
+- [X] T079 [US3] Render stop list with station names and times in StopList.tsx
+- [X] T080 [US3] Apply visual styling for completed stops (gray) in StopList.tsx
+- [X] T081 [US3] Apply visual styling for current stop (highlighted/bold) in StopList.tsx
+- [X] T082 [US3] Apply visual styling for upcoming stops (default) in StopList.tsx
+- [X] T083 [US3] Display actual vs scheduled times when different in StopList.tsx
+- [X] T084 [US3] Calculate and display delay duration per stop in StopList.tsx
 
 ### Integration
 
-- [ ] T085 [US3] Replace placeholder stop list in TrainInfoPanel with StopList component
-- [ ] T086 [US3] Add scrolling behavior for long stop lists in TrainInfoPanel.tsx
+- [X] T085 [US3] Replace placeholder stop list in TrainInfoPanel with StopList component
+- [X] T086 [US3] Add scrolling behavior for long stop lists in TrainInfoPanel.tsx
 
 **Checkpoint US3 Complete**:
 - Open panel → see full chronological stop list

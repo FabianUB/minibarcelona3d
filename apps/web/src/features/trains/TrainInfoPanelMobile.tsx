@@ -79,18 +79,18 @@ export function TrainInfoPanelMobile() {
     return null;
   }
 
-  // Calculate delay from trip schedule
+  // Calculate delay from trip schedule - always for next stop
   const calculateScheduleDelay = (): { text: string; status: 'on-time' | 'delayed' | 'early' | 'unknown' } => {
-    if (!tripDetails || !selectedTrain.currentStopId) {
+    if (!tripDetails || !selectedTrain.nextStopId) {
       return { text: 'Unknown', status: 'unknown' };
     }
 
-    const currentStop = tripDetails.stopTimes.find(st => st.stopId === selectedTrain.currentStopId);
-    if (!currentStop) {
+    const nextStop = tripDetails.stopTimes.find(st => st.stopId === selectedTrain.nextStopId);
+    if (!nextStop) {
       return { text: 'Unknown', status: 'unknown' };
     }
 
-    const scheduledTime = currentStop.scheduledArrival || currentStop.scheduledDeparture;
+    const scheduledTime = nextStop.scheduledArrival || nextStop.scheduledDeparture;
     if (!scheduledTime) {
       return { text: 'Unknown', status: 'unknown' };
     }
@@ -106,19 +106,15 @@ export function TrainInfoPanelMobile() {
 
     const delaySeconds = Math.floor((now.getTime() - scheduled.getTime()) / 1000);
 
-    if (delaySeconds === 0) {
+    // Only show delay if we're already late (scheduled time has passed)
+    // Don't show "early" or negative delays for future stops
+    if (delaySeconds <= 0) {
       return { text: 'On time', status: 'on-time' };
     }
 
-    if (delaySeconds > 0) {
-      const minutes = Math.floor(delaySeconds / 60);
-      const text = minutes > 0 ? `${minutes} min late` : `${delaySeconds}s late`;
-      return { text, status: 'delayed' };
-    }
-
-    const absMinutes = Math.floor(Math.abs(delaySeconds) / 60);
-    const text = absMinutes > 0 ? `${absMinutes} min early` : `${Math.abs(delaySeconds)}s early`;
-    return { text, status: 'early' };
+    const delayMinutes = Math.floor(delaySeconds / 60);
+    const text = delayMinutes > 0 ? `${delayMinutes} min late` : `${delaySeconds}s late`;
+    return { text, status: 'delayed' };
   };
 
   const delay = calculateScheduleDelay();
@@ -202,6 +198,7 @@ export function TrainInfoPanelMobile() {
             <StopList
               tripId={selectedTrain.tripId}
               currentStopId={selectedTrain.currentStopId}
+              nextStopId={selectedTrain.nextStopId}
               previousStopName={previousStopName}
               currentStopName={currentStopName}
               nextStopName={nextStopName}

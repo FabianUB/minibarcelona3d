@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { fetchTripDetails } from '@/lib/api/trains';
 import type { StopTime } from '@/types/trains';
@@ -7,6 +8,7 @@ import type { StopTime } from '@/types/trains';
 interface StopListProps {
   tripId: string | null;
   currentStopId: string | null;
+  nextStopId: string | null;
   previousStopName: string | null;
   currentStopName: string | null;
   nextStopName: string | null;
@@ -16,6 +18,7 @@ interface StopListProps {
 export function StopList({
   tripId,
   currentStopId,
+  nextStopId,
   previousStopName,
   currentStopName,
   nextStopName,
@@ -45,17 +48,20 @@ export function StopList({
     }
   }, [isExpanded, tripId, stopTimes.length]);
 
-  const getStopStatus = (stop: StopTime): 'completed' | 'current' | 'upcoming' => {
-    if (!currentStopId) return 'upcoming';
+  const getStopStatus = (stop: StopTime): 'completed' | 'next' | 'upcoming' => {
+    // Use nextStopId as the primary indicator for the next stop
+    if (nextStopId && stop.stopId === nextStopId) return 'next';
 
-    if (stop.stopId === currentStopId) return 'current';
-
-    const currentIndex = stopTimes.findIndex(s => s.stopId === currentStopId);
+    // Find indices to determine completed vs upcoming
+    const nextStopIndex = nextStopId ? stopTimes.findIndex(s => s.stopId === nextStopId) : -1;
     const stopIndex = stopTimes.findIndex(s => s.stopId === stop.stopId);
 
-    if (currentIndex === -1) return 'upcoming';
+    if (nextStopIndex === -1) return 'upcoming';
 
-    return stopIndex < currentIndex ? 'completed' : 'upcoming';
+    // Stops before the next stop are completed
+    if (stopIndex < nextStopIndex) return 'completed';
+
+    return 'upcoming';
   };
 
   const formatTime = (timeString: string | null): string | null => {
@@ -252,18 +258,18 @@ export function StopList({
 
             // Calculate delay based on schedule vs current time
             let delaySeconds: number | null = null;
+            let isLate = false;
 
-            if (status === 'completed') {
-              // For completed stops: prefer actual delay from feed, fallback to schedule calculation
-              delaySeconds = stop.arrivalDelaySeconds || stop.departureDelaySeconds || calculateScheduleDelay(rawScheduledTime);
-            } else if (status === 'current' || status === 'upcoming') {
-              // For current/upcoming stops: calculate from schedule
+            // Only show delay for the next stop
+            if (status === 'next') {
+              // For next stop only: calculate from schedule and show if late
               const calculatedDelay = calculateScheduleDelay(rawScheduledTime);
-              // Only show delay if scheduled time has passed (train is late)
               if (calculatedDelay !== null && calculatedDelay > 0) {
                 delaySeconds = calculatedDelay;
+                isLate = true;
               }
             }
+            // For 'completed' and 'upcoming' stops: don't show delay
 
             const delay = formatDelay(delaySeconds);
 
@@ -273,7 +279,7 @@ export function StopList({
                 className={cn(
                   'px-3 py-2 rounded-md text-sm',
                   status === 'completed' && 'bg-muted/30 text-muted-foreground',
-                  status === 'current' && 'bg-primary/10 border border-primary/30 font-medium',
+                  status === 'next' && 'bg-primary/10 border border-primary/30 font-medium',
                   status === 'upcoming' && 'bg-background'
                 )}
               >
@@ -282,7 +288,7 @@ export function StopList({
                     <div className={cn(
                       'w-2 h-2 rounded-full flex-shrink-0',
                       status === 'completed' && 'bg-muted-foreground',
-                      status === 'current' && 'bg-primary',
+                      status === 'next' && 'bg-primary',
                       status === 'upcoming' && 'bg-muted'
                     )} />
                     <span className="truncate" title={stop.stopName || stop.stopId}>
@@ -290,21 +296,21 @@ export function StopList({
                     </span>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {scheduledTime && (
-                      <span className={cn(
-                        'text-xs',
-                        status === 'completed' && 'text-muted-foreground',
-                        delay && 'line-through'
-                      )}>
-                        {scheduledTime}
-                      </span>
-                    )}
                     {delay && (
                       <span className={cn(
                         'text-xs font-medium',
                         (delaySeconds || 0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
                       )}>
                         {delay}
+                      </span>
+                    )}
+                    {scheduledTime && (
+                      <span className={cn(
+                        'text-xs',
+                        status === 'completed' && 'text-muted-foreground',
+                        delay && status === 'completed' && 'line-through'
+                      )}>
+                        {scheduledTime}
                       </span>
                     )}
                   </div>
