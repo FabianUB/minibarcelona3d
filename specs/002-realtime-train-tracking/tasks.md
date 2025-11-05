@@ -362,9 +362,9 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### Legend Integration
 
-- [ ] T087 [US4] Review existing legend component from feature 001 at apps/web/src/features/legend/
-- [ ] T088 [US4] Add hook to subscribe to line selection state in TrainLayer3D.tsx
-- [ ] T089 [US4] Filter train data by selected routeIds before rendering in TrainLayer3D.tsx
+- [X] T087 [US4] Review existing legend component from feature 001 at apps/web/src/features/legend/
+- [X] T088 [US4] Add hook to subscribe to line selection state in TrainLayer3D.tsx
+- [X] T089 [US4] Filter train data by selected routeIds before rendering in TrainLayer3D.tsx
 - [ ] T090 [US4] Optionally: Optimize API calls to pass routeId filter in fetchTrainPositions()
 
 ### Panel Behavior

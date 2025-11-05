@@ -28,8 +28,9 @@ import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
 import { loadStations, loadLineGeometryCollection } from '../../lib/rodalies/dataLoader';
 import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
+import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
-import { useMapActions } from '../../state/map';
+import { useMapActions, useMapHighlightSelectors } from '../../state/map';
 
 export interface TrainLayer3DProps {
   /**
@@ -102,6 +103,7 @@ const LAYER_ID = 'train-layer-3d';
 export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
+  const { highlightMode, highlightedLineIds, isLineHighlighted } = useMapHighlightSelectors();
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -147,6 +149,40 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
     lastLogTime: performance.now(),
     renderCount: 0,
   });
+
+  /**
+   * Helper function to get train opacity based on line selection
+   * Task: T089 - Filter trains by selected line IDs
+   *
+   * Rules:
+   * - No selection: All trains at 100% opacity
+   * - Highlight mode: Selected lines at 100%, others at 25%
+   * - Isolate mode: Selected lines at 100%, others at 0% (invisible)
+   */
+  const getTrainOpacity = useCallback((train: TrainPosition): number => {
+    // If no lines are highlighted, show all trains at full opacity
+    if (highlightMode === 'none' || highlightedLineIds.length === 0) {
+      return 1.0;
+    }
+
+    // Extract line code from route ID using existing utility function
+    const lineCode = extractLineFromRouteId(train.routeId);
+    if (!lineCode) {
+      // If we can't extract a line code, show at full opacity
+      return 1.0;
+    }
+
+    // Check if this train's line is highlighted
+    const isHighlighted = isLineHighlighted(lineCode);
+
+    if (isHighlighted) {
+      return 1.0; // Full opacity for selected lines
+    } else if (highlightMode === 'highlight') {
+      return 0.25; // 25% opacity for non-selected lines in highlight mode
+    } else {
+      return 0.0; // Invisible for non-selected lines in isolate mode
+    }
+  }, [highlightMode, highlightedLineIds, isLineHighlighted]);
 
   /**
    * Fetches latest train positions from the API
@@ -894,6 +930,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
    * Effect: Update train meshes when train data or models change
    * Tasks: T046 - Create and update train mesh instances
    *        T047 - Apply bearing-based rotation
+   *        T089 - Filter trains by selected line IDs
    */
   useEffect(() => {
     // Only update meshes when models, stations, and manager are ready
@@ -910,6 +947,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
       return;
     }
 
+    // T089: Calculate opacity for each train based on line selection
+    const trainOpacities = new Map<string, number>();
+    trains.forEach(train => {
+      trainOpacities.set(train.vehicleKey, getTrainOpacity(train));
+    });
+
     // Update train meshes based on current train positions
     // This will apply bearing-based rotation automatically (T047)
     meshManagerRef.current.updateTrainMeshes(trains, previousPositionsRef.current, {
@@ -918,12 +961,15 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
       receivedAtMs: pollTimestampsRef.current.receivedAt,
     });
 
+    // Apply opacity to all trains based on line selection
+    meshManagerRef.current.setTrainOpacities(trainOpacities);
+
     if (trains.length > 0) {
       console.log(
         `TrainLayer3D: ${meshManagerRef.current.getMeshCount()} train meshes active with rotation`
       );
     }
-  }, [trains, modelsLoaded, stationsLoaded]);
+  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity]);
 
   /**
    * Effect: Handle pointer hover/click using screen-space distance
