@@ -365,12 +365,12 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 - [X] T087 [US4] Review existing legend component from feature 001 at apps/web/src/features/legend/
 - [X] T088 [US4] Add hook to subscribe to line selection state in TrainLayer3D.tsx
 - [X] T089 [US4] Apply opacity filtering based on selected routeIds (highlight: 25%, isolate: 0%)
-- [ ] T090 [US4] Optionally: Optimize API calls to pass routeId filter in fetchTrainPositions()
+- [ ] T090 [US4] Optionally: Optimize API calls to pass routeId filter in fetchTrainPositions() (skipped - too complex)
 
 ### Panel Behavior
 
-- [ ] T091 [US4] Implement logic to close panel when selected train filtered out in TrainStateProvider.tsx
-- [ ] T092 [US4] Add watcher for line selection changes in TrainInfoPanel.tsx
+- [X] T091 [US4] Implement logic to close panel when selected train filtered out in TrainInfoPanel.tsx
+- [X] T092 [US4] Add watcher for line selection changes in TrainInfoPanel.tsx
 
 ### Visual Feedback
 
