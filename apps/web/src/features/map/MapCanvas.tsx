@@ -14,6 +14,7 @@ import type { MapViewport } from '../../types/rodalies';
 import { startMetric, endMetric } from '../../lib/analytics/perf';
 // import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
+import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
 import { setModelOrigin } from '../../lib/map/coordinates';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
@@ -89,6 +90,7 @@ export function MapCanvas() {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const copyFeedbackTimeoutRef = useRef<number | null>(null);
   const [raycastDebugInfo, setRaycastDebugInfo] = useState<RaycastDebugInfo | null>(null);
+  const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
 
   const { setMapInstance, setMapLoaded, setViewport } = useMapActions();
   const { highlightMode, highlightedLineId, highlightedLineIds } = useMapHighlightSelectors();
@@ -638,12 +640,15 @@ export function MapCanvas() {
         data-testid="map-canvas"
         aria-hidden={Boolean(error)}
       />
+      {/* T099: Show skeleton UI while initial train data is loading */}
+      {isTrainDataLoading && mapInstance && isMapLoaded ? <TrainLoadingSkeleton /> : null}
       {/* Phase B 2D markers replaced by Phase C 3D models */}
       {/* {mapInstance && isMapLoaded ? <TrainMarkers map={mapInstance} /> : null} */}
       {mapInstance && isMapLoaded ? (
         <TrainLayer3D
           map={mapInstance}
           onRaycastResult={SHOW_RAYCAST_DEBUG ? setRaycastDebugInfo : undefined}
+          onLoadingChange={setIsTrainDataLoading}
         />
       ) : null}
     </div>

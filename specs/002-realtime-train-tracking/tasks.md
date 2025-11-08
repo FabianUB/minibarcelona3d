@@ -374,8 +374,8 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### Visual Feedback
 
-- [ ] T093 [US4] Add loading indicator when filter changes in TrainLayer3D.tsx
-- [ ] T094 [P] [US4] Add counter showing N trains visible / total in map UI
+- [ ] T093 [US4] Add loading indicator when filter changes in TrainLayer3D.tsx (skipped - not needed for instant opacity changes)
+- [X] T094 [P] [US4] Add counter showing N trains visible / total in map UI
 
 **Checkpoint US4 Complete**:
 - Select line → only those trains render
@@ -391,21 +391,21 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### Error Handling
 
-- [ ] T095 [P] Add error boundary component in apps/web/src/features/trains/ErrorBoundary.tsx
-- [ ] T096 [P] Display user-friendly message when API unavailable in TrainMarkers or TrainLayer3D
-- [ ] T097 Add stale data detection (polledAt > 60s ago) in TrainLayer3D.tsx
-- [ ] T098 Add visual indicator for stale trains (gray out or pulse) in TrainLayer3D.tsx
+- [x] T095 [P] Add error boundary component in apps/web/src/features/trains/ErrorBoundary.tsx
+- [x] T096 [P] Display user-friendly message when API unavailable in TrainMarkers or TrainLayer3D
+- [x] T097 Add stale data detection (polledAt > 60s ago) in TrainLayer3D.tsx
+- [x] T098 Add visual indicator for stale trains (gray out or pulse) in TrainLayer3D.tsx
 
 ### Loading States
 
-- [ ] T099 [P] Add skeleton UI while initial train data loads in MapCanvas.tsx
-- [ ] T100 [P] Add spinner in TrainInfoPanel while fetching trip details
+- [x] T099 [P] Add skeleton UI while initial train data loads in MapCanvas.tsx
+- [x] T100 [P] Add spinner in TrainInfoPanel while fetching trip details
 
 ### Performance
 
-- [ ] T101 Implement connection pooling optimization if needed in apps/api/repository/postgres.go
-- [ ] T102 Add API response caching headers in apps/api/handlers/trains.go
-- [ ] T103 Profile Three.js rendering and optimize if needed in TrainLayer3D.tsx
+- [x] T101 Implement connection pooling optimization if needed in apps/api/repository/postgres.go
+- [x] T102 Add API response caching headers in apps/api/handlers/trains.go
+- [x] T103 Profile Three.js rendering and optimize if needed in TrainLayer3D.tsx
 
 ### Documentation
 

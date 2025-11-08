@@ -24,6 +24,7 @@ export function TrainInfoPanelMobile() {
   const [stationNames, setStationNames] = useState<Map<string, string>>(new Map());
   const [lines, setLines] = useState<RodaliesLine[]>([]);
   const [tripDetails, setTripDetails] = useState<TripDetails | null>(null);
+  const [isTripDetailsLoading, setIsTripDetailsLoading] = useState(false);
 
   useEffect(() => {
     loadStations().then((stationCollection) => {
@@ -43,6 +44,7 @@ export function TrainInfoPanelMobile() {
 
   useEffect(() => {
     if (selectedTrain?.tripId) {
+      setIsTripDetailsLoading(true);
       fetchTripDetails(selectedTrain.tripId)
         .then((details) => {
           setTripDetails(details);
@@ -50,9 +52,13 @@ export function TrainInfoPanelMobile() {
         .catch((err) => {
           console.error('Failed to fetch trip details for delay calculation:', err);
           setTripDetails(null);
+        })
+        .finally(() => {
+          setIsTripDetailsLoading(false);
         });
     } else {
       setTripDetails(null);
+      setIsTripDetailsLoading(false);
     }
   }, [selectedTrain?.tripId]);
 
@@ -155,7 +161,16 @@ export function TrainInfoPanelMobile() {
         <Separator className="my-1" />
 
         <div className="flex-1 overflow-y-auto pb-6 space-y-3">
-          {delay.status !== 'unknown' && (
+          {isTripDetailsLoading && (
+            <>
+              <div className="px-3 py-2 rounded-md text-sm font-medium bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center gap-2">
+                <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
+                <span className="text-gray-600 dark:text-gray-400">Loading trip details...</span>
+              </div>
+              <Separator />
+            </>
+          )}
+          {!isTripDetailsLoading && delay.status !== 'unknown' && (
             <>
               <div
                 className={cn(

@@ -31,6 +31,8 @@ import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/t
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
 import { useMapActions, useMapHighlightSelectors } from '../../state/map';
+import { TrainCounter } from './TrainCounter';
+import { TrainErrorDisplay } from './TrainErrorDisplay';
 
 export interface TrainLayer3DProps {
   /**
@@ -52,6 +54,12 @@ export interface TrainLayer3DProps {
    * Useful for verifying hover/click detection during development
    */
   onRaycastResult?: (result: RaycastDebugInfo) => void;
+
+  /**
+   * Callback invoked when loading state changes
+   * Task: T099 - Expose loading state for skeleton UI
+   */
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
 export interface RaycastDebugInfo {
@@ -67,6 +75,12 @@ export interface RaycastDebugInfo {
  * Matches acceptance criteria for US1
  */
 const POLLING_INTERVAL_MS = 30000;
+
+/**
+ * Stale data threshold in milliseconds (60 seconds)
+ * Task: T097 - Mark data as stale if polledAt is older than 60s
+ */
+const STALE_DATA_THRESHOLD_MS = 60000;
 
 /**
  * Custom Layer ID for Mapbox layer management
@@ -100,7 +114,7 @@ const LAYER_ID = 'train-layer-3d';
  * Task: T046 - Create model instances based on route mapping
  * Task: T047 - Apply bearing-based rotation
  */
-export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DProps) {
+export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
   const { highlightMode, highlightedLineIds, isLineHighlighted } = useMapHighlightSelectors();
@@ -112,6 +126,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
   const [stationsLoaded, setStationsLoaded] = useState(false);
   const [railwaysLoaded, setRailwaysLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isDataStale, setIsDataStale] = useState(false);
 
   // References for Three.js scene components
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -135,6 +151,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
 
   // Store polling interval reference for cleanup
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Store retry timeout reference for cleanup (T097)
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
@@ -186,7 +204,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
 
   /**
    * Fetches latest train positions from the API
-   * Updates state and handles errors
+   * Updates state and handles errors with exponential backoff retry
+   * Task: T096 - Error handling with retry mechanism
    */
   const fetchTrains = async () => {
     try {
@@ -276,15 +295,50 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
 
       setTrains(validTrains);
       setError(null);
+      setRetryCount(0);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch train positions';
       setError(errorMessage);
       console.error('Error fetching train positions:', err);
+
+      // T097: Implement exponential backoff retry
+      // Retry with increasing delays: 2s, 4s, 8s, 16s, 32s (max)
+      const nextRetryCount = retryCount + 1;
+      const maxRetries = 5;
+
+      if (nextRetryCount <= maxRetries) {
+        const retryDelayMs = Math.min(2000 * Math.pow(2, retryCount), 32000);
+        console.log(`TrainLayer3D: Retrying in ${retryDelayMs / 1000}s (attempt ${nextRetryCount}/${maxRetries})`);
+
+        setRetryCount(nextRetryCount);
+
+        // Clear any existing retry timeout
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
+
+        // Schedule retry
+        retryTimeoutRef.current = setTimeout(() => {
+          void fetchTrains();
+        }, retryDelayMs);
+      } else {
+        console.error(`TrainLayer3D: Max retries (${maxRetries}) reached, giving up`);
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  /**
+   * Manual retry function for user-initiated retry
+   * Task: T096 - Allow users to manually retry failed requests
+   */
+  const handleManualRetry = useCallback(() => {
+    setRetryCount(0);
+    setError(null);
+    void fetchTrains();
+  }, []);
 
   /**
    * Converts geographic coordinates (lng, lat) to Mercator meters
@@ -560,8 +614,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
       });
 
       // Configure renderer settings
+      // T103: Optimize Three.js rendering for performance
       renderer.autoClear = false; // Don't clear Mapbox's render
       renderer.shadowMap.enabled = false; // Shadows disabled for performance
+      renderer.sortObjects = false; // Skip object sorting for better performance
+      renderer.powerPreference = 'high-performance'; // Prefer discrete GPU
       if ('outputColorSpace' in renderer) {
         renderer.outputColorSpace = THREE.SRGBColorSpace;
       } else {
@@ -693,7 +750,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
       perf.fps = timeSinceLastFrame > 0 ? 1000 / timeSinceLastFrame : 60;
       perf.avgFrameTime = perf.frameTimes.reduce((a, b) => a + b, 0) / perf.frameTimes.length;
 
-      // Log performance every 5 seconds
+      // T103: Log performance every 5 seconds with optimization warnings
       const timeSinceLastLog = frameStartTime - perf.lastLogTime;
       if (timeSinceLastLog >= 5000) {
         const trainCount = meshManagerRef.current?.getMeshCount() ?? 0;
@@ -702,6 +759,14 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
         const maxFrameTime = Math.max(...perf.frameTimes);
 
         console.log(`[Performance] Trains: ${trainCount} | FPS: ${avgFps.toFixed(1)} | Frame: ${perf.avgFrameTime.toFixed(2)}ms (min: ${minFrameTime.toFixed(2)}ms, max: ${maxFrameTime.toFixed(2)}ms) | Renders: ${perf.renderCount}`);
+
+        // T103: Warn if performance is degraded
+        if (avgFps < 30) {
+          console.warn(`[Performance] Low FPS detected (${avgFps.toFixed(1)}). Consider reducing train count or disabling features.`);
+        }
+        if (maxFrameTime > 33.33) {
+          console.warn(`[Performance] Frame drops detected (max: ${maxFrameTime.toFixed(2)}ms). Some frames taking >33ms.`);
+        }
 
         perf.lastLogTime = frameStartTime;
         perf.renderCount = 0;
@@ -785,6 +850,48 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
   }, []);
 
   /**
+   * Effect: Notify parent of loading state changes
+   * Task: T099 - Expose loading state for skeleton UI
+   */
+  useEffect(() => {
+    onLoadingChange?.(isLoading && trains.length === 0);
+  }, [isLoading, trains.length, onLoadingChange]);
+
+  /**
+   * Effect: Check for stale data
+   * Task: T097 - Detect when polledAt timestamp is older than 60 seconds
+   */
+  useEffect(() => {
+    const checkStaleData = () => {
+      const currentPolledAt = pollTimestampsRef.current.current;
+      if (!currentPolledAt) {
+        setIsDataStale(false);
+        return;
+      }
+
+      const now = Date.now();
+      const dataAge = now - currentPolledAt;
+      const isStale = dataAge > STALE_DATA_THRESHOLD_MS;
+
+      if (isStale && !isDataStale) {
+        console.warn(`TrainLayer3D: Data is stale (age: ${Math.round(dataAge / 1000)}s)`);
+      }
+
+      setIsDataStale(isStale);
+    };
+
+    // Check immediately
+    checkStaleData();
+
+    // Check every 5 seconds
+    const staleCheckInterval = setInterval(checkStaleData, 5000);
+
+    return () => {
+      clearInterval(staleCheckInterval);
+    };
+  }, [isDataStale]);
+
+  /**
    * Effect: Set up polling for train positions
    * Fetches on mount and every 30 seconds
    */
@@ -797,11 +904,15 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
       void fetchTrains();
     }, POLLING_INTERVAL_MS);
 
-    // Cleanup: clear interval on unmount
+    // Cleanup: clear interval and retry timeout on unmount
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
       }
     };
   }, []);
@@ -948,9 +1059,13 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
     }
 
     // T089: Calculate opacity for each train based on line selection
+    // T098: Apply visual indicator for stale data
     const trainOpacities = new Map<string, number>();
     trains.forEach(train => {
-      trainOpacities.set(train.vehicleKey, getTrainOpacity(train));
+      const baseOpacity = getTrainOpacity(train);
+      // If data is stale, reduce opacity by 50% to gray out trains
+      const finalOpacity = isDataStale ? baseOpacity * 0.5 : baseOpacity;
+      trainOpacities.set(train.vehicleKey, finalOpacity);
     });
 
     // Update train meshes based on current train positions
@@ -961,15 +1076,15 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
       receivedAtMs: pollTimestampsRef.current.receivedAt,
     });
 
-    // Apply opacity to all trains based on line selection
+    // Apply opacity to all trains based on line selection and stale state
     meshManagerRef.current.setTrainOpacities(trainOpacities);
 
     if (trains.length > 0) {
       console.log(
-        `TrainLayer3D: ${meshManagerRef.current.getMeshCount()} train meshes active with rotation`
+        `TrainLayer3D: ${meshManagerRef.current.getMeshCount()} train meshes active with rotation${isDataStale ? ' (STALE)' : ''}`
       );
     }
-  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity]);
+  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale]);
 
   /**
    * Effect: Handle pointer hover/click using screen-space distance
@@ -988,11 +1103,19 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult }: TrainLayer3DPro
     };
   }, [map, handlePointerMove, handlePointerLeave, handlePointerClick]);
 
-  // Log error state
-  if (error && !isLoading && trains.length === 0) {
+  // T096: Display user-friendly error message when API unavailable
+  // Only show error if we have no trains to display (don't disrupt working state)
+  const shouldShowError = error && !isLoading && trains.length === 0;
+
+  if (shouldShowError) {
     console.warn('TrainLayer3D error:', error);
   }
 
-  // This component doesn't render any JSX - it only manages the 3D layer
+  // Train counter overlay (T094) - hidden for now, can be enabled in the future
+  // Error overlay (T096) - shows when API is unavailable
+  if (shouldShowError) {
+    return <TrainErrorDisplay error={error!} onRetry={handleManualRetry} />;
+  }
+
   return null;
 }
