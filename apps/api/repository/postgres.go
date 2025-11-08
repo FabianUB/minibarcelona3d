@@ -18,7 +18,21 @@ type TrainRepository struct {
 }
 
 func NewTrainRepository(databaseURL string) (*TrainRepository, error) {
-	pool, err := pgxpool.New(context.Background(), databaseURL)
+	// T101: Configure connection pool for optimal performance
+	config, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse database URL: %w", err)
+	}
+
+	// Set pool size based on workload characteristics
+	// For read-heavy workloads with ~30s polling, smaller pool is sufficient
+	config.MaxConns = 10                          // Maximum connections in the pool
+	config.MinConns = 2                           // Minimum idle connections to maintain
+	config.MaxConnLifetime = 1 * time.Hour        // Recycle connections after 1 hour
+	config.MaxConnIdleTime = 5 * time.Minute      // Close idle connections after 5 minutes
+	config.HealthCheckPeriod = 30 * time.Second   // Check connection health every 30s
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}

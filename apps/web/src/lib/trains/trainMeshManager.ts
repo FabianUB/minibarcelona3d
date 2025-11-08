@@ -450,6 +450,10 @@ export class TrainMeshManager {
     // This allows us to separate "lay flat" rotation from "direction" rotation
     const mesh = new THREE.Group();
 
+    // T103: Performance optimizations for Three.js rendering
+    mesh.matrixAutoUpdate = true; // Keep auto-update for smooth animations
+    mesh.frustumCulled = false; // Disable frustum culling as Mapbox handles viewport
+
     // First, rotate the model to lay flat on the map (XY plane)
     // The models appear to be oriented with Z-up; rotating +90° keeps the roof up
     trainModel.rotation.x = Math.PI / 2;

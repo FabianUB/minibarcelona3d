@@ -81,7 +81,11 @@ func (h *TrainHandler) GetAllTrains(w http.ResponseWriter, r *http.Request) {
 		PolledAt: time.Now().UTC(),
 	}
 
+	// T102: Add caching headers for performance
+	// Cache for 15 seconds (half of 30s polling interval to ensure freshness)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=15, stale-while-revalidate=10")
+	w.Header().Set("Vary", "Accept-Encoding")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
@@ -129,7 +133,11 @@ func (h *TrainHandler) GetTrainByKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// T102: Add caching headers for individual train details
+	// Cache for 10 seconds for single train lookups
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=10, stale-while-revalidate=5")
+	w.Header().Set("Vary", "Accept-Encoding")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(train)
 }
@@ -165,7 +173,11 @@ func (h *TrainHandler) GetAllTrainPositions(w http.ResponseWriter, r *http.Reque
 		response.PreviousPolledAt = previousPolledAt
 	}
 
+	// T102: Add caching headers for position endpoint (most frequently polled)
+	// Cache for 15 seconds with stale-while-revalidate for smooth updates
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=15, stale-while-revalidate=10")
+	w.Header().Set("Vary", "Accept-Encoding")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
@@ -208,7 +220,11 @@ func (h *TrainHandler) GetTripDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// T102: Add caching headers for trip details
+	// Trip schedules are relatively static, can cache longer (5 minutes)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=300, stale-while-revalidate=60")
+	w.Header().Set("Vary", "Accept-Encoding")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(tripDetails)
 }
