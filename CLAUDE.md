@@ -99,9 +99,10 @@ Data types:
 Features are organized by domain in `apps/web/src/features/`:
 - `map/`: Mapbox canvas, controls, viewport management
 - `legend/`: Line legend UI and interaction (not yet implemented)
+- `trains/`: Real-time train visualization and info panels
 
 Shared code:
-- `lib/`: Reusable utilities (data loaders, etc.)
+- `lib/`: Reusable utilities (data loaders, geometry processing, etc.)
 - `state/`: Global state providers
 - `types/`: TypeScript type definitions
 - `styles/`: CSS modules/global styles
@@ -146,12 +147,26 @@ Three-tier testing approach (see `docs/TESTS.md`):
 
 ## Key Files to Understand
 
+**Core Application:**
 - `apps/web/src/App.tsx`: Application root with MapStateProvider
 - `apps/web/src/state/map/MapStateProvider.tsx`: Core state management reducer
 - `apps/web/src/lib/rodalies/dataLoader.ts`: Data fetching and caching layer
 - `apps/web/src/types/rodalies.ts`: Complete type system
 - `apps/web/vite.config.ts`: Vite configuration with test setup
 - `apps/web/playwright.config.ts`: E2E test configuration with multi-browser matrix
+
+**Train Features:**
+- `apps/web/src/features/trains/TrainLayer3D.tsx`: 3D train rendering with Three.js via Mapbox Custom Layer API
+- `apps/web/src/lib/trains/trainMeshManager.ts`: Manages train mesh lifecycle, positioning, and animations
+- `apps/web/src/lib/trains/geometry.ts`: Railway line snapping and bearing calculations
+- `apps/web/src/features/trains/TrainInfoPanel*.tsx`: Train details panels (desktop/mobile)
+- `apps/web/src/state/trains/`: Train-specific state management (Zustand)
+- `apps/web/src/lib/api/trains.ts`: API client for train data
+
+**Backend API:**
+- `apps/api/handlers/trains.go`: HTTP handlers for train endpoints
+- `apps/api/repository/postgres.go`: Database queries with connection pooling
+- `apps/api/models/trains.go`: Go data models for train entities
 
 ## Development Workflow
 
@@ -186,6 +201,85 @@ const { isLineHighlighted } = useMapHighlightSelectors();
 
 // Or get all at once
 const [state, actions, selectors] = useMapStore();
+```
+
+**Train state management pattern:**
+```typescript
+// Train-specific state (separate from map state)
+const { selectedTrain, isPanelOpen } = useTrainState();
+const { selectTrain, clearSelection } = useTrainActions();
+
+// Selecting a train
+const handleTrainClick = async (vehicleKey: string) => {
+  const trainData = await fetchTrainByKey(vehicleKey);
+  selectTrain(trainData);
+  setActivePanel('trainInfo');
+};
+```
+
+**3D Train Rendering with Three.js:**
+```typescript
+// TrainLayer3D uses Mapbox Custom Layer API
+// Task reference pattern for tracking implementation
+/**
+ * Effect: Update train meshes when data changes
+ * Tasks: T046 - Create mesh instances
+ *        T047 - Apply bearing-based rotation
+ */
+useEffect(() => {
+  meshManagerRef.current.updateTrainMeshes(trains, previousPositions, {
+    currentPolledAtMs,
+    previousPolledAtMs,
+    receivedAtMs,
+  });
+}, [trains, modelsLoaded, stationsLoaded]);
+
+// Performance monitoring is built-in
+// Logs FPS and frame times every 5 seconds
+// Warns if FPS < 30 or frame time > 33ms
+```
+
+**Railway geometry snapping:**
+```typescript
+// Snap train positions to railway lines for realistic movement
+const preprocessed = preprocessRailwayLine(feature.geometry);
+const snapState = snapToRailwayLine(
+  trainPosition,
+  nextStopPosition,
+  preprocessedLine
+);
+
+// Apply bearing from snapped position
+meshManager.applyRailwayBearing(mesh, snapState.bearing, reversed);
+```
+
+**API data fetching with error handling:**
+```typescript
+// Use built-in retry mechanism with exponential backoff
+const fetchTrains = async () => {
+  try {
+    const response = await fetchTrainPositions();
+    setTrains(response.positions);
+    setError(null);
+    setRetryCount(0);
+  } catch (err) {
+    setError(err.message);
+    // Exponential backoff: 2s, 4s, 8s, 16s, 32s (max 5 retries)
+    const retryDelayMs = Math.min(2000 * Math.pow(2, retryCount), 32000);
+    setTimeout(() => fetchTrains(), retryDelayMs);
+  }
+};
+```
+
+**Stale data detection:**
+```typescript
+// Check if data is older than threshold (60s)
+const dataAge = Date.now() - polledAtTimestamp;
+const isStale = dataAge > 60000;
+
+// Apply visual indicator (reduce opacity by 50%)
+const opacity = isStale ? baseOpacity * 0.5 : baseOpacity;
+meshManager.setTrainOpacities(trainOpacities);
 ```
 
 ## Coding Standards

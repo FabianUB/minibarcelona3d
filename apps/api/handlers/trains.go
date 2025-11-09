@@ -221,9 +221,10 @@ func (h *TrainHandler) GetTripDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// T102: Add caching headers for trip details
-	// Trip schedules are relatively static, can cache longer (5 minutes)
+	// Trip details include real-time delay data, cache for 15 seconds like positions
+	// This ensures delay calculations remain accurate while reducing load
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Cache-Control", "public, max-age=300, stale-while-revalidate=60")
+	w.Header().Set("Cache-Control", "public, max-age=15, stale-while-revalidate=10")
 	w.Header().Set("Vary", "Accept-Encoding")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(tripDetails)

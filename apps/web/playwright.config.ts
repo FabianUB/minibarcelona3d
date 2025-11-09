@@ -5,6 +5,8 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173'
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: '**/deprecated/**',
+  outputDir: 'test-results/playwright-artifacts',
   timeout: 60_000,
   expect: {
     timeout: 5_000,
@@ -13,10 +15,10 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
   reporter: isCI
-    ? [['github'], ['html', { outputFolder: 'test-results/playwright' }]]
+    ? [['github'], ['html', { outputFolder: 'test-results/playwright-report' }]]
     : [
         ['list'],
-        ['html', { outputFolder: 'test-results/playwright', open: 'never' }],
+        ['html', { outputFolder: 'test-results/playwright-report', open: 'never' }],
       ],
   use: {
     baseURL,
