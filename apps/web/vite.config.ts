@@ -1,10 +1,8 @@
 import path from "path"
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite"
 import { visualizer } from 'rollup-plugin-visualizer'
-import { configDefaults } from 'vitest/config'
-import type { PluginOption } from 'vite'
 
 const shouldVisualizeBundle =
   typeof process.env.ANALYZE_BUNDLE !== 'undefined' &&
@@ -22,7 +20,7 @@ export default defineConfig({
 	            template: 'treemap',
 	            gzipSize: true,
 	            brotliSize: true,
-	          }) as PluginOption,
+	          }),
 	        ]
 	      : []),
   ],
@@ -41,9 +39,5 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  test: {
-    environment: 'jsdom',
-    exclude: [...configDefaults.exclude, 'e2e/**'],
   },
 })

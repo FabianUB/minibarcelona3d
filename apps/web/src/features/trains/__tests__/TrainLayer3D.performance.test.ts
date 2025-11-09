@@ -30,8 +30,8 @@ function generateMockTrainPositions(count: number): TrainPosition[] {
       latitude: baseLat + (Math.random() - 0.5) * 0.1, // ~5km radius
       longitude: baseLng + (Math.random() - 0.5) * 0.1,
       nextStopId: stations[i % stations.length],
-      vehicleLabel: `Train ${i}`,
-      timestamp: new Date().toISOString(),
+      status: 'IN_TRANSIT_TO',
+      polledAtUtc: new Date().toISOString(),
     });
   }
 
@@ -40,13 +40,14 @@ function generateMockTrainPositions(count: number): TrainPosition[] {
 
 /**
  * Performance metrics collector
+ * @deprecated Currently not actively used but kept for future performance profiling
  */
-interface PerformanceMetrics {
-  fps: number[];
-  frameTimes: number[];
-  meshCount: number;
-  duration: number;
-}
+// interface PerformanceMetrics {
+//   fps: number[];
+//   frameTimes: number[];
+//   meshCount: number;
+//   duration: number;
+// }
 
 describe('TrainLayer3D Performance Tests', () => {
   beforeEach(() => {
@@ -229,6 +230,7 @@ describe('TrainLayer3D Performance Tests', () => {
 
       // Verify coordinates are still valid
       const allValid = trains.every(t =>
+        t.latitude !== null && t.longitude !== null &&
         t.latitude > 40 && t.latitude < 43 &&
         t.longitude > 1 && t.longitude < 3
       );

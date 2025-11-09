@@ -21,7 +21,6 @@ import {
   type RailwaySnapResult,
 } from './geometry';
 import { getModelPosition, getModelScale, getLngLatFromModelPosition } from '../map/coordinates';
-import mapboxgl from 'mapbox-gl';
 
 /**
  * Metadata stored with each train mesh

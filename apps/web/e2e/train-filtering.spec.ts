@@ -22,6 +22,13 @@ test.describe('Train Line Filtering', () => {
 
     // Wait for map and trains to initialize
     await page.waitForTimeout(3000);
+
+    // Expand the legend (desktop only - on mobile it's a sheet)
+    const legendButton = page.locator('[data-testid="legend-toggle-button"]');
+    if (await legendButton.isVisible()) {
+      await legendButton.click();
+      await page.waitForTimeout(500);
+    }
   });
 
   test('should render legend with clickable line items', async ({ page }) => {

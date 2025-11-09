@@ -17,9 +17,9 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
+import type { Map as MapboxMap } from 'mapbox-gl';
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { TrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
@@ -31,7 +31,6 @@ import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/t
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
 import { useMapActions, useMapHighlightSelectors } from '../../state/map';
-import { TrainCounter } from './TrainCounter';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 
 export interface TrainLayer3DProps {
@@ -39,7 +38,7 @@ export interface TrainLayer3DProps {
    * Mapbox GL Map instance to render 3D models on
    * Must be initialized and loaded before passing to this component
    */
-  map: mapboxgl.Map;
+  map: MapboxMap;
 
   /**
    * Layer ID to insert train layer before (z-index control)
@@ -618,7 +617,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       renderer.autoClear = false; // Don't clear Mapbox's render
       renderer.shadowMap.enabled = false; // Shadows disabled for performance
       renderer.sortObjects = false; // Skip object sorting for better performance
-      renderer.powerPreference = 'high-performance'; // Prefer discrete GPU
       if ('outputColorSpace' in renderer) {
         renderer.outputColorSpace = THREE.SRGBColorSpace;
       } else {
@@ -627,7 +625,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       }
       renderer.toneMapping = THREE.LinearToneMapping;
       renderer.toneMappingExposure = 1.0;
-      renderer.physicallyCorrectLights = true;
       rendererRef.current = renderer;
 
       // Apply neutral environment lighting similar to GLTF viewer
