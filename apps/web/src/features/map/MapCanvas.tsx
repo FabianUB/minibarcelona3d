@@ -540,7 +540,7 @@ export function MapCanvas() {
 
     // Update each paint property
     Object.entries(paintProperties).forEach(([property, value]) => {
-      map.setPaintProperty(RODALIES_LINE_LAYER_ID, property, value);
+      map.setPaintProperty(RODALIES_LINE_LAYER_ID, property as any, value);
     });
   }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
 

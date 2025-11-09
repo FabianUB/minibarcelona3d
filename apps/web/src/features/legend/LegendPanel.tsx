@@ -97,6 +97,7 @@ export function LegendPanel() {
             <button
               key={item.lineId}
               data-testid={`legend-entry-${item.lineId}`}
+              data-line-id={item.lineId}
               aria-pressed={isActive}
               aria-label={`${item.lineId}: ${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')}`}
               onMouseDown={() => handleMouseDown(item.lineId)}
@@ -144,6 +145,7 @@ export function LegendPanel() {
         {!isExpanded ? (
           // Collapsed: Circular rail icon button
           <button
+            data-testid="legend-toggle-button"
             onClick={() => setActivePanel('legend')}
             className="fixed top-4 left-4 w-12 h-12 rounded-full bg-card shadow-lg z-10 flex items-center justify-center hover:scale-105 transition-transform border border-border"
             aria-label="Show legend"
@@ -172,7 +174,7 @@ export function LegendPanel() {
           </button>
         ) : (
           // Expanded: Full legend panel
-          <Card className="fixed top-4 left-4 w-64 shadow-lg z-10" data-testid="legend-panel">
+          <Card className="fixed top-4 left-4 w-64 shadow-lg z-10" data-testid="rodalies-legend">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center justify-between text-sm">
                 <span>Rodalies Lines</span>

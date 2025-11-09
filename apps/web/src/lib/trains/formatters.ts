@@ -4,7 +4,7 @@ import type { Train } from '../../types/trains';
  * Calculate delay based on scheduled time vs current time
  * Used as fallback when real-time delay data is not available
  */
-function calculateScheduleDelay(scheduledTime: string | null): number | null {
+export function calculateScheduleDelay(scheduledTime: string | null): number | null {
   if (!scheduledTime) return null;
 
   const now = new Date();

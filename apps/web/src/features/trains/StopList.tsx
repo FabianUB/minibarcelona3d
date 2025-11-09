@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { fetchTripDetails } from '@/lib/api/trains';
 import type { StopTime } from '@/types/trains';
@@ -17,7 +16,6 @@ interface StopListProps {
 
 export function StopList({
   tripId,
-  currentStopId,
   nextStopId,
   previousStopName,
   currentStopName,
@@ -258,7 +256,6 @@ export function StopList({
 
             // Calculate delay based on schedule vs current time
             let delaySeconds: number | null = null;
-            let isLate = false;
 
             // Only show delay for the next stop
             if (status === 'next') {
@@ -266,7 +263,6 @@ export function StopList({
               const calculatedDelay = calculateScheduleDelay(rawScheduledTime);
               if (calculatedDelay !== null && calculatedDelay > 0) {
                 delaySeconds = calculatedDelay;
-                isLate = true;
               }
             }
             // For 'completed' and 'upcoming' stops: don't show delay

@@ -111,6 +111,7 @@ export function LegendSheet({
                 <button
                   key={item.lineId}
                   data-testid={`legend-entry-${item.lineId}`}
+                  data-line-id={item.lineId}
                   aria-pressed={isActive}
                   aria-label={`${item.lineId}: ${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')}`}
                   onMouseDown={() => handleMouseDown(item.lineId)}
