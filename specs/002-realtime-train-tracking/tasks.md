@@ -409,15 +409,15 @@ _Status_: Paused. See `docs/MINI-TOKYO-3D.md` for the future implementation plan
 
 ### Documentation
 
-- [ ] T104 [P] Update CLAUDE.md with train feature patterns and best practices
-- [ ] T105 [P] Add API documentation to README in apps/api/
-- [ ] T106 Validate quickstart.md instructions still work
+- [x] T104 [P] Update CLAUDE.md with train feature patterns and best practices
+- [x] T105 [P] Add API documentation to README in apps/api/
+- [x] T106 Validate quickstart.md instructions still work
 
 ### Testing
 
-- [ ] T107 [P] Add E2E test for info panel interaction in apps/web/e2e/train-info-panel.spec.ts
-- [ ] T108 [P] Add E2E test for line filtering in apps/web/e2e/train-filtering.spec.ts
-- [ ] T109 Run full E2E test suite across all browsers (Chromium, Firefox, WebKit)
+- [x] T107 [P] Add E2E test for info panel interaction in apps/web/e2e/train-info-panel.spec.ts
+- [x] T108 [P] Add E2E test for line filtering in apps/web/e2e/train-filtering.spec.ts
+- [x] T109 Run full E2E test suite across all browsers (Chromium, Firefox, WebKit)
 
 **Final Checkpoint**: All user stories work independently and together
 
@@ -573,7 +573,7 @@ With 3 developers after Phase 2 completes:
   - Phase 4.5 (Mini Tokyo 3D patterns): 21 tasks
     - Critical fixes: 11 tasks (T052a-T052k)
     - Testing: 3 tasks (T052l-T052n)
-    - Zoom scaling: 3 tasks (T052o-T052q)
+    - Zoom scaling: 3 tasks (Postponed)
     - Optional snapping: 4 tasks (T052r-T052u)
 - Phase 5 (US2 Panel): 18 tasks
 - Phase 6 (US3 Stops): 15 tasks
