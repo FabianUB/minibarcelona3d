@@ -51,7 +51,7 @@ test.describe('Mobile Accessibility', () => {
     ).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('high contrast toggle is accessible on mobile', async ({ page, browserName }) => {
+  test('high contrast toggle is accessible on mobile', async ({ page }) => {
     // KNOWN ISSUE: This test is flaky across browsers on mobile - the sheet closes after clicking the toggle
     // The functionality works correctly in manual testing and passes in Chromium desktop
     // This is a Playwright/mobile sheet interaction timing issue

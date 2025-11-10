@@ -540,6 +540,8 @@ export function MapCanvas() {
 
     // Update each paint property
     Object.entries(paintProperties).forEach(([property, value]) => {
+      // TypeScript doesn't recognize dynamic property names from Object.entries
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.setPaintProperty(RODALIES_LINE_LAYER_ID, property as any, value);
     });
   }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
