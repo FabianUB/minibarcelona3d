@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:ci": "playwright test --reporter=line",
+    "test:e2e:ci": "playwright test --project=chromium --reporter=line",
     "test:accessibility": "playwright test --project=chromium-axe --grep @axe",
     "analyze-bundle": "cross-env ANALYZE_BUNDLE=1 npm run build"
   },

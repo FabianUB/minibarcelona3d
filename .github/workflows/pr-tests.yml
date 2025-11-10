@@ -75,12 +75,12 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: apps/web
       - name: Run E2E tests (Chromium only)
-        run: npm run test:e2e:ci -- --project=chromium
+        run: npm run test:e2e:ci
         working-directory: apps/web
         env:
           CI: true
       - name: Run accessibility tests
-        run: npm run test:accessibility -- --project=chromium
+        run: npm run test:accessibility
         working-directory: apps/web
         env:
           CI: true
