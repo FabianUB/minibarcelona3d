@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:ci": "playwright test --reporter=line",
+    "test:e2e:ci": "playwright test --project=chromium --reporter=line",
     "test:accessibility": "playwright test --project=chromium-axe --grep @axe",
     "analyze-bundle": "cross-env ANALYZE_BUNDLE=1 npm run build"
   },
@@ -22,6 +22,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.6",
     "@tailwindcss/vite": "^4.1.16",
+    "@types/three": "^0.180.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -30,7 +31,8 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.1.16"
+    "tailwindcss": "^4.1.16",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

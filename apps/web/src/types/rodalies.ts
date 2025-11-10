@@ -104,7 +104,7 @@ export interface LegendEntry {
 
 export type MapHighlightMode = 'none' | 'highlight' | 'isolate';
 
-export type ActivePanel = 'none' | 'legend' | 'settings';
+export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo';
 
 export interface MapUIState {
   selectedLineId: string | null; // Deprecated: kept for backwards compatibility

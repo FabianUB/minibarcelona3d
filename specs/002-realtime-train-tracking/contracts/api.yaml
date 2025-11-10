@@ -1,0 +1,386 @@
+openapi: 3.0.3
+info:
+  title: Rodalies Real-Time Train Tracking API
+  description: |
+    REST API for real-time train position and status data.
+
+    **Phased Implementation**:
+    - Phase A: Core endpoints (`/trains`, `/trains/{vehicleKey}`)
+    - Phase B: Lightweight polling endpoint (`/trains/positions`)
+    - Phase D: Trip details endpoint (`/trains/{vehicleKey}/trip`) - Future
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local development
+  - url: http://localhost:5173/api
+    description: Vite dev server proxy
+
+tags:
+  - name: trains
+    description: Real-time train position and status
+
+paths:
+  /trains:
+    get:
+      tags: [trains]
+      summary: Get all active trains
+      description: |
+        Returns all currently active Rodalies trains from `rt_rodalies_vehicle_current` table.
+        Results include full train details (position, delays, stops).
+
+        **Phase**: A (MVP)
+        **Performance**: <100ms for ~100 trains
+      parameters:
+        - name: route_id
+          in: query
+          description: Filter by route/line ID (optional)
+          required: false
+          schema:
+            type: string
+            example: "R1"
+      responses:
+        '200':
+          description: List of active trains
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [trains, count, polledAt]
+                properties:
+                  trains:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Train'
+                  count:
+                    type: integer
+                    description: Number of trains returned
+                    example: 87
+                  polledAt:
+                    type: string
+                    format: date-time
+                    description: Server timestamp when data was retrieved
+                    example: "2025-10-24T14:30:45Z"
+              example:
+                trains:
+                  - vehicleKey: "vehicle:R12345"
+                    vehicleId: "R12345"
+                    vehicleLabel: "R12345"
+                    routeId: "R1"
+                    latitude: 41.3851
+                    longitude: 2.1734
+                    nextStopId: "71801"
+                    status: "IN_TRANSIT_TO"
+                    arrivalDelaySeconds: 120
+                    polledAtUtc: "2025-10-24T14:30:40Z"
+                count: 1
+                polledAt: "2025-10-24T14:30:45Z"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /trains/positions:
+    get:
+      tags: [trains]
+      summary: Get lightweight train positions
+      description: |
+        Returns minimal train data optimized for frequent polling.
+        Only includes position, route, and status - no delay details.
+
+        **Phase**: B (Proof of concept)
+        **Use case**: Frontend polling every 15-30 seconds
+        **Performance**: <50ms for ~100 trains
+      parameters:
+        - name: route_id
+          in: query
+          description: Filter by route/line ID (optional)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of train positions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [positions, count, polledAt]
+                properties:
+                  positions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrainPosition'
+                  previousPositions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrainPosition'
+                    description: Previous snapshot of positions (if available) for immediate animation on load
+                  count:
+                    type: integer
+                  polledAt:
+                    type: string
+                    format: date-time
+                  previousPolledAt:
+                    type: string
+                    format: date-time
+                    description: Poll timestamp for the previous snapshot when `previousPositions` is present
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /trains/{vehicleKey}:
+    get:
+      tags: [trains]
+      summary: Get single train details
+      description: |
+        Returns full details for a specific train by vehicle key.
+
+        **Phase**: A (MVP)
+        **Use case**: When user clicks a train to see details
+        **Performance**: <10ms (primary key lookup)
+      parameters:
+        - name: vehicleKey
+          in: path
+          required: true
+          description: Unique train identifier (use this, not vehicleId)
+          schema:
+            type: string
+          example: "vehicle:R12345"
+      responses:
+        '200':
+          description: Train details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Train'
+        '404':
+          description: Train not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Train not found"
+                vehicleKey: "vehicle:R99999"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /health:
+    get:
+      tags: [health]
+      summary: Health check
+      description: Verifies API and database connectivity
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  database:
+                    type: string
+                    example: "connected"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  database:
+                    type: string
+                    example: "disconnected"
+
+components:
+  schemas:
+    Train:
+      type: object
+      required:
+        - vehicleKey
+        - vehicleLabel
+        - entityId
+        - routeId
+        - latitude
+        - longitude
+        - status
+        - polledAtUtc
+        - updatedAt
+      properties:
+        vehicleKey:
+          type: string
+          description: Stable unique identifier (always present)
+          example: "vehicle:R12345"
+        vehicleId:
+          type: string
+          nullable: true
+          description: Provider vehicle ID (may be null)
+          example: "R12345"
+        vehicleLabel:
+          type: string
+          description: User-facing train number (starts with R)
+          example: "R12345"
+        entityId:
+          type: string
+          description: GTFS-RT entity identifier
+          example: "entity:12345"
+        tripId:
+          type: string
+          nullable: true
+          description: GTFS trip identifier
+          example: "trip_001"
+        routeId:
+          type: string
+          description: Line/route identifier (links to feature 001)
+          example: "R1"
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 41.3851
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: 2.1734
+        currentStopId:
+          type: string
+          nullable: true
+          description: Stop where train is currently at (null if between stops)
+          example: "71801"
+        previousStopId:
+          type: string
+          nullable: true
+          description: Last stop before current position
+          example: "71800"
+        nextStopId:
+          type: string
+          nullable: true
+          description: Next scheduled stop (used for orientation)
+          example: "71802"
+        nextStopSequence:
+          type: integer
+          nullable: true
+          description: Sequence number of next stop in trip
+          example: 5
+        status:
+          type: string
+          description: GTFS VehicleStopStatus
+          enum: [IN_TRANSIT_TO, STOPPED_AT, INCOMING_AT]
+          example: "IN_TRANSIT_TO"
+        arrivalDelaySeconds:
+          type: integer
+          nullable: true
+          description: Seconds late (positive) or early (negative) at current stop
+          example: 120
+        departureDelaySeconds:
+          type: integer
+          nullable: true
+          description: Departure delay in seconds
+          example: 90
+        scheduleRelationship:
+          type: string
+          nullable: true
+          description: GTFS schedule relationship
+          enum: [SCHEDULED, SKIPPED, NO_DATA]
+          example: "SCHEDULED"
+        predictedArrivalUtc:
+          type: string
+          format: date-time
+          nullable: true
+          description: Predicted arrival time at next stop
+          example: "2025-10-24T14:45:00Z"
+        predictedDepartureUtc:
+          type: string
+          format: date-time
+          nullable: true
+          description: Predicted departure time from current stop
+          example: "2025-10-24T14:46:00Z"
+        vehicleTimestampUtc:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp from vehicle feed
+          example: "2025-10-24T14:30:35Z"
+        polledAtUtc:
+          type: string
+          format: date-time
+          description: When data was last polled from feed
+          example: "2025-10-24T14:30:40Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Database update timestamp
+          example: "2025-10-24T14:30:41Z"
+
+    TrainPosition:
+      type: object
+      required:
+        - vehicleKey
+        - latitude
+        - longitude
+        - routeId
+        - status
+        - polledAtUtc
+      properties:
+        vehicleKey:
+          type: string
+          example: "vehicle:R12345"
+        latitude:
+          type: number
+          format: double
+          example: 41.3851
+        longitude:
+          type: number
+          format: double
+          example: 2.1734
+        nextStopId:
+          type: string
+          nullable: true
+          example: "71802"
+        routeId:
+          type: string
+          example: "R1"
+        status:
+          type: string
+          example: "IN_TRANSIT_TO"
+        polledAtUtc:
+          type: string
+          format: date-time
+          example: "2025-10-24T14:30:40Z"
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Train not found"
+        details:
+          type: object
+          description: Additional error context
+          additionalProperties: true
+
+  responses:
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Database query failed"
+            details:
+              query: "SELECT * FROM rt_rodalies_vehicle_current"

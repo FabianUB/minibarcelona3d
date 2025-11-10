@@ -32,11 +32,11 @@ async function fetchLegendEntries(page: Page): Promise<LegendEntry[]> {
 }
 
 async function ensureLegendPanelVisible(page: Page): Promise<Locator> {
-  const legendPanel = page.getByTestId('legend-panel');
+  const legendPanel = page.getByTestId('rodalies-legend');
   if (await legendPanel.isVisible().catch(() => false)) {
     return legendPanel;
   }
-  const legendToggle = page.getByRole('button', { name: /legend/i });
+  const legendToggle = page.getByTestId('legend-toggle-button');
   await expect(
     legendToggle,
     'legend toggle button should be available when panel is hidden',

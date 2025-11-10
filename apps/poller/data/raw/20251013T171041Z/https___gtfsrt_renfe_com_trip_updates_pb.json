@@ -1,0 +1,2581 @@
+{
+  "header": {
+    "gtfs_realtime_version": "2.0",
+    "timestamp": "1760375401"
+  },
+  "entity": [
+    {
+      "id": "TUUPDATE_3016L23731C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3016L23731C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 360,
+              "time": "1760375571"
+            },
+            "stop_id": "51100"
+          }
+        ],
+        "delay": 360
+      }
+    },
+    {
+      "id": "TUUPDATE_3016L23565C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3016L23565C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760376014"
+            },
+            "stop_id": "50703"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_3016L23562C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3016L23562C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760376091"
+            },
+            "stop_id": "51003"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_3016L23733C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3016L23733C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375792"
+            },
+            "stop_id": "43027"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_3216L23168C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3216L23168C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375395"
+            },
+            "stop_id": "54408"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_3216L23381C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3216L23381C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375431"
+            },
+            "stop_id": "54508"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_3216L23379C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3216L23379C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375527"
+            },
+            "stop_id": "54514"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_3216L23374C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "3216L23374C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375502"
+            },
+            "stop_id": "54520"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L76251C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L76251C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375465"
+            },
+            "stop_id": "69105"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24350C6",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24350C6",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375575"
+            },
+            "stop_id": "65202"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24070C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24070C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 660,
+              "time": "1760375822"
+            },
+            "stop_id": "64200"
+          }
+        ],
+        "delay": 660
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24075C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24075C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 600,
+              "time": "1760375530"
+            },
+            "stop_id": "64105"
+          }
+        ],
+        "delay": 600
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24072C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24072C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375872"
+            },
+            "stop_id": "64107"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L76254C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L76254C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375751"
+            },
+            "stop_id": "69102"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24077C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24077C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375668"
+            },
+            "stop_id": "64107"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24352C6",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24352C6",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375374"
+            },
+            "stop_id": "65003"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24348C6",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24348C6",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 780,
+              "time": "1760375485"
+            },
+            "stop_id": "65208"
+          }
+        ],
+        "delay": 780
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24074C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24074C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375589"
+            },
+            "stop_id": "64103"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L76650C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L76650C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375596"
+            },
+            "stop_id": "66212"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24351C6",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24351C6",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375509"
+            },
+            "stop_id": "65005"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L76256C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L76256C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375505"
+            },
+            "stop_id": "69107"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_4016L24079C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "4016L24079C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375578"
+            },
+            "stop_id": "64203"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L28540R2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28540R2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375513"
+            },
+            "stop_id": "79005"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L28377R2S",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28377R2S",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375613"
+            },
+            "stop_id": "71704"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77979R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77979R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375401"
+            },
+            "stop_id": "78706"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77652R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77652R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375419"
+            },
+            "stop_id": "72303"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L28456R2N",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28456R2N",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375525"
+            },
+            "stop_id": "79006"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25452R2N",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25452R2N",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 540,
+              "time": "1760375656"
+            },
+            "stop_id": "71802"
+          }
+        ],
+        "delay": 540
+      }
+    },
+    {
+      "id": "TUCANCEL_5116L28592R2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28592R2",
+          "schedule_relationship": "CANCELED"
+        }
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25772R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25772R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375839"
+            },
+            "stop_id": "79009"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25774R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25774R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375564"
+            },
+            "stop_id": "79406"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77756R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77756R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375539"
+            },
+            "stop_id": "78707"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77136R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77136R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375626"
+            },
+            "stop_id": "72203"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77308R3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77308R3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375456"
+            },
+            "stop_id": "77307"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77855R7",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77855R7",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375432"
+            },
+            "stop_id": "72503"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUCANCEL_5116L28542R2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28542R2",
+          "schedule_relationship": "CANCELED"
+        }
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25676R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25676R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 360,
+              "time": "1760375503"
+            },
+            "stop_id": "79603"
+          }
+        ],
+        "delay": 360
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77329R3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77329R3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375533"
+            },
+            "stop_id": "77105"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25454R2N",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25454R2N",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375764"
+            },
+            "stop_id": "71707"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUCANCEL_5116L28594R2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28594R2",
+          "schedule_relationship": "CANCELED"
+        }
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L28538R2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28538R2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 1320,
+              "time": "1760375317"
+            },
+            "stop_id": "79006"
+          }
+        ],
+        "delay": 1320
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25670R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25670R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375437"
+            },
+            "stop_id": "79009"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77556R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77556R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375707"
+            },
+            "stop_id": "78804"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77650R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77650R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375611"
+            },
+            "stop_id": "78707"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25548R2S",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25548R2S",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 360,
+              "time": "1760375742"
+            },
+            "stop_id": "71802"
+          }
+        ],
+        "delay": 360
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L28454R2N",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28454R2N",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375472"
+            },
+            "stop_id": "71801"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25665R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25665R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375536"
+            },
+            "stop_id": "79502"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25768R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25768R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 1020,
+              "time": "1760375627"
+            },
+            "stop_id": "71801"
+          }
+        ],
+        "delay": 1020
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25672R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25672R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375574"
+            },
+            "stop_id": "79409"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77754R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77754R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375679"
+            },
+            "stop_id": "72305"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L15092R11",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L15092R11",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760376588"
+            },
+            "stop_id": "79009"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L28590R2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28590R2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 1080,
+              "time": "1760375822"
+            },
+            "stop_id": "71708"
+          }
+        ],
+        "delay": 1080
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77985R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77985R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375526"
+            },
+            "stop_id": "78710"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25770R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25770R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375495"
+            },
+            "stop_id": "78805"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25667R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25667R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375573"
+            },
+            "stop_id": "79500"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77450R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77450R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375631"
+            },
+            "stop_id": "78806"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25551R2S",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25551R2S",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375741"
+            },
+            "stop_id": "71700"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77976R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77976R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375455"
+            },
+            "stop_id": "71801"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77894R7",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77894R7",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375472"
+            },
+            "stop_id": "72303"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25775R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25775R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375563"
+            },
+            "stop_id": "78804"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77182R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77182R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375527"
+            },
+            "stop_id": "78704"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77560R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77560R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760376647"
+            },
+            "stop_id": "78700"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77130R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77130R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 1200,
+              "time": "1760375798"
+            },
+            "stop_id": "78600"
+          }
+        ],
+        "delay": 1200
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L28379R2S",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L28379R2S",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375314"
+            },
+            "stop_id": "71802"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77306R3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77306R3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 1260,
+              "time": "1760375509"
+            },
+            "stop_id": "77103"
+          }
+        ],
+        "delay": 1260
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25674R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25674R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375627"
+            },
+            "stop_id": "79600"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77178R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77178R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375573"
+            },
+            "stop_id": "72204"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25673R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25673R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375583"
+            },
+            "stop_id": "78805"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25776R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25776R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375480"
+            },
+            "stop_id": "79501"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77132R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77132R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375443"
+            },
+            "stop_id": "78704"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L15018R11",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L15018R11",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375501"
+            },
+            "stop_id": "71802"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77180R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77180R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375470"
+            },
+            "stop_id": "72301"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77325R3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77325R3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 540,
+              "time": "1760375427"
+            },
+            "stop_id": "77304"
+          }
+        ],
+        "delay": 540
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25448R2N",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25448R2N",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 1560,
+              "time": "1760375444"
+            },
+            "stop_id": "79101"
+          }
+        ],
+        "delay": 1560
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77752R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77752R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 420,
+              "time": "1760375571"
+            },
+            "stop_id": "72211"
+          }
+        ],
+        "delay": 420
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25663R1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25663R1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375446"
+            },
+            "stop_id": "79603"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L77134R4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L77134R4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375510"
+            },
+            "stop_id": "72301"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_5116L25549R2S",
+      "trip_update": {
+        "trip": {
+          "trip_id": "5116L25549R2S",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 540,
+              "time": "1760375724"
+            },
+            "stop_id": "71600"
+          }
+        ],
+        "delay": 540
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L35866C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L35866C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375470"
+            },
+            "stop_id": "13111"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L35867C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L35867C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375414"
+            },
+            "stop_id": "13121"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L26070C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L26070C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375552"
+            },
+            "stop_id": "13508"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L26071C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L26071C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375445"
+            },
+            "stop_id": "13207"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L71539C4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L71539C4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375678"
+            },
+            "stop_id": "05465"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L71538C4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L71538C4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375524"
+            },
+            "stop_id": "05467"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L26069C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L26069C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375426"
+            },
+            "stop_id": "13507"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_6016L71536C4",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6016L71536C4",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375435"
+            },
+            "stop_id": "05485"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_6116L35953C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6116L35953C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375724"
+            },
+            "stop_id": "11506"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_6116L35956C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6116L35956C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375519"
+            },
+            "stop_id": "11509"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_6216L71177C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6216L71177C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375400"
+            },
+            "stop_id": "05631"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_6216L71372C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6216L71372C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375644"
+            },
+            "stop_id": "14223"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_6216L71178C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6216L71178C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375444"
+            },
+            "stop_id": "05617"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_6216L71336C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6216L71336C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -120,
+              "time": "1760376218"
+            },
+            "stop_id": "05621"
+          }
+        ],
+        "delay": -120
+      }
+    },
+    {
+      "id": "TUUPDATE_6216L26939C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6216L26939C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375953"
+            },
+            "stop_id": "14234"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_6216L26934C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "6216L26934C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 660,
+              "time": "1760375780"
+            },
+            "stop_id": "14209"
+          }
+        ],
+        "delay": 660
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21154C10",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21154C10",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375580"
+            },
+            "stop_id": "10010"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21563C8A",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21563C8A",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -120,
+              "time": "1760376780"
+            },
+            "stop_id": "70105"
+          }
+        ],
+        "delay": -120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20087C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20087C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375640"
+            },
+            "stop_id": "60105"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21252C10",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21252C10",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375580"
+            },
+            "stop_id": "18001"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19732C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19732C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375820"
+            },
+            "stop_id": "35606"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20897C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20897C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375460"
+            },
+            "stop_id": "35011"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L35086C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L35086C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375580"
+            },
+            "stop_id": "18002"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19904C1",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19904C1",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375580"
+            },
+            "stop_id": "98003"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L80692C9",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L80692C9",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 1560,
+              "time": "1760376300"
+            },
+            "stop_id": "12020"
+          }
+        ],
+        "delay": 1560
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20889C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20889C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375340"
+            },
+            "stop_id": "35600"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21152C10",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21152C10",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 540,
+              "time": "1760375700"
+            },
+            "stop_id": "18000"
+          }
+        ],
+        "delay": 540
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20503C4B",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20503C4B",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 420,
+              "time": "1760375400"
+            },
+            "stop_id": "18101"
+          }
+        ],
+        "delay": 420
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19716C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19716C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375640"
+            },
+            "stop_id": "18000"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20301C4A",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20301C4A",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375760"
+            },
+            "stop_id": "18000"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20134C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20134C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375340"
+            },
+            "stop_id": "60103"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21250C10",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21250C10",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 360,
+              "time": "1760375460"
+            },
+            "stop_id": "10001"
+          }
+        ],
+        "delay": 360
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21773C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21773C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 780,
+              "time": "1760375640"
+            },
+            "stop_id": "70100"
+          }
+        ],
+        "delay": 780
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20878C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20878C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375520"
+            },
+            "stop_id": "35608"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20085C3",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20085C3",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375520"
+            },
+            "stop_id": "60101"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19729C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19729C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375520"
+            },
+            "stop_id": "35702"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21863C7",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21863C7",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375520"
+            },
+            "stop_id": "70102"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20494C4B",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20494C4B",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375700"
+            },
+            "stop_id": "17001"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19733C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19733C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375520"
+            },
+            "stop_id": "37001"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21156C10",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21156C10",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -120,
+              "time": "1760375520"
+            },
+            "stop_id": "10104"
+          }
+        ],
+        "delay": -120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21355C10",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21355C10",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 300,
+              "time": "1760375520"
+            },
+            "stop_id": "10001"
+          }
+        ],
+        "delay": 300
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20893C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20893C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375520"
+            },
+            "stop_id": "35703"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20308C4A",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20308C4A",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375400"
+            },
+            "stop_id": "19002"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21856C7",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21856C7",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": -60,
+              "time": "1760375760"
+            },
+            "stop_id": "10001"
+          }
+        ],
+        "delay": -60
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21850C7",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21850C7",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 480,
+              "time": "1760375340"
+            },
+            "stop_id": "70101"
+          }
+        ],
+        "delay": 480
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20297C4A",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20297C4A",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 420,
+              "time": "1760375580"
+            },
+            "stop_id": "19003"
+          }
+        ],
+        "delay": 420
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19708C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19708C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 240,
+              "time": "1760375520"
+            },
+            "stop_id": "35010"
+          }
+        ],
+        "delay": 240
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20299C4A",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20299C4A",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375640"
+            },
+            "stop_id": "17009"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21635C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21635C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375340"
+            },
+            "stop_id": "18002"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19712C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19712C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375580"
+            },
+            "stop_id": "37001"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21852C7",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21852C7",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 420,
+              "time": "1760375400"
+            },
+            "stop_id": "18001"
+          }
+        ],
+        "delay": 420
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20306C4A",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20306C4A",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375640"
+            },
+            "stop_id": "18101"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20885C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20885C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375340"
+            },
+            "stop_id": "35610"
+          }
+        ],
+        "delay": 180
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21352C10",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21352C10",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 780,
+              "time": "1760375580"
+            },
+            "stop_id": "10007"
+          }
+        ],
+        "delay": 780
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21760C2",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21760C2",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 600,
+              "time": "1760375400"
+            },
+            "stop_id": "70112"
+          }
+        ],
+        "delay": 600
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L19727C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L19727C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 120,
+              "time": "1760375640"
+            },
+            "stop_id": "35608"
+          }
+        ],
+        "delay": 120
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L21637C8A",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L21637C8A",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 780,
+              "time": "1760375340"
+            },
+            "stop_id": "70112"
+          }
+        ],
+        "delay": 780
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20876C5",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20876C5",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 60,
+              "time": "1760375520"
+            },
+            "stop_id": "35702"
+          }
+        ],
+        "delay": 60
+      }
+    },
+    {
+      "id": "TUUPDATE_1016L20632C8b",
+      "trip_update": {
+        "trip": {
+          "trip_id": "1016L20632C8b",
+          "schedule_relationship": "SCHEDULED"
+        },
+        "stop_time_update": [
+          {
+            "arrival": {
+              "delay": 180,
+              "time": "1760375640"
+            },
+            "stop_id": "10100"
+          }
+        ],
+        "delay": 180
+      }
+    }
+  ]
+}

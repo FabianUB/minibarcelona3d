@@ -1,0 +1,155 @@
+[
+  {
+    "line_id": "R1",
+    "label": "R1 - Molins de Rei - Maçanet-Massanes",
+    "theme_tokens": {
+      "standard": "solid-r1",
+      "high_contrast": "hatched-r1"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R2",
+    "label": "R2 - El Prat de Llobregat - Barcelona-Sant Andreu",
+    "theme_tokens": {
+      "standard": "solid-r2",
+      "high_contrast": "hatched-r2"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R2N",
+    "label": "R2N - Aeroport - Maçanet-Massanes",
+    "theme_tokens": {
+      "standard": "solid-r2n",
+      "high_contrast": "hatched-r2n"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R2S",
+    "label": "R2S - Sant Vicenc de Calders - Barcelona-Estació de França",
+    "theme_tokens": {
+      "standard": "solid-r2s",
+      "high_contrast": "hatched-r2s"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R3",
+    "label": "R3 - Barcelona-Fabra i Puig - Granollers-Canovelles",
+    "theme_tokens": {
+      "standard": "solid-r3",
+      "high_contrast": "hatched-r3"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R4",
+    "label": "R4 - Terrassa Estació del Nord - Castellbisbal",
+    "theme_tokens": {
+      "standard": "solid-r4",
+      "high_contrast": "hatched-r4"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R7",
+    "label": "R7 - Barcelona-Fabra i Puig - Cerdanyola-Universitat",
+    "theme_tokens": {
+      "standard": "solid-r7",
+      "high_contrast": "hatched-r7"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R8",
+    "label": "R8 - Castellbisbal - Cerdanyola-Universitat",
+    "theme_tokens": {
+      "standard": "solid-r8",
+      "high_contrast": "hatched-r8"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "RG1",
+    "label": "RG1 - Maçanet-Massanes - Figueres",
+    "theme_tokens": {
+      "standard": "solid-rg1",
+      "high_contrast": "hatched-rg1"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "RL3",
+    "label": "RL3 - Lleida - Cervera",
+    "theme_tokens": {
+      "standard": "solid-rl3",
+      "high_contrast": "hatched-rl3"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "RL4",
+    "label": "RL4 - Terrassa Estació del Nord - Lleida",
+    "theme_tokens": {
+      "standard": "solid-rl4",
+      "high_contrast": "hatched-rl4"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "RT2",
+    "label": "RT2 - Salou-Port Aventura - Tarragona",
+    "theme_tokens": {
+      "standard": "solid-rt2",
+      "high_contrast": "hatched-rt2"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R11",
+    "label": "R11 - Barcelona-Sant Andreu - Girona",
+    "theme_tokens": {
+      "standard": "solid-r11",
+      "high_contrast": "hatched-r11"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R14",
+    "label": "R14 - La Plana-Picamoixons - Tarragona",
+    "theme_tokens": {
+      "standard": "solid-r14",
+      "high_contrast": "hatched-r14"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R15",
+    "label": "R15 - Riba-roja d'Ebre - Caspe",
+    "theme_tokens": {
+      "standard": "solid-r15",
+      "high_contrast": "hatched-r15"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R16",
+    "label": "R16 - Tortosa - Barcelona-Estació de França",
+    "theme_tokens": {
+      "standard": "solid-r16",
+      "high_contrast": "hatched-r16"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R17",
+    "label": "R17 - Salou-Port Aventura - Barcelona-Estació de França",
+    "theme_tokens": {
+      "standard": "solid-r17",
+      "high_contrast": "hatched-r17"
+    },
+    "is_highlighted": false
+  }
+]
