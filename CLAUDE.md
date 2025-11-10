@@ -329,6 +329,8 @@ const routeTrains = trains.filter(t => t.routeId === selectedRoute);
 
 ## Active Technologies
 - PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`) (002-realtime-train-tracking)
+- TypeScript 5.9.3 (React 19.1.1 frontend) + Three.js 0.180.0, Mapbox GL JS 3.4.0, Vite 7.1.7 (003-train-line-colors-zoom)
+- Static JSON/GeoJSON files in `apps/web/public/rodalies_data/` (003-train-line-colors-zoom)
 
 ## Recent Changes
 - 002-realtime-train-tracking: Added PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`)
