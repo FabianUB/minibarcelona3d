@@ -316,6 +316,14 @@ export class TrainMeshManager {
     return bucket - half;
   }
 
+  private computeLateralOffset(offsetIndex: number): number {
+    const offsetMultiplier = offsetIndex;
+    const zoomFactor = this.currentZoom > this.lateralOffsetConfig.highZoomThreshold
+      ? this.lateralOffsetConfig.highZoomMultiplier
+      : 1.0;
+    return this.lateralOffsetConfig.baseStepMeters * offsetMultiplier * zoomFactor;
+  }
+
   private applyLateralOffset(
     position: { x: number; y: number },
     bearingInfo: { bearing: number; reversed: boolean } | null,
@@ -328,7 +336,7 @@ export class TrainMeshManager {
     const adjustedBearing = (bearingInfo.bearing + (bearingInfo.reversed ? 180 : 0) + 360) % 360;
     const bearingRad = (adjustedBearing * Math.PI) / 180;
 
-    const offsetMeters = offsetIndex * this.LATERAL_OFFSET_STEP_METERS;
+    const offsetMeters = this.computeLateralOffset(offsetIndex);
     if (offsetMeters === 0) {
       return;
     }
