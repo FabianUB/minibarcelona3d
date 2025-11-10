@@ -40,10 +40,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Extend TrainMeshData interface in apps/web/src/lib/trains/trainMeshManager.ts with screenSpaceScale, lastZoomBucket fields
-- [ ] T005 Add LateralOffsetConfig interface to apps/web/src/lib/trains/trainMeshManager.ts based on contracts/train-color-config.ts
-- [ ] T006 Modify TrainMeshManager constructor in apps/web/src/lib/trains/trainMeshManager.ts to accept zoom parameter for offset computation
-- [ ] T007 Add currentZoom state tracking to TrainMeshManager in apps/web/src/lib/trains/trainMeshManager.ts
+- [x] T004 Extend TrainMeshData interface in apps/web/src/lib/trains/trainMeshManager.ts with screenSpaceScale, lastZoomBucket fields
+- [x] T005 Add LateralOffsetConfig interface to apps/web/src/lib/trains/trainMeshManager.ts based on contracts/train-color-config.ts
+- [x] T006 Modify TrainMeshManager constructor in apps/web/src/lib/trains/trainMeshManager.ts to accept zoom parameter for offset computation
+- [x] T007 Add currentZoom state tracking to TrainMeshManager in apps/web/src/lib/trains/trainMeshManager.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
