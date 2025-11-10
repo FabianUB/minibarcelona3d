@@ -1,9 +1,8 @@
 import path from "path"
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite"
 import { visualizer } from 'rollup-plugin-visualizer'
-import { configDefaults } from 'vitest/config'
 
 const shouldVisualizeBundle =
   typeof process.env.ANALYZE_BUNDLE !== 'undefined' &&
@@ -14,16 +13,16 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    ...(shouldVisualizeBundle
-      ? [
-          visualizer({
-            filename: 'dist/bundle-analysis.html',
-            template: 'treemap',
-            gzipSize: true,
-            brotliSize: true,
-          }) as any,
-        ]
-      : []),
+	    ...(shouldVisualizeBundle
+	      ? [
+	          visualizer({
+	            filename: 'dist/bundle-analysis.html',
+	            template: 'treemap',
+	            gzipSize: true,
+	            brotliSize: true,
+	          }),
+	        ]
+	      : []),
   ],
   server: {
     host: true,
@@ -31,7 +30,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://api:8080', 
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:8081',
         changeOrigin: true,
       },
     },
@@ -40,9 +39,5 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  test: {
-    environment: 'jsdom',
-    exclude: [...configDefaults.exclude, 'e2e/**'],
   },
 })
