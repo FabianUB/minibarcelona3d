@@ -30,6 +30,17 @@ interface RailwaySnapState extends RailwaySnapResult {
   lineId: string;
 }
 
+/**
+ * Configuration for spatial separation of co-located trains
+ * Feature 003: Enhanced lateral offset at high zoom levels
+ */
+interface LateralOffsetConfig {
+  buckets: number; // Number of offset positions (default: 5)
+  baseStepMeters: number; // Base offset distance in meters (default: 1.6)
+  highZoomThreshold: number; // Zoom level threshold for increased offset (default: 14)
+  highZoomMultiplier: number; // Offset multiplier at high zoom (default: 1.5)
+}
+
 interface TrainMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
@@ -46,6 +57,9 @@ interface TrainMeshData {
   boundingRadius: number;
   hasUnrealisticSpeed: boolean;
   warningIndicator?: THREE.Sprite;
+  // Feature 003: Zoom-responsive scaling
+  screenSpaceScale: number; // Current zoom-responsive multiplier (0.48-1.6)
+  lastZoomBucket: number; // Quantized zoom level for cache invalidation (0.1 increments)
 }
 
 interface PollSnapshotMetadata {
@@ -97,6 +111,10 @@ export class TrainMeshManager {
   private readonly LATERAL_OFFSET_BUCKETS = 5;
   private readonly LATERAL_OFFSET_STEP_METERS = 1.6; // meters between trains laterally
 
+  // Feature 003: Zoom-responsive lateral offset configuration
+  private lateralOffsetConfig: LateralOffsetConfig;
+  private currentZoom: number = 10; // Default zoom level
+
   // Maximum realistic train speed: 200 km/h = ~55.6 m/s
   // Rodalies trains typically max out at 140 km/h (~39 m/s)
   // Add 50% buffer for high-speed sections and GPS/timing inaccuracies
@@ -127,7 +145,8 @@ export class TrainMeshManager {
   constructor(
     scene: THREE.Scene,
     stations: Station[],
-    railwayLines: Map<string, PreprocessedRailwayLine>
+    railwayLines: Map<string, PreprocessedRailwayLine>,
+    lateralOffsetConfig?: LateralOffsetConfig
   ) {
     this.scene = scene;
 
@@ -139,7 +158,23 @@ export class TrainMeshManager {
 
     this.railwayLines = railwayLines;
 
+    // Feature 003: Initialize lateral offset configuration
+    this.lateralOffsetConfig = lateralOffsetConfig ?? {
+      buckets: this.LATERAL_OFFSET_BUCKETS,
+      baseStepMeters: this.LATERAL_OFFSET_STEP_METERS,
+      highZoomThreshold: 14,
+      highZoomMultiplier: 1.5,
+    };
+
     console.log(`TrainMeshManager: Loaded ${this.stationMap.size} stations for bearing calculations`);
+  }
+
+  /**
+   * Update current zoom level for zoom-responsive lateral offset
+   * Feature 003: Called from render loop to track map zoom changes
+   */
+  public setCurrentZoom(zoom: number): void {
+    this.currentZoom = zoom;
   }
 
   private snapPositionToRailway(train: TrainPosition): RailwaySnapState | null {
@@ -528,6 +563,9 @@ export class TrainMeshManager {
       boundingCenterOffset: boundingSphere.center.clone(),
       boundingRadius: boundingSphere.radius,
       hasUnrealisticSpeed: false,
+      // Feature 003: Initialize zoom-responsive scaling fields
+      screenSpaceScale: 1.0, // Default to no scaling adjustment
+      lastZoomBucket: Math.round(this.currentZoom * 10) / 10, // Quantize to 0.1
     };
 
     return meshData;
