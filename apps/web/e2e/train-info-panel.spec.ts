@@ -60,7 +60,7 @@ test.describe('Train Info Panel', () => {
     }
   });
 
-  test('should display train details in panel (desktop)', async ({ page, viewport }) => {
+  test('should display train details in panel (desktop)', async ({ viewport }) => {
     // Only run on desktop viewports
     if (!viewport || viewport.width < 768) {
       test.skip();
@@ -79,7 +79,7 @@ test.describe('Train Info Panel', () => {
     test.skip();
   });
 
-  test('should display train details in panel (mobile)', async ({ page, viewport }) => {
+  test('should display train details in panel (mobile)', async ({ viewport }) => {
     // Only run on mobile viewports
     if (viewport && viewport.width >= 768) {
       test.skip();
