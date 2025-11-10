@@ -685,7 +685,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
      * Task: T054 - Performance monitoring
      */
     render(_gl: WebGLRenderingContext, matrix: Array<number>) {
-      // T054: Start frame time measurement
       const frameStartTime = performance.now();
 
       if (!sceneRef.current || !cameraRef.current || !rendererRef.current) {
@@ -694,7 +693,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
 
       const modelOrigin = getModelOrigin();
       if (!modelOrigin) {
-        // Model origin must be set during map load
         return;
       }
 
@@ -705,6 +703,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       }
 
       if (meshManagerRef.current) {
+        const currentZoom = map.getZoom();
+        meshManagerRef.current.setCurrentZoom(currentZoom);
         meshManagerRef.current.animatePositions();
       }
 

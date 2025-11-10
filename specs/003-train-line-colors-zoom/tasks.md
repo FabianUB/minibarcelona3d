@@ -61,10 +61,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [P] [US1] Create computeLateralOffset() method in apps/web/src/lib/trains/trainMeshManager.ts with zoom-responsive multiplier
-- [ ] T009 [US1] Modify updateTrainMeshes() in apps/web/src/lib/trains/trainMeshManager.ts to call computeLateralOffset() with current zoom
-- [ ] T010 [US1] Update position calculation in apps/web/src/lib/trains/trainMeshManager.ts to apply enhanced offset perpendicular to bearing
-- [ ] T011 [US1] Pass current zoom from TrainLayer3D.customLayer.render() to TrainMeshManager in apps/web/src/features/trains/TrainLayer3D.tsx
+- [x] T008 [P] [US1] Create computeLateralOffset() method in apps/web/src/lib/trains/trainMeshManager.ts with zoom-responsive multiplier
+- [x] T009 [US1] Modify updateTrainMeshes() in apps/web/src/lib/trains/trainMeshManager.ts to call computeLateralOffset() with current zoom
+- [x] T010 [US1] Update position calculation in apps/web/src/lib/trains/trainMeshManager.ts to apply enhanced offset perpendicular to bearing
+- [x] T011 [US1] Pass current zoom from TrainLayer3D.customLayer.render() to TrainMeshManager in apps/web/src/features/trains/TrainLayer3D.tsx
 - [ ] T012 [P] [US1] Add unit tests for computeLateralOffset() in apps/web/tests/unit/trainMeshManager.test.ts verifying 1.6m→2.4m at zoom>14
 - [ ] T013 [US1] Manual visual test per quickstart.md Scenario 1: verify spatial separation at Barcelona-Sants
 
