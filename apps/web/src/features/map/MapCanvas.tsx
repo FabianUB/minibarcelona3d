@@ -253,6 +253,7 @@ export function MapCanvas() {
       pitch: 60, // MiniTokyo3D style 3D perspective
       bearing: 0,
       maxBounds: initialViewportRef.current!.max_bounds,
+      maxZoom: 16.5,
       maxPitch: 60,
       attributionControl: true,
     });
@@ -356,16 +357,29 @@ export function MapCanvas() {
       // Find the first symbol layer to insert buildings before labels
       const firstSymbolId = layers?.find((layer) => layer.type === 'symbol')?.id;
 
-      // Hide POI and building labels for cleaner view
+      // Hide POI, building numbers, and other labels for cleaner view
       const labelsToHide = [
         'poi-label',
         'transit-label',
         'airport-label',
         'settlement-subdivision-label',
+        'settlement-minor-label',
+        'settlement-major-label',
+        'state-label',
+        'country-label',
+        'place-label',
+        'natural-point-label',
+        'natural-line-label',
+        'water-point-label',
+        'water-line-label',
+        'waterway-label',
+        'road-label',
+        'road-number',
+        'road-exit',
       ];
 
       layers?.forEach((layer) => {
-        if (labelsToHide.some((label) => layer.id.includes(label))) {
+        if (layer.type === 'symbol' && labelsToHide.some((label) => layer.id.includes(label))) {
           map.setLayoutProperty(layer.id, 'visibility', 'none');
         }
       });

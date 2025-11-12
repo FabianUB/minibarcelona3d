@@ -65,10 +65,11 @@
 - [x] T009 [US1] Modify updateTrainMeshes() in apps/web/src/lib/trains/trainMeshManager.ts to call computeLateralOffset() with current zoom
 - [x] T010 [US1] Update position calculation in apps/web/src/lib/trains/trainMeshManager.ts to apply enhanced offset perpendicular to bearing
 - [x] T011 [US1] Pass current zoom from TrainLayer3D.customLayer.render() to TrainMeshManager in apps/web/src/features/trains/TrainLayer3D.tsx
-- [ ] T012 [P] [US1] Add unit tests for computeLateralOffset() in apps/web/tests/unit/trainMeshManager.test.ts verifying 1.6m→2.4m at zoom>14
+- [x] T012 [P] [US1] Add unit tests for computeLateralOffset() in apps/web/tests/unit/trainMeshManager.test.ts verifying 40m→60m at zoom>14
+- [ ] T012a [US1] **BLOCKED: Lateral offset implementation temporarily disabled** - Need to first implement US2 (zoom-responsive sizing) to understand actual train scale at different zoom levels, then calculate appropriate offset values that work across all zoom levels
 - [ ] T013 [US1] Manual visual test per quickstart.md Scenario 1: verify spatial separation at Barcelona-Sants
 
-**Checkpoint**: At this point, trains should visibly separate at high zoom levels (zoom > 14)
+**Checkpoint**: MODIFIED - US1 implementation paused. Lateral offset feature requires US2 (zoom-responsive sizing) to be completed first to determine proper offset calibration. The offset calculation infrastructure is in place but disabled until train scale behavior is understood.
 
 ---
 
@@ -171,11 +172,11 @@
 - **User Story 2 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
 - **User Story 3 (P2)**: Can start after Foundational (Phase 2) - No dependencies on other stories (outline is independent feature)
 
-**NOTE**: US1 and US2 are both P1 and should be completed together for MVP. US3 can be deferred.
+**NOTE**: ⚠️ **DEPENDENCY CHANGE** - US2 must now be completed before US1 can be finalized. US1 lateral offset infrastructure is implemented but disabled pending US2 scale calibration. US3 can be deferred.
 
 ### Within Each User Story
 
-- US1: computeLateralOffset() → updateTrainMeshes() → pass zoom from render loop → tests
+- US1: ⚠️ **MODIFIED DEPENDENCY** - US1 implementation paused at T012a. Must complete US2 first to calibrate lateral offsets properly. Original flow: computeLateralOffset() → updateTrainMeshes() → pass zoom from render loop → tests → **[NEW]** → calibrate offsets based on US2 scale behavior → re-enable applyLateralOffset()
 - US2: ScaleManager creation → integration with render loop → mesh scale application → tests
 - US3: Color map → outline creation → hover detection → visibility toggle → tests
 
