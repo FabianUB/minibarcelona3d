@@ -25,7 +25,8 @@ import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
 import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
-import { loadStations, loadLineGeometryCollection } from '../../lib/rodalies/dataLoader';
+import { loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
+import { buildLineColorMap } from '../../lib/trains/outlineManager';
 import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
 import { extractLineFromRouteId } from '../../config/trainModels';
@@ -128,6 +129,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   const [sceneReady, setSceneReady] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isDataStale, setIsDataStale] = useState(false);
+
+  // Phase 5: Line color map for hover outlines
+  const lineColorMapRef = useRef<Map<string, THREE.Color> | null>(null);
 
   // References for Three.js scene components
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -537,14 +541,29 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       const vehicleKey = hit?.vehicleKey ?? null;
 
       if (hoveredVehicleRef.current !== vehicleKey) {
+        // Hide outline from previous hovered train
+        if (hoveredVehicleRef.current && lineColorMapRef.current) {
+          meshManagerRef.current?.hideOutline(hoveredVehicleRef.current);
+        }
+
         hoveredVehicleRef.current = vehicleKey;
         meshManagerRef.current?.setHighlightedTrain(vehicleKey ?? undefined);
+
+        // Show outline for newly hovered train
+        if (vehicleKey && lineColorMapRef.current) {
+          meshManagerRef.current?.showOutline(vehicleKey, lineColorMapRef.current);
+        }
       }
     },
     [map, resolveScreenHit]
   );
 
   const handlePointerLeave = useCallback(() => {
+    // Hide outline when leaving canvas
+    if (hoveredVehicleRef.current && lineColorMapRef.current) {
+      meshManagerRef.current?.hideOutline(hoveredVehicleRef.current);
+    }
+
     hoveredVehicleRef.current = null;
     meshManagerRef.current?.setHighlightedTrain(undefined);
   }, []);
@@ -853,6 +872,25 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     };
 
     void loadRailwayData();
+  }, []);
+
+  /**
+   * Effect: Load line data and build color map for hover outlines
+   * Phase 5: User Story 3 - Line Identification on Hover
+   */
+  useEffect(() => {
+    const loadLineData = async () => {
+      try {
+        const lines = await loadRodaliesLines();
+        const colorMap = buildLineColorMap(lines);
+        lineColorMapRef.current = colorMap;
+        console.log(`TrainLayer3D: Loaded ${colorMap.size} line colors for outlines`);
+      } catch (err) {
+        console.error('TrainLayer3D: Failed to load line data for outlines', err);
+      }
+    };
+
+    void loadLineData();
   }, []);
 
   /**
