@@ -991,6 +991,7 @@ export class TrainMeshManager {
   /**
    * Show hover outline for a train (Phase 5: User Story 3)
    * Creates outline mesh lazily on first hover
+   * Outline thickness scales with zoom level
    */
   showOutline(vehicleKey: string, lineColorMap: Map<string, THREE.Color>): void {
     const meshData = this.trainMeshes.get(vehicleKey);
@@ -1013,9 +1014,15 @@ export class TrainMeshManager {
         }
       });
 
-      // Create outline mesh from the trainModel
+      // Compute zoom-responsive outline scale factor
+      // Zoom < 15 (before buildings): thicker outline (1.08)
+      // Zoom >= 15 (buildings visible): thinner outline (1.04)
+      const zoom = this.currentZoom;
+      const scaleFactor = zoom < 15 ? 1.08 : 1.04;
+
+      // Create outline mesh from the trainModel with zoom-adjusted scale
       const targetMesh = trainModelChild ?? meshData.mesh;
-      const outlineMesh = createOutlineMesh(targetMesh as THREE.Group, lineColor);
+      const outlineMesh = createOutlineMesh(targetMesh as THREE.Group, lineColor, scaleFactor);
       targetMesh.add(outlineMesh);
 
       // Store for future use

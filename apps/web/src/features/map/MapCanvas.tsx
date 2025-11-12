@@ -16,6 +16,7 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
 import { setModelOrigin } from '../../lib/map/coordinates';
+import { LineOffsetManager } from '../../lib/lines/lineOffsetManager';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
 // Similar to MiniTokyo3D's custom style but with built-in 3D building support
@@ -80,6 +81,7 @@ export function MapCanvas() {
   const latestRecenterRef = useRef<() => void>(() => {});
   const initialViewportRef = useRef<MapViewport | null>(null);
   const skipMoveSyncRef = useRef(false);
+  const lineOffsetManagerRef = useRef<LineOffsetManager | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -284,13 +286,31 @@ export function MapCanvas() {
       try {
         startMetric('geometry-load');
         const collection = await loadLineGeometryCollection();
+
+        // Initialize line offset manager if not already created
+        if (!lineOffsetManagerRef.current) {
+          lineOffsetManagerRef.current = new LineOffsetManager();
+        }
+
+        const currentZoom = map.getZoom();
+
         const normalisedCollection: FeatureCollection = {
           type: 'FeatureCollection',
           features: collection.features.map((feature) => {
             const properties = feature.properties ?? {};
             const normalisedColor = normaliseHexColor(properties.brand_color);
+
+            // Apply line offset for visual separation (Phase 8)
+            const lineId = properties.id as string;
+            const offsetGeometry = lineOffsetManagerRef.current!.applyOffset(
+              lineId,
+              feature.geometry,
+              currentZoom
+            );
+
             return {
               ...feature,
+              geometry: offsetGeometry,
               properties: {
                 ...properties,
                 ...(normalisedColor ? { brand_color: normalisedColor } : {}),
@@ -460,14 +480,23 @@ export function MapCanvas() {
       }
     };
 
+    // Phase 8: Zoom event listener to update line offsets dynamically
+    const handleZoomEnd = () => {
+      if (lineOffsetManagerRef.current) {
+        void attachLineGeometry();
+      }
+    };
+
     map.on('error', handleTileError);
     map.on('load', handleLoad);
     map.on('moveend', updateCameraSnapshot);
+    map.on('zoomend', handleZoomEnd);
 
     return () => {
       map.off('error', handleTileError);
       map.off('load', handleLoad);
       map.off('moveend', updateCameraSnapshot);
+      map.off('zoomend', handleZoomEnd);
       if (map.getLayer(RODALIES_LINE_LAYER_ID)) {
         map.removeLayer(RODALIES_LINE_LAYER_ID);
       }

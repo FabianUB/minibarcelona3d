@@ -21,8 +21,8 @@ export function buildLineColorMap(
 export function createOutlineMesh(
   trainMesh: THREE.Group,
   lineColor: THREE.Color,
-  scaleFactor: number = 1.05,
-  opacity: number = 0.8
+  scaleFactor: number = 1.12,
+  opacity: number = 0.95
 ): THREE.Group {
   const outlineGroup = new THREE.Group();
 
@@ -33,6 +33,8 @@ export function createOutlineMesh(
         side: THREE.BackSide,
         transparent: true,
         opacity,
+        depthTest: true,
+        depthWrite: false,
       });
 
       const outlineMesh = new THREE.Mesh(child.geometry, outlineMaterial);
