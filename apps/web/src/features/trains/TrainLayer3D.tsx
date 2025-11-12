@@ -32,6 +32,7 @@ import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
 import { useMapActions, useMapHighlightSelectors } from '../../state/map';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
+import { TrainDebugPanel } from './TrainDebugPanel';
 
 export interface TrainLayer3DProps {
   /**
@@ -404,6 +405,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   );
 
   const hoveredVehicleRef = useRef<string | null>(null);
+  const lastMouseMoveTime = useRef<number>(0);
+  const MOUSE_MOVE_THROTTLE_MS = 100; // Throttle to max 10 FPS
+
   useEffect(() => {
     const meshManager = meshManagerRef.current;
     if (!meshManager) {
@@ -515,6 +519,13 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
  */
   const handlePointerMove = useCallback(
     (event: MouseEvent) => {
+      // Throttle mousemove to reduce performance impact
+      const now = Date.now();
+      if (now - lastMouseMoveTime.current < MOUSE_MOVE_THROTTLE_MS) {
+        return;
+      }
+      lastMouseMoveTime.current = now;
+
       const canvas = map.getCanvas();
       const rect = canvas.getBoundingClientRect();
       const point = {
@@ -703,8 +714,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       }
 
       if (meshManagerRef.current) {
-        const currentZoom = map.getZoom();
-        meshManagerRef.current.setCurrentZoom(currentZoom);
         meshManagerRef.current.animatePositions();
       }
 
@@ -1084,6 +1093,27 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale]);
 
   /**
+   * Effect: Update train scales when zoom changes
+   * Two buckets: < 15 (full size) and >= 15 (half size to avoid buildings)
+   */
+  useEffect(() => {
+    const handleZoomChange = () => {
+      if (meshManagerRef.current) {
+        const currentZoom = map.getZoom();
+        meshManagerRef.current.setCurrentZoom(currentZoom);
+        meshManagerRef.current.applyZoomResponsiveScale();
+      }
+    };
+
+    map.on('zoom', handleZoomChange);
+    handleZoomChange();
+
+    return () => {
+      map.off('zoom', handleZoomChange);
+    };
+  }, [map]);
+
+  /**
    * Effect: Handle pointer hover/click using screen-space distance
    */
   useEffect(() => {
@@ -1114,5 +1144,5 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     return <TrainErrorDisplay error={error!} onRetry={handleManualRetry} />;
   }
 
-  return null;
+  return <TrainDebugPanel meshManager={meshManagerRef.current} currentZoom={map.getZoom()} />;
 }
