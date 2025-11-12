@@ -13,6 +13,7 @@ import type { Station } from '../../types/rodalies';
 import { getCachedModel } from './modelLoader';
 import { extractLineFromRouteId, getModelTypeForRoute } from '../../config/trainModels';
 import { ScaleManager } from './scaleManager';
+import { createOutlineMesh } from './outlineManager';
 import {
   calculateBearing,
   interpolatePositionSmooth,
@@ -61,6 +62,10 @@ interface TrainMeshData {
   // Feature 003: Zoom-responsive scaling
   screenSpaceScale: number; // Current zoom-responsive multiplier (0.48-1.6)
   lastZoomBucket: number; // Quantized zoom level for cache invalidation (0.1 increments)
+  // Feature 003 Phase 5: Hover outline (lazy-loaded)
+  outlineMesh?: THREE.Group; // Created on first hover
+  lineCode?: string; // Extracted from routeId
+  lineColor?: THREE.Color; // Line brand color
 }
 
 interface PollSnapshotMetadata {
@@ -981,6 +986,58 @@ export class TrainMeshManager {
         next.mesh.scale.setScalar(highlightScale);
       }
     }
+  }
+
+  /**
+   * Show hover outline for a train (Phase 5: User Story 3)
+   * Creates outline mesh lazily on first hover
+   */
+  showOutline(vehicleKey: string, lineColorMap: Map<string, THREE.Color>): void {
+    const meshData = this.trainMeshes.get(vehicleKey);
+    if (!meshData) return;
+
+    // Lazy creation: create outline on first hover
+    if (!meshData.outlineMesh) {
+      // Extract line code from route ID
+      const lineCode = extractLineFromRouteId(meshData.routeId);
+      const lineColor = lineCode
+        ? lineColorMap.get(lineCode.toUpperCase()) ?? lineColorMap.get('__FALLBACK__')!
+        : lineColorMap.get('__FALLBACK__')!;
+
+      // Find the trainModel child (the rotated child inside the parent Group)
+      // The outline should be added to trainModel to inherit its rotation
+      let trainModelChild: THREE.Object3D | null = null;
+      meshData.mesh.traverse((child) => {
+        if (child !== meshData.mesh && child instanceof THREE.Group && !trainModelChild) {
+          trainModelChild = child;
+        }
+      });
+
+      // Create outline mesh from the trainModel
+      const targetMesh = trainModelChild ?? meshData.mesh;
+      const outlineMesh = createOutlineMesh(targetMesh as THREE.Group, lineColor);
+      targetMesh.add(outlineMesh);
+
+      // Store for future use
+      meshData.outlineMesh = outlineMesh;
+      meshData.lineCode = lineCode ?? undefined;
+      meshData.lineColor = lineColor;
+    }
+
+    // Show outline
+    if (meshData.outlineMesh) {
+      meshData.outlineMesh.visible = true;
+    }
+  }
+
+  /**
+   * Hide hover outline for a train (Phase 5: User Story 3)
+   */
+  hideOutline(vehicleKey: string): void {
+    const meshData = this.trainMeshes.get(vehicleKey);
+    if (!meshData || !meshData.outlineMesh) return;
+
+    meshData.outlineMesh.visible = false;
   }
 
   /**
