@@ -290,6 +290,83 @@ Per research.md and quickstart.md:
 
 ---
 
+## Phase 8: User Story 4 - Railway Line Visual Separation (Priority: P2)
+
+**Goal**: When multiple railway lines run very close together (appear merged on the map), users should see them visually separated at appropriate zoom levels to distinguish between different lines.
+
+**Context**: Currently, railway lines that are geographically close (e.g., parallel tracks, converging routes) render as overlapping or merged lines on the map. This makes it difficult to distinguish which line is which, especially when trains are moving on these routes.
+
+**Independent Test**:
+1. Find a location where 2+ lines run parallel (e.g., Barcelona-Sants area where R1, R2, R3 converge)
+2. Zoom to level 12 → lines should appear slightly separated
+3. Zoom to level 15 → lines should have clear 8-12 pixel visual separation
+4. Verify smooth transition when zooming between levels
+5. Verify line colors remain correct after separation
+
+**Technical Approach**: Modify line geometry rendering by applying perpendicular offset based on zoom level and line order. This creates visual separation without modifying source data.
+
+### Implementation for User Story 4
+
+**Foundational Tasks (Must complete first)**:
+
+- [ ] T047 [P] [US4] Create `LineOffsetManager` class in `apps/web/src/lib/lines/lineOffsetManager.ts` with `computeLineOffset()` method
+- [ ] T048 [P] [US4] Implement zoom-responsive offset calculation (0px at zoom <12, 2-12px at zoom 12-16)
+- [ ] T049 [P] [US4] Add line grouping detection to identify which lines are parallel/overlapping
+- [ ] T050 [US4] Create geometry offset utility `offsetLineString()` in `apps/web/src/lib/lines/geometryOffset.ts` for perpendicular displacement
+
+**Integration Tasks**:
+
+- [ ] T051 [US4] Modify `MapCanvas.tsx` `attachLineGeometry()` to detect zoom level and apply offsets before rendering
+- [ ] T052 [US4] Add zoom event listener to recompute line offsets on zoom change
+- [ ] T053 [US4] Implement geometry caching to prevent recomputing offsets on every frame
+- [ ] T054 [US4] Update line layer source data with offset geometry when zoom threshold crossed
+
+**Testing & Validation**:
+
+- [ ] T055 [P] [US4] Add unit tests for `computeLineOffset()` in `apps/web/tests/unit/lineOffsetManager.test.ts`
+- [ ] T056 [P] [US4] Add unit tests for `offsetLineString()` verifying perpendicular displacement
+- [ ] T057 [US4] Manual visual test per quickstart: verify line separation at Barcelona-Sants convergence
+- [ ] T058 [US4] Performance test: verify offset computation <1ms for all lines, no frame drops
+
+**Checkpoint**: At this point, parallel railway lines should be visually distinguishable at appropriate zoom levels
+
+### Technical Design Details
+
+**Offset Calculation**:
+```typescript
+// Zoom-responsive offset (perpendicular to line bearing)
+// zoom < 12: 0px (no offset, natural position)
+// zoom 12-14: 2-6px linear interpolation
+// zoom 14-16: 6-12px linear interpolation
+// zoom > 16: 12px (maximum offset)
+
+interface LineOffsetConfig {
+  lineId: string;
+  offsetIndex: number; // -1, 0, 1, 2 for multi-line groups
+  zoom: number;
+}
+```
+
+**Line Grouping**:
+- Detect lines with similar/overlapping bounding boxes
+- Assign offset indices based on line order (R1=-1, R2=0, R3=1)
+- Apply perpendicular offset to each line segment
+
+**Geometry Offset Algorithm**:
+1. For each line segment (point A → point B):
+   - Calculate bearing (angle) of segment
+   - Calculate perpendicular angle (bearing + 90°)
+   - Offset point by distance in perpendicular direction
+   - Apply offset to all coordinates in LineString
+
+**Performance Considerations**:
+- Cache offset geometry per zoom bucket (every 0.5 zoom levels)
+- Only recompute when zoom crosses bucket threshold
+- Store offset geometry in separate Map for fast lookup
+- Estimated overhead: <1ms for 20 lines with 500 coordinates each
+
+---
+
 ## Notes
 
 - [P] tasks = different files or independent methods, no dependencies
@@ -297,6 +374,7 @@ Per research.md and quickstart.md:
 - Each user story should be independently completable and testable
 - US1 + US2 together form the MVP (both P1)
 - US3 is optional enhancement (P2)
+- US4 is optional enhancement (P2) - addresses railway line separation
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Performance profiling is critical - verify <0.2ms overhead target
