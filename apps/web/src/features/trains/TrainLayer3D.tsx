@@ -211,7 +211,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
    * Updates state and handles errors with exponential backoff retry
    * Task: T096 - Error handling with retry mechanism
    */
-  const fetchTrains = async () => {
+  const fetchTrains = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetchTrainPositions();
@@ -332,7 +332,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [retryCount]);
 
   /**
    * Manual retry function for user-initiated retry
@@ -342,7 +342,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     setRetryCount(0);
     setError(null);
     void fetchTrains();
-  }, []);
+  }, [fetchTrains]);
 
   /**
    * Converts geographic coordinates (lng, lat) to Mercator meters
@@ -785,6 +785,17 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
 
         console.log(`[Performance] Trains: ${trainCount} | FPS: ${avgFps.toFixed(1)} | Frame: ${perf.avgFrameTime.toFixed(2)}ms (min: ${minFrameTime.toFixed(2)}ms, max: ${maxFrameTime.toFixed(2)}ms) | Renders: ${perf.renderCount}`);
 
+        // T046: Log scale cache performance
+        if (meshManagerRef.current) {
+          const cacheStats = meshManagerRef.current.getScaleManager().getCacheStats();
+          console.log(`[ScaleCache] Size: ${cacheStats.size} | Hits: ${cacheStats.hits} | Misses: ${cacheStats.misses} | Hit Rate: ${(cacheStats.hitRate * 100).toFixed(1)}%`);
+
+          // T046: Warn if cache hit rate is poor
+          if (cacheStats.hitRate < 0.95 && cacheStats.hits + cacheStats.misses > 100) {
+            console.warn(`[ScaleCache] Low cache hit rate (${(cacheStats.hitRate * 100).toFixed(1)}%). Expected >95% for optimal performance.`);
+          }
+        }
+
         // T103: Warn if performance is degraded
         if (avgFps < 30) {
           console.warn(`[Performance] Low FPS detected (${avgFps.toFixed(1)}). Consider reducing train count or disabling features.`);
@@ -959,7 +970,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         retryTimeoutRef.current = null;
       }
     };
-  }, []);
+  }, [fetchTrains]);
 
   /**
    * Effect: Add custom layer to map when ready
