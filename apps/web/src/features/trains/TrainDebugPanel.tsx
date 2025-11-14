@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { TrainMeshManager } from '../../lib/trains/trainMeshManager';
 
 interface TrainDebugPanelProps {

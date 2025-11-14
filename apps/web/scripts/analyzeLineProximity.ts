@@ -299,7 +299,7 @@ async function analyzeLineProximity() {
   // For each group, find the coordinate ranges
   const segments: ProximitySegment[] = [];
 
-  for (const [groupKey, lineSet] of proximityGroups) {
+  for (const [, lineSet] of proximityGroups) {
     const lines = Array.from(lineSet).sort();
     console.log(`📍 Processing group: ${lines.join(', ')}`);
 

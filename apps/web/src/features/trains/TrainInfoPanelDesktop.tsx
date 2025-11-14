@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,10 +58,10 @@ export function TrainInfoPanelDesktop() {
     }
   }, [selectedTrain?.tripId]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     clearSelection();
     setActivePanel('none');
-  };
+  }, [clearSelection, setActivePanel]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -72,7 +72,7 @@ export function TrainInfoPanelDesktop() {
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
+  }, [handleClose]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -83,7 +83,7 @@ export function TrainInfoPanelDesktop() {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [handleClose]);
 
   if (!selectedTrain) {
     return null;

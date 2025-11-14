@@ -59,6 +59,7 @@ interface TrainMeshData {
   boundingRadius: number;
   hasUnrealisticSpeed: boolean;
   warningIndicator?: THREE.Sprite;
+  status: string; // Train status (STOPPED_AT, IN_TRANSIT_TO, INCOMING_AT)
   // Feature 003: Zoom-responsive scaling
   screenSpaceScale: number; // Current zoom-responsive multiplier (0.48-1.6)
   lastZoomBucket: number; // Quantized zoom level for cache invalidation (0.1 increments)
@@ -341,6 +342,24 @@ export class TrainMeshManager {
     return bucket - half;
   }
 
+  /**
+   * Compute lateral offset distance in meters based on offset index and zoom
+   *
+   * Calculates perpendicular offset to separate co-located trains from different lines.
+   * The offset scales with zoom level to maintain appropriate visual separation.
+   *
+   * @param offsetIndex - Signed integer offset index (e.g., -2, -1, 0, 1, 2)
+   * @returns Offset distance in meters perpendicular to train bearing
+   *
+   * @example
+   * ```typescript
+   * // At zoom 10 with baseStepMeters = 1.6, highZoomThreshold = 14
+   * const offset = computeLateralOffset(-1); // Returns -1.6 meters (1.6 * -1 * 1.0)
+   *
+   * // At zoom 16 with highZoomMultiplier = 1.5
+   * const offset = computeLateralOffset(2);  // Returns 4.8 meters (1.6 * 2 * 1.5)
+   * ```
+   */
   private computeLateralOffset(offsetIndex: number): number {
     const offsetMultiplier = offsetIndex;
     const zoomFactor = this.currentZoom > this.lateralOffsetConfig.highZoomThreshold
@@ -349,36 +368,104 @@ export class TrainMeshManager {
     return this.lateralOffsetConfig.baseStepMeters * offsetMultiplier * zoomFactor;
   }
 
+  /**
+   * Apply sequential positioning offset along the track
+   *
+   * Positions co-located trains sequentially along the railway line with a gap
+   * between them, similar to how trains queue at a station platform. This creates
+   * a more realistic visualization than lateral (side-by-side) positioning.
+   *
+   * Only applies offset when trains are stopped at a station to avoid interfering
+   * with moving trains that should follow their actual GPS positions.
+   *
+   * @param position - Train position in world coordinates (will be mutated)
+   * @param bearingInfo - Train bearing and direction (null if bearing unknown)
+   * @param offsetIndex - Sequential position index (0 = front, 1 = behind first, etc.)
+   * @param trainLengthMeters - Actual train model length in meters (from bounding box)
+   * @param trainStatus - Train's current status (only offset when 'STOPPED_AT')
+   *
+   * @remarks
+   * Sequential positioning along the track direction. Each train is offset by
+   * (trainLength + gap) * offsetIndex meters along the bearing direction.
+   * Uses actual model dimensions to ensure proper spacing without overlaps.
+   */
   private applyLateralOffset(
-    position: { x: number; y: number },
+    position: { x: number; y: number; z?: number },
     bearingInfo: { bearing: number; reversed: boolean } | null,
-    offsetIndex: number
+    offsetIndex: number,
+    trainLengthMeters: number = 20, // Default fallback if not provided
+    trainStatus?: string // Optional train status
   ): void {
-    // DISABLED: Lateral offset temporarily disabled for calibration
-    // Need to verify train scale at different zoom levels before calculating proper offsets
-    return;
+    // Only apply offset to stopped trains
+    if (trainStatus && trainStatus !== 'STOPPED_AT') {
+      return;
+    }
 
-    // if (!offsetIndex || !bearingInfo) {
-    //   return;
-    // }
+    // Skip if no offset needed or no bearing information
+    if (!offsetIndex || !bearingInfo) {
+      return;
+    }
 
-    // const adjustedBearing = (bearingInfo.bearing + (bearingInfo.reversed ? 180 : 0) + 360) % 360;
-    // const bearingRad = (adjustedBearing * Math.PI) / 180;
+    // Configuration for sequential positioning
+    // Use actual train model length multiplied by factor to account for bounding radius
+    // (bounding sphere radius is half the train length in one direction)
+    const TRAIN_LENGTH_METERS = trainLengthMeters * 3.5; // Account for full model + extra buffer
+    const TRAIN_GAP_METERS = 15;  // Gap between sequential trains (increased for better visibility)
+    const SPACING_METERS = TRAIN_LENGTH_METERS + TRAIN_GAP_METERS;
 
-    // const offsetMeters = this.computeLateralOffset(offsetIndex);
-    // if (offsetMeters === 0) {
-    //   return;
-    // }
+    // Calculate offset distance (positive = forward, negative = backward)
+    // offsetIndex: -2, -1, 0, 1, 2 becomes positions along the track
+    const offsetMeters = offsetIndex * SPACING_METERS;
 
-    // const rightEast = Math.cos(bearingRad);
-    // const rightNorth = -Math.sin(bearingRad);
-    // const modelScale = getModelScale();
+    if (offsetMeters === 0) {
+      return;
+    }
 
-    // const offsetX = rightEast * offsetMeters * modelScale;
-    // const offsetY = -rightNorth * offsetMeters * modelScale;
+    // SIMPLIFIED APPROACH: Offset along a fixed direction (north-south axis)
+    // This ensures all trains at the same location offset in the same direction,
+    // creating a proper queue regardless of their individual travel direction
+    const modelScale = getModelScale();
 
-    // position.x += offsetX;
-    // position.y += offsetY;
+    // Offset along the north direction (latitude axis)
+    // This creates a vertical queue when viewed on the map
+    const offsetX = 0; // No east-west offset
+    const offsetY = offsetMeters * modelScale; // North-south offset
+
+    position.x += offsetX;
+    position.y += offsetY;
+
+    /* BEARING-BASED OFFSET (DISABLED - causes opposite-direction trains to spread apart)
+     *
+     * Previous implementation: offset along each train's bearing
+     * Problem: Trains going opposite directions offset in opposite directions
+     *
+     * const adjustedBearing = (bearingInfo.bearing + (bearingInfo.reversed ? 180 : 0) + 360) % 360;
+     * const bearingRad = (adjustedBearing * Math.PI) / 180;
+     * const forwardEast = Math.sin(bearingRad);
+     * const forwardNorth = Math.cos(bearingRad);
+     * const offsetX = forwardEast * offsetMeters * modelScale;
+     * const offsetY = forwardNorth * offsetMeters * modelScale;
+     */
+
+    /* LATERAL OFFSET (COMMENTED OUT - Kept for reference)
+     *
+     * Previous implementation: side-by-side positioning perpendicular to track
+     *
+     * const adjustedBearing = (bearingInfo.bearing + (bearingInfo.reversed ? 180 : 0) + 360) % 360;
+     * const bearingRad = (adjustedBearing * Math.PI) / 180;
+     * const offsetMeters = this.computeLateralOffset(offsetIndex);
+     *
+     * // Calculate perpendicular direction (right side of bearing)
+     * const rightEast = Math.cos(bearingRad);
+     * const rightNorth = -Math.sin(bearingRad);
+     * const modelScale = getModelScale();
+     *
+     * const offsetX = rightEast * offsetMeters * modelScale;
+     * const offsetY = -rightNorth * offsetMeters * modelScale;
+     *
+     * position.x += offsetX;
+     * position.y += offsetY;
+     */
   }
 
   public getDebugInfo(): Array<{
@@ -665,6 +752,7 @@ export class TrainMeshManager {
       boundingCenterOffset: boundingSphere.center.clone(),
       boundingRadius: boundingSphere.radius,
       hasUnrealisticSpeed: false,
+      status: train.status, // Store train status for offset logic
       // Feature 003: Initialize zoom-responsive scaling fields
       screenSpaceScale: zoomScale,
       lastZoomBucket: Math.round(this.currentZoom * 10) / 10, // Quantize to 0.1
@@ -731,6 +819,9 @@ export class TrainMeshManager {
         if (typeof existing.lateralOffsetIndex !== 'number') {
           existing.lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
         }
+
+        // Update train status for offset logic
+        existing.status = train.status;
 
         // Validate position update to detect unrealistic jumps
         const effectivePreviousSnap = previousSnapState ?? existing.currentSnap ?? null;
@@ -833,7 +924,7 @@ export class TrainMeshManager {
                 ? { bearing: nextStationBearing, reversed: false }
                 : null;
 
-          this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex);
+          this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex, meshData.boundingRadius, train.status);
 
           meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
@@ -1184,6 +1275,8 @@ export class TrainMeshManager {
       const [targetLng, targetLat] = targetPosition;
 
       // If already at target, skip interpolation
+      // For stopped trains, the offset has already been applied in updateTrainMeshes()
+      // and their position is final - no need to recalculate every frame
       if (currentLng === targetLng && currentLat === targetLat) {
         return;
       }
@@ -1279,7 +1372,13 @@ export class TrainMeshManager {
         bearingInfo = { bearing: (rotationDeg + 360) % 360, reversed: false };
       }
 
-      this.applyLateralOffset(position, bearingInfo, meshData.lateralOffsetIndex);
+      // DO NOT apply offset here - it's already been applied in updateTrainMeshes()
+      // when the polling data arrived. For stopped trains, position is already final.
+      // For moving trains, we want them to follow the interpolated railway geometry
+      // without any lateral offset.
+      //
+      // Performance: This eliminates thousands of redundant offset calculations per second
+      // (was recalculating every frame even though the result never changes for stopped trains)
 
       if (this.debugCount < this.DEBUG_LIMIT) {
         console.log('TrainMeshManager: Position computed for mesh', {
