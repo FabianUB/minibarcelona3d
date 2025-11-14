@@ -9,40 +9,50 @@ describe('ScaleManager', () => {
   });
 
   describe('computeScale', () => {
-    it('should return 1.0 at reference zoom level (10)', () => {
+    it('should return 1.0 for zoom level 10 (standard size bucket)', () => {
       const scale = manager.computeScale(10);
       expect(scale).toBeCloseTo(1.0, 10);
     });
 
-    it('should return larger scale at lower zoom levels', () => {
+    it('should return 1.0 for zoom level 5 (standard size bucket)', () => {
       const scale = manager.computeScale(5);
-      expect(scale).toBeGreaterThan(1.0);
+      expect(scale).toBeCloseTo(1.0, 10);
     });
 
-    it('should return smaller scale at higher zoom levels', () => {
+    it('should return 1.0 for zoom level 14 (at bucket threshold)', () => {
+      const scale = manager.computeScale(14);
+      expect(scale).toBeCloseTo(1.0, 10);
+    });
+
+    it('should return 0.5 for zoom level 15 (high zoom bucket)', () => {
       const scale = manager.computeScale(15);
-      expect(scale).toBeLessThan(1.0);
+      expect(scale).toBeCloseTo(0.5, 10);
     });
 
-    it('should clamp to minimum scale (12px / 25px = 0.48)', () => {
+    it('should return 0.5 for zoom level 20 (high zoom bucket)', () => {
       const scale = manager.computeScale(20);
-      expect(scale).toBeCloseTo(0.48, 2);
+      expect(scale).toBeCloseTo(0.5, 10);
     });
 
-    it('should clamp to maximum scale (40px / 25px = 1.6)', () => {
+    it('should return 1.0 for zoom level 0 (standard size bucket)', () => {
       const scale = manager.computeScale(0);
-      expect(scale).toBeCloseTo(1.6, 2);
+      expect(scale).toBeCloseTo(1.0, 10);
     });
 
-    it('should decrease scale exponentially as zoom increases', () => {
+    it('should use discrete buckets: zoom 0-15 = 1.0x, zoom 15+ = 0.5x', () => {
       const scale10 = manager.computeScale(10);
       const scale11 = manager.computeScale(11);
-      const scale12 = manager.computeScale(12);
-      const scale13 = manager.computeScale(13);
+      const scale14 = manager.computeScale(14);
+      const scale15 = manager.computeScale(15);
+      const scale16 = manager.computeScale(16);
 
-      expect(scale10).toBeGreaterThan(scale11);
-      expect(scale11).toBeGreaterThan(scale12);
-      expect(scale12).toBeGreaterThan(scale13);
+      // Same bucket (0-15) = same scale
+      expect(scale10).toBe(scale11);
+      expect(scale11).toBe(scale14);
+
+      // Different bucket (15+) = different scale
+      expect(scale14).toBeGreaterThan(scale15);
+      expect(scale15).toBe(scale16);
     });
   });
 
@@ -119,22 +129,24 @@ describe('ScaleManager', () => {
   });
 
   describe('custom configuration', () => {
-    it('should accept custom minHeightPx', () => {
-      const customManager = new ScaleManager({ minHeightPx: 20 });
-      const scale = customManager.computeScale(20);
-      expect(scale).toBeCloseTo(0.8, 2);
+    it('should accept custom configuration (discrete buckets override config)', () => {
+      const customManager = new ScaleManager({ minHeightPx: 20, maxHeightPx: 50 });
+      // Discrete bucket system ignores config values and uses fixed buckets
+      const scale0 = customManager.computeScale(0);
+      const scale15 = customManager.computeScale(15);
+
+      expect(scale0).toBeCloseTo(1.0, 10); // Standard bucket
+      expect(scale15).toBeCloseTo(0.5, 10); // High zoom bucket
     });
 
-    it('should accept custom maxHeightPx', () => {
-      const customManager = new ScaleManager({ maxHeightPx: 50 });
-      const scale = customManager.computeScale(0);
-      expect(scale).toBeCloseTo(2.0, 2);
-    });
-
-    it('should accept custom referenceZoom', () => {
+    it('should maintain discrete bucket behavior with custom referenceZoom', () => {
       const customManager = new ScaleManager({ referenceZoom: 12 });
-      const scale = customManager.computeScale(12);
-      expect(scale).toBeCloseTo(1.0, 10);
+      // Discrete buckets remain: 0-15 = 1.0x, 15+ = 0.5x
+      const scale12 = customManager.computeScale(12);
+      const scale16 = customManager.computeScale(16);
+
+      expect(scale12).toBeCloseTo(1.0, 10);
+      expect(scale16).toBeCloseTo(0.5, 10);
     });
   });
 });
