@@ -401,6 +401,8 @@ const routeTrains = trains.filter(t => t.routeId === selectedRoute);
 - PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`) (002-realtime-train-tracking)
 - TypeScript 5.9.3 (React 19.1.1 frontend) + Three.js 0.180.0, Mapbox GL JS 3.4.0, Vite 7.1.7 (003-train-line-colors-zoom)
 - Static JSON/GeoJSON files in `apps/web/public/rodalies_data/` (003-train-line-colors-zoom)
+- TypeScript 5.9.3, React 19.1.1 + Mapbox GL JS 3.4.0, Radix UI (dialogs, popovers), Tailwind CSS 4.1.16, Vitest 2.1.9, Playwright 1.48.2 (004-station-visualization)
+- Static GeoJSON files (Station.geojson), client-side caching via existing dataLoader (004-station-visualization)
 
 ## Recent Changes
 - 003-train-line-colors-zoom: Added zoom-responsive train scaling (ScaleManager), hover outlines with BackSide rendering (outlineManager), and debug panel for train visualization. Simplified railway line rendering to Mini Tokyo 3D approach (single layer) after removing proximity-based system due to performance issues (567 layers)
