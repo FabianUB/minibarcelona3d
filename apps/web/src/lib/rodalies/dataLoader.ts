@@ -1,5 +1,6 @@
 import type {
   LineGeometryCollection,
+  LineProximityConfig,
   LegendEntry,
   MapHighlightMode,
   MapUIState,
@@ -36,6 +37,7 @@ let rodaliesLineListPromise: Promise<RodaliesLine[]> | null = null;
 let legendEntriesPromise: Promise<LegendEntry[]> | null = null;
 let mapViewportPromise: Promise<MapViewport> | null = null;
 let mapUiStatePromise: Promise<MapUIState> | null = null;
+let lineProximityConfigPromise: Promise<LineProximityConfig> | null = null;
 
 export async function loadManifest(): Promise<RodaliesManifest> {
   if (!manifestPromise) {
@@ -197,6 +199,17 @@ export async function loadStationList(
     lines: [...feature.properties.lines],
     geometry: feature.geometry,
   }));
+}
+
+export async function loadLineProximityConfig(): Promise<LineProximityConfig> {
+  if (!lineProximityConfigPromise) {
+    lineProximityConfigPromise = (async () => {
+      // Direct path to the proximity config file (not in manifest)
+      const url = resolveFromBase(`${RODALIES_DATA_ROOT}/LineProximity.json`);
+      return fetchJson<LineProximityConfig>(url);
+    })();
+  }
+  return lineProximityConfigPromise;
 }
 
 export function getFallbackViewport(): MapViewport {
