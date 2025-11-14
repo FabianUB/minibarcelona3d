@@ -253,6 +253,7 @@ export function MapCanvas() {
       pitch: 60, // MiniTokyo3D style 3D perspective
       bearing: 0,
       maxBounds: initialViewportRef.current!.max_bounds,
+      maxZoom: 16.5,
       maxPitch: 60,
       attributionControl: true,
     });
@@ -282,12 +283,16 @@ export function MapCanvas() {
     const attachLineGeometry = async () => {
       try {
         startMetric('geometry-load');
+
+        // Load original line geometry (no offsets, Mini Tokyo 3D approach)
         const collection = await loadLineGeometryCollection();
+
         const normalisedCollection: FeatureCollection = {
           type: 'FeatureCollection',
           features: collection.features.map((feature) => {
             const properties = feature.properties ?? {};
             const normalisedColor = normaliseHexColor(properties.brand_color);
+
             return {
               ...feature,
               properties: {
@@ -297,6 +302,7 @@ export function MapCanvas() {
             } as typeof feature;
           }),
         };
+
         const existingSource = map.getSource(
           RODALIES_LINE_SOURCE_ID,
         ) as mapboxgl.GeoJSONSource | undefined;
@@ -308,7 +314,8 @@ export function MapCanvas() {
             type: 'geojson',
             data: normalisedCollection,
           });
-          // Add line layer with initial paint properties
+
+          // Add single line layer for all lines (Mini Tokyo 3D style)
           map.addLayer({
             id: RODALIES_LINE_LAYER_ID,
             type: 'line',
@@ -356,16 +363,29 @@ export function MapCanvas() {
       // Find the first symbol layer to insert buildings before labels
       const firstSymbolId = layers?.find((layer) => layer.type === 'symbol')?.id;
 
-      // Hide POI and building labels for cleaner view
+      // Hide POI, building numbers, and other labels for cleaner view
       const labelsToHide = [
         'poi-label',
         'transit-label',
         'airport-label',
         'settlement-subdivision-label',
+        'settlement-minor-label',
+        'settlement-major-label',
+        'state-label',
+        'country-label',
+        'place-label',
+        'natural-point-label',
+        'natural-line-label',
+        'water-point-label',
+        'water-line-label',
+        'waterway-label',
+        'road-label',
+        'road-number',
+        'road-exit',
       ];
 
       layers?.forEach((layer) => {
-        if (labelsToHide.some((label) => layer.id.includes(label))) {
+        if (layer.type === 'symbol' && labelsToHide.some((label) => layer.id.includes(label))) {
           map.setLayoutProperty(layer.id, 'visibility', 'none');
         }
       });
@@ -454,9 +474,12 @@ export function MapCanvas() {
       map.off('error', handleTileError);
       map.off('load', handleLoad);
       map.off('moveend', updateCameraSnapshot);
+
+      // Remove line layer
       if (map.getLayer(RODALIES_LINE_LAYER_ID)) {
         map.removeLayer(RODALIES_LINE_LAYER_ID);
       }
+
       if (map.getSource(RODALIES_LINE_SOURCE_ID)) {
         map.removeSource(RODALIES_LINE_SOURCE_ID);
       }
@@ -538,7 +561,7 @@ export function MapCanvas() {
       isHighContrast,
     });
 
-    // Update each paint property
+    // Update line layer
     Object.entries(paintProperties).forEach(([property, value]) => {
       // TypeScript doesn't recognize dynamic property names from Object.entries
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

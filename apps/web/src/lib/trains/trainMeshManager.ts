@@ -12,6 +12,8 @@ import type { TrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { getCachedModel } from './modelLoader';
 import { extractLineFromRouteId, getModelTypeForRoute } from '../../config/trainModels';
+import { ScaleManager } from './scaleManager';
+import { createOutlineMesh } from './outlineManager';
 import {
   calculateBearing,
   interpolatePositionSmooth,
@@ -30,6 +32,17 @@ interface RailwaySnapState extends RailwaySnapResult {
   lineId: string;
 }
 
+/**
+ * Configuration for spatial separation of co-located trains
+ * Feature 003: Enhanced lateral offset at high zoom levels
+ */
+interface LateralOffsetConfig {
+  buckets: number; // Number of offset positions (default: 5)
+  baseStepMeters: number; // Base offset distance in meters (default: 1.6)
+  highZoomThreshold: number; // Zoom level threshold for increased offset (default: 14)
+  highZoomMultiplier: number; // Offset multiplier at high zoom (default: 1.5)
+}
+
 interface TrainMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
@@ -46,6 +59,14 @@ interface TrainMeshData {
   boundingRadius: number;
   hasUnrealisticSpeed: boolean;
   warningIndicator?: THREE.Sprite;
+  status: string; // Train status (STOPPED_AT, IN_TRANSIT_TO, INCOMING_AT)
+  // Feature 003: Zoom-responsive scaling
+  screenSpaceScale: number; // Current zoom-responsive multiplier (0.48-1.6)
+  lastZoomBucket: number; // Quantized zoom level for cache invalidation (0.1 increments)
+  // Feature 003 Phase 5: Hover outline (lazy-loaded)
+  outlineMesh?: THREE.Group; // Created on first hover
+  lineCode?: string; // Extracted from routeId
+  lineColor?: THREE.Color; // Line brand color
 }
 
 interface PollSnapshotMetadata {
@@ -95,7 +116,19 @@ export class TrainMeshManager {
   private readonly MIN_INTERPOLATION_DURATION_MS = 1000;
   private readonly MODEL_FORWARD_OFFSET = Math.PI; // Train models face negative X by default
   private readonly LATERAL_OFFSET_BUCKETS = 5;
-  private readonly LATERAL_OFFSET_STEP_METERS = 1.6; // meters between trains laterally
+  private readonly LATERAL_OFFSET_STEP_METERS = 40; // meters between trains laterally
+
+  // Feature 003: Zoom-responsive lateral offset configuration
+  private lateralOffsetConfig: LateralOffsetConfig;
+  private currentZoom: number = 10; // Default zoom level
+
+  // Feature 003: Zoom-responsive scale manager
+  private scaleManager: ScaleManager;
+
+  // Screen-space candidate caching to reduce mousemove overhead
+  private screenCandidatesCache: ScreenSpaceCandidate[] | null = null;
+  private screenCandidatesCacheZoom: number | null = null;
+  private screenCandidatesCacheInvalidated: boolean = true;
 
   // Maximum realistic train speed: 200 km/h = ~55.6 m/s
   // Rodalies trains typically max out at 140 km/h (~39 m/s)
@@ -127,7 +160,8 @@ export class TrainMeshManager {
   constructor(
     scene: THREE.Scene,
     stations: Station[],
-    railwayLines: Map<string, PreprocessedRailwayLine>
+    railwayLines: Map<string, PreprocessedRailwayLine>,
+    lateralOffsetConfig?: LateralOffsetConfig
   ) {
     this.scene = scene;
 
@@ -139,7 +173,34 @@ export class TrainMeshManager {
 
     this.railwayLines = railwayLines;
 
+    // Feature 003: Initialize lateral offset configuration
+    this.lateralOffsetConfig = lateralOffsetConfig ?? {
+      buckets: this.LATERAL_OFFSET_BUCKETS,
+      baseStepMeters: this.LATERAL_OFFSET_STEP_METERS,
+      highZoomThreshold: 14,
+      highZoomMultiplier: 1.5,
+    };
+
+    // Feature 003: Initialize scale manager
+    this.scaleManager = new ScaleManager();
+
     console.log(`TrainMeshManager: Loaded ${this.stationMap.size} stations for bearing calculations`);
+  }
+
+  /**
+   * Update current zoom level for zoom-responsive lateral offset
+   * Feature 003: Called from render loop to track map zoom changes
+   */
+  public setCurrentZoom(zoom: number): void {
+    this.currentZoom = zoom;
+  }
+
+  /**
+   * Get scale manager instance for zoom-responsive sizing
+   * Feature 003: Used by render loop to compute scale multipliers
+   */
+  public getScaleManager(): ScaleManager {
+    return this.scaleManager;
   }
 
   private snapPositionToRailway(train: TrainPosition): RailwaySnapState | null {
@@ -281,32 +342,173 @@ export class TrainMeshManager {
     return bucket - half;
   }
 
+  /**
+   * Compute lateral offset distance in meters based on offset index and zoom
+   *
+   * Calculates perpendicular offset to separate co-located trains from different lines.
+   * The offset scales with zoom level to maintain appropriate visual separation.
+   *
+   * @param offsetIndex - Signed integer offset index (e.g., -2, -1, 0, 1, 2)
+   * @returns Offset distance in meters perpendicular to train bearing
+   *
+   * @example
+   * ```typescript
+   * // At zoom 10 with baseStepMeters = 1.6, highZoomThreshold = 14
+   * const offset = computeLateralOffset(-1); // Returns -1.6 meters (1.6 * -1 * 1.0)
+   *
+   * // At zoom 16 with highZoomMultiplier = 1.5
+   * const offset = computeLateralOffset(2);  // Returns 4.8 meters (1.6 * 2 * 1.5)
+   * ```
+   */
+  private computeLateralOffset(offsetIndex: number): number {
+    const offsetMultiplier = offsetIndex;
+    const zoomFactor = this.currentZoom > this.lateralOffsetConfig.highZoomThreshold
+      ? this.lateralOffsetConfig.highZoomMultiplier
+      : 1.0;
+    return this.lateralOffsetConfig.baseStepMeters * offsetMultiplier * zoomFactor;
+  }
+
+  /**
+   * Apply sequential positioning offset along the track
+   *
+   * Positions co-located trains sequentially along the railway line with a gap
+   * between them, similar to how trains queue at a station platform. This creates
+   * a more realistic visualization than lateral (side-by-side) positioning.
+   *
+   * Only applies offset when trains are stopped at a station to avoid interfering
+   * with moving trains that should follow their actual GPS positions.
+   *
+   * @param position - Train position in world coordinates (will be mutated)
+   * @param bearingInfo - Train bearing and direction (null if bearing unknown)
+   * @param offsetIndex - Sequential position index (0 = front, 1 = behind first, etc.)
+   * @param trainLengthMeters - Actual train model length in meters (from bounding box)
+   * @param trainStatus - Train's current status (only offset when 'STOPPED_AT')
+   *
+   * @remarks
+   * Sequential positioning along the track direction. Each train is offset by
+   * (trainLength + gap) * offsetIndex meters along the bearing direction.
+   * Uses actual model dimensions to ensure proper spacing without overlaps.
+   */
   private applyLateralOffset(
-    position: { x: number; y: number },
+    position: { x: number; y: number; z?: number },
     bearingInfo: { bearing: number; reversed: boolean } | null,
-    offsetIndex: number
+    offsetIndex: number,
+    trainLengthMeters: number = 20, // Default fallback if not provided
+    trainStatus?: string // Optional train status
   ): void {
+    // Only apply offset to stopped trains
+    if (trainStatus && trainStatus !== 'STOPPED_AT') {
+      return;
+    }
+
+    // Skip if no offset needed or no bearing information
     if (!offsetIndex || !bearingInfo) {
       return;
     }
 
-    const adjustedBearing = (bearingInfo.bearing + (bearingInfo.reversed ? 180 : 0) + 360) % 360;
-    const bearingRad = (adjustedBearing * Math.PI) / 180;
+    // Configuration for sequential positioning
+    // Use actual train model length multiplied by factor to account for bounding radius
+    // (bounding sphere radius is half the train length in one direction)
+    const TRAIN_LENGTH_METERS = trainLengthMeters * 3.5; // Account for full model + extra buffer
+    const TRAIN_GAP_METERS = 15;  // Gap between sequential trains (increased for better visibility)
+    const SPACING_METERS = TRAIN_LENGTH_METERS + TRAIN_GAP_METERS;
 
-    const offsetMeters = offsetIndex * this.LATERAL_OFFSET_STEP_METERS;
+    // Calculate offset distance (positive = forward, negative = backward)
+    // offsetIndex: -2, -1, 0, 1, 2 becomes positions along the track
+    const offsetMeters = offsetIndex * SPACING_METERS;
+
     if (offsetMeters === 0) {
       return;
     }
 
-    const rightEast = Math.cos(bearingRad);
-    const rightNorth = -Math.sin(bearingRad);
+    // SIMPLIFIED APPROACH: Offset along a fixed direction (north-south axis)
+    // This ensures all trains at the same location offset in the same direction,
+    // creating a proper queue regardless of their individual travel direction
     const modelScale = getModelScale();
 
-    const offsetX = rightEast * offsetMeters * modelScale;
-    const offsetY = -rightNorth * offsetMeters * modelScale;
+    // Offset along the north direction (latitude axis)
+    // This creates a vertical queue when viewed on the map
+    const offsetX = 0; // No east-west offset
+    const offsetY = offsetMeters * modelScale; // North-south offset
 
     position.x += offsetX;
     position.y += offsetY;
+
+    /* BEARING-BASED OFFSET (DISABLED - causes opposite-direction trains to spread apart)
+     *
+     * Previous implementation: offset along each train's bearing
+     * Problem: Trains going opposite directions offset in opposite directions
+     *
+     * const adjustedBearing = (bearingInfo.bearing + (bearingInfo.reversed ? 180 : 0) + 360) % 360;
+     * const bearingRad = (adjustedBearing * Math.PI) / 180;
+     * const forwardEast = Math.sin(bearingRad);
+     * const forwardNorth = Math.cos(bearingRad);
+     * const offsetX = forwardEast * offsetMeters * modelScale;
+     * const offsetY = forwardNorth * offsetMeters * modelScale;
+     */
+
+    /* LATERAL OFFSET (COMMENTED OUT - Kept for reference)
+     *
+     * Previous implementation: side-by-side positioning perpendicular to track
+     *
+     * const adjustedBearing = (bearingInfo.bearing + (bearingInfo.reversed ? 180 : 0) + 360) % 360;
+     * const bearingRad = (adjustedBearing * Math.PI) / 180;
+     * const offsetMeters = this.computeLateralOffset(offsetIndex);
+     *
+     * // Calculate perpendicular direction (right side of bearing)
+     * const rightEast = Math.cos(bearingRad);
+     * const rightNorth = -Math.sin(bearingRad);
+     * const modelScale = getModelScale();
+     *
+     * const offsetX = rightEast * offsetMeters * modelScale;
+     * const offsetY = -rightNorth * offsetMeters * modelScale;
+     *
+     * position.x += offsetX;
+     * position.y += offsetY;
+     */
+  }
+
+  public getDebugInfo(): Array<{
+    vehicleKey: string;
+    routeId: string;
+    offsetIndex: number;
+    offsetMeters: number;
+    currentZoom: number;
+    zoomFactor: number;
+    position: { x: number; y: number; z: number };
+  }> {
+    const debugInfo: Array<{
+      vehicleKey: string;
+      routeId: string;
+      offsetIndex: number;
+      offsetMeters: number;
+      currentZoom: number;
+      zoomFactor: number;
+      position: { x: number; y: number; z: number };
+    }> = [];
+
+    this.trainMeshes.forEach((meshData) => {
+      const offsetMeters = this.computeLateralOffset(meshData.lateralOffsetIndex);
+      const zoomFactor = this.currentZoom > this.lateralOffsetConfig.highZoomThreshold
+        ? this.lateralOffsetConfig.highZoomMultiplier
+        : 1.0;
+
+      debugInfo.push({
+        vehicleKey: meshData.vehicleKey,
+        routeId: meshData.routeId,
+        offsetIndex: meshData.lateralOffsetIndex,
+        offsetMeters,
+        currentZoom: this.currentZoom,
+        zoomFactor,
+        position: {
+          x: meshData.mesh.position.x,
+          y: meshData.mesh.position.y,
+          z: meshData.mesh.position.z,
+        },
+      });
+    });
+
+    return debugInfo;
   }
 
   private calculateEffectiveInterpolationDuration(
@@ -438,12 +640,9 @@ export class TrainMeshManager {
       });
     }
 
-    // T052k: Pseudo-random scale variation (0-3%) to prevent visual overlap
-    const scaleVariation = this.getScaleVariation(train.vehicleKey);
-    const finalScale = baseScale * scaleVariation;
-
-    // Apply scale to model
-    trainModel.scale.set(finalScale, finalScale, finalScale);
+    // T052k: Don't apply any scale to trainModel - keep it at natural size
+    // Scale will be applied to the parent Group instead
+    trainModel.scale.set(1, 1, 1);
 
     // Create a parent group to handle rotation properly
     // This allows us to separate "lay flat" rotation from "direction" rotation
@@ -489,6 +688,30 @@ export class TrainMeshManager {
     };
     mesh.add(trainModel);
 
+    // Center the trainModel geometry so scaling doesn't cause lateral drift
+    // Use computeBoundingBox which is faster than setFromObject for single meshes
+    trainModel.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.geometry) {
+        child.geometry.computeBoundingBox();
+      }
+    });
+
+    // Calculate center offset from the already-rotated model
+    trainModel.updateMatrixWorld(true);
+    const centerBox = new THREE.Box3().setFromObject(trainModel);
+    const centerOffset = new THREE.Vector3();
+    centerBox.getCenter(centerOffset);
+
+    // Offset the trainModel position to center it at the origin
+    // This ensures scaling happens around the visual center, not an arbitrary pivot
+    trainModel.position.sub(centerOffset);
+
+    // Feature 003: Apply initial scale to parent group (not trainModel)
+    const scaleVariation = this.getScaleVariation(train.vehicleKey);
+    const zoomScale = this.scaleManager.computeScale(this.currentZoom);
+    const initialScale = baseScale * scaleVariation * zoomScale;
+    mesh.scale.set(initialScale, initialScale, initialScale);
+
     // T047: Apply rotation based on bearing to next station
     // This rotates the parent group around Z-axis to point toward next station
     this.applyBearingRotation(mesh, train);
@@ -508,10 +731,11 @@ export class TrainMeshManager {
 
     const lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
 
-    mesh.updateMatrixWorld(true);
-    const boundingBox = new THREE.Box3().setFromObject(mesh);
+    // Calculate final bounding sphere after all transforms (only once)
+    // Reuse centerBox to avoid allocating new Box3
+    centerBox.setFromObject(mesh);
     const boundingSphere = new THREE.Sphere();
-    boundingBox.getBoundingSphere(boundingSphere);
+    centerBox.getBoundingSphere(boundingSphere);
 
     const meshData: TrainMeshData = {
       mesh,
@@ -524,10 +748,14 @@ export class TrainMeshManager {
       currentSnap: (initialSnapState ?? targetSnapState) ?? undefined,
       targetSnap: targetSnapState ?? undefined,
       lateralOffsetIndex,
-      baseScale: mesh.scale.x,
+      baseScale,
       boundingCenterOffset: boundingSphere.center.clone(),
       boundingRadius: boundingSphere.radius,
       hasUnrealisticSpeed: false,
+      status: train.status, // Store train status for offset logic
+      // Feature 003: Initialize zoom-responsive scaling fields
+      screenSpaceScale: zoomScale,
+      lastZoomBucket: Math.round(this.currentZoom * 10) / 10, // Quantize to 0.1
     };
 
     return meshData;
@@ -591,6 +819,9 @@ export class TrainMeshManager {
         if (typeof existing.lateralOffsetIndex !== 'number') {
           existing.lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
         }
+
+        // Update train status for offset logic
+        existing.status = train.status;
 
         // Validate position update to detect unrealistic jumps
         const effectivePreviousSnap = previousSnapState ?? existing.currentSnap ?? null;
@@ -693,9 +924,12 @@ export class TrainMeshManager {
                 ? { bearing: nextStationBearing, reversed: false }
                 : null;
 
-          this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex);
+          this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex, meshData.boundingRadius, train.status);
 
           meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+
+      // Invalidate screen-space cache when position changes
+      this.screenCandidatesCacheInvalidated = true;
 
           // Add to scene
           this.scene.add(meshData.mesh);
@@ -725,6 +959,9 @@ export class TrainMeshManager {
     for (const vehicleKey of toRemove) {
       this.removeTrainMesh(vehicleKey);
     }
+
+    // Invalidate screen-space cache after train updates
+    this.screenCandidatesCacheInvalidated = true;
 
     console.log(
       `TrainMeshManager: ${this.trainMeshes.size} trains rendered (${toRemove.length} removed)`
@@ -823,7 +1060,9 @@ export class TrainMeshManager {
     if (this.highlightedVehicleKey) {
       const prev = this.trainMeshes.get(this.highlightedVehicleKey);
       if (prev) {
-        prev.mesh.scale.setScalar(prev.baseScale);
+        const scaleVariation = this.getScaleVariation(prev.vehicleKey);
+        const normalScale = prev.baseScale * scaleVariation * prev.screenSpaceScale;
+        prev.mesh.scale.setScalar(normalScale);
       }
     }
 
@@ -832,9 +1071,71 @@ export class TrainMeshManager {
     if (nextKey) {
       const next = this.trainMeshes.get(nextKey);
       if (next) {
-        next.mesh.scale.setScalar(next.baseScale * 1.12);
+        const scaleVariation = this.getScaleVariation(next.vehicleKey);
+        const normalScale = next.baseScale * scaleVariation * next.screenSpaceScale;
+        const highlightScale = normalScale * 1.12;
+        next.mesh.scale.setScalar(highlightScale);
       }
     }
+  }
+
+  /**
+   * Show hover outline for a train (Phase 5: User Story 3)
+   * Creates outline mesh lazily on first hover
+   * Outline thickness scales with zoom level
+   */
+  showOutline(vehicleKey: string, lineColorMap: Map<string, THREE.Color>): void {
+    const meshData = this.trainMeshes.get(vehicleKey);
+    if (!meshData) return;
+
+    // Lazy creation: create outline on first hover
+    if (!meshData.outlineMesh) {
+      // Extract line code from route ID
+      const lineCode = extractLineFromRouteId(meshData.routeId);
+      const lineColor = lineCode
+        ? lineColorMap.get(lineCode.toUpperCase()) ?? lineColorMap.get('__FALLBACK__')!
+        : lineColorMap.get('__FALLBACK__')!;
+
+      // Find the trainModel child (the rotated child inside the parent Group)
+      // The outline should be added to trainModel to inherit its rotation
+      let trainModelChild: THREE.Object3D | null = null;
+      meshData.mesh.traverse((child) => {
+        if (child !== meshData.mesh && child instanceof THREE.Group && !trainModelChild) {
+          trainModelChild = child;
+        }
+      });
+
+      // Compute zoom-responsive outline scale factor
+      // Zoom < 15 (before buildings): thicker outline (1.08)
+      // Zoom >= 15 (buildings visible): thinner outline (1.04)
+      const zoom = this.currentZoom;
+      const scaleFactor = zoom < 15 ? 1.08 : 1.04;
+
+      // Create outline mesh from the trainModel with zoom-adjusted scale
+      const targetMesh = trainModelChild ?? meshData.mesh;
+      const outlineMesh = createOutlineMesh(targetMesh as THREE.Group, lineColor, scaleFactor);
+      targetMesh.add(outlineMesh);
+
+      // Store for future use
+      meshData.outlineMesh = outlineMesh;
+      meshData.lineCode = lineCode ?? undefined;
+      meshData.lineColor = lineColor;
+    }
+
+    // Show outline
+    if (meshData.outlineMesh) {
+      meshData.outlineMesh.visible = true;
+    }
+  }
+
+  /**
+   * Hide hover outline for a train (Phase 5: User Story 3)
+   */
+  hideOutline(vehicleKey: string): void {
+    const meshData = this.trainMeshes.get(vehicleKey);
+    if (!meshData || !meshData.outlineMesh) return;
+
+    meshData.outlineMesh.visible = false;
   }
 
   /**
@@ -876,6 +1177,18 @@ export class TrainMeshManager {
   }
 
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
+    const currentZoom = map.getZoom();
+
+    // Return cached candidates if zoom hasn't changed and positions haven't been updated
+    if (
+      this.screenCandidatesCache &&
+      this.screenCandidatesCacheZoom === currentZoom &&
+      !this.screenCandidatesCacheInvalidated
+    ) {
+      return this.screenCandidatesCache;
+    }
+
+    // Recalculate candidates
     const candidates: ScreenSpaceCandidate[] = [];
 
     this.trainMeshes.forEach((meshData) => {
@@ -914,6 +1227,11 @@ export class TrainMeshManager {
       });
     });
 
+    // Cache the results
+    this.screenCandidatesCache = candidates;
+    this.screenCandidatesCacheZoom = currentZoom;
+    this.screenCandidatesCacheInvalidated = false;
+
     return candidates;
   }
 
@@ -927,6 +1245,25 @@ export class TrainMeshManager {
    *
    * Uses easeInOutCubic easing for natural-looking movement.
    */
+  applyZoomResponsiveScale(): void {
+    const zoomScale = this.scaleManager.computeScale(this.currentZoom);
+
+    this.trainMeshes.forEach((meshData) => {
+      const quantizedZoom = Math.round(this.currentZoom * 10) / 10;
+      if (meshData.lastZoomBucket !== quantizedZoom) {
+        const scaleVariation = this.getScaleVariation(meshData.vehicleKey);
+        const finalScale = meshData.baseScale * scaleVariation * zoomScale;
+
+        const isHighlighted = this.highlightedVehicleKey === meshData.vehicleKey;
+        const scaleToApply = isHighlighted ? finalScale * 1.12 : finalScale;
+
+        meshData.mesh.scale.set(scaleToApply, scaleToApply, scaleToApply);
+        meshData.screenSpaceScale = zoomScale;
+        meshData.lastZoomBucket = quantizedZoom;
+      }
+    });
+  }
+
   animatePositions(): void {
     const now = Date.now();
 
@@ -938,6 +1275,8 @@ export class TrainMeshManager {
       const [targetLng, targetLat] = targetPosition;
 
       // If already at target, skip interpolation
+      // For stopped trains, the offset has already been applied in updateTrainMeshes()
+      // and their position is final - no need to recalculate every frame
       if (currentLng === targetLng && currentLat === targetLat) {
         return;
       }
@@ -1033,7 +1372,13 @@ export class TrainMeshManager {
         bearingInfo = { bearing: (rotationDeg + 360) % 360, reversed: false };
       }
 
-      this.applyLateralOffset(position, bearingInfo, meshData.lateralOffsetIndex);
+      // DO NOT apply offset here - it's already been applied in updateTrainMeshes()
+      // when the polling data arrived. For stopped trains, position is already final.
+      // For moving trains, we want them to follow the interpolated railway geometry
+      // without any lateral offset.
+      //
+      // Performance: This eliminates thousands of redundant offset calculations per second
+      // (was recalculating every frame even though the result never changes for stopped trains)
 
       if (this.debugCount < this.DEBUG_LIMIT) {
         console.log('TrainMeshManager: Position computed for mesh', {
@@ -1047,6 +1392,9 @@ export class TrainMeshManager {
       }
 
       meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+
+      // Invalidate screen-space cache when position changes
+      this.screenCandidatesCacheInvalidated = true;
 
       if (bearingOverride) {
         this.applyRailwayBearing(

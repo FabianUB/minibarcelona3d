@@ -158,8 +158,11 @@ Three-tier testing approach (see `docs/TESTS.md`):
 **Train Features:**
 - `apps/web/src/features/trains/TrainLayer3D.tsx`: 3D train rendering with Three.js via Mapbox Custom Layer API
 - `apps/web/src/lib/trains/trainMeshManager.ts`: Manages train mesh lifecycle, positioning, and animations
+- `apps/web/src/lib/trains/scaleManager.ts`: Zoom-responsive train scaling with discrete buckets and caching
+- `apps/web/src/lib/trains/outlineManager.ts`: Hover outline creation using BackSide rendering technique
 - `apps/web/src/lib/trains/geometry.ts`: Railway line snapping and bearing calculations
 - `apps/web/src/features/trains/TrainInfoPanel*.tsx`: Train details panels (desktop/mobile)
+- `apps/web/src/features/trains/TrainDebugPanel.tsx`: Debug panel for train offset and zoom info
 - `apps/web/src/state/trains/`: Train-specific state management (Zustand)
 - `apps/web/src/lib/api/trains.ts`: API client for train data
 
@@ -282,6 +285,73 @@ const opacity = isStale ? baseOpacity * 0.5 : baseOpacity;
 meshManager.setTrainOpacities(trainOpacities);
 ```
 
+**Zoom-responsive train scaling:**
+```typescript
+// Use ScaleManager for discrete zoom buckets with caching
+import { ScaleManager } from '../lib/trains/scaleManager';
+
+const scaleManager = new ScaleManager({
+  minHeightPx: 15,
+  maxHeightPx: 50,
+  targetHeightPx: 30,
+});
+
+// Compute scale on zoom change
+const zoomScale = scaleManager.computeScale(currentZoom);
+mesh.scale.set(baseScale * zoomScale, baseScale * zoomScale, baseScale * zoomScale);
+
+// Monitor cache performance
+const stats = scaleManager.getCacheStats();
+console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(1)}%`);
+```
+
+**Train hover outlines with BackSide rendering:**
+```typescript
+// Build line color map for hover outlines
+import { buildLineColorMap, createOutlineMesh } from '../lib/trains/outlineManager';
+
+const lines = await loadRodaliesLines();
+const colorMap = buildLineColorMap(lines, 'CCCCCC');
+
+// Create outline lazily on first hover
+const lineColor = colorMap.get(train.lineCode) || colorMap.get('__FALLBACK__');
+const outline = createOutlineMesh(trainModel, lineColor, 1.12, 0.95);
+trainMesh.add(outline);
+
+// Toggle visibility on hover
+outline.visible = true; // Show on hover
+outline.visible = false; // Hide on leave
+```
+
+**Railway line rendering (Mini Tokyo 3D approach):**
+```typescript
+// Single layer for all lines - natural GPS positions, no artificial offsets
+map.addLayer({
+  id: 'rodalies-lines',
+  type: 'line',
+  source: 'rodalies-lines',
+  layout: {
+    'line-join': 'round',
+    'line-cap': 'round',
+  },
+  paint: {
+    'line-color': ['get', 'brand_color'],
+    'line-width': [
+      'interpolate',
+      ['exponential', 1.5],
+      ['zoom'],
+      8, 1,
+      22, 12
+    ],
+    'line-emissive-strength': 1,
+  },
+});
+
+// Note: Proximity-based rendering with separate layers was attempted but
+// caused severe performance issues (567 layers). The simple approach above
+// is preferred for performance and maintainability.
+```
+
 ## Coding Standards
 
 ### Comments and Code Clarity
@@ -329,6 +399,9 @@ const routeTrains = trains.filter(t => t.routeId === selectedRoute);
 
 ## Active Technologies
 - PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`) (002-realtime-train-tracking)
+- TypeScript 5.9.3 (React 19.1.1 frontend) + Three.js 0.180.0, Mapbox GL JS 3.4.0, Vite 7.1.7 (003-train-line-colors-zoom)
+- Static JSON/GeoJSON files in `apps/web/public/rodalies_data/` (003-train-line-colors-zoom)
 
 ## Recent Changes
+- 003-train-line-colors-zoom: Added zoom-responsive train scaling (ScaleManager), hover outlines with BackSide rendering (outlineManager), and debug panel for train visualization. Simplified railway line rendering to Mini Tokyo 3D approach (single layer) after removing proximity-based system due to performance issues (567 layers)
 - 002-realtime-train-tracking: Added PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`)

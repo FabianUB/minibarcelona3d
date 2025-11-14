@@ -25,13 +25,15 @@ import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
 import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
-import { loadStations, loadLineGeometryCollection } from '../../lib/rodalies/dataLoader';
+import { loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
+import { buildLineColorMap } from '../../lib/trains/outlineManager';
 import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
 import { useMapActions, useMapHighlightSelectors } from '../../state/map';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
+import { TrainDebugPanel } from './TrainDebugPanel';
 
 export interface TrainLayer3DProps {
   /**
@@ -128,6 +130,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   const [retryCount, setRetryCount] = useState(0);
   const [isDataStale, setIsDataStale] = useState(false);
 
+  // Phase 5: Line color map for hover outlines
+  const lineColorMapRef = useRef<Map<string, THREE.Color> | null>(null);
+
   // References for Three.js scene components
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
@@ -206,7 +211,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
    * Updates state and handles errors with exponential backoff retry
    * Task: T096 - Error handling with retry mechanism
    */
-  const fetchTrains = async () => {
+  const fetchTrains = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetchTrainPositions();
@@ -327,7 +332,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [retryCount]);
 
   /**
    * Manual retry function for user-initiated retry
@@ -337,7 +342,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     setRetryCount(0);
     setError(null);
     void fetchTrains();
-  }, []);
+  }, [fetchTrains]);
 
   /**
    * Converts geographic coordinates (lng, lat) to Mercator meters
@@ -404,6 +409,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   );
 
   const hoveredVehicleRef = useRef<string | null>(null);
+  const lastMouseMoveTime = useRef<number>(0);
+  const MOUSE_MOVE_THROTTLE_MS = 100; // Throttle to max 10 FPS
+
   useEffect(() => {
     const meshManager = meshManagerRef.current;
     if (!meshManager) {
@@ -515,6 +523,13 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
  */
   const handlePointerMove = useCallback(
     (event: MouseEvent) => {
+      // Throttle mousemove to reduce performance impact
+      const now = Date.now();
+      if (now - lastMouseMoveTime.current < MOUSE_MOVE_THROTTLE_MS) {
+        return;
+      }
+      lastMouseMoveTime.current = now;
+
       const canvas = map.getCanvas();
       const rect = canvas.getBoundingClientRect();
       const point = {
@@ -526,14 +541,29 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       const vehicleKey = hit?.vehicleKey ?? null;
 
       if (hoveredVehicleRef.current !== vehicleKey) {
+        // Hide outline from previous hovered train
+        if (hoveredVehicleRef.current && lineColorMapRef.current) {
+          meshManagerRef.current?.hideOutline(hoveredVehicleRef.current);
+        }
+
         hoveredVehicleRef.current = vehicleKey;
         meshManagerRef.current?.setHighlightedTrain(vehicleKey ?? undefined);
+
+        // Show outline for newly hovered train
+        if (vehicleKey && lineColorMapRef.current) {
+          meshManagerRef.current?.showOutline(vehicleKey, lineColorMapRef.current);
+        }
       }
     },
     [map, resolveScreenHit]
   );
 
   const handlePointerLeave = useCallback(() => {
+    // Hide outline when leaving canvas
+    if (hoveredVehicleRef.current && lineColorMapRef.current) {
+      meshManagerRef.current?.hideOutline(hoveredVehicleRef.current);
+    }
+
     hoveredVehicleRef.current = null;
     meshManagerRef.current?.setHighlightedTrain(undefined);
   }, []);
@@ -685,7 +715,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
      * Task: T054 - Performance monitoring
      */
     render(_gl: WebGLRenderingContext, matrix: Array<number>) {
-      // T054: Start frame time measurement
       const frameStartTime = performance.now();
 
       if (!sceneRef.current || !cameraRef.current || !rendererRef.current) {
@@ -694,7 +723,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
 
       const modelOrigin = getModelOrigin();
       if (!modelOrigin) {
-        // Model origin must be set during map load
         return;
       }
 
@@ -756,6 +784,17 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         const maxFrameTime = Math.max(...perf.frameTimes);
 
         console.log(`[Performance] Trains: ${trainCount} | FPS: ${avgFps.toFixed(1)} | Frame: ${perf.avgFrameTime.toFixed(2)}ms (min: ${minFrameTime.toFixed(2)}ms, max: ${maxFrameTime.toFixed(2)}ms) | Renders: ${perf.renderCount}`);
+
+        // T046: Log scale cache performance
+        if (meshManagerRef.current) {
+          const cacheStats = meshManagerRef.current.getScaleManager().getCacheStats();
+          console.log(`[ScaleCache] Size: ${cacheStats.size} | Hits: ${cacheStats.hits} | Misses: ${cacheStats.misses} | Hit Rate: ${(cacheStats.hitRate * 100).toFixed(1)}%`);
+
+          // T046: Warn if cache hit rate is poor
+          if (cacheStats.hitRate < 0.95 && cacheStats.hits + cacheStats.misses > 100) {
+            console.warn(`[ScaleCache] Low cache hit rate (${(cacheStats.hitRate * 100).toFixed(1)}%). Expected >95% for optimal performance.`);
+          }
+        }
 
         // T103: Warn if performance is degraded
         if (avgFps < 30) {
@@ -847,6 +886,25 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   }, []);
 
   /**
+   * Effect: Load line data and build color map for hover outlines
+   * Phase 5: User Story 3 - Line Identification on Hover
+   */
+  useEffect(() => {
+    const loadLineData = async () => {
+      try {
+        const lines = await loadRodaliesLines();
+        const colorMap = buildLineColorMap(lines);
+        lineColorMapRef.current = colorMap;
+        console.log(`TrainLayer3D: Loaded ${colorMap.size} line colors for outlines`);
+      } catch (err) {
+        console.error('TrainLayer3D: Failed to load line data for outlines', err);
+      }
+    };
+
+    void loadLineData();
+  }, []);
+
+  /**
    * Effect: Notify parent of loading state changes
    * Task: T099 - Expose loading state for skeleton UI
    */
@@ -912,7 +970,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         retryTimeoutRef.current = null;
       }
     };
-  }, []);
+  }, [fetchTrains]);
 
   /**
    * Effect: Add custom layer to map when ready
@@ -1084,6 +1142,27 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale]);
 
   /**
+   * Effect: Update train scales when zoom changes
+   * Two buckets: < 15 (full size) and >= 15 (half size to avoid buildings)
+   */
+  useEffect(() => {
+    const handleZoomChange = () => {
+      if (meshManagerRef.current) {
+        const currentZoom = map.getZoom();
+        meshManagerRef.current.setCurrentZoom(currentZoom);
+        meshManagerRef.current.applyZoomResponsiveScale();
+      }
+    };
+
+    map.on('zoom', handleZoomChange);
+    handleZoomChange();
+
+    return () => {
+      map.off('zoom', handleZoomChange);
+    };
+  }, [map]);
+
+  /**
    * Effect: Handle pointer hover/click using screen-space distance
    */
   useEffect(() => {
@@ -1114,5 +1193,5 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     return <TrainErrorDisplay error={error!} onRetry={handleManualRetry} />;
   }
 
-  return null;
+  return <TrainDebugPanel meshManager={meshManagerRef.current} currentZoom={map.getZoom()} />;
 }

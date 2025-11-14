@@ -75,19 +75,24 @@ export function getLineWidthExpression(
   const widthMultiplier = isHighContrast ? 1.5 : 1;
 
   if (highlightMode === 'none' || activeLineIds.length === 0) {
-    // No highlight: standard zoom-based width (with optional high contrast boost)
+    // No highlight: thicker lines for better visibility
+    // Exponential scaling from zoom 11 to 22
     return [
       'interpolate',
       ['exponential', 2],
       ['zoom'],
-      10,
-      2 * widthMultiplier,
+      11,
+      2 * widthMultiplier, // Thicker at low zoom
       12,
-      4 * widthMultiplier,
+      4 * widthMultiplier, // Base width (doubled)
       14,
       6 * widthMultiplier,
       16,
       8 * widthMultiplier,
+      19,
+      10 * widthMultiplier,
+      22,
+      20 * widthMultiplier, // Much thicker at highest zoom
     ] as Expression;
   }
 
@@ -97,7 +102,7 @@ export function getLineWidthExpression(
     'interpolate',
     ['exponential', 2],
     ['zoom'],
-    10,
+    11,
     ['case', isHighlighted, 4 * widthMultiplier, 2 * widthMultiplier],
     12,
     ['case', isHighlighted, 8 * widthMultiplier, 4 * widthMultiplier],
@@ -105,6 +110,10 @@ export function getLineWidthExpression(
     ['case', isHighlighted, 12 * widthMultiplier, 6 * widthMultiplier],
     16,
     ['case', isHighlighted, 16 * widthMultiplier, 8 * widthMultiplier],
+    19,
+    ['case', isHighlighted, 20 * widthMultiplier, 10 * widthMultiplier],
+    22,
+    ['case', isHighlighted, 40 * widthMultiplier, 20 * widthMultiplier],
   ] as Expression;
 }
 
@@ -112,15 +121,15 @@ export function getLineWidthExpression(
  * Get complete paint properties for line layer
  * Combines all dynamic styling expressions
  *
- * Note: We don't use line-emissive-strength because it doesn't support
- * data expressions (can't read feature properties). Instead, we rely on
- * opacity and width changes for highlight effects.
+ * Uses line-emissive-strength (like Mini Tokyo 3D) to make colors pop,
+ * especially useful for distinguishing overlapping lines.
  */
 export function getLinePaintProperties(config: LineLayerStyleConfig) {
   return {
     'line-color': ['coalesce', ['get', 'brand_color'], '#f97316'] as Expression,
     'line-width': getLineWidthExpression(config),
     'line-opacity': getLineOpacityExpression(config),
+    'line-emissive-strength': 1, // Make line colors bright and visible (Mini Tokyo 3D style)
   };
 }
 
