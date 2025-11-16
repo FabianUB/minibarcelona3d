@@ -30,6 +30,8 @@ export interface MapActions {
   setActivePanel(panel: ActivePanel): void;
   setMapInstance(map: MapboxMap | null): void;
   setMapLoaded(isLoaded: boolean): void;
+  selectStation(stationId: string | null): void;
+  retryStationLoad(): void;
 }
 
 export interface MapHighlightSelectors {
