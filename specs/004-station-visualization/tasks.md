@@ -24,10 +24,10 @@
 
 **Purpose**: Create foundational directory structure and configuration
 
-- [ ] T001 Create stations feature directory at apps/web/src/features/stations/
-- [ ] T002 Create stations library directory at apps/web/src/lib/stations/
-- [ ] T003 [P] Create stations hooks directory at apps/web/src/features/stations/hooks/
-- [ ] T004 [P] Verify Station.geojson exists at apps/web/public/rodalies_data/Station.geojson
+- [x] T001 Create stations feature directory at apps/web/src/features/stations/
+- [x] T002 Create stations library directory at apps/web/src/lib/stations/
+- [x] T003 [P] Create stations hooks directory at apps/web/src/features/stations/hooks/
+- [x] T004 [P] Verify Station.geojson exists at apps/web/public/rodalies_data/Station.geojson
 
 ---
 
@@ -39,26 +39,26 @@
 
 ### State Management Extensions
 
-- [ ] T005 Extend MapUIState interface with selectedStationId and stationLoadError in apps/web/src/state/map/types.ts
-- [ ] T006 Extend MapActions interface with selectStation() and retryStationLoad() in apps/web/src/state/map/types.ts
-- [ ] T007 Add SELECT_STATION reducer case to mapStateReducer in apps/web/src/state/map/MapStateProvider.tsx
-- [ ] T008 Add SET_STATION_LOAD_ERROR reducer case to mapStateReducer in apps/web/src/state/map/MapStateProvider.tsx
-- [ ] T009 Implement selectStation action in MapActionsContext in apps/web/src/state/map/MapStateProvider.tsx
-- [ ] T010 Implement retryStationLoad action in MapActionsContext in apps/web/src/state/map/MapStateProvider.tsx
+- [x] T005 Extend MapUIState interface with selectedStationId and stationLoadError in apps/web/src/state/map/types.ts
+- [x] T006 Extend MapActions interface with selectStation() and retryStationLoad() in apps/web/src/state/map/types.ts
+- [x] T007 Add SELECT_STATION reducer case to mapStateReducer in apps/web/src/state/map/MapStateProvider.tsx
+- [x] T008 Add SET_STATION_LOAD_ERROR reducer case to mapStateReducer in apps/web/src/state/map/MapStateProvider.tsx
+- [x] T009 Implement selectStation action in MapActionsContext in apps/web/src/state/map/MapStateProvider.tsx
+- [x] T010 Implement retryStationLoad action in MapActionsContext in apps/web/src/state/map/MapStateProvider.tsx
 
 ### Core Utilities
 
-- [ ] T011 [P] Implement calculateRadialOffsets function in apps/web/src/lib/stations/markerPositioning.ts
-- [ ] T012 [P] Implement clusterByProximity helper function in apps/web/src/lib/stations/markerPositioning.ts
-- [ ] T013 [P] Implement getStationMarkerStyles function in apps/web/src/lib/stations/markerStyles.ts
-- [ ] T014 [P] Implement getMultiLineInnerCircleStyles function in apps/web/src/lib/stations/markerStyles.ts
+- [x] T011 [P] Implement calculateRadialOffsets function in apps/web/src/lib/stations/markerPositioning.ts
+- [x] T012 [P] Implement clusterByProximity helper function in apps/web/src/lib/stations/markerPositioning.ts
+- [x] T013 [P] Implement getStationMarkerStyles function in apps/web/src/lib/stations/markerStyles.ts
+- [x] T014 [P] Implement getMultiLineInnerCircleStyles function in apps/web/src/lib/stations/markerStyles.ts
 
 ### Unit Tests for Utilities
 
-- [ ] T015 [P] Write unit tests for calculateRadialOffsets in apps/web/src/lib/stations/markerPositioning.test.ts
-- [ ] T016 [P] Write unit tests for clusterByProximity in apps/web/src/lib/stations/markerPositioning.test.ts
-- [ ] T017 [P] Write unit tests for marker style functions in apps/web/src/lib/stations/markerStyles.test.ts
-- [ ] T018 [P] Write unit tests for MapStateProvider station actions in apps/web/src/state/map/MapStateProvider.test.tsx
+- [x] T015 [P] Write unit tests for calculateRadialOffsets in apps/web/src/lib/stations/markerPositioning.test.ts
+- [x] T016 [P] Write unit tests for clusterByProximity in apps/web/src/lib/stations/markerPositioning.test.ts
+- [x] T017 [P] Write unit tests for marker style functions in apps/web/src/lib/stations/markerStyles.test.ts
+- [x] T018 [P] Write unit tests for MapStateProvider station actions in apps/web/src/state/map/mapStationActions.test.tsx
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -74,30 +74,30 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T019 [P] [US1] Write E2E test for "all stations appear on map load" in apps/web/e2e/stations.spec.ts
-- [ ] T020 [P] [US1] Write E2E test for "station markers scale with zoom level" in apps/web/e2e/stations.spec.ts
-- [ ] T021 [P] [US1] Write E2E test for "multi-line stations show concentric circles" in apps/web/e2e/stations.spec.ts
-- [ ] T022 [P] [US1] Write E2E test for "stations filter by highlighted lines" in apps/web/e2e/stations.spec.ts
+- [x] T019 [P] [US1] Write E2E test for "all stations appear on map load" in apps/web/e2e/stations.spec.ts
+- [x] T020 [P] [US1] Write E2E test for "station markers scale with zoom level" in apps/web/e2e/stations.spec.ts
+- [x] T021 [P] [US1] Write E2E test for "multi-line stations show concentric circles" in apps/web/e2e/stations.spec.ts
+- [x] T022 [P] [US1] Write E2E test for "stations filter by highlighted lines" in apps/web/e2e/stations.spec.ts
 
 ### Implementation for User Story 1
 
-- [ ] T023 [P] [US1] Create useStationMarkers hook in apps/web/src/features/stations/hooks/useStationMarkers.ts
-- [ ] T024 [US1] Implement StationLayer component in apps/web/src/features/stations/StationLayer.tsx (depends on T023)
-- [ ] T025 [US1] Add station data loading logic to StationLayer with error handling in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T026 [US1] Add Mapbox GL source creation for stations in StationLayer in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T027 [US1] Add single-line station circle layer in StationLayer in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T028 [US1] Add multi-line station outer circle layer in StationLayer in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T029 [US1] Add multi-line station inner circle layer in StationLayer in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T030 [US1] Integrate radial offset positioning in StationLayer in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T031 [US1] Apply line highlighting filters to station layers in StationLayer in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T032 [US1] Add StationLayer to RodaliesMapView in apps/web/src/features/map/RodaliesMapView.tsx
-- [ ] T033 [US1] Add error banner for station load failures in RodaliesMapView in apps/web/src/features/map/RodaliesMapView.tsx
+- [x] T023 [P] [US1] Create useStationMarkers hook in apps/web/src/features/stations/hooks/useStationMarkers.ts
+- [x] T024 [US1] Implement StationLayer component in apps/web/src/features/stations/StationLayer.tsx (depends on T023)
+- [x] T025 [US1] Add station data loading logic to StationLayer with error handling in apps/web/src/features/stations/StationLayer.tsx
+- [x] T026 [US1] Add Mapbox GL source creation for stations in StationLayer in apps/web/src/features/stations/StationLayer.tsx
+- [x] T027 [US1] Add single-line station circle layer in StationLayer in apps/web/src/features/stations/StationLayer.tsx
+- [x] T028 [US1] Add multi-line station outer circle layer in StationLayer in apps/web/src/features/stations/StationLayer.tsx
+- [x] T029 [US1] Add multi-line station inner circle layer in StationLayer in apps/web/src/features/stations/StationLayer.tsx
+- [x] T030 [US1] Integrate radial offset positioning in StationLayer in apps/web/src/features/stations/StationLayer.tsx
+- [x] T031 [US1] Apply line highlighting filters to station layers in StationLayer in apps/web/src/features/stations/StationLayer.tsx
+- [x] T032 [US1] Add StationLayer to MapCanvas in apps/web/src/features/map/MapCanvas.tsx
+- [x] T033 [US1] Add error banner for station load failures in MapCanvas (handled via useStationMarkers hook)
 
 ### Component Tests for User Story 1
 
-- [ ] T034 [P] [US1] Write component test for StationLayer marker rendering in apps/web/src/features/stations/StationLayer.test.tsx
-- [ ] T035 [P] [US1] Write component test for radial offset application in apps/web/src/features/stations/StationLayer.test.tsx
-- [ ] T036 [P] [US1] Write component test for line highlighting integration in apps/web/src/features/stations/StationLayer.test.tsx
+- [x] T034 [P] [US1] Write component test for StationLayer marker rendering in apps/web/src/features/stations/StationLayer.test.tsx
+- [x] T035 [P] [US1] Write component test for radial offset application in apps/web/src/features/stations/StationLayer.test.tsx
+- [x] T036 [P] [US1] Write component test for line highlighting integration in apps/web/src/features/stations/StationLayer.test.tsx
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - 200+ stations visible on map with proper styling, positioning, and filtering
 
@@ -122,8 +122,8 @@
 - [ ] T042 [P] [US2] Create StationInfoPanelDesktop component in apps/web/src/features/stations/StationInfoPanelDesktop.tsx
 - [ ] T043 [P] [US2] Create StationInfoPanelMobile component in apps/web/src/features/stations/StationInfoPanelMobile.tsx
 - [ ] T044 [US2] Create StationInfoPanel wrapper component in apps/web/src/features/stations/StationInfoPanel.tsx (depends on T042, T043)
-- [ ] T045 [US2] Add Radix Dialog integration to desktop panel in apps/web/src/features/stations/StationInfoPanelDesktop.tsx
-- [ ] T046 [US2] Add Radix Dialog integration to mobile panel in apps/web/src/features/stations/StationInfoPanelMobile.tsx
+- [ ] T045 [US2] Add ShadCN Dialog integration to desktop panel in apps/web/src/features/stations/StationInfoPanelDesktop.tsx
+- [ ] T046 [US2] Add ShadCN Dialog integration to mobile panel in apps/web/src/features/stations/StationInfoPanelMobile.tsx
 - [ ] T047 [US2] Implement line badge rendering with colors in StationInfoPanel components
 - [ ] T048 [US2] Add click handler to StationLayer for station selection in apps/web/src/features/stations/StationLayer.tsx
 - [ ] T049 [US2] Integrate StationInfoPanel into RodaliesMapView in apps/web/src/features/map/RodaliesMapView.tsx

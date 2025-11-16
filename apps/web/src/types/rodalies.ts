@@ -122,7 +122,7 @@ export interface LegendEntry {
 
 export type MapHighlightMode = 'none' | 'highlight' | 'isolate';
 
-export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo';
+export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo' | 'stationInfo';
 
 export interface MapUIState {
   selectedLineId: string | null; // Deprecated: kept for backwards compatibility
@@ -131,6 +131,8 @@ export interface MapUIState {
   isHighContrast: boolean;
   isLegendOpen: boolean; // Deprecated: use activePanel instead
   activePanel: ActivePanel; // Which panel is currently expanded on desktop
+  selectedStationId: string | null; // Currently selected station
+  stationLoadError: string | null; // Error message from station data load failure
 }
 
 export interface ManifestLineEntry {

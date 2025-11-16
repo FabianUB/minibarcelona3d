@@ -16,6 +16,7 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
 import { setModelOrigin } from '../../lib/map/coordinates';
+import { StationLayer } from '../stations/StationLayer';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
 // Similar to MiniTokyo3D's custom style but with built-in 3D building support
@@ -92,7 +93,7 @@ export function MapCanvas() {
   const [raycastDebugInfo, setRaycastDebugInfo] = useState<RaycastDebugInfo | null>(null);
   const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
 
-  const { setMapInstance, setMapLoaded, setViewport } = useMapActions();
+  const { setMapInstance, setMapLoaded, setViewport, selectStation } = useMapActions();
   const { highlightMode, highlightedLineId, highlightedLineIds } = useMapHighlightSelectors();
   const { ui, mapInstance, isMapLoaded } = useMapState();
   const {
@@ -674,6 +675,15 @@ export function MapCanvas() {
           map={mapInstance}
           onRaycastResult={SHOW_RAYCAST_DEBUG ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
+        />
+      ) : null}
+      {/* Station markers layer */}
+      {mapInstance && isMapLoaded ? (
+        <StationLayer
+          map={mapInstance}
+          highlightedLineIds={highlightedLineIds}
+          highlightMode={highlightMode}
+          onStationClick={selectStation}
         />
       ) : null}
     </div>
