@@ -11,8 +11,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import type { Station } from '../../../types/rodalies';
-import { loadStations, loadRodaliesLines } from '../../../lib/rodalies/dataLoader';
+import { loadStations, loadRodaliesLines, loadLineGeometryCollection } from '../../../lib/rodalies/dataLoader';
 import { calculateRadialOffsets } from '../../../lib/stations/markerPositioning';
+import { calculateStationTrackAlignments } from '../../../lib/stations/trackAlignment';
 
 export interface UseStationMarkersReturn {
   /** GeoJSON FeatureCollection with station markers */
@@ -31,6 +32,7 @@ export interface UseStationMarkersReturn {
         lineCount: number;
         offsetX: number;
         offsetY: number;
+        trackBearing: number;
       };
       geometry: {
         type: 'Point';
@@ -92,10 +94,11 @@ export function useStationMarkers({
     setError(null);
 
     try {
-      // Load stations and lines in parallel
-      const [stationFeatures, lines] = await Promise.all([
+      // Load stations, lines, and line geometries in parallel
+      const [stationFeatures, lines, lineGeometries] = await Promise.all([
         loadStations(),
         loadRodaliesLines(),
+        loadLineGeometryCollection(),
       ]);
 
       // Convert features to Station objects
@@ -107,9 +110,14 @@ export function useStationMarkers({
         geometry: feature.geometry,
       }));
 
-      // Calculate radial offsets
+      // Calculate radial offsets and track bearings
       const offsets = calculateRadialOffsets(stations, map);
       const offsetMap = new Map(offsets.map((o) => [o.stationId, o]));
+
+      const trackAlignments = calculateStationTrackAlignments(stations, lineGeometries);
+      const alignmentMap = new Map(
+        Array.from(trackAlignments.values()).map((a) => [a.stationId, a])
+      );
 
       // Create line color map
       const lineMap = new Map(lines.map((l) => [l.id, l]));
@@ -117,6 +125,7 @@ export function useStationMarkers({
       // Generate GeoJSON with enriched properties
       const features = stations.map((station) => {
         const offset = offsetMap.get(station.id) || { offsetX: 0, offsetY: 0 };
+        const alignment = alignmentMap.get(station.id);
         const firstLine = lineMap.get(station.lines[0]);
         const dominantLineColor = firstLine?.brand_color || '#CCCCCC';
 
@@ -133,6 +142,7 @@ export function useStationMarkers({
             lineCount: station.lines.length,
             offsetX: offset.offsetX,
             offsetY: offset.offsetY,
+            trackBearing: alignment?.bearing ?? 0,
           },
           geometry: station.geometry,
         };

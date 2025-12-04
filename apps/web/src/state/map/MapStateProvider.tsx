@@ -238,6 +238,9 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         dispatch({ type: 'set-station-load-error', payload: null });
         // Note: Actual reload logic will be handled by components that depend on this state
       },
+      setStationLoadError(message) {
+        dispatch({ type: 'set-station-load-error', payload: message });
+      },
     }),
     [dispatch],
   );

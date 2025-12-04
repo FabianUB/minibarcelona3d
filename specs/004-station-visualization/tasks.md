@@ -111,31 +111,31 @@
 
 ### E2E Tests for User Story 2
 
-- [ ] T037 [P] [US2] Write E2E test for "clicking station opens detail panel" in apps/web/e2e/stations.spec.ts
-- [ ] T038 [P] [US2] Write E2E test for "panel shows station name, code, and lines" in apps/web/e2e/stations.spec.ts
-- [ ] T039 [P] [US2] Write E2E test for "clicking another station updates panel" in apps/web/e2e/stations.spec.ts
-- [ ] T040 [P] [US2] Write E2E test for "panel closes on outside click and escape" in apps/web/e2e/stations.spec.ts
-- [ ] T041 [P] [US2] Write E2E test for "rapid station clicks show only most recent" in apps/web/e2e/stations.spec.ts
+- [X] T037 [P] [US2] Write E2E test for "clicking station opens detail panel" in apps/web/e2e/stations.spec.ts
+- [X] T038 [P] [US2] Write E2E test for "panel shows station name, code, and lines" in apps/web/e2e/stations.spec.ts
+- [X] T039 [P] [US2] Write E2E test for "clicking another station updates panel" in apps/web/e2e/stations.spec.ts
+- [X] T040 [P] [US2] Write E2E test for "panel closes on outside click and escape" in apps/web/e2e/stations.spec.ts
+- [X] T041 [P] [US2] Write E2E test for "rapid station clicks show only most recent" in apps/web/e2e/stations.spec.ts
 
 ### Implementation for User Story 2
 
-- [ ] T042 [P] [US2] Create StationInfoPanelDesktop component in apps/web/src/features/stations/StationInfoPanelDesktop.tsx
-- [ ] T043 [P] [US2] Create StationInfoPanelMobile component in apps/web/src/features/stations/StationInfoPanelMobile.tsx
-- [ ] T044 [US2] Create StationInfoPanel wrapper component in apps/web/src/features/stations/StationInfoPanel.tsx (depends on T042, T043)
-- [ ] T045 [US2] Add ShadCN Dialog integration to desktop panel in apps/web/src/features/stations/StationInfoPanelDesktop.tsx
-- [ ] T046 [US2] Add ShadCN Dialog integration to mobile panel in apps/web/src/features/stations/StationInfoPanelMobile.tsx
-- [ ] T047 [US2] Implement line badge rendering with colors in StationInfoPanel components
-- [ ] T048 [US2] Add click handler to StationLayer for station selection in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T049 [US2] Integrate StationInfoPanel into RodaliesMapView in apps/web/src/features/map/RodaliesMapView.tsx
-- [ ] T050 [US2] Add station data fetch logic based on selectedStationId in RodaliesMapView in apps/web/src/features/map/RodaliesMapView.tsx
-- [ ] T051 [US2] Implement rapid click cancellation logic (FR-016) in MapStateProvider
+- [X] T042 [P] [US2] Create StationInfoPanelDesktop component in apps/web/src/features/stations/StationInfoPanelDesktop.tsx
+- [X] T043 [P] [US2] Create StationInfoPanelMobile component in apps/web/src/features/stations/StationInfoPanelMobile.tsx
+- [X] T044 [US2] Create StationInfoPanel wrapper component in apps/web/src/features/stations/StationInfoPanel.tsx (depends on T042, T043)
+- [X] T045 [US2] Add ShadCN Dialog integration to desktop panel in apps/web/src/features/stations/StationInfoPanelDesktop.tsx
+- [X] T046 [US2] Add ShadCN Dialog integration to mobile panel in apps/web/src/features/stations/StationInfoPanelMobile.tsx
+- [X] T047 [US2] Implement line badge rendering with colors in StationInfoPanel components
+- [X] T048 [US2] Add click handler to StationLayer for station selection in apps/web/src/features/stations/StationLayer.tsx
+- [X] T049 [US2] Integrate StationInfoPanel into RodaliesMapView in apps/web/src/features/map/RodaliesMapView.tsx
+- [X] T050 [US2] Add station data fetch logic based on selectedStationId in RodaliesMapView in apps/web/src/features/map/RodaliesMapView.tsx
+- [X] T051 [US2] Implement rapid click cancellation logic (FR-016) in MapStateProvider
 
 ### Component Tests for User Story 2
 
-- [ ] T052 [P] [US2] Write component test for StationInfoPanelDesktop rendering in apps/web/src/features/stations/StationInfoPanelDesktop.test.tsx
-- [ ] T053 [P] [US2] Write component test for StationInfoPanelMobile rendering in apps/web/src/features/stations/StationInfoPanelMobile.test.tsx
-- [ ] T054 [P] [US2] Write component test for line badge display in apps/web/src/features/stations/StationInfoPanel.test.tsx
-- [ ] T055 [P] [US2] Write component test for panel close interactions in apps/web/src/features/stations/StationInfoPanel.test.tsx
+- [X] T052 [P] [US2] Write component test for StationInfoPanelDesktop rendering in apps/web/src/features/stations/StationInfoPanelDesktop.test.tsx
+- [X] T053 [P] [US2] Write component test for StationInfoPanelMobile rendering in apps/web/src/features/stations/StationInfoPanelMobile.test.tsx
+- [X] T054 [P] [US2] Write component test for line badge display in apps/web/src/features/stations/StationInfoPanel.test.tsx
+- [X] T055 [P] [US2] Write component test for panel close interactions in apps/web/src/features/stations/StationInfoPanel.test.tsx
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - markers visible AND clickable with detail panel
 
@@ -149,27 +149,27 @@
 
 ### E2E Tests for User Story 3
 
-- [ ] T056 [P] [US3] Write E2E test for "hovering shows tooltip with station name" in apps/web/e2e/stations.spec.ts (desktop only)
-- [ ] T057 [P] [US3] Write E2E test for "tooltip disappears on mouse leave" in apps/web/e2e/stations.spec.ts
-- [ ] T058 [P] [US3] Write E2E test for "tooltip shows line count after 500ms" in apps/web/e2e/stations.spec.ts
-- [ ] T059 [P] [US3] Write E2E test for "no tooltip on mobile devices" in apps/web/e2e/stations.spec.ts
+- [X] T056 [P] [US3] Write E2E test for "hovering shows tooltip with station name" in apps/web/e2e/stations.spec.ts (desktop only)
+- [X] T057 [P] [US3] Write E2E test for "tooltip disappears on mouse leave" in apps/web/e2e/stations.spec.ts
+- [X] T058 [P] [US3] Write E2E test for "tooltip shows line count after 500ms" in apps/web/e2e/stations.spec.ts
+- [X] T059 [P] [US3] Write E2E test for "no tooltip on mobile devices" in apps/web/e2e/stations.spec.ts
 
 ### Implementation for User Story 3
 
-- [ ] T060 [P] [US3] Create useStationHover hook in apps/web/src/features/stations/hooks/useStationHover.ts
-- [ ] T061 [US3] Integrate useStationHover into StationLayer in apps/web/src/features/stations/StationLayer.tsx
-- [ ] T062 [US3] Add Mapbox GL Popup initialization for hover tooltips in useStationHover
-- [ ] T063 [US3] Add mouseenter event handler with 200ms debounce in useStationHover
-- [ ] T064 [US3] Add mouseleave event handler for tooltip dismissal in useStationHover
-- [ ] T065 [US3] Add 500ms delayed line count display logic in useStationHover
-- [ ] T066 [US3] Add media query check to disable hover on touch devices in useStationHover
-- [ ] T067 [US3] Style hover tooltip with Tailwind classes for consistency
+- [X] T060 [P] [US3] Create useStationHover hook in apps/web/src/features/stations/hooks/useStationHover.ts
+- [X] T061 [US3] Integrate useStationHover into StationLayer in apps/web/src/features/stations/StationLayer.tsx
+- [X] T062 [US3] Add Mapbox GL Popup initialization for hover tooltips in useStationHover
+- [X] T063 [US3] Add mouseenter event handler with 200ms debounce in useStationHover
+- [X] T064 [US3] Add mouseleave event handler for tooltip dismissal in useStationHover
+- [X] T065 [US3] Add 500ms delayed line count display logic in useStationHover
+- [X] T066 [US3] Add media query check to disable hover on touch devices in useStationHover
+- [X] T067 [US3] Style hover tooltip with Tailwind classes for consistency
 
 ### Component Tests for User Story 3
 
-- [ ] T068 [P] [US3] Write component test for useStationHover hook in apps/web/src/features/stations/hooks/useStationHover.test.ts
-- [ ] T069 [P] [US3] Write component test for tooltip timing (100ms appear, 200ms dismiss) in useStationHover.test.ts
-- [ ] T070 [P] [US3] Write component test for desktop-only behavior in useStationHover.test.ts
+- [X] T068 [P] [US3] Write component test for useStationHover hook in apps/web/src/features/stations/hooks/useStationHover.test.ts
+- [X] T069 [P] [US3] Write component test for tooltip timing (100ms appear, 200ms dismiss) in useStationHover.test.ts
+- [X] T070 [P] [US3] Write component test for desktop-only behavior in useStationHover.test.ts
 
 **Checkpoint**: All user stories should now be independently functional - view, click, and hover all working
 
@@ -188,28 +188,28 @@
 
 ### Error Handling & Edge Cases
 
-- [ ] T075 [P] Add handling for stations with missing code field (display "N/A")
-- [ ] T076 [P] Add handling for stations serving unloaded lines (graceful fallback)
+- [x] T075 [P] Add handling for stations with missing code field (display "N/A")
+- [x] T076 [P] Add handling for stations serving unloaded lines (graceful fallback)
 - [ ] T077 [P] Verify error banner retry functionality works correctly
 
 ### Accessibility & Responsiveness
 
 - [ ] T078 [P] Verify panel is readable on 320px viewport width (SC-008)
-- [ ] T079 [P] Test keyboard navigation for panel close (Escape key)
-- [ ] T080 [P] Verify ARIA attributes on dialog components
+- [x] T079 [P] Test keyboard navigation for panel close (Escape key)
+- [x] T080 [P] Verify ARIA attributes on dialog components
 
 ### Documentation & Validation
 
-- [ ] T081 [P] Update CLAUDE.md with station feature implementation notes
-- [ ] T082 Run full test suite (unit + component + E2E) and verify all pass
+- [x] T081 [P] Update CLAUDE.md with station feature implementation notes
+- [x] T082 Run full test suite (unit + component + E2E) and verify all pass
 - [ ] T083 Visual QA: Verify all acceptance scenarios from spec.md
 - [ ] T084 Run quickstart.md validation steps
 - [ ] T085 Performance validation: Record FPS metrics with 200+ stations
 
 ### Code Quality
 
-- [ ] T086 [P] Run ESLint and fix any issues in station feature files
-- [ ] T087 [P] Review and refactor for code clarity and maintainability
+- [x] T086 [P] Run ESLint and fix any issues in station feature files
+- [x] T087 [P] Review and refactor for code clarity and maintainability
 - [ ] T088 [P] Add JSDoc comments to public interfaces
 
 ---
