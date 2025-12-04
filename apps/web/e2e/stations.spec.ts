@@ -81,6 +81,17 @@ async function waitForMapLoad(page: Page) {
   });
 }
 
+async function selectStationViaActions(page: Page, stationId: string) {
+  await page.evaluate((id) => {
+    const actions = (window as unknown as { __MAP_ACTIONS__?: { selectStation?: (value: string) => void } })
+      .__MAP_ACTIONS__;
+    if (!actions || typeof actions.selectStation !== 'function') {
+      throw new Error('Map actions not available for station selection');
+    }
+    actions.selectStation(id);
+  }, stationId);
+}
+
 test.describe('User Story 1: View Stations on Map', () => {
   test('T019: all stations appear on map load', async ({ page }) => {
     // Load expected station data
@@ -106,28 +117,20 @@ test.describe('User Story 1: View Stations on Map', () => {
 
     expect(hasStationSource, 'stations-source should be added to map').toBe(true);
 
-    // Check that station layers exist
-    const stationLayers = await page.evaluate(() => {
+    // Check that station layer exists (teardrop symbol layer)
+    const hasStationLayer = await page.evaluate(() => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__;
-      if (!map) return [];
+      if (!map) return false;
 
-      const layers: string[] = [];
-      const style = map.getStyle();
-      if (style && style.layers) {
-        style.layers.forEach((layer) => {
-          if (layer.id.startsWith('stations-circles')) {
-            layers.push(layer.id);
-          }
-        });
-      }
-      return layers;
+      const layer = map.getLayer('stations-lowmarkers');
+      return layer !== undefined && layer.type === 'symbol';
     });
 
     expect(
-      stationLayers.length,
-      'station circle layers should be added (single, multi-outer, multi-inner)'
-    ).toBeGreaterThanOrEqual(2);
+      hasStationLayer,
+      'stations-lowmarkers symbol layer should be added'
+    ).toBe(true);
 
     // Verify station features are loaded
     const stationFeatureCount = await page.evaluate(() => {
@@ -170,37 +173,37 @@ test.describe('User Story 1: View Stations on Map', () => {
       { timeout: 10000 }
     );
 
-    // Get marker size at zoom level 8
-    const sizeAtZoom8 = await page.evaluate(async () => {
+    // Get marker size at zoom level 13 (below threshold)
+    const sizeAtZoom13 = await page.evaluate(async () => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__!;
-      map.setZoom(8);
+      map.setZoom(13);
       await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for render
 
-      const layer = map.getLayer('stations-circles-single');
-      if (!layer || layer.type !== 'circle') return null;
+      const layer = map.getLayer('stations-lowmarkers');
+      if (!layer || layer.type !== 'symbol') return null;
 
-      // Get paint property for circle-radius
-      return map.getPaintProperty('stations-circles-single', 'circle-radius');
+      // Get layout property for icon-size (teardrop markers scale with zoom)
+      return map.getLayoutProperty('stations-lowmarkers', 'icon-size');
     });
 
-    // Get marker size at zoom level 16
+    // Get marker size at zoom level 16 (above threshold)
     const sizeAtZoom16 = await page.evaluate(async () => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__!;
       map.setZoom(16);
       await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for render
 
-      return map.getPaintProperty('stations-circles-single', 'circle-radius');
+      return map.getLayoutProperty('stations-lowmarkers', 'icon-size');
     });
 
-    expect(sizeAtZoom8, 'should have circle-radius paint property at zoom 8').toBeTruthy();
-    expect(sizeAtZoom16, 'should have circle-radius paint property at zoom 16').toBeTruthy();
+    expect(sizeAtZoom13, 'should have icon-size layout property at zoom 13').toBeTruthy();
+    expect(sizeAtZoom16, 'should have icon-size layout property at zoom 16').toBeTruthy();
 
-    // Both should use interpolate expression (array format)
+    // Both should use step/interpolate expression (array format)
     expect(
-      Array.isArray(sizeAtZoom8),
-      'circle-radius should use expression-based sizing'
+      Array.isArray(sizeAtZoom13),
+      'icon-size should use expression-based sizing'
     ).toBe(true);
     expect(
       Array.isArray(sizeAtZoom16),
@@ -237,62 +240,35 @@ test.describe('User Story 1: View Stations on Map', () => {
       { timeout: 10000 }
     );
 
-    // Check that multi-line station layers exist
-    const multiLineLayersExist = await page.evaluate(() => {
+    // Check that station layer exists and contains multi-line station data
+    const hasMultiLineData = await page.evaluate((multiStationId) => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__;
       if (!map) return false;
 
-      const outerLayer = map.getLayer('stations-circles-multi-outer');
-      const innerLayer = map.getLayer('stations-circles-multi-inner');
+      // Verify the main station layer exists
+      const layer = map.getLayer('stations-lowmarkers');
+      if (!layer || layer.type !== 'symbol') return false;
 
-      return outerLayer !== undefined && innerLayer !== undefined;
-    });
+      // Verify multi-line station data is present in source
+      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
+      if (!source) return false;
+
+      const sourceData = (source as any)._data;
+      if (!sourceData || !sourceData.features) return false;
+
+      // Find the multi-line station in the data
+      const multiStation = sourceData.features.find(
+        (f: any) => f.properties.id === multiStationId
+      );
+
+      return multiStation && multiStation.properties.isMultiLine === true;
+    }, multiLineStation!.properties.id);
 
     expect(
-      multiLineLayersExist,
-      'multi-line station layers (outer and inner) should exist'
+      hasMultiLineData,
+      'station layer should contain multi-line station data with isMultiLine property'
     ).toBe(true);
-
-    // Verify that both layers have circle type
-    const layerTypes = await page.evaluate(() => {
-      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
-        .__MAPBOX_INSTANCE__!;
-
-      const outerLayer = map.getLayer('stations-circles-multi-outer');
-      const innerLayer = map.getLayer('stations-circles-multi-inner');
-
-      return {
-        outer: outerLayer?.type,
-        inner: innerLayer?.type,
-      };
-    });
-
-    expect(layerTypes.outer, 'outer layer should be circle type').toBe('circle');
-    expect(layerTypes.inner, 'inner layer should be circle type').toBe('circle');
-
-    // Verify that layers have filters for isMultiLine property
-    const layerFilters = await page.evaluate(() => {
-      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
-        .__MAPBOX_INSTANCE__!;
-
-      const outerLayer = map.getLayer('stations-circles-multi-outer');
-      const innerLayer = map.getLayer('stations-circles-multi-inner');
-
-      return {
-        outer: (outerLayer as any)?.filter,
-        inner: (innerLayer as any)?.filter,
-      };
-    });
-
-    expect(
-      layerFilters.outer,
-      'outer layer should filter for multi-line stations'
-    ).toBeTruthy();
-    expect(
-      layerFilters.inner,
-      'inner layer should filter for multi-line stations'
-    ).toBeTruthy();
   });
 
   test('T022: stations filter by highlighted lines', async ({ page }) => {
@@ -334,13 +310,6 @@ test.describe('User Story 1: View Stations on Map', () => {
     const legendPanel = page.getByTestId('rodalies-legend');
     await expect(legendPanel, 'legend panel should be visible').toBeVisible();
 
-    // Get initial station layer opacity
-    const initialOpacity = await page.evaluate(() => {
-      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
-        .__MAPBOX_INSTANCE__!;
-      return map.getPaintProperty('stations-circles-single', 'circle-opacity');
-    });
-
     // Click line in legend to isolate it
     const legendEntry = legendPanel.getByTestId(`legend-entry-${testLineId}`);
     await expect(legendEntry, `legend entry for ${testLineId} should exist`).toBeVisible();
@@ -361,7 +330,7 @@ test.describe('User Story 1: View Stations on Map', () => {
     const updatedOpacity = await page.evaluate(() => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__!;
-      return map.getPaintProperty('stations-circles-single', 'circle-opacity');
+      return map.getPaintProperty('stations-lowmarkers', 'icon-opacity');
     });
 
     // Opacity should be set (either 1.0 for serving the line, or 0.3 for dimmed)
@@ -380,5 +349,399 @@ test.describe('User Story 1: View Stations on Map', () => {
       isValidOpacity,
       'opacity should be a valid value or expression'
     ).toBe(true);
+  });
+});
+
+test.describe('User Story 2: Click Station for Details', () => {
+  test('T037: clicking station opens detail panel', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    const targetStation = stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    await selectStationViaActions(page, targetStation.properties.id);
+
+    const panel = page.getByTestId('station-info-panel');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(targetStation.properties.name);
+  });
+
+  test('T038: panel shows station name, code, and lines', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    const targetStation =
+      stationData.features.find((station) => Boolean(station.properties.code)) ??
+      stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    await selectStationViaActions(page, targetStation.properties.id);
+
+    const panel = page.getByTestId('station-info-panel');
+    await expect(panel).toBeVisible();
+
+    // Only check for station code if the station has one
+    if (targetStation.properties.code) {
+      const codeElement = panel.getByTestId('station-code');
+      await expect(codeElement).toBeVisible();
+      await expect(codeElement).toContainText(targetStation.properties.code);
+    }
+
+    const badges = panel.getByTestId('station-line-badges').getByTestId('station-line-badge');
+    await expect(badges).toHaveCount(targetStation.properties.lines.length);
+  });
+
+  test('T039: clicking another station updates panel', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    const first = stationData.features[0];
+    const second = stationData.features[1] ?? first;
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    await selectStationViaActions(page, first.properties.id);
+    const panel = page.getByTestId('station-info-panel');
+    await expect(panel).toContainText(first.properties.name);
+
+    await selectStationViaActions(page, second.properties.id);
+    await expect(panel).toContainText(second.properties.name);
+    if (second.properties.name !== first.properties.name) {
+      await expect(panel).not.toContainText(first.properties.name);
+    }
+  });
+
+  test('T040: panel closes on outside click and escape', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    const targetStation = stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    // Test Escape key
+    await selectStationViaActions(page, targetStation.properties.id);
+    const panel = page.getByTestId('station-info-panel');
+    await expect(panel).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(panel).not.toBeVisible();
+
+    // Test outside click on map canvas
+    await selectStationViaActions(page, targetStation.properties.id);
+    await expect(panel).toBeVisible();
+
+    // Click on map canvas (outside the panel) - use force to bypass pointer-events blocking
+    const mapCanvas = page.getByTestId('map-canvas');
+    await mapCanvas.click({ position: { x: 100, y: 100 }, force: true });
+    await expect(panel).not.toBeVisible();
+  });
+
+  test('T041: rapid station clicks show only most recent', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    const first = stationData.features[0];
+    const second = stationData.features[1] ?? stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    await page.evaluate(([firstId, secondId]) => {
+      const actions = (window as unknown as { __MAP_ACTIONS__?: { selectStation?: (value: string) => void } })
+        .__MAP_ACTIONS__;
+      if (!actions || typeof actions.selectStation !== 'function') {
+        throw new Error('Map actions unavailable');
+      }
+      actions.selectStation(firstId);
+      actions.selectStation(secondId);
+    }, [first.properties.id, second.properties.id]);
+
+    const panel = page.getByTestId('station-info-panel');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(second.properties.name);
+    if (first.properties.name !== second.properties.name) {
+      await expect(panel).not.toContainText(first.properties.name);
+    }
+  });
+});
+
+test.describe('User Story 3: Hover Station Preview', () => {
+  // TODO: Re-enable when hover functionality is active (currently disabled in StationLayer.tsx)
+  test.skip('T056: hovering shows tooltip with station name', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    const targetStation = stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    // Wait for stations to load
+    await page.waitForFunction(
+      () => {
+        const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+          .__MAPBOX_INSTANCE__;
+        return map && map.getSource('stations-source') !== undefined;
+      },
+      { timeout: 10000 }
+    );
+
+    // Zoom to high zoom level (>= 15) where stations are clickable/hoverable
+    await page.evaluate(() => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+      map.setZoom(16);
+    });
+
+    await page.waitForTimeout(1000); // Wait for zoom animation
+
+    // Get station position on screen
+    const stationScreenPos = await page.evaluate((stationId) => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+
+      // Get station data from source
+      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
+      const sourceData = (source as any)._data;
+      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+
+      if (!station) return null;
+
+      const [lng, lat] = station.geometry.coordinates;
+      const point = map.project([lng, lat]);
+
+      return { x: point.x, y: point.y };
+    }, targetStation.properties.id);
+
+    expect(stationScreenPos, 'should find station on map').toBeTruthy();
+
+    // Hover over the station
+    const mapCanvas = page.getByTestId('map-canvas');
+    await mapCanvas.hover({ position: { x: stationScreenPos!.x, y: stationScreenPos!.y } });
+
+    // Wait for tooltip to appear (should be within 100ms, but give some buffer)
+    await page.waitForTimeout(200);
+
+    // Check that tooltip/popup exists and contains station name
+    const tooltipVisible = await page.evaluate((stationName) => {
+      const popups = document.querySelectorAll('.mapboxgl-popup-content');
+      for (const popup of popups) {
+        if (popup.textContent?.includes(stationName)) {
+          return true;
+        }
+      }
+      return false;
+    }, targetStation.properties.name);
+
+    expect(tooltipVisible, 'tooltip should appear with station name').toBe(true);
+  });
+
+  // TODO: Re-enable when hover functionality is active (currently disabled in StationLayer.tsx)
+  test.skip('T057: tooltip disappears on mouse leave', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    const targetStation = stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    await page.waitForFunction(
+      () => {
+        const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+          .__MAPBOX_INSTANCE__;
+        return map && map.getSource('stations-source') !== undefined;
+      },
+      { timeout: 10000 }
+    );
+
+    // Zoom to high zoom level
+    await page.evaluate(() => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+      map.setZoom(16);
+    });
+
+    await page.waitForTimeout(1000);
+
+    // Get station position
+    const stationScreenPos = await page.evaluate((stationId) => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
+      const sourceData = (source as any)._data;
+      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+
+      if (!station) return null;
+
+      const [lng, lat] = station.geometry.coordinates;
+      const point = map.project([lng, lat]);
+
+      return { x: point.x, y: point.y };
+    }, targetStation.properties.id);
+
+    // Hover over the station
+    const mapCanvas = page.getByTestId('map-canvas');
+    await mapCanvas.hover({ position: { x: stationScreenPos!.x, y: stationScreenPos!.y } });
+    await page.waitForTimeout(200);
+
+    // Verify tooltip is visible
+    let tooltipVisible = await page.evaluate((stationName) => {
+      const popups = document.querySelectorAll('.mapboxgl-popup-content');
+      for (const popup of popups) {
+        if (popup.textContent?.includes(stationName)) {
+          return true;
+        }
+      }
+      return false;
+    }, targetStation.properties.name);
+
+    expect(tooltipVisible, 'tooltip should be visible after hover').toBe(true);
+
+    // Move mouse away from station
+    await mapCanvas.hover({ position: { x: 100, y: 100 } });
+
+    // Wait for tooltip to disappear (should be within 200ms)
+    await page.waitForTimeout(300);
+
+    // Verify tooltip is gone
+    tooltipVisible = await page.evaluate((stationName) => {
+      const popups = document.querySelectorAll('.mapboxgl-popup-content');
+      for (const popup of popups) {
+        if (popup.textContent?.includes(stationName)) {
+          return true;
+        }
+      }
+      return false;
+    }, targetStation.properties.name);
+
+    expect(tooltipVisible, 'tooltip should disappear after mouse leave').toBe(false);
+  });
+
+  // TODO: Re-enable when hover functionality is active (currently disabled in StationLayer.tsx)
+  test.skip('T058: tooltip shows line count after 500ms', async ({ page }) => {
+    const stationData = await loadStationData(page);
+    // Find a multi-line station for this test
+    const targetStation = stationData.features.find(
+      (station) => station.properties.lines.length > 1
+    ) ?? stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    await page.waitForFunction(
+      () => {
+        const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+          .__MAPBOX_INSTANCE__;
+        return map && map.getSource('stations-source') !== undefined;
+      },
+      { timeout: 10000 }
+    );
+
+    // Zoom to high zoom level
+    await page.evaluate(() => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+      map.setZoom(16);
+    });
+
+    await page.waitForTimeout(1000);
+
+    // Get station position
+    const stationScreenPos = await page.evaluate((stationId) => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
+      const sourceData = (source as any)._data;
+      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+
+      if (!station) return null;
+
+      const [lng, lat] = station.geometry.coordinates;
+      const point = map.project([lng, lat]);
+
+      return { x: point.x, y: point.y };
+    }, targetStation.properties.id);
+
+    const mapCanvas = page.getByTestId('map-canvas');
+    await mapCanvas.hover({ position: { x: stationScreenPos!.x, y: stationScreenPos!.y } });
+
+    // Wait 200ms - tooltip should show name but not line count yet
+    await page.waitForTimeout(200);
+
+    let tooltipContent = await page.evaluate(() => {
+      const popups = document.querySelectorAll('.mapboxgl-popup-content');
+      return popups[0]?.textContent || '';
+    });
+
+    // Should have station name initially
+    expect(tooltipContent.includes(targetStation.properties.name), 'tooltip should show station name immediately').toBe(true);
+
+    // Wait another 400ms (total 600ms) - line count should now be visible
+    await page.waitForTimeout(400);
+
+    tooltipContent = await page.evaluate(() => {
+      const popups = document.querySelectorAll('.mapboxgl-popup-content');
+      return popups[0]?.textContent || '';
+    });
+
+    // Should now show line count information
+    const lineCount = targetStation.properties.lines.length;
+    const hasLineInfo = tooltipContent.includes('line') || tooltipContent.includes(lineCount.toString());
+
+    expect(hasLineInfo, 'tooltip should show line count after 500ms hover').toBe(true);
+  });
+
+  test('T059: no tooltip on mobile devices', async ({ page, isMobile }) => {
+    // Skip this test if not running in mobile context
+    test.skip(!isMobile, 'This test is only for mobile devices');
+
+    const stationData = await loadStationData(page);
+    const targetStation = stationData.features[0];
+
+    await page.goto('/');
+    await waitForMapLoad(page);
+
+    await page.waitForFunction(
+      () => {
+        const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+          .__MAPBOX_INSTANCE__;
+        return map && map.getSource('stations-source') !== undefined;
+      },
+      { timeout: 10000 }
+    );
+
+    // Zoom to high zoom level
+    await page.evaluate(() => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+      map.setZoom(16);
+    });
+
+    await page.waitForTimeout(1000);
+
+    // Get station position
+    const stationScreenPos = await page.evaluate((stationId) => {
+      const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
+        .__MAPBOX_INSTANCE__!;
+      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
+      const sourceData = (source as any)._data;
+      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+
+      if (!station) return null;
+
+      const [lng, lat] = station.geometry.coordinates;
+      const point = map.project([lng, lat]);
+
+      return { x: point.x, y: point.y };
+    }, targetStation.properties.id);
+
+    // Tap on the station (mobile interaction)
+    const mapCanvas = page.getByTestId('map-canvas');
+    await mapCanvas.tap({ position: { x: stationScreenPos!.x, y: stationScreenPos!.y } });
+
+    // Wait to see if tooltip appears
+    await page.waitForTimeout(300);
+
+    // Check that no hover tooltip exists (only detail panel should open)
+    const tooltipVisible = await page.evaluate(() => {
+      const popups = document.querySelectorAll('.mapboxgl-popup-content');
+      return popups.length > 0;
+    });
+
+    expect(tooltipVisible, 'no hover tooltip should appear on mobile').toBe(false);
   });
 });

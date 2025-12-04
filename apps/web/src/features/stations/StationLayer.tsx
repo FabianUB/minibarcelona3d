@@ -8,10 +8,10 @@
  * Tasks: T024-T031
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { useStationMarkers } from './hooks/useStationMarkers';
-import { getStationMarkerStyles, getMultiLineInnerCircleStyles } from '../../lib/stations/markerStyles';
+// import { useStationHover } from './hooks/useStationHover'; // TODO: Re-enable when hover is active
 
 export interface StationLayerProps {
   /** Mapbox GL map instance (must be loaded) */
@@ -31,9 +31,9 @@ export interface StationLayerProps {
 }
 
 const SOURCE_ID = 'stations-source';
-const LAYER_ID_SINGLE = 'stations-circles-single';
-const LAYER_ID_MULTI_OUTER = 'stations-circles-multi-outer';
-const LAYER_ID_MULTI_INNER = 'stations-circles-multi-inner';
+const LAYER_ID_LOW = 'stations-lowmarkers';
+const TEARDROP_IMAGE_ID = 'station-lowzoom-pin';
+const TRAIN_LAYER_ID = 'train-layer-3d';
 
 /**
  * StationLayer - Renders station markers on the map
@@ -64,6 +64,28 @@ export function StationLayer({
     highlightedLineIds,
     highlightMode,
   });
+  const [isClickable, setIsClickable] = useState(false);
+
+  useEffect(() => {
+    if (!map) return;
+    const updateClickability = () => {
+      setIsClickable(map.getZoom() >= 15);
+    };
+    updateClickability();
+    map.on('zoomend', updateClickability);
+    return () => {
+      map.off('zoomend', updateClickability);
+    };
+  }, [map]);
+
+  // Add hover tooltip functionality (desktop only)
+  // Only enable hover when stations are clickable (zoom >= 15)
+  // TODO: Disabled for now - may re-enable in future
+  // useStationHover({
+  //   map: isClickable ? map : null,
+  //   layerIds: [LAYER_ID_LOW],
+  //   onStationHover: onStationHover,
+  // });
 
   // Add source and layers when data is ready
   useEffect(() => {
@@ -83,108 +105,120 @@ export function StationLayer({
       data: geoJSON,
     });
 
-    // Determine styling based on highlight mode
-    const isAnyLineHighlighted = highlightMode !== 'none' && highlightedLineIds.length > 0;
-    const isDimmed = highlightMode === 'isolate' && isAnyLineHighlighted;
-
-    const singleLineStyles = getStationMarkerStyles(false, isDimmed);
-    const multiLineStyles = getStationMarkerStyles(false, isDimmed);
-    const innerCircleStyles = getMultiLineInnerCircleStyles();
-
-    // Add single-line station layer
+    // Station teardrop marker layer (all zoom levels)
+    // At low zoom (< 15): small marker, no text
+    // At high zoom (≥ 15): larger marker with full station name
     map.addLayer({
-      id: LAYER_ID_SINGLE,
-      type: 'circle',
+      id: LAYER_ID_LOW,
+      type: 'symbol',
       source: SOURCE_ID,
-      filter: ['!', ['get', 'isMultiLine']],
+      layout: {
+        'icon-image': TEARDROP_IMAGE_ID,
+        'icon-anchor': 'bottom',
+        'icon-size': [
+          'step',
+          ['zoom'],
+          0.8, // Below zoom 13.5
+          13.5,
+          1.1, // Zoom 13.5 to 15
+          15,
+          1.8, // At zoom 15 and above
+        ],
+        'icon-allow-overlap': true,
+        'symbol-placement': 'point',
+        'text-field': [
+          'step',
+          ['zoom'],
+          '', // Below zoom 15: no text
+          15,
+          ['get', 'name'], // At zoom 15 and above: show full name
+        ],
+        'text-font': ['Open Sans Bold'],
+        'text-transform': 'uppercase',
+        'text-size': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          15,
+          12,
+          18.5,
+          18,
+        ],
+        'text-letter-spacing': 0.25,
+        'text-anchor': 'bottom',
+        'text-offset': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          15,
+          ['literal', [0, -5.5]],
+          18.5,
+          ['literal', [0, -8.0]],
+        ],
+        'text-allow-overlap': true,
+      },
       paint: {
-        ...singleLineStyles,
-        'circle-pitch-alignment': 'map', // Align to map surface (perpendicular to ground)
-        'circle-pitch-scale': 'map', // Scale with map pitch
+        'text-color': '#1a1a1a',
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 2.5,
+        'text-halo-blur': 1,
+        'text-opacity': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          14.5,
+          0,
+          15,
+          1.0,
+        ],
       },
     });
 
-    // Add multi-line station outer circle layer
-    map.addLayer({
-      id: LAYER_ID_MULTI_OUTER,
-      type: 'circle',
-      source: SOURCE_ID,
-      filter: ['get', 'isMultiLine'],
-      paint: {
-        ...multiLineStyles,
-        'circle-pitch-alignment': 'map', // Align to map surface (perpendicular to ground)
-        'circle-pitch-scale': 'map', // Scale with map pitch
-      },
-    });
-
-    // Add multi-line station inner circle layer
-    map.addLayer({
-      id: LAYER_ID_MULTI_INNER,
-      type: 'circle',
-      source: SOURCE_ID,
-      filter: ['get', 'isMultiLine'],
-      paint: {
-        ...innerCircleStyles,
-        'circle-pitch-alignment': 'map', // Align to map surface (perpendicular to ground)
-        'circle-pitch-scale': 'map', // Scale with map pitch
-      },
-    });
 
     // Cleanup on unmount
     return () => {
-      if (map.getLayer(LAYER_ID_MULTI_INNER)) {
-        map.removeLayer(LAYER_ID_MULTI_INNER);
-      }
-      if (map.getLayer(LAYER_ID_MULTI_OUTER)) {
-        map.removeLayer(LAYER_ID_MULTI_OUTER);
-      }
-      if (map.getLayer(LAYER_ID_SINGLE)) {
-        map.removeLayer(LAYER_ID_SINGLE);
+      if (map.getLayer(LAYER_ID_LOW)) {
+        map.removeLayer(LAYER_ID_LOW);
       }
       if (map.getSource(SOURCE_ID)) {
         map.removeSource(SOURCE_ID);
       }
     };
-  }, [map, geoJSON, isLoading, error, highlightedLineIds, highlightMode]);
+  }, [map, geoJSON, isLoading, error]);
 
   // Update layer styles when highlighting changes
   useEffect(() => {
-    if (!map || !map.getLayer(LAYER_ID_SINGLE)) return;
+    if (!map || !map.getLayer(LAYER_ID_LOW)) return;
 
     const isAnyLineHighlighted = highlightMode !== 'none' && highlightedLineIds.length > 0;
     const isDimmed = highlightMode === 'isolate' && isAnyLineHighlighted;
+    const iconOpacity = isDimmed ? 0.3 : 1.0;
 
-    const singleLineStyles = getStationMarkerStyles(false, isDimmed);
-    const multiLineStyles = getStationMarkerStyles(false, isDimmed);
-
-    // Update paint properties
-    Object.entries(singleLineStyles).forEach(([property, value]) => {
-      map.setPaintProperty(LAYER_ID_SINGLE, property as any, value);
-    });
-
-    Object.entries(multiLineStyles).forEach(([property, value]) => {
-      map.setPaintProperty(LAYER_ID_MULTI_OUTER, property as any, value);
-    });
+    map.setPaintProperty(LAYER_ID_LOW, 'icon-opacity', iconOpacity);
   }, [map, highlightedLineIds, highlightMode]);
 
   // Add click handlers
   useEffect(() => {
-    if (!map || !map.getLayer(LAYER_ID_SINGLE)) return;
+    if (!map || !map.getLayer(LAYER_ID_LOW)) return;
+
+    const interactiveLayers = [LAYER_ID_LOW];
 
     const handleClick = (e: mapboxgl.MapMouseEvent) => {
       const features = map.queryRenderedFeatures(e.point, {
-        layers: [LAYER_ID_SINGLE, LAYER_ID_MULTI_OUTER],
+        layers: interactiveLayers,
       });
 
-      if (features.length > 0 && features[0].properties) {
-        onStationClick(features[0].properties.id);
+      const feature = features[0];
+      const stationId =
+        feature && feature.properties && typeof feature.properties.id === 'string'
+          ? feature.properties.id
+          : null;
+
+      if (stationId) {
+        onStationClick(stationId);
       }
     };
 
-    map.on('click', LAYER_ID_SINGLE, handleClick);
-    map.on('click', LAYER_ID_MULTI_OUTER, handleClick);
-
-    // Change cursor on hover
     const handleMouseEnter = () => {
       map.getCanvas().style.cursor = 'pointer';
     };
@@ -193,53 +227,139 @@ export function StationLayer({
       map.getCanvas().style.cursor = '';
     };
 
-    map.on('mouseenter', LAYER_ID_SINGLE, handleMouseEnter);
-    map.on('mouseenter', LAYER_ID_MULTI_OUTER, handleMouseEnter);
-    map.on('mouseleave', LAYER_ID_SINGLE, handleMouseLeave);
-    map.on('mouseleave', LAYER_ID_MULTI_OUTER, handleMouseLeave);
+    const registerHandlers = () => {
+      interactiveLayers.forEach((layerId) => {
+        map.on('click', layerId, handleClick);
+        map.on('mouseenter', layerId, handleMouseEnter);
+        map.on('mouseleave', layerId, handleMouseLeave);
+      });
+    };
+
+    const unregisterHandlers = () => {
+      interactiveLayers.forEach((layerId) => {
+        map.off('click', layerId, handleClick);
+        map.off('mouseenter', layerId, handleMouseEnter);
+        map.off('mouseleave', layerId, handleMouseLeave);
+      });
+    };
+
+    if (isClickable) {
+      registerHandlers();
+    }
 
     return () => {
-      map.off('click', LAYER_ID_SINGLE, handleClick);
-      map.off('click', LAYER_ID_MULTI_OUTER, handleClick);
-      map.off('mouseenter', LAYER_ID_SINGLE, handleMouseEnter);
-      map.off('mouseenter', LAYER_ID_MULTI_OUTER, handleMouseEnter);
-      map.off('mouseleave', LAYER_ID_SINGLE, handleMouseLeave);
-      map.off('mouseleave', LAYER_ID_MULTI_OUTER, handleMouseLeave);
+      unregisterHandlers();
     };
-  }, [map, onStationClick]);
+  }, [map, geoJSON, isLoading, error, onStationClick, isClickable]);
 
   // Add hover handlers if provided
   useEffect(() => {
-    if (!map || !map.getLayer(LAYER_ID_SINGLE) || !onStationHover) return;
+    if (!map || !onStationHover || !isClickable) return;
+    if (!map.getLayer(LAYER_ID_LOW)) return;
+
+    const interactiveLayers = [LAYER_ID_LOW];
 
     const handleHover = (e: mapboxgl.MapMouseEvent) => {
       const features = map.queryRenderedFeatures(e.point, {
-        layers: [LAYER_ID_SINGLE, LAYER_ID_MULTI_OUTER],
+        layers: interactiveLayers,
       });
 
-      if (features.length > 0 && features[0].properties) {
-        onStationHover(features[0].properties.id);
-      } else {
-        onStationHover(null);
-      }
+      const feature = features[0];
+      const stationId =
+        feature && feature.properties && typeof feature.properties.id === 'string'
+          ? feature.properties.id
+          : null;
+
+      onStationHover(stationId);
     };
 
     const handleMouseLeave = () => {
       onStationHover(null);
     };
 
-    map.on('mousemove', LAYER_ID_SINGLE, handleHover);
-    map.on('mousemove', LAYER_ID_MULTI_OUTER, handleHover);
-    map.on('mouseleave', LAYER_ID_SINGLE, handleMouseLeave);
-    map.on('mouseleave', LAYER_ID_MULTI_OUTER, handleMouseLeave);
+    const registerHandlers = () => {
+      interactiveLayers.forEach((layerId) => {
+        map.on('mousemove', layerId, handleHover);
+        map.on('mouseleave', layerId, handleMouseLeave);
+      });
+    };
+
+    const unregisterHandlers = () => {
+      interactiveLayers.forEach((layerId) => {
+        map.off('mousemove', layerId, handleHover);
+        map.off('mouseleave', layerId, handleMouseLeave);
+      });
+    };
+
+    registerHandlers();
 
     return () => {
-      map.off('mousemove', LAYER_ID_SINGLE, handleHover);
-      map.off('mousemove', LAYER_ID_MULTI_OUTER, handleHover);
-      map.off('mouseleave', LAYER_ID_SINGLE, handleMouseLeave);
-      map.off('mouseleave', LAYER_ID_MULTI_OUTER, handleMouseLeave);
+      unregisterHandlers();
     };
-  }, [map, onStationHover]);
+  }, [map, geoJSON, isLoading, error, onStationHover, isClickable]);
+
+
+  // Register teardrop icon for station markers
+  // Larger base size for better clickability at high zoom
+  useEffect(() => {
+    if (!map || map.hasImage(TEARDROP_IMAGE_ID)) {
+      return;
+    }
+    const size = 80; // Increased from 64 for larger base icon
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return undefined;
+    }
+
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = '#EE7F00';
+    ctx.beginPath();
+    // Larger teardrop shape
+    ctx.arc(size / 2, size / 2 - 10, 18, Math.PI, 0, false);
+    ctx.lineTo(size / 2 + 14, size - 15);
+    ctx.lineTo(size / 2, size - 5);
+    ctx.lineTo(size / 2 - 14, size - 15);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2 - 10, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    const imageData = ctx.getImageData(0, 0, size, size);
+    map.addImage(TEARDROP_IMAGE_ID, imageData, { pixelRatio: 2 });
+
+    return () => {
+      if (map.hasImage(TEARDROP_IMAGE_ID)) {
+        map.removeImage(TEARDROP_IMAGE_ID);
+      }
+    };
+  }, [map]);
+
+  // Keep station layer beneath 3D trains so models always overlay markers.
+  useEffect(() => {
+    if (!map) return;
+
+    const moveStationsBelowTrains = () => {
+      if (!map.getLayer(TRAIN_LAYER_ID)) {
+        return;
+      }
+      if (map.getLayer(LAYER_ID_LOW)) {
+        map.moveLayer(LAYER_ID_LOW, TRAIN_LAYER_ID);
+      }
+    };
+
+    map.on('idle', moveStationsBelowTrains);
+    moveStationsBelowTrains();
+
+    return () => {
+      map.off('idle', moveStationsBelowTrains);
+    };
+  }, [map, geoJSON, isLoading, error]);
 
   // No DOM rendering - this is a pure Mapbox layer component
   return null;

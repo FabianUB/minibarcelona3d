@@ -32,6 +32,7 @@ export interface MapActions {
   setMapLoaded(isLoaded: boolean): void;
   selectStation(stationId: string | null): void;
   retryStationLoad(): void;
+  setStationLoadError(message: string | null): void;
 }
 
 export interface MapHighlightSelectors {

@@ -9,7 +9,7 @@
  * - Style updates on highlight changes
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { StationLayer } from '../StationLayer';
 import type { Map as MapboxMap } from 'mapbox-gl';
@@ -38,6 +38,32 @@ describe('StationLayer', () => {
   let mockSources: Map<string, MockSource>;
   let mockLayers: Map<string, MockLayer>;
   let mockEventHandlers: Map<string, Map<string, any>>;
+  let canvasContextSpy: any;
+
+  beforeAll(() => {
+    const mockCanvasContext = {
+      clearRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      lineTo: vi.fn(),
+      closePath: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn(),
+      ellipse: vi.fn(),
+      getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(0), width: 0, height: 0 })),
+    };
+
+    canvasContextSpy = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockReturnValue(mockCanvasContext as any);
+  });
+
+  afterAll(() => {
+    canvasContextSpy.mockRestore();
+  });
 
   beforeEach(() => {
     mockSources = new Map();
@@ -62,6 +88,7 @@ describe('StationLayer', () => {
               lineCount: 1,
               offsetX: 0,
               offsetY: 0,
+              trackBearing: 45,
             },
             geometry: {
               type: 'Point',
@@ -81,6 +108,7 @@ describe('StationLayer', () => {
               lineCount: 2,
               offsetX: 10,
               offsetY: 5,
+              trackBearing: 90,
             },
             geometry: {
               type: 'Point',
@@ -134,7 +162,7 @@ describe('StationLayer', () => {
         }
         mockEventHandlers.get(event)!.set(eventKey, handler);
       }),
-      off: vi.fn((event: string, layerIdOrCallback: string | Function, callback?: Function) => {
+      off: vi.fn((event: string, layerIdOrCallback: string | Function, _callback?: Function) => {
         const eventKey = typeof layerIdOrCallback === 'string' ? layerIdOrCallback : 'map';
         const handlers = mockEventHandlers.get(event);
         if (handlers) {
@@ -146,7 +174,12 @@ describe('StationLayer', () => {
           cursor: '',
         },
       })),
+      moveLayer: vi.fn(),
+      getZoom: vi.fn(() => 16),
       queryRenderedFeatures: vi.fn(() => []),
+      hasImage: vi.fn(() => false),
+      addImage: vi.fn(),
+      removeImage: vi.fn(),
     } as unknown as MapboxMap;
   });
 
@@ -155,7 +188,7 @@ describe('StationLayer', () => {
   });
 
   describe('Layer Creation', () => {
-    it('should add source and three circle layers on mount', () => {
+    it('should add source and station layer on mount', () => {
       render(
         <StationLayer
           map={mockMap}
@@ -173,36 +206,17 @@ describe('StationLayer', () => {
         })
       );
 
-      // Should add three layers
-      expect(mockMap.addLayer).toHaveBeenCalledTimes(3);
+      // Should add one layer (teardrop symbol layer)
+      expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
 
-      // Check layer IDs
-      expect(mockMap.addLayer).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'stations-circles-single',
-          type: 'circle',
-          source: 'stations-source',
-        })
+      // Check layer ID
+      const layerIds = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls.map(
+        (call: any) => call[0].id
       );
-
-      expect(mockMap.addLayer).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'stations-circles-multi-outer',
-          type: 'circle',
-          source: 'stations-source',
-        })
-      );
-
-      expect(mockMap.addLayer).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'stations-circles-multi-inner',
-          type: 'circle',
-          source: 'stations-source',
-        })
-      );
+      expect(layerIds).toContain('stations-lowmarkers');
     });
 
-    it('should apply pitch alignment properties to all layers', () => {
+    it('should create symbol layer with text labels', () => {
       render(
         <StationLayer
           map={mockMap}
@@ -212,43 +226,16 @@ describe('StationLayer', () => {
         />
       );
 
-      // Get all addLayer calls
-      const calls = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls;
+      const layerCall = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls[0];
+      const layer = layerCall[0];
 
-      // All three layers should have pitch alignment
-      calls.forEach((call: any) => {
-        const layerConfig = call[0];
-        expect(layerConfig.paint).toHaveProperty('circle-pitch-alignment', 'map');
-        expect(layerConfig.paint).toHaveProperty('circle-pitch-scale', 'map');
-      });
-    });
+      // Should be a symbol layer
+      expect(layer.type).toBe('symbol');
 
-    it('should filter single-line and multi-line stations correctly', () => {
-      render(
-        <StationLayer
-          map={mockMap}
-          highlightedLineIds={[]}
-          highlightMode="none"
-          onStationClick={vi.fn()}
-        />
-      );
-
-      // Single-line layer should filter OUT multi-line stations
-      const singleLineCall = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls.find(
-        (call: any) => call[0].id === 'stations-circles-single'
-      );
-      expect(singleLineCall[0].filter).toEqual(['!', ['get', 'isMultiLine']]);
-
-      // Multi-line layers should filter FOR multi-line stations
-      const multiOuterCall = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls.find(
-        (call: any) => call[0].id === 'stations-circles-multi-outer'
-      );
-      expect(multiOuterCall[0].filter).toEqual(['get', 'isMultiLine']);
-
-      const multiInnerCall = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls.find(
-        (call: any) => call[0].id === 'stations-circles-multi-inner'
-      );
-      expect(multiInnerCall[0].filter).toEqual(['get', 'isMultiLine']);
+      // Should have icon and text configuration
+      expect(layer.layout).toHaveProperty('icon-image');
+      expect(layer.layout).toHaveProperty('text-field');
+      expect(layer.layout).toHaveProperty('text-font');
     });
 
     it('should update source data instead of recreating if source exists', () => {
@@ -284,7 +271,7 @@ describe('StationLayer', () => {
       expect(mockMap.addSource).toHaveBeenCalledTimes(1);
     });
 
-    it('should clean up layers and source on unmount', () => {
+    it('should clean up layer and source on unmount', () => {
       const { unmount } = render(
         <StationLayer
           map={mockMap}
@@ -294,20 +281,10 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
-      mockLayers.set('stations-circles-single', {
-        id: 'stations-circles-single',
-        type: 'circle',
-        source: 'stations-source',
-      });
-      mockLayers.set('stations-circles-multi-outer', {
-        id: 'stations-circles-multi-outer',
-        type: 'circle',
-        source: 'stations-source',
-      });
-      mockLayers.set('stations-circles-multi-inner', {
-        id: 'stations-circles-multi-inner',
-        type: 'circle',
+      // Mock that layer exists
+      mockLayers.set('stations-lowmarkers', {
+        id: 'stations-lowmarkers',
+        type: 'symbol',
         source: 'stations-source',
       });
       mockSources.set('stations-source', {
@@ -318,15 +295,13 @@ describe('StationLayer', () => {
 
       unmount();
 
-      expect(mockMap.removeLayer).toHaveBeenCalledWith('stations-circles-multi-inner');
-      expect(mockMap.removeLayer).toHaveBeenCalledWith('stations-circles-multi-outer');
-      expect(mockMap.removeLayer).toHaveBeenCalledWith('stations-circles-single');
+      expect(mockMap.removeLayer).toHaveBeenCalledWith('stations-lowmarkers');
       expect(mockMap.removeSource).toHaveBeenCalledWith('stations-source');
     });
   });
 
   describe('Event Handlers', () => {
-    it('should register click handlers on both layer types', () => {
+    it('should register click handlers on station layer', () => {
       render(
         <StationLayer
           map={mockMap}
@@ -336,20 +311,11 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
+      // Mock that layer exists
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
-      // Should register click handlers
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'click',
-        'stations-circles-single',
-        expect.any(Function)
-      );
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'click',
-        'stations-circles-multi-outer',
-        expect.any(Function)
-      );
+      // Should register click handler
+      expect(mockMap.on).toHaveBeenCalledWith('click', 'stations-lowmarkers', expect.any(Function));
     });
 
     it('should register mouseenter/mouseleave handlers for cursor changes', () => {
@@ -362,32 +328,14 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
+      // Mock that layer exists
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       // Should register mouseenter handlers
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'mouseenter',
-        'stations-circles-single',
-        expect.any(Function)
-      );
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'mouseenter',
-        'stations-circles-multi-outer',
-        expect.any(Function)
-      );
+      expect(mockMap.on).toHaveBeenCalledWith('mouseenter', 'stations-lowmarkers', expect.any(Function));
 
       // Should register mouseleave handlers
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'mouseleave',
-        'stations-circles-single',
-        expect.any(Function)
-      );
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'mouseleave',
-        'stations-circles-multi-outer',
-        expect.any(Function)
-      );
+      expect(mockMap.on).toHaveBeenCalledWith('mouseleave', 'stations-lowmarkers', expect.any(Function));
     });
 
     it('should call onStationClick when station marker is clicked', () => {
@@ -402,7 +350,7 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
+      // Mock that layer exists
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       // Mock queryRenderedFeatures to return a station
@@ -416,7 +364,7 @@ describe('StationLayer', () => {
       ]);
 
       // Get the click handler
-      const clickHandler = mockEventHandlers.get('click')?.get('stations-circles-single');
+      const clickHandler = mockEventHandlers.get('click')?.get('stations-lowmarkers');
       expect(clickHandler).toBeDefined();
 
       // Simulate click
@@ -438,20 +386,11 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
+      // Mock that layer exists
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
-      // Should register mousemove handlers
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'mousemove',
-        'stations-circles-single',
-        expect.any(Function)
-      );
-      expect(mockMap.on).toHaveBeenCalledWith(
-        'mousemove',
-        'stations-circles-multi-outer',
-        expect.any(Function)
-      );
+      // Should register mousemove handler
+      expect(mockMap.on).toHaveBeenCalledWith('mousemove', 'stations-lowmarkers', expect.any(Function));
     });
 
     it('should remove all event handlers on unmount', () => {
@@ -465,46 +404,25 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
+      // Mock that layer exists
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       unmount();
 
-      // Should remove click handlers
-      expect(mockMap.off).toHaveBeenCalledWith(
-        'click',
-        'stations-circles-single',
-        expect.any(Function)
-      );
-      expect(mockMap.off).toHaveBeenCalledWith(
-        'click',
-        'stations-circles-multi-outer',
-        expect.any(Function)
-      );
+      // Should remove click handler
+      expect(mockMap.off).toHaveBeenCalledWith('click', 'stations-lowmarkers', expect.any(Function));
 
       // Should remove mouse handlers
-      expect(mockMap.off).toHaveBeenCalledWith(
-        'mouseenter',
-        'stations-circles-single',
-        expect.any(Function)
-      );
-      expect(mockMap.off).toHaveBeenCalledWith(
-        'mouseleave',
-        'stations-circles-single',
-        expect.any(Function)
-      );
+      expect(mockMap.off).toHaveBeenCalledWith('mouseenter', 'stations-lowmarkers', expect.any(Function));
+      expect(mockMap.off).toHaveBeenCalledWith('mouseleave', 'stations-lowmarkers', expect.any(Function));
 
-      // Should remove hover handlers
-      expect(mockMap.off).toHaveBeenCalledWith(
-        'mousemove',
-        'stations-circles-single',
-        expect.any(Function)
-      );
+      // Should remove hover handler
+      expect(mockMap.off).toHaveBeenCalledWith('mousemove', 'stations-lowmarkers', expect.any(Function));
     });
   });
 
   describe('Style Updates', () => {
-    it('should update paint properties when highlighting changes', () => {
+    it('should update icon opacity when highlighting changes', () => {
       const { rerender } = render(
         <StationLayer
           map={mockMap}
@@ -514,7 +432,7 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
+      // Mock that layer exists
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       // Re-render with highlight
@@ -527,8 +445,12 @@ describe('StationLayer', () => {
         />
       );
 
-      // Should update paint properties
-      expect(mockMap.setPaintProperty).toHaveBeenCalled();
+      // Should update icon opacity
+      expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
+        'stations-lowmarkers',
+        'icon-opacity',
+        expect.anything()
+      );
     });
 
     it('should apply dimmed opacity in isolate mode', () => {
@@ -541,7 +463,7 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layers exist
+      // Mock that layer exists
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       // Clear previous calls
@@ -559,8 +481,8 @@ describe('StationLayer', () => {
 
       // Should set opacity to 0.3 (dimmed)
       expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
-        expect.any(String),
-        'circle-opacity',
+        'stations-lowmarkers',
+        'icon-opacity',
         0.3
       );
     });

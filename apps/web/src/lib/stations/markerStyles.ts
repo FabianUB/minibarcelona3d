@@ -9,15 +9,22 @@
 
 /**
  * Mapbox GL paint properties for station markers
+ * Using any for Mapbox GL expression types which can be complex nested arrays
  */
 export interface StationMarkerStyles {
-  'circle-radius': any;
-  'circle-color': any;
-  'circle-opacity': any;
-  'circle-stroke-width': any;
-  'circle-stroke-color': any;
-  'circle-blur'?: any;
+  'circle-radius': any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  'circle-color': any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  'circle-opacity': any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  'circle-stroke-width': any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  'circle-stroke-color': any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  'circle-blur'?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  'circle-translate'?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
+
+const STATION_MARKER_COLOR = '#000000';
+// Keep the markers seated on the ground plane at large zoom levels so
+// trains appear to dock on top of the station symbol.
+const ELEVATE_TRANSLATE: any = ['literal', [0, 0]]; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 /**
  * Generate Mapbox GL paint properties for station markers
@@ -43,21 +50,33 @@ export function getStationMarkerStyles(
   isHighlighted: boolean,
   isDimmed: boolean
 ): StationMarkerStyles {
+  const maxOpacity = isDimmed ? 0.3 : 1.0;
   return {
     'circle-radius': [
       'interpolate',
-      ['exponential', 1.5],
+      ['linear'],
       ['zoom'],
-      8,
-      ['case', ['get', 'isMultiLine'], 8, 6],
-      16,
-      ['case', ['get', 'isMultiLine'], 20, 16],
+      10,
+      ['case', ['get', 'isMultiLine'], 18, 15],
+      15,
+      ['case', ['get', 'isMultiLine'], 22, 16],
+      18.5,
+      ['case', ['get', 'isMultiLine'], 30, 22],
     ],
-    'circle-color': ['get', 'dominantLineColor'],
-    'circle-opacity': isDimmed ? 0.3 : 1.0,
+    'circle-color': STATION_MARKER_COLOR,
+    'circle-opacity': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      10,
+      0,
+      15,
+      maxOpacity,
+    ],
     'circle-stroke-width': ['case', ['get', 'isMultiLine'], 3, 2],
     'circle-stroke-color': isHighlighted ? '#FFD700' : '#FFFFFF',
     'circle-blur': 0.15, // Subtle glow effect to stand out from trains
+    'circle-translate': ELEVATE_TRANSLATE,
   };
 }
 
@@ -82,16 +101,27 @@ export function getMultiLineInnerCircleStyles(): StationMarkerStyles {
   return {
     'circle-radius': [
       'interpolate',
-      ['exponential', 1.5],
+      ['linear'],
       ['zoom'],
-      8,
-      5,
+      10,
+      10,
+      15,
+      12,
+      18.5,
       16,
-      14,
     ],
     'circle-color': '#FFFFFF',
-    'circle-opacity': 1.0,
+    'circle-opacity': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      10,
+      0,
+      15,
+      1,
+    ],
     'circle-stroke-width': 1,
-    'circle-stroke-color': ['get', 'dominantLineColor'],
+    'circle-stroke-color': STATION_MARKER_COLOR,
+    'circle-translate': ELEVATE_TRANSLATE,
   };
 }

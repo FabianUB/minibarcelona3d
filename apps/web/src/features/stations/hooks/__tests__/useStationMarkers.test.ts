@@ -64,18 +64,19 @@ describe('useStationMarkers', () => {
         {
           id: 'R1',
           name: 'R1',
+          short_code: 'R1',
           brand_color: '#FF0000',
-          brand_name: 'R1',
-          line_color_hex: '#FF0000',
-          icon_color_hex: '#FFFFFF',
-          text_color_hex: '#000000',
-          line_direction_inbound_pattern: 'inbound',
-          line_direction_outbound_pattern: 'outbound',
+          default_pattern: 'solid' as const,
+          high_contrast_pattern: 'dashed' as const,
         },
       ];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([
         { stationId: 'station-1', offsetX: 0, offsetY: 0 },
       ]);
@@ -101,6 +102,9 @@ describe('useStationMarkers', () => {
         () => new Promise(() => {}) // Never resolves
       );
       vi.mocked(dataLoader.loadRodaliesLines).mockImplementation(
+        () => new Promise(() => {}) // Never resolves
+      );
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockImplementation(
         () => new Promise(() => {}) // Never resolves
       );
 
@@ -189,29 +193,27 @@ describe('useStationMarkers', () => {
         {
           id: 'R1',
           name: 'R1',
+          short_code: 'R1',
           brand_color: '#FF0000',
-          brand_name: 'R1',
-          line_color_hex: '#FF0000',
-          icon_color_hex: '#FFFFFF',
-          text_color_hex: '#000000',
-          line_direction_inbound_pattern: 'inbound',
-          line_direction_outbound_pattern: 'outbound',
+          default_pattern: 'solid' as const,
+          high_contrast_pattern: 'dashed' as const,
         },
         {
           id: 'R2',
           name: 'R2',
+          short_code: 'R2',
           brand_color: '#00FF00',
-          brand_name: 'R2',
-          line_color_hex: '#00FF00',
-          icon_color_hex: '#FFFFFF',
-          text_color_hex: '#000000',
-          line_direction_inbound_pattern: 'inbound',
-          line_direction_outbound_pattern: 'outbound',
+          default_pattern: 'solid' as const,
+          high_contrast_pattern: 'dashed' as const,
         },
       ];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([
         { stationId: 'station-1', offsetX: 0, offsetY: 0 },
         { stationId: 'station-2', offsetX: 10, offsetY: 5 },
@@ -274,6 +276,10 @@ describe('useStationMarkers', () => {
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([
         { stationId: 'station-1', offsetX: 0, offsetY: 0 },
       ]);
@@ -320,18 +326,19 @@ describe('useStationMarkers', () => {
         {
           id: 'R1',
           name: 'R1',
+          short_code: 'R1',
           brand_color: '#FF0000',
-          brand_name: 'R1',
-          line_color_hex: '#FF0000',
-          icon_color_hex: '#FFFFFF',
-          text_color_hex: '#000000',
-          line_direction_inbound_pattern: 'inbound',
-          line_direction_outbound_pattern: 'outbound',
+          default_pattern: 'solid' as const,
+          high_contrast_pattern: 'dashed' as const,
         },
       ];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([
         { stationId: 'station-1', offsetX: 0, offsetY: 0 },
       ]);
@@ -383,18 +390,19 @@ describe('useStationMarkers', () => {
         {
           id: 'R1',
           name: 'R1',
+          short_code: 'R1',
           brand_color: '#FF0000',
-          brand_name: 'R1',
-          line_color_hex: '#FF0000',
-          icon_color_hex: '#FFFFFF',
-          text_color_hex: '#000000',
-          line_direction_inbound_pattern: 'inbound',
-          line_direction_outbound_pattern: 'outbound',
+          default_pattern: 'solid' as const,
+          high_contrast_pattern: 'dashed' as const,
         },
       ];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([
         { stationId: 'station-1', offsetX: 15, offsetY: 20 },
       ]);
@@ -452,18 +460,19 @@ describe('useStationMarkers', () => {
         {
           id: 'R1',
           name: 'R1',
+          short_code: 'R1',
           brand_color: '#FF0000',
-          brand_name: 'R1',
-          line_color_hex: '#FF0000',
-          icon_color_hex: '#FFFFFF',
-          text_color_hex: '#000000',
-          line_direction_inbound_pattern: 'inbound',
-          line_direction_outbound_pattern: 'outbound',
+          default_pattern: 'solid' as const,
+          high_contrast_pattern: 'dashed' as const,
         },
       ];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([
         { stationId: 'station-1', offsetX: 25, offsetY: 30 },
       ]);
@@ -511,18 +520,19 @@ describe('useStationMarkers', () => {
         {
           id: 'R1',
           name: 'R1',
+          short_code: 'R1',
           brand_color: '#FF0000',
-          brand_name: 'R1',
-          line_color_hex: '#FF0000',
-          icon_color_hex: '#FFFFFF',
-          text_color_hex: '#000000',
-          line_direction_inbound_pattern: 'inbound',
-          line_direction_outbound_pattern: 'outbound',
+          default_pattern: 'solid' as const,
+          high_contrast_pattern: 'dashed' as const,
         },
       ];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       // Return empty offset array
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([]);
 
@@ -570,6 +580,10 @@ describe('useStationMarkers', () => {
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
+      vi.mocked(dataLoader.loadLineGeometryCollection).mockResolvedValue({
+        type: 'FeatureCollection',
+        features: [],
+      });
       vi.mocked(markerPositioning.calculateRadialOffsets).mockReturnValue([]);
 
       const { result } = renderHook(() =>
