@@ -85,7 +85,7 @@ export function TrainInfoPanelMobile() {
     return null;
   }
 
-  // Calculate delay from trip schedule - always for next stop
+  // Get delay for next stop from GTFS-RT feed data
   const calculateScheduleDelay = (): { text: string; status: 'on-time' | 'delayed' | 'early' | 'unknown' } => {
     if (!tripDetails || !selectedTrain.nextStopId) {
       return { text: 'Unknown', status: 'unknown' };
@@ -96,31 +96,27 @@ export function TrainInfoPanelMobile() {
       return { text: 'Unknown', status: 'unknown' };
     }
 
-    const scheduledTime = nextStop.scheduledArrival || nextStop.scheduledDeparture;
-    if (!scheduledTime) {
+    // Use real-time delay from GTFS-RT feed (already calculated)
+    const delaySeconds = nextStop.arrivalDelaySeconds ?? nextStop.departureDelaySeconds;
+
+    if (delaySeconds === null || delaySeconds === undefined) {
       return { text: 'Unknown', status: 'unknown' };
     }
 
-    const now = new Date();
-    const [hours, minutes, seconds] = scheduledTime.split(':').map(Number);
-    const scheduled = new Date(now);
-    scheduled.setHours(hours, minutes, seconds || 0, 0);
-
-    if (hours < 12 && now.getHours() > 12) {
-      scheduled.setDate(scheduled.getDate() + 1);
-    }
-
-    const delaySeconds = Math.floor((now.getTime() - scheduled.getTime()) / 1000);
-
-    // Only show delay if we're already late (scheduled time has passed)
-    // Don't show "early" or negative delays for future stops
-    if (delaySeconds <= 0) {
+    if (delaySeconds === 0) {
       return { text: 'On time', status: 'on-time' };
     }
 
-    const delayMinutes = Math.floor(delaySeconds / 60);
-    const text = delayMinutes > 0 ? `${delayMinutes} min late` : `${delaySeconds}s late`;
-    return { text, status: 'delayed' };
+    if (delaySeconds > 0) {
+      const delayMinutes = Math.floor(delaySeconds / 60);
+      const text = delayMinutes > 0 ? `${delayMinutes} min late` : `${delaySeconds}s late`;
+      return { text, status: 'delayed' };
+    }
+
+    // Negative delay = early
+    const delayMinutes = Math.floor(Math.abs(delaySeconds) / 60);
+    const text = delayMinutes > 0 ? `${delayMinutes} min early` : `${Math.abs(delaySeconds)}s early`;
+    return { text, status: 'early' };
   };
 
   const delay = calculateScheduleDelay();
