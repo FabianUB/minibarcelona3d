@@ -990,9 +990,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     // Wait for map style to load
     const onStyleLoad = () => {
       console.log('TrainLayer3D: onStyleLoad called, attempting to add layer...');
+
       try {
-        // Check if layer already exists (shouldn't, but defensive)
-        if (map.getLayer(LAYER_ID)) {
+        // Check if layer already exists (only if style is loaded to avoid errors)
+        // If style isn't loaded, skip this check and proceed to addLayer
+        if (map.isStyleLoaded() && map.getLayer(LAYER_ID)) {
           console.warn('TrainLayer3D: Layer already exists, skipping add');
           return;
         }
@@ -1012,8 +1014,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     };
 
     // Add layer when map is ready
-    // Since this component only renders after map.on('load'), we can add immediately
-    // But we'll use a small delay to ensure all map initialization is complete
+    // Use a small delay to ensure all map initialization is complete
     const timer = setTimeout(() => {
       console.log('TrainLayer3D: Adding layer after initialization delay');
       onStyleLoad();
@@ -1023,11 +1024,14 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     return () => {
       clearTimeout(timer);
 
-      if (layerAddedRef.current && map.getLayer(LAYER_ID)) {
+      if (layerAddedRef.current) {
         try {
-          map.removeLayer(LAYER_ID);
-          layerAddedRef.current = false;
-          console.log('TrainLayer3D: Custom layer removed from map');
+          // Only check for layer existence if style is loaded
+          if (map.isStyleLoaded() && map.getLayer(LAYER_ID)) {
+            map.removeLayer(LAYER_ID);
+            layerAddedRef.current = false;
+            console.log('TrainLayer3D: Custom layer removed from map');
+          }
         } catch (error) {
           console.error('TrainLayer3D: Failed to remove custom layer:', error);
         }

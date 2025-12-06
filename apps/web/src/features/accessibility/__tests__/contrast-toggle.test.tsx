@@ -14,6 +14,19 @@ import { MapStateProvider } from '../../../state/map/MapStateProvider';
  * - T029: localStorage persistence logic (completed)
  */
 
+// Mock localStorage with proper methods
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => { store[key] = value; },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { store = {}; },
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
 // Wrapper component for hooks that need MapStateProvider
 function Wrapper({ children }: PropsWithChildren) {
   return <MapStateProvider>{children}</MapStateProvider>;

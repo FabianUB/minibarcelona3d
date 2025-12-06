@@ -178,6 +178,8 @@ export async function loadMapUiState(
           isHighContrast: false,
           isLegendOpen: false,
           activePanel: 'none',
+          selectedStationId: null,
+          stationLoadError: null,
         };
       }
       const url = resolveManifestAssetUrl(path);
@@ -310,6 +312,8 @@ function normaliseMapUiState(
     isHighContrast: Boolean(candidate?.isHighContrast),
     isLegendOpen: Boolean(candidate?.isLegendOpen),
     activePanel: candidate?.activePanel === 'legend' || candidate?.activePanel === 'settings' ? candidate.activePanel : 'none',
+    selectedStationId: null,
+    stationLoadError: null,
   };
 }
 

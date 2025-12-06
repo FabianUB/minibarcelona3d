@@ -36,7 +36,9 @@ type MapAction =
   | { type: 'set-legend-open'; payload: boolean }
   | { type: 'set-active-panel'; payload: import('../../types/rodalies').ActivePanel }
   | { type: 'set-map-instance'; payload: MapboxMap | null }
-  | { type: 'set-map-loaded'; payload: boolean };
+  | { type: 'set-map-loaded'; payload: boolean }
+  | { type: 'select-station'; payload: string | null }
+  | { type: 'set-station-load-error'; payload: string | null };
 
 /**
  * Create initial UI state with preferences loaded from localStorage
@@ -49,6 +51,8 @@ function createInitialUiState(): MapUIState {
     isHighContrast: getPreference('isHighContrast', false),
     isLegendOpen: getPreference('isLegendOpen', false),
     activePanel: 'none', // Don't persist - always start with no panel open
+    selectedStationId: null,
+    stationLoadError: null,
   };
 }
 
@@ -136,6 +140,23 @@ function mapReducer(state: MapState, action: MapAction): MapState {
         ...state,
         isMapLoaded: action.payload,
       };
+    case 'select-station':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          selectedStationId: action.payload,
+          activePanel: action.payload ? 'stationInfo' : state.ui.activePanel,
+        },
+      };
+    case 'set-station-load-error':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          stationLoadError: action.payload,
+        },
+      };
     default:
       return state;
   }
@@ -208,6 +229,17 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       setMapLoaded(isLoaded) {
         dispatch({ type: 'set-map-loaded', payload: isLoaded });
+      },
+      selectStation(stationId) {
+        dispatch({ type: 'select-station', payload: stationId });
+      },
+      retryStationLoad() {
+        // Clear error state to trigger reload
+        dispatch({ type: 'set-station-load-error', payload: null });
+        // Note: Actual reload logic will be handled by components that depend on this state
+      },
+      setStationLoadError(message) {
+        dispatch({ type: 'set-station-load-error', payload: message });
       },
     }),
     [dispatch],

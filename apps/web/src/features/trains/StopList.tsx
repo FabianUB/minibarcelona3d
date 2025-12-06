@@ -84,22 +84,9 @@ export function StopList({
     }
   };
 
-  const calculateScheduleDelay = (scheduledTime: string | null): number | null => {
-    if (!scheduledTime) return null;
-
-    const now = new Date();
-    const [hours, minutes, seconds] = scheduledTime.split(':').map(Number);
-
-    const scheduled = new Date(now);
-    scheduled.setHours(hours, minutes, seconds || 0, 0);
-
-    // Handle times past midnight (e.g., 00:30 is tomorrow)
-    if (hours < 12 && now.getHours() > 12) {
-      scheduled.setDate(scheduled.getDate() + 1);
-    }
-
-    const delayMs = now.getTime() - scheduled.getTime();
-    return Math.floor(delayMs / 1000);
+  // Get delay from GTFS-RT feed data (already calculated)
+  const getStopDelay = (stop: StopTime): number | null => {
+    return stop.arrivalDelaySeconds ?? stop.departureDelaySeconds ?? null;
   };
 
   if (!tripId) {
@@ -252,20 +239,12 @@ export function StopList({
           {stopTimes.map((stop) => {
             const status = getStopStatus(stop);
             const scheduledTime = formatTime(stop.scheduledArrival || stop.scheduledDeparture);
-            const rawScheduledTime = stop.scheduledArrival || stop.scheduledDeparture;
-
-            // Calculate delay based on schedule vs current time
+            // Get real-time delay from GTFS-RT feed
             let delaySeconds: number | null = null;
 
-            // Only show delay for the next stop
-            if (status === 'next') {
-              // For next stop only: calculate from schedule and show if late
-              const calculatedDelay = calculateScheduleDelay(rawScheduledTime);
-              if (calculatedDelay !== null && calculatedDelay > 0) {
-                delaySeconds = calculatedDelay;
-              }
-            }
-            // For 'completed' and 'upcoming' stops: don't show delay
+            // Show delay for all stops that have delay data available
+            // The GTFS-RT feed provides delay for stops with real-time updates
+            delaySeconds = getStopDelay(stop);
 
             const delay = formatDelay(delaySeconds);
 

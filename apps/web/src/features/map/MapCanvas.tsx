@@ -16,6 +16,8 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
 import { setModelOrigin } from '../../lib/map/coordinates';
+import { StationLayer } from '../stations/StationLayer';
+import type { MapActions as MapActionsType } from '../../state/map/types';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
 // Similar to MiniTokyo3D's custom style but with built-in 3D building support
@@ -29,7 +31,10 @@ const RODALIES_LINE_LAYER_ID = 'rodalies-lines-outline';
 const SHOW_CAMERA_DEBUG = false;
 const SHOW_RAYCAST_DEBUG = true;
 
-type MapboxWindow = Window & { __MAPBOX_INSTANCE__?: mapboxgl.Map };
+type MapboxWindow = Window & {
+  __MAPBOX_INSTANCE__?: mapboxgl.Map;
+  __MAP_ACTIONS__?: Partial<MapActionsType>;
+};
 
 function getGlobalWindow(): MapboxWindow {
   return window as MapboxWindow;
@@ -91,8 +96,15 @@ export function MapCanvas() {
   const copyFeedbackTimeoutRef = useRef<number | null>(null);
   const [raycastDebugInfo, setRaycastDebugInfo] = useState<RaycastDebugInfo | null>(null);
   const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
+  const [isStationDebugMode, setIsStationDebugMode] = useState(false);
 
-  const { setMapInstance, setMapLoaded, setViewport } = useMapActions();
+  const mapActions = useMapActions();
+  const {
+    setMapInstance,
+    setMapLoaded,
+    setViewport,
+    selectStation,
+  } = mapActions;
   const { highlightMode, highlightedLineId, highlightedLineIds } = useMapHighlightSelectors();
   const { ui, mapInstance, isMapLoaded } = useMapState();
   const {
@@ -195,6 +207,22 @@ export function MapCanvas() {
       root.removeAttribute('data-map-theme');
     }
   }, [isHighContrast]);
+
+  useEffect(() => {
+    const globalWindow = getGlobalWindow();
+    globalWindow.__MAP_ACTIONS__ = {
+      selectStation: mapActions.selectStation,
+      highlightLine: mapActions.highlightLine,
+      isolateLine: mapActions.isolateLine,
+      clearHighlightedLine: mapActions.clearHighlightedLine,
+      toggleLine: mapActions.toggleLine,
+    };
+    return () => {
+      if (globalWindow.__MAP_ACTIONS__) {
+        delete globalWindow.__MAP_ACTIONS__;
+      }
+    };
+  }, [mapActions]);
 
   const updateCameraSnapshot = useCallback(() => {
     const map = mapRef.current;
@@ -587,6 +615,44 @@ export function MapCanvas() {
     }
   };
 
+  useEffect(() => {
+    if (!mapInstance || !isStationDebugMode) {
+      return;
+    }
+
+    const handleDebugClick = (event: mapboxgl.MapMouseEvent) => {
+      const { lng, lat } = event.lngLat;
+      const point = mapInstance.project(event.lngLat);
+      const message = `Station Debug
+================
+Lng: ${lng.toFixed(6)}
+Lat: ${lat.toFixed(6)}
+Pixel X: ${point.x.toFixed(2)}
+Pixel Y: ${point.y.toFixed(2)}
+Zoom: ${mapInstance.getZoom().toFixed(2)}`;
+
+      console.info(message);
+
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(message).catch(() => {
+          // Ignore clipboard failures
+        });
+      }
+    };
+
+    mapInstance.on('click', handleDebugClick);
+    const targetZoom = Math.min(mapInstance.getMaxZoom(), 17);
+    mapInstance.easeTo({ zoom: targetZoom });
+
+    return () => {
+      mapInstance.off('click', handleDebugClick);
+    };
+  }, [mapInstance, isStationDebugMode]);
+
+  const toggleStationDebug = () => {
+    setIsStationDebugMode((prev) => !prev);
+  };
+
   return (
     <div className="map-canvas">
       {error ? (
@@ -667,6 +733,15 @@ export function MapCanvas() {
       />
       {/* T099: Show skeleton UI while initial train data is loading */}
       {isTrainDataLoading && mapInstance && isMapLoaded ? <TrainLoadingSkeleton /> : null}
+      {/* Station markers layer */}
+      {mapInstance && isMapLoaded ? (
+        <StationLayer
+          map={mapInstance}
+          highlightedLineIds={highlightedLineIds}
+          highlightMode={highlightMode}
+          onStationClick={selectStation}
+        />
+      ) : null}
       {/* Phase B 2D markers replaced by Phase C 3D models */}
       {/* {mapInstance && isMapLoaded ? <TrainMarkers map={mapInstance} /> : null} */}
       {mapInstance && isMapLoaded ? (
@@ -675,6 +750,50 @@ export function MapCanvas() {
           onRaycastResult={SHOW_RAYCAST_DEBUG ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
         />
+      ) : null}
+      {process.env.NODE_ENV !== 'production' ? (
+        <>
+          <button
+            type="button"
+            onClick={toggleStationDebug}
+            style={{
+              position: 'fixed',
+              bottom: '1rem',
+              left: '1rem',
+              zIndex: 50,
+              padding: '0.5rem 0.75rem',
+              borderRadius: '0.375rem',
+              border: '1px solid rgba(255,255,255,0.3)',
+              backgroundColor: isStationDebugMode ? '#fde047' : 'rgba(15,23,42,0.75)',
+              color: isStationDebugMode ? '#1f2937' : '#f1f5f9',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            {isStationDebugMode ? 'Exit Station Debug' : 'Station Debug'}
+          </button>
+          {isStationDebugMode ? (
+            <div
+              style={{
+                position: 'fixed',
+                bottom: '4.5rem',
+                left: '1rem',
+                zIndex: 50,
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: 'rgba(15,23,42,0.85)',
+                color: '#f1f5f9',
+                maxWidth: '18rem',
+                fontSize: '0.8rem',
+                lineHeight: 1.4,
+                boxShadow: '0 10px 25px rgba(0,0,0,0.35)',
+              }}
+            >
+              Station debug on: click anywhere (max zoom) to log coordinates. Output is copied to clipboard.
+            </div>
+          ) : null}
+        </>
       ) : null}
     </div>
   );
