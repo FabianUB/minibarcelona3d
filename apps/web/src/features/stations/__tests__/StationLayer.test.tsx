@@ -38,7 +38,8 @@ describe('StationLayer', () => {
   let mockSources: Map<string, MockSource>;
   let mockLayers: Map<string, MockLayer>;
   let mockEventHandlers: Map<string, Map<string, (...args: unknown[]) => unknown>>;
-  let canvasContextSpy: ReturnType<typeof vi.spyOn>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let canvasContextSpy: any;
 
   beforeAll(() => {
     const mockCanvasContext = {
@@ -58,7 +59,8 @@ describe('StationLayer', () => {
 
     canvasContextSpy = vi
       .spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValue(mockCanvasContext as unknown as CanvasRenderingContext2D);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .mockReturnValue(mockCanvasContext as any);
   });
 
   afterAll(() => {
@@ -161,7 +163,7 @@ describe('StationLayer', () => {
           callback?: (...args: unknown[]) => unknown
         ) => {
           const eventKey = typeof layerIdOrCallback === 'string' ? layerIdOrCallback : 'map';
-          const handler = callback || layerIdOrCallback;
+          const handler = (callback || layerIdOrCallback) as (...args: unknown[]) => unknown;
 
         if (!mockEventHandlers.has(event)) {
           mockEventHandlers.set(event, new Map());
@@ -223,7 +225,8 @@ describe('StationLayer', () => {
 
       // Check layer ID
       const layerIds = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls.map(
-        (call: [MockLayer]) => call[0].id
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (call: any) => call[0].id
       );
       expect(layerIds).toContain('stations-lowmarkers');
     });
@@ -380,7 +383,7 @@ describe('StationLayer', () => {
       expect(clickHandler).toBeDefined();
 
       // Simulate click
-      clickHandler({ point: { x: 100, y: 100 } });
+      clickHandler!({ point: { x: 100, y: 100 } });
 
       expect(mockOnStationClick).toHaveBeenCalledWith('station-123');
     });
