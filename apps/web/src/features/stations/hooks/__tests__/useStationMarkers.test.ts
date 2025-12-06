@@ -272,7 +272,7 @@ describe('useStationMarkers', () => {
         ],
       };
 
-      const mockLines: any[] = [];
+      const mockLines: never[] = [];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);
@@ -576,7 +576,7 @@ describe('useStationMarkers', () => {
         features: [],
       };
 
-      const mockLines: any[] = [];
+      const mockLines: never[] = [];
 
       vi.mocked(dataLoader.loadStations).mockResolvedValue(mockStations);
       vi.mocked(dataLoader.loadRodaliesLines).mockResolvedValue(mockLines);

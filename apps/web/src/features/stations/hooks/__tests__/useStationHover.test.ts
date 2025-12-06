@@ -32,7 +32,7 @@ vi.mock('mapbox-gl', () => ({
 
 describe('useStationHover', () => {
   let mockMap: Partial<MapboxMap>;
-  let eventHandlers: Record<string, Record<string, Function>>;
+  let eventHandlers: Record<string, Record<string, (...args: unknown[]) => unknown>>;
   let originalMatchMedia: typeof window.matchMedia;
 
   beforeEach(() => {
@@ -56,14 +56,14 @@ describe('useStationHover', () => {
 
     // Create mock map
     mockMap = {
-      on: vi.fn((event: string, layerId: string, handler: Function) => {
+      on: vi.fn((event: string, layerId: string, handler: (...args: unknown[]) => unknown) => {
         if (!eventHandlers[layerId]) {
           eventHandlers[layerId] = {};
         }
         eventHandlers[layerId][event] = handler;
-      }) as any,
+      }) as unknown as MapboxMap['on'],
       off: vi.fn(),
-      getLayer: vi.fn(() => ({ id: 'test-layer', type: 'symbol' })) as any,
+      getLayer: vi.fn(() => ({ id: 'test-layer', type: 'symbol' })) as unknown as MapboxMap['getLayer'],
     };
 
     // Reset mock popup instance

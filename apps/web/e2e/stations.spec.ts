@@ -14,6 +14,29 @@ import type mapboxgl from 'mapbox-gl';
  */
 
 /**
+ * Internal Mapbox GL source data type (for testing purposes)
+ * Note: Accessing internal _data property - not part of public API
+ */
+interface MapboxSourceData {
+  type: string;
+  features?: Array<{
+    type: string;
+    geometry: {
+      type: string;
+      coordinates: number[] | number[][];
+    };
+    properties: Record<string, unknown>;
+  }>;
+}
+
+/**
+ * Mapbox GL source with internal _data property
+ */
+interface MapboxSourceWithData extends mapboxgl.GeoJSONSource {
+  _data?: MapboxSourceData;
+}
+
+/**
  * Load station data from manifest
  */
 async function loadStationData(page: Page) {
@@ -138,12 +161,12 @@ test.describe('User Story 1: View Stations on Map', () => {
         .__MAPBOX_INSTANCE__;
       if (!map) return 0;
 
-      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
+      const source = map.getSource('stations-source') as MapboxSourceWithData;
       if (!source) return 0;
 
       // Access internal _data property to get feature count
-      const sourceData = (source as any)._data;
-      if (sourceData && sourceData.features) {
+      const sourceData = source._data;
+      if (sourceData?.features) {
         return sourceData.features.length;
       }
       return 0;
@@ -251,15 +274,15 @@ test.describe('User Story 1: View Stations on Map', () => {
       if (!layer || layer.type !== 'symbol') return false;
 
       // Verify multi-line station data is present in source
-      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
+      const source = map.getSource('stations-source') as MapboxSourceWithData;
       if (!source) return false;
 
-      const sourceData = (source as any)._data;
-      if (!sourceData || !sourceData.features) return false;
+      const sourceData = source._data;
+      if (!sourceData?.features) return false;
 
       // Find the multi-line station in the data
       const multiStation = sourceData.features.find(
-        (f: any) => f.properties.id === multiStationId
+        (f) => f.properties.id === multiStationId
       );
 
       return multiStation && multiStation.properties.isMultiLine === true;
@@ -316,8 +339,11 @@ test.describe('User Story 1: View Stations on Map', () => {
 
     // Use isolate action (Ctrl+Click or programmatically)
     await page.evaluate((lineId) => {
-      const actions = (window as any).__MAP_ACTIONS__;
-      if (actions && actions.isolateLine) {
+      const windowWithActions = window as unknown as {
+        __MAP_ACTIONS__?: { isolateLine?: (lineId: string) => void };
+      };
+      const actions = windowWithActions.__MAP_ACTIONS__;
+      if (actions?.isolateLine) {
         actions.isolateLine(lineId);
       }
     }, testLineId);
@@ -496,9 +522,9 @@ test.describe('User Story 3: Hover Station Preview', () => {
         .__MAPBOX_INSTANCE__!;
 
       // Get station data from source
-      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
-      const sourceData = (source as any)._data;
-      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+      const source = map.getSource('stations-source') as MapboxSourceWithData;
+      const sourceData = source._data;
+      const station = sourceData?.features?.find((f) => f.properties.id === stationId);
 
       if (!station) return null;
 
@@ -561,9 +587,9 @@ test.describe('User Story 3: Hover Station Preview', () => {
     const stationScreenPos = await page.evaluate((stationId) => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__!;
-      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
-      const sourceData = (source as any)._data;
-      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+      const source = map.getSource('stations-source') as MapboxSourceWithData;
+      const sourceData = source._data;
+      const station = sourceData?.features?.find((f) => f.properties.id === stationId);
 
       if (!station) return null;
 
@@ -644,9 +670,9 @@ test.describe('User Story 3: Hover Station Preview', () => {
     const stationScreenPos = await page.evaluate((stationId) => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__!;
-      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
-      const sourceData = (source as any)._data;
-      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+      const source = map.getSource('stations-source') as MapboxSourceWithData;
+      const sourceData = source._data;
+      const station = sourceData?.features?.find((f) => f.properties.id === stationId);
 
       if (!station) return null;
 
@@ -717,9 +743,9 @@ test.describe('User Story 3: Hover Station Preview', () => {
     const stationScreenPos = await page.evaluate((stationId) => {
       const map = (window as unknown as { __MAPBOX_INSTANCE__?: mapboxgl.Map })
         .__MAPBOX_INSTANCE__!;
-      const source = map.getSource('stations-source') as mapboxgl.GeoJSONSource;
-      const sourceData = (source as any)._data;
-      const station = sourceData.features.find((f: any) => f.properties.id === stationId);
+      const source = map.getSource('stations-source') as MapboxSourceWithData;
+      const sourceData = source._data;
+      const station = sourceData?.features?.find((f) => f.properties.id === stationId);
 
       if (!station) return null;
 

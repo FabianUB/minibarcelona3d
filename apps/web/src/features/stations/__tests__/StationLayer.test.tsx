@@ -21,7 +21,7 @@ vi.mock('../hooks/useStationMarkers');
 // Mock mapbox-gl types
 type MockSource = {
   type: string;
-  data: any;
+  data: unknown;
   setData: ReturnType<typeof vi.fn>;
 };
 
@@ -29,16 +29,16 @@ type MockLayer = {
   id: string;
   type: string;
   source: string;
-  filter?: any;
-  paint?: any;
+  filter?: unknown;
+  paint?: Record<string, unknown>;
 };
 
 describe('StationLayer', () => {
   let mockMap: MapboxMap;
   let mockSources: Map<string, MockSource>;
   let mockLayers: Map<string, MockLayer>;
-  let mockEventHandlers: Map<string, Map<string, any>>;
-  let canvasContextSpy: any;
+  let mockEventHandlers: Map<string, Map<string, (...args: unknown[]) => unknown>>;
+  let canvasContextSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(() => {
     const mockCanvasContext = {
@@ -58,7 +58,7 @@ describe('StationLayer', () => {
 
     canvasContextSpy = vi
       .spyOn(HTMLCanvasElement.prototype, 'getContext')
-      .mockReturnValue(mockCanvasContext as any);
+      .mockReturnValue(mockCanvasContext as unknown as CanvasRenderingContext2D);
   });
 
   afterAll(() => {
@@ -125,10 +125,10 @@ describe('StationLayer', () => {
     // Create mock Mapbox GL map
     mockMap = {
       getSource: vi.fn((id: string) => mockSources.get(id)),
-      addSource: vi.fn((id: string, config: any) => {
+      addSource: vi.fn((id: string, config: { type: string; data: unknown }) => {
         mockSources.set(id, {
           ...config,
-          setData: vi.fn((data: any) => {
+          setData: vi.fn((data: unknown) => {
             const source = mockSources.get(id);
             if (source) {
               source.data = data;
@@ -140,35 +140,47 @@ describe('StationLayer', () => {
         mockSources.delete(id);
       }),
       getLayer: vi.fn((id: string) => mockLayers.get(id)),
-      addLayer: vi.fn((config: any) => {
+      addLayer: vi.fn((config: MockLayer) => {
         mockLayers.set(config.id, config);
       }),
       removeLayer: vi.fn((id: string) => {
         mockLayers.delete(id);
       }),
-      setPaintProperty: vi.fn((layerId: string, property: string, value: any) => {
+      setPaintProperty: vi.fn((layerId: string, property: string, value: unknown) => {
         const layer = mockLayers.get(layerId);
-        if (layer) {
-          layer.paint = layer.paint || {};
+        if (layer?.paint) {
           layer.paint[property] = value;
+        } else if (layer) {
+          layer.paint = { [property]: value };
         }
       }),
-      on: vi.fn((event: string, layerIdOrCallback: string | Function, callback?: Function) => {
-        const eventKey = typeof layerIdOrCallback === 'string' ? layerIdOrCallback : 'map';
-        const handler = callback || layerIdOrCallback;
+      on: vi.fn(
+        (
+          event: string,
+          layerIdOrCallback: string | ((...args: unknown[]) => unknown),
+          callback?: (...args: unknown[]) => unknown
+        ) => {
+          const eventKey = typeof layerIdOrCallback === 'string' ? layerIdOrCallback : 'map';
+          const handler = callback || layerIdOrCallback;
 
         if (!mockEventHandlers.has(event)) {
           mockEventHandlers.set(event, new Map());
         }
         mockEventHandlers.get(event)!.set(eventKey, handler);
-      }),
-      off: vi.fn((event: string, layerIdOrCallback: string | Function, _callback?: Function) => {
-        const eventKey = typeof layerIdOrCallback === 'string' ? layerIdOrCallback : 'map';
-        const handlers = mockEventHandlers.get(event);
-        if (handlers) {
-          handlers.delete(eventKey);
+      }
+      ),
+      off: vi.fn(
+        (
+          event: string,
+          layerIdOrCallback: string | ((...args: unknown[]) => unknown)
+        ) => {
+          const eventKey = typeof layerIdOrCallback === 'string' ? layerIdOrCallback : 'map';
+          const handlers = mockEventHandlers.get(event);
+          if (handlers) {
+            handlers.delete(eventKey);
+          }
         }
-      }),
+      ),
       getCanvas: vi.fn(() => ({
         style: {
           cursor: '',
@@ -211,7 +223,7 @@ describe('StationLayer', () => {
 
       // Check layer ID
       const layerIds = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls.map(
-        (call: any) => call[0].id
+        (call: [MockLayer]) => call[0].id
       );
       expect(layerIds).toContain('stations-lowmarkers');
     });
