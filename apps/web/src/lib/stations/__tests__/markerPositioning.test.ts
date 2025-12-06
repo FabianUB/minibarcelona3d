@@ -157,8 +157,8 @@ describe('markerPositioning', () => {
   describe('calculateRadialOffsets', () => {
     it('should return zero offset for isolated station', () => {
       const mockMap = {
-        project: vi.fn((coords) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
-      } as any;
+        project: vi.fn((coords: [number, number]) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
+      } as unknown as mapboxgl.Map;
 
       const station: Station = {
         id: '1',
@@ -183,8 +183,8 @@ describe('markerPositioning', () => {
 
     it('should compute radial offsets for overlapping stations', () => {
       const mockMap = {
-        project: vi.fn((coords) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
-      } as any;
+        project: vi.fn((coords: [number, number]) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
+      } as unknown as mapboxgl.Map;
 
       const station1: Station = {
         id: '1',
@@ -226,8 +226,8 @@ describe('markerPositioning', () => {
 
     it('should distribute stations evenly around circle', () => {
       const mockMap = {
-        project: vi.fn((coords) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
-      } as any;
+        project: vi.fn((coords: [number, number]) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
+      } as unknown as mapboxgl.Map;
 
       // Create 4 overlapping stations
       const stations: Station[] = [
@@ -291,8 +291,8 @@ describe('markerPositioning', () => {
 
     it('should increase radius based on cluster size', () => {
       const mockMap = {
-        project: vi.fn((coords) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
-      } as any;
+        project: vi.fn((coords: [number, number]) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
+      } as unknown as mapboxgl.Map;
 
       // 2 overlapping stations
       const stations2: Station[] = [
@@ -347,8 +347,8 @@ describe('markerPositioning', () => {
 
     it('should call map.project for each station', () => {
       const mockMap = {
-        project: vi.fn((coords) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
-      } as any;
+        project: vi.fn((coords: [number, number]) => ({ x: coords[0] * 100, y: coords[1] * 100 })),
+      } as unknown as mapboxgl.Map;
 
       const stations: Station[] = [
         {
