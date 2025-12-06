@@ -169,10 +169,12 @@ describe('rodalies dataLoader', () => {
     expect(uiState).toEqual({
       selectedLineId: null,
       selectedLineIds: [],
+      selectedStationId: null,
       highlightMode: 'none',
       isHighContrast: false,
       isLegendOpen: false,
       activePanel: 'none',
+      stationLoadError: null,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
 });
@@ -198,10 +200,12 @@ it('normalises remote Map UI state defaults and invalid highlight modes', async 
     expect(uiState).toEqual({
       selectedLineId: null,
       selectedLineIds: [],
+      selectedStationId: null,
       highlightMode: 'none',
       isLegendOpen: true,
       isHighContrast: true,
       activePanel: 'none',
+      stationLoadError: null,
     });
 });
 

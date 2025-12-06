@@ -155,6 +155,16 @@ Three-tier testing approach (see `docs/TESTS.md`):
 - `apps/web/vite.config.ts`: Vite configuration with test setup
 - `apps/web/playwright.config.ts`: E2E test configuration with multi-browser matrix
 
+**Station Features:**
+- `apps/web/src/features/stations/StationLayer.tsx`: Station markers on map (teardrop symbols with zoom-responsive sizing)
+- `apps/web/src/features/stations/hooks/useStationMarkers.ts`: Data loading and GeoJSON enrichment with radial offsets
+- `apps/web/src/lib/stations/markerPositioning.ts`: Radial offset calculation for overlapping stations
+- `apps/web/src/lib/stations/markerStyles.ts`: Mapbox GL paint properties for station markers
+- `apps/web/src/features/stations/StationInfoPanel*.tsx`: Station details panels (desktop/mobile with ShadCN UI)
+- `apps/web/src/features/stations/hooks/useStationHover.ts`: Hover tooltip functionality (currently disabled)
+- Visualization: Teardrop markers at low zoom (<15), same markers with station names at high zoom (≥15)
+- State integration: Uses MapStateProvider for selectedStationId and highlight/isolate modes
+
 **Train Features:**
 - `apps/web/src/features/trains/TrainLayer3D.tsx`: 3D train rendering with Three.js via Mapbox Custom Layer API
 - `apps/web/src/lib/trains/trainMeshManager.ts`: Manages train mesh lifecycle, positioning, and animations
@@ -218,6 +228,32 @@ const handleTrainClick = async (vehicleKey: string) => {
   selectTrain(trainData);
   setActivePanel('trainInfo');
 };
+```
+
+**Station state management pattern:**
+```typescript
+// Station selection uses MapStateProvider (unlike trains)
+const { ui } = useMapState();
+const { selectStation } = useMapActions();
+
+// Selecting a station
+const handleStationClick = (event: mapboxgl.MapLayerMouseEvent) => {
+  const feature = event.features?.[0];
+  if (feature?.properties) {
+    const stationId = feature.properties.id;
+    selectStation(stationId);
+    // Panel opens automatically via selectedStationId state
+  }
+};
+
+// Station data loading with graceful fallbacks
+const stationLines = useMemo(() => {
+  const map = new Map(lines.map((line) => [line.id, line]));
+  const orderedLines = station?.lines
+    .map((lineId) => map.get(lineId) ?? null)
+    .filter(Boolean) as RodaliesLine[]; // Filters out unloaded lines
+  return orderedLines.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
+}, [station, lines]);
 ```
 
 **3D Train Rendering with Three.js:**
@@ -401,7 +437,10 @@ const routeTrains = trains.filter(t => t.routeId === selectedRoute);
 - PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`) (002-realtime-train-tracking)
 - TypeScript 5.9.3 (React 19.1.1 frontend) + Three.js 0.180.0, Mapbox GL JS 3.4.0, Vite 7.1.7 (003-train-line-colors-zoom)
 - Static JSON/GeoJSON files in `apps/web/public/rodalies_data/` (003-train-line-colors-zoom)
+- TypeScript 5.9.3, React 19.1.1 + Mapbox GL JS 3.4.0, Radix UI (dialogs, popovers), Tailwind CSS 4.1.16, Vitest 2.1.9, Playwright 1.48.2 (004-station-visualization)
+- Static GeoJSON files (Station.geojson), client-side caching via existing dataLoader (004-station-visualization)
 
 ## Recent Changes
+- 004-station-visualization: Added interactive station visualization with 200+ station markers displayed as teardrop symbols with zoom-responsive sizing. Features include: click-to-view-details panels (desktop/mobile responsive with ShadCN Dialog), radial offset positioning for overlapping stations at complex interchanges, highlight/isolate mode integration via MapStateProvider, graceful error handling for missing station codes and unloaded lines, and hover tooltips (currently disabled). Station info panels display station name, code (when available), and serving lines with color-coded badges.
 - 003-train-line-colors-zoom: Added zoom-responsive train scaling (ScaleManager), hover outlines with BackSide rendering (outlineManager), and debug panel for train visualization. Simplified railway line rendering to Mini Tokyo 3D approach (single layer) after removing proximity-based system due to performance issues (567 layers)
 - 002-realtime-train-tracking: Added PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`)
