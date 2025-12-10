@@ -225,3 +225,58 @@ export async function fetchTripDetails(tripId: string): Promise<TripDetails> {
 
   return response.json();
 }
+
+// Import trip cache lazily to avoid circular dependencies
+let tripCacheModule: typeof import('../trains/tripCache') | null = null;
+
+async function getTripCacheModule() {
+  if (!tripCacheModule) {
+    tripCacheModule = await import('../trains/tripCache');
+  }
+  return tripCacheModule;
+}
+
+/**
+ * Fetches trip details with caching
+ *
+ * Uses the global TripCache to avoid redundant API calls.
+ * Handles concurrent requests for the same tripId.
+ *
+ * Phase 3, Task T016
+ *
+ * @param tripId - GTFS trip identifier
+ * @returns Promise with trip details (from cache or freshly fetched)
+ * @throws Error if trip not found or request fails
+ */
+export async function fetchTripDetailsCached(tripId: string): Promise<TripDetails> {
+  if (!tripId) {
+    throw new Error('tripId is required');
+  }
+
+  const { getTripCache } = await getTripCacheModule();
+  return getTripCache().getOrFetch(tripId);
+}
+
+/**
+ * Prefetch trip details for multiple trains without blocking
+ *
+ * Useful for warming the cache when new trains appear.
+ * Silently handles errors (logs warnings but doesn't throw).
+ *
+ * Phase 3, Task T017
+ *
+ * @param tripIds - Array of GTFS trip identifiers
+ */
+export async function prefetchTripDetails(tripIds: string[]): Promise<void> {
+  if (tripIds.length === 0) return;
+
+  const { getTripCache } = await getTripCacheModule();
+  const cache = getTripCache();
+
+  // Filter out null/undefined and already cached trips
+  const toFetch = tripIds.filter((id) => id && !cache.has(id));
+
+  if (toFetch.length > 0) {
+    cache.prefetchMany(toFetch);
+  }
+}

@@ -61,6 +61,13 @@ export interface TrainLayer3DProps {
    * Task: T099 - Expose loading state for skeleton UI
    */
   onLoadingChange?: (isLoading: boolean) => void;
+
+  /**
+   * Callback invoked when train data changes
+   * Used to expose train list to parent component (MapCanvas)
+   * to avoid re-render issues with StationLayer
+   */
+  onTrainsChange?: (trains: TrainPosition[]) => void;
 }
 
 export interface RaycastDebugInfo {
@@ -115,7 +122,7 @@ const LAYER_ID = 'train-layer-3d';
  * Task: T046 - Create model instances based on route mapping
  * Task: T047 - Apply bearing-based rotation
  */
-export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }: TrainLayer3DProps) {
+export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, onTrainsChange }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
   const { highlightMode, highlightedLineIds, isLineHighlighted } = useMapHighlightSelectors();
@@ -129,6 +136,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   const [sceneReady, setSceneReady] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isDataStale, setIsDataStale] = useState(false);
+  const [lastPollTime, setLastPollTime] = useState<number>(Date.now());
 
   // Phase 5: Line color map for hover outlines
   const lineColorMapRef = useRef<Map<string, THREE.Color> | null>(null);
@@ -286,10 +294,34 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
 
       previousPositionsRef.current = snapshotPreviousPositions;
 
+
       // Filter out trains without valid GPS coordinates
       const validTrains = response.positions.filter(
         (train) => train.latitude !== null && train.longitude !== null
       );
+
+      // DEBUG: Log trains that were filtered out due to null coordinates
+      const nullCoordTrains = response.positions.filter(
+        (train) => train.latitude === null || train.longitude === null
+      );
+      if (nullCoordTrains.length > 0) {
+        console.warn(`[POLL] ${nullCoordTrains.length} trains filtered out (null coords):`,
+          nullCoordTrains.map(t => t.vehicleKey)
+        );
+      }
+
+      // DEBUG: Log trains that disappeared from the response
+      const previousKeys = new Set(lastPositionsRef.current.keys());
+      const currentKeys = new Set(validTrains.map(t => t.vehicleKey));
+      const disappearedTrains = [...previousKeys].filter(key => !currentKeys.has(key));
+      const newTrains = [...currentKeys].filter(key => !previousKeys.has(key));
+
+      if (disappearedTrains.length > 0 || newTrains.length > 0) {
+        console.log(`[POLL] Train changes: +${newTrains.length} new, -${disappearedTrains.length} removed`, {
+          disappeared: disappearedTrains,
+          new: newTrains,
+        });
+      }
 
       const currentPositionsMap = new Map<string, TrainPosition>();
       validTrains.forEach((train) => {
@@ -300,6 +332,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       setTrains(validTrains);
       setError(null);
       setRetryCount(0);
+      setLastPollTime(Date.now()); // Update poll time for countdown display
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch train positions';
@@ -734,6 +767,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
 
       if (meshManagerRef.current) {
         meshManagerRef.current.animatePositions();
+        // Phase 2: Apply parking visuals to stopped trains (rotate 90°)
+        meshManagerRef.current.applyParkingVisuals();
       }
 
       const mapboxMatrix = new THREE.Matrix4().fromArray(matrix);
@@ -913,6 +948,14 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   }, [isLoading, trains.length, onLoadingChange]);
 
   /**
+   * Effect: Notify parent of train data changes
+   * Used for TrainListButton to access train data without state in TrainLayer3D
+   */
+  useEffect(() => {
+    onTrainsChange?.(trains);
+  }, [trains, onTrainsChange]);
+
+  /**
    * Effect: Check for stale data
    * Task: T097 - Detect when polledAt timestamp is older than 60 seconds
    */
@@ -1065,6 +1108,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   /**
    * Effect: Create mesh manager when stations and scene are ready
    * Task: T047 - Initialize manager with station data
+   *
+   * NOTE: This effect ONLY creates the manager. Train mesh updates are handled
+   * by a separate effect below to avoid double-calling updateTrainMeshes
+   * which was causing train teleportation issues.
    */
   useEffect(() => {
     if (
@@ -1086,15 +1133,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         `TrainLayer3D: Mesh manager initialized with ${stationsRef.current.length} stations and ${railwaysRef.current.size} railway lines`
       );
     }
-
-    if (modelsLoaded && trains.length > 0 && meshManagerRef.current) {
-      meshManagerRef.current.updateTrainMeshes(trains, previousPositionsRef.current, {
-        currentPolledAtMs: pollTimestampsRef.current.current,
-        previousPolledAtMs: pollTimestampsRef.current.previous,
-        receivedAtMs: pollTimestampsRef.current.receivedAt,
-      });
-    }
-  }, [stationsLoaded, railwaysLoaded, sceneReady, modelsLoaded, trains]);
+    // NOTE: Do NOT call updateTrainMeshes here - it's handled by the train update effect below
+    // Calling it in both places causes double-updates which corrupt interpolation state
+  }, [stationsLoaded, railwaysLoaded, sceneReady]);
 
   /**
    * Effect: Update train meshes when train data or models change
@@ -1142,6 +1183,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       console.log(
         `TrainLayer3D: ${meshManagerRef.current.getMeshCount()} train meshes active with rotation${isDataStale ? ' (STALE)' : ''}`
       );
+
+      // Log diagnostic info about trains that appear stuck
+      const stuckTrains = meshManagerRef.current.getStuckTrainsDiagnostic();
+      if (stuckTrains.length > 0) {
+        console.warn(`TrainLayer3D: ${stuckTrains.length} trains appear stuck (in transit but no movement):`, stuckTrains);
+      }
     }
   }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale]);
 
@@ -1197,5 +1244,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     return <TrainErrorDisplay error={error!} onRetry={handleManualRetry} />;
   }
 
-  return <TrainDebugPanel meshManager={meshManagerRef.current} currentZoom={map.getZoom()} />;
+  return (
+    <TrainDebugPanel
+      meshManager={meshManagerRef.current}
+      currentZoom={map.getZoom()}
+      lastPollTime={lastPollTime}
+      pollingIntervalMs={POLLING_INTERVAL_MS}
+    />
+  );
 }

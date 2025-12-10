@@ -29,6 +29,51 @@
   --rodalies-map-alert-text: #f0fdf4;
 }
 
+/* Algorithm Toggle Component */
+.algorithm-toggle {
+  display: flex;
+  gap: 0;
+  background-color: var(--rodalies-map-control-bg);
+  border: 1px solid var(--rodalies-map-control-border);
+  border-radius: 4px;
+  padding: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.algorithm-toggle-button {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--rodalies-map-control-text);
+  background-color: transparent;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  outline: none;
+}
+
+.algorithm-toggle-button:hover {
+  background-color: var(--rodalies-map-control-hover);
+}
+
+.algorithm-toggle-button:focus-visible {
+  box-shadow: var(--rodalies-map-focus-ring);
+  z-index: 1;
+}
+
+.algorithm-toggle-button-active {
+  background-color: rgba(59, 130, 246, 0.9);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.algorithm-toggle-button-active:hover {
+  background-color: rgba(59, 130, 246, 1);
+}
+
 .map-canvas {
   position: relative;
   width: 100%;

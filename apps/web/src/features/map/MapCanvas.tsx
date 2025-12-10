@@ -15,6 +15,8 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 // import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
+import { TrainListButton } from '../trains/TrainListButton';
+import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
 import type { MapActions as MapActionsType } from '../../state/map/types';
@@ -97,6 +99,7 @@ export function MapCanvas() {
   const [raycastDebugInfo, setRaycastDebugInfo] = useState<RaycastDebugInfo | null>(null);
   const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
+  const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
 
   const mapActions = useMapActions();
   const {
@@ -749,7 +752,12 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           map={mapInstance}
           onRaycastResult={SHOW_RAYCAST_DEBUG ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
+          onTrainsChange={setTrainPositions}
         />
+      ) : null}
+      {/* Train List Button - rendered separately to avoid re-render issues with map layers */}
+      {mapInstance && isMapLoaded ? (
+        <TrainListButton trains={trainPositions} map={mapInstance} />
       ) : null}
       {process.env.NODE_ENV !== 'production' ? (
         <>
