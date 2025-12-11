@@ -19,7 +19,6 @@ import {
   type PollDebugEntry,
 } from './pollDebugLogger';
 import {
-  calculateDistance,
   calculateBearing,
   interpolatePositionSmooth,
   snapTrainToRailway,
@@ -97,7 +96,6 @@ interface TrainMeshData {
   parkingPosition?: ParkingPosition; // Calculated parking slot position
   stoppedAtStationId?: string; // Station ID where train is stopped
   prevStatus?: string; // Status on previous poll to detect transitions
-  softParkingPosition?: ParkingPosition; // Soft parking (near station but not STOPPED)
   // Parking rotation animation state
   parkingRotationAnim?: {
     start: number;
@@ -165,7 +163,6 @@ export class TrainMeshManager {
   // Keep meshes for a while if absent to avoid pop-out/pop-in when a poll drops a train
   private readonly MISSING_TRAIN_GRACE_MS = 180000; // 3 minutes
   private readonly PARKING_ROTATION_DURATION_MS = 500;
-  private readonly SOFT_PARK_DISTANCE_METERS = 35; // Near-station soft parking threshold
 
   // Feature 003: Zoom-responsive lateral offset configuration
   private lateralOffsetConfig: LateralOffsetConfig;
@@ -1033,8 +1030,6 @@ export class TrainMeshManager {
       const previousPosition = previousPositions?.get(train.vehicleKey);
       let previousLngLat: [number, number] | null = null;
       let previousSnapState: RailwaySnapState | null = null;
-      let softParkingPosition: ParkingPosition | undefined;
-
       if (
         previousPosition &&
         previousPosition.latitude !== null &&
@@ -1045,38 +1040,6 @@ export class TrainMeshManager {
         previousLngLat = previousSnapState
           ? [previousSnapState.position[0], previousSnapState.position[1]]
           : [previousPosition.longitude, previousPosition.latitude];
-      }
-
-      // Precompute soft parking target if near next station (non-stopped)
-      if (train.status !== 'STOPPED_AT' && train.nextStopId) {
-        const station = this.stationMap.get(train.nextStopId);
-        if (station) {
-          const stationCoords: [number, number] = [
-            station.geometry.coordinates[0],
-            station.geometry.coordinates[1],
-          ];
-          const distanceToStation = calculateDistance(
-            { lng: targetLngLat[0], lat: targetLngLat[1] },
-            { lng: stationCoords[0], lat: stationCoords[1] }
-          );
-          if (distanceToStation <= this.SOFT_PARK_DISTANCE_METERS) {
-            const lineId = extractLineFromRouteId(train.routeId)?.toUpperCase();
-            const railway = lineId ? this.railwayLines.get(lineId) : undefined;
-            if (railway) {
-              const parking = calculateParkingPosition(
-                train.nextStopId,
-                train.vehicleKey,
-                stationCoords,
-                railway,
-                DEFAULT_PARKING_CONFIG,
-                this.currentZoom
-              );
-              if (parking) {
-                softParkingPosition = parking;
-              }
-            }
-          }
-        }
       }
 
       const initialLngLat: [number, number] = previousLngLat ?? targetLngLat;
@@ -1115,7 +1078,6 @@ export class TrainMeshManager {
         // Update train status for offset logic
         existing.status = train.status;
         existing.prevStatus = prevStatus;
-        existing.softParkingPosition = softParkingPosition;
 
         // Phase 4: Update nextStopId for predictive positioning
         existing.nextStopId = train.nextStopId ?? undefined;
@@ -1319,7 +1281,6 @@ export class TrainMeshManager {
         if (meshData) {
           // Leave prevStatus undefined on first render so parking animation can run for initial STOPPED_AT
           meshData.prevStatus = undefined;
-          meshData.softParkingPosition = softParkingPosition;
           const nextStationBearing = this.calculateBearingToNextStation(train);
           // T052g, T052j: Position using correct coordinate system with Z-offset
           // getModelPosition returns position relative to model origin with Y negated
@@ -2122,12 +2083,7 @@ export class TrainMeshManager {
     this.trainMeshes.forEach((meshData) => {
       const shouldBePerpendicular = meshData.status === 'STOPPED_AT';
       const wasPerpendicular = meshData.prevStatus === 'STOPPED_AT';
-      const hasSoftParking = !shouldBePerpendicular && Boolean(meshData.softParkingPosition);
-      const desiredMode: 'hard' | 'soft' | 'none' = shouldBePerpendicular
-        ? 'hard'
-        : hasSoftParking
-          ? 'soft'
-          : 'none';
+      const desiredMode: 'hard' | 'none' = shouldBePerpendicular ? 'hard' : 'none';
       const isCurrentlyPerpendicular = meshData.isParkingRotationApplied === true;
 
       // Apply ongoing parking rotation animation if present
@@ -2147,8 +2103,7 @@ export class TrainMeshManager {
 
       // Only trigger parking rotation when transitioning into STOPPED_AT
       const justStopped = desiredMode === 'hard' && meshData.prevStatus !== 'STOPPED_AT';
-      const justSoftPark = desiredMode === 'soft' && meshData.prevStatus !== 'SOFT_PARK';
-      if ((justStopped || justSoftPark) && !meshData.parkingRotationAnim) {
+      if (justStopped && !meshData.parkingRotationAnim) {
         // Train just stopped - calculate parking position
         const stationId = meshData.stoppedAtStationId;
         let parkingApplied = false;
@@ -2231,25 +2186,13 @@ export class TrainMeshManager {
             targetIsPerpendicular: true,
           };
         }
-      } else if (desiredMode === 'soft') {
-        // Apply soft parking position without altering logical positions
-        const parking = meshData.softParkingPosition;
-        if (parking) {
-          const position = getModelPosition(parking.position[0], parking.position[1], 0);
-          const modelScale = getModelScale();
-          const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-          const zOffset = this.Z_OFFSET_FACTOR * baseScale;
-          meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
-          this.screenCandidatesCacheInvalidated = true;
-        }
-      } else if (desiredMode === 'none' && (isCurrentlyPerpendicular || meshData.parkingRotationAnim || wasPerpendicular || hasSoftParking)) {
+      } else if (desiredMode === 'none' && (isCurrentlyPerpendicular || meshData.parkingRotationAnim || wasPerpendicular)) {
         // Train started moving - clear parking data and rotate back to track bearing smoothly
         const baseRotation =
           (meshData.targetSnap?.bearing ?? meshData.currentSnap?.bearing ?? 0) * -Math.PI / 180 +
           this.MODEL_FORWARD_OFFSET;
 
         meshData.parkingPosition = undefined;
-        meshData.softParkingPosition = undefined;
         meshData.parkingRotationAnim = {
           start: meshData.mesh.rotation.z,
           target: baseRotation,
@@ -2261,11 +2204,7 @@ export class TrainMeshManager {
       }
 
       // Track soft park state in prevStatus proxy to avoid retriggers
-      meshData.prevStatus = shouldBePerpendicular
-        ? 'STOPPED_AT'
-        : hasSoftParking
-          ? 'SOFT_PARK'
-          : meshData.status;
+      meshData.prevStatus = shouldBePerpendicular ? 'STOPPED_AT' : meshData.status;
     });
   }
 }

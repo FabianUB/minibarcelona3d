@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { TrainPosition } from '../../types/trains';
 import type { Map as MapboxMap } from 'mapbox-gl';
-import { loadRodaliesLines } from '../../lib/rodalies/dataLoader';
+import { loadRodaliesLines, loadStations } from '../../lib/rodalies/dataLoader';
+import type { Station, StationFeatureCollection } from '../../types/rodalies';
 
 interface TrainListPanelProps {
   trains: TrainPosition[];
@@ -19,6 +20,8 @@ export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelP
   const [filter, setFilter] = useState('');
   const [lineColors, setLineColors] = useState<Map<string, string>>(new Map());
   const [lineOrder, setLineOrder] = useState<Map<string, number>>(new Map());
+  const [stations, setStations] = useState<Station[]>([]);
+  const [stationMap, setStationMap] = useState<Map<string, Station>>(new Map());
 
   // Load line colors and order from RodaliesLines data (same source as Legend panel)
   useEffect(() => {
@@ -40,6 +43,33 @@ export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelP
       })
       .catch((err) => {
         console.error('Failed to load line colors:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load stations for name lookup
+  useEffect(() => {
+    let cancelled = false;
+    loadStations()
+      .then((collection: StationFeatureCollection) => {
+        if (cancelled) return;
+        const list: Station[] = collection.features.map((feature) => ({
+          id: feature.properties.id,
+          name: feature.properties.name,
+          code: feature.properties.code,
+          lines: feature.properties.lines,
+          geometry: feature.geometry,
+        }));
+        const map = new Map<string, Station>();
+        list.forEach((st) => map.set(st.id, st));
+        setStations(list);
+        setStationMap(map);
+      })
+      .catch((err) => {
+        console.error('Failed to load stations:', err);
       });
 
     return () => {
@@ -154,7 +184,7 @@ export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelP
               <tr>
                 <SortableHeader field="vehicleKey" label="Vehicle" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
                 <SortableHeader field="line" label="Line" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                <SortableHeader field="status" label="Status" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader field="status" label="Status" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
                 <SortableHeader field="nextStopId" label="Next Stop" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-3 py-2 text-left font-medium">Position</th>
                 <SortableHeader field="polledAtUtc" label="Last Update" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
@@ -179,11 +209,11 @@ export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelP
                   <td className="px-3 py-2">
                     <StatusBadge status={train.status} />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs">{train.nextStopId ?? '-'}</td>
+                  <td className="px-3 py-2 text-xs">
+                    <NextStopDisplay train={train} stationMap={stationMap} />
+                  </td>
                   <td className="px-3 py-2 font-mono text-xs">
-                    {train.longitude !== null && train.latitude !== null
-                      ? `${train.longitude.toFixed(4)}, ${train.latitude.toFixed(4)}`
-                      : 'N/A'}
+                    <PositionDisplay train={train} stations={stations} />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs">
                     {train.polledAtUtc ? new Date(train.polledAtUtc).toLocaleTimeString() : '-'}
@@ -230,6 +260,80 @@ function SortableHeader({ field, label, sortField, sortDirection, onSort }: Sort
   );
 }
 
+function PositionDisplay({ train, stations }: { train: TrainPosition; stations: Station[] }) {
+  if (train.longitude === null || train.latitude === null) {
+    return <span>N/A</span>;
+  }
+
+  const coordsText = `${train.longitude.toFixed(4)}, ${train.latitude.toFixed(4)}`;
+
+  if (!stations.length) {
+    return <span className="font-mono text-xs">{coordsText}</span>;
+  }
+
+  const stationMap = new Map<string, Station>();
+  stations.forEach((st) => stationMap.set(st.id, st));
+
+  const stationFromNextStop = train.nextStopId ? stationMap.get(train.nextStopId) : undefined;
+  const nearest = stationFromNextStop ?? findNearestStation(stations, train.longitude, train.latitude);
+
+  if (!nearest) {
+    return <span className="font-mono text-xs">{coordsText}</span>;
+  }
+
+  return (
+    <div className="flex flex-col leading-tight">
+      <span className="text-xs font-medium">{nearest.name}</span>
+      <span className="font-mono text-[11px] text-muted-foreground">{coordsText}</span>
+    </div>
+  );
+}
+
+function findNearestStation(stations: Station[], lng: number, lat: number): Station | null {
+  let nearest: Station | null = null;
+  let best = Number.POSITIVE_INFINITY;
+  for (const st of stations) {
+    const [stLng, stLat] = st.geometry.coordinates;
+    const d = haversineMeters(lat, lng, stLat, stLng);
+    if (d < best) {
+      best = d;
+      nearest = st;
+    }
+  }
+
+  // Only return if within ~5km to avoid spurious matches
+  if (best > 5000) {
+    return null;
+  }
+  return nearest;
+}
+
+function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371000; // meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function NextStopDisplay({ train, stationMap }: { train: TrainPosition; stationMap: Map<string, Station> }) {
+  if (!train.nextStopId) return <span>-</span>;
+  const station = stationMap.get(train.nextStopId);
+  if (!station) return <span className="font-mono text-xs">{train.nextStopId}</span>;
+
+  const code = station.code ? ` (${station.code})` : '';
+  return (
+    <span className="text-xs">
+      {station.name}
+      {code}
+    </span>
+  );
+}
+
 function StatusBadge({ status }: { status: string | null }) {
   const getStatusClasses = (status: string | null): string => {
     const base = 'px-2 py-0.5 rounded text-xs font-medium';
@@ -247,4 +351,3 @@ function StatusBadge({ status }: { status: string | null }) {
 
   return <span className={getStatusClasses(status)}>{status ?? 'UNKNOWN'}</span>;
 }
-
