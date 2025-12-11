@@ -91,6 +91,9 @@ export function StationLayer({
   useEffect(() => {
     if (!map || !geoJSON || isLoading || error) return;
 
+    // Guard against map being in invalid state (style not loaded or removed)
+    if (!map.isStyleLoaded()) return;
+
     // Check if source already exists
     if (map.getSource(SOURCE_ID)) {
       // Update existing source
@@ -177,6 +180,9 @@ export function StationLayer({
 
     // Cleanup on unmount
     return () => {
+      // Guard against map being in invalid state during cleanup
+      if (!map.isStyleLoaded()) return;
+
       if (map.getLayer(LAYER_ID_LOW)) {
         map.removeLayer(LAYER_ID_LOW);
       }
@@ -188,7 +194,7 @@ export function StationLayer({
 
   // Update layer styles when highlighting changes
   useEffect(() => {
-    if (!map || !map.getLayer(LAYER_ID_LOW)) return;
+    if (!map || !map.isStyleLoaded() || !map.getLayer(LAYER_ID_LOW)) return;
 
     const isAnyLineHighlighted = highlightMode !== 'none' && highlightedLineIds.length > 0;
     const isDimmed = highlightMode === 'isolate' && isAnyLineHighlighted;
@@ -199,7 +205,7 @@ export function StationLayer({
 
   // Add click handlers
   useEffect(() => {
-    if (!map || !map.getLayer(LAYER_ID_LOW)) return;
+    if (!map || !map.isStyleLoaded() || !map.getLayer(LAYER_ID_LOW)) return;
 
     const interactiveLayers = [LAYER_ID_LOW];
 
@@ -255,7 +261,7 @@ export function StationLayer({
   // Add hover handlers if provided
   useEffect(() => {
     if (!map || !onStationHover || !isClickable) return;
-    if (!map.getLayer(LAYER_ID_LOW)) return;
+    if (!map.isStyleLoaded() || !map.getLayer(LAYER_ID_LOW)) return;
 
     const interactiveLayers = [LAYER_ID_LOW];
 
@@ -345,6 +351,9 @@ export function StationLayer({
     if (!map) return;
 
     const moveStationsBelowTrains = () => {
+      // Guard against map being in invalid state
+      if (!map.isStyleLoaded()) return;
+
       if (!map.getLayer(TRAIN_LAYER_ID)) {
         return;
       }
