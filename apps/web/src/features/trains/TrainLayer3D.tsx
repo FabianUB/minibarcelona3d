@@ -229,9 +229,15 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
    * Task: T096 - Error handling with retry mechanism
    */
   const resolveTrainPosition = useCallback((train: TrainPosition): TrainPosition => {
+    const anyTrain = train as any;
+    const stopIds = {
+      current: train.currentStopId ?? anyTrain.current_stop_id ?? null,
+      next: train.nextStopId ?? anyTrain.next_stop_id ?? null,
+      previous: train.previousStopId ?? anyTrain.previous_stop_id ?? null,
+    };
     const hasCoords = train.latitude !== null && train.longitude !== null;
     const stationIdForStop =
-      train.currentStopId ?? train.nextStopId ?? train.previousStopId ?? null;
+      stopIds.current ?? stopIds.next ?? stopIds.previous ?? null;
     const isStoppedAtStation = train.status === 'STOPPED_AT' && !!stationIdForStop;
 
     if (!hasCoords && isStoppedAtStation) {
@@ -240,10 +246,27 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         const [lng, lat] = station.geometry.coordinates;
         return {
           ...train,
+          currentStopId: stopIds.current,
+          nextStopId: stopIds.next,
+          previousStopId: stopIds.previous,
           latitude: lat,
           longitude: lng,
         };
       }
+    }
+
+    // Normalize stop IDs even when coordinates are present
+    if (
+      stopIds.current !== train.currentStopId ||
+      stopIds.next !== train.nextStopId ||
+      stopIds.previous !== train.previousStopId
+    ) {
+      return {
+        ...train,
+        currentStopId: stopIds.current,
+        nextStopId: stopIds.next,
+        previousStopId: stopIds.previous,
+      };
     }
 
     return train;
@@ -355,7 +378,42 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       );
       if (nullCoordTrains.length > 0) {
         console.warn(`[POLL] ${nullCoordTrains.length} trains filtered out (null coords):`,
-          nullCoordTrains.map(t => t.vehicleKey)
+          nullCoordTrains.map(t => ({
+            key: t.vehicleKey,
+            status: t.status,
+            routeId: t.routeId,
+            nextStopId: t.nextStopId,
+          }))
+        );
+      }
+
+      // DEBUG: Log trains with null routeId (shows as "N/A" in table)
+      const nullRouteTrains = validTrains.filter((train) => train.routeId === null);
+      if (nullRouteTrains.length > 0) {
+        console.warn(`[POLL] ${nullRouteTrains.length} trains have null routeId (N/A line):`,
+          nullRouteTrains.map(t => ({
+            key: t.vehicleKey,
+            status: t.status,
+            coords: t.latitude !== null ? `${t.latitude?.toFixed(4)}, ${t.longitude?.toFixed(4)}` : 'null',
+            nextStopId: t.nextStopId,
+          }))
+        );
+      }
+
+      // DEBUG: Log STOPPED_AT trains to verify they're being processed
+      const stoppedAtTrains = validTrains.filter((train) => train.status === 'STOPPED_AT');
+      if (stoppedAtTrains.length > 0) {
+        console.log(`[POLL] ${stoppedAtTrains.length} STOPPED_AT trains with valid coords:`,
+          stoppedAtTrains.slice(0, 5).map(t => ({
+            key: t.vehicleKey,
+            routeId: t.routeId,
+            coords: `${t.latitude?.toFixed(4)}, ${t.longitude?.toFixed(4)}`,
+            stopIds: {
+              current: t.currentStopId,
+              next: t.nextStopId,
+            },
+          })),
+          stoppedAtTrains.length > 5 ? `... and ${stoppedAtTrains.length - 5} more` : ''
         );
       }
 
