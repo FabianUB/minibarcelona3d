@@ -69,6 +69,13 @@ export interface TrainLayer3DProps {
    * to avoid re-render issues with StationLayer
    */
   onTrainsChange?: (trains: TrainPosition[]) => void;
+
+  /**
+   * Callback to expose the mesh position getter for external use.
+   * The getter returns the actual rendered position [lng, lat] for a given vehicleKey,
+   * which may differ from API GPS coordinates due to railway snapping and parking.
+   */
+  onMeshPositionGetterReady?: (getter: (vehicleKey: string) => [number, number] | null) => void;
 }
 
 export interface RaycastDebugInfo {
@@ -124,7 +131,7 @@ const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
  * Task: T046 - Create model instances based on route mapping
  * Task: T047 - Apply bearing-based rotation
  */
-export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, onTrainsChange }: TrainLayer3DProps) {
+export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, onTrainsChange, onMeshPositionGetterReady }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
   const { highlightMode, highlightedLineIds, isLineHighlighted } = useMapHighlightSelectors();
@@ -1109,6 +1116,18 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   useEffect(() => {
     onTrainsChange?.(trains);
   }, [trains, onTrainsChange]);
+
+  /**
+   * Effect: Expose mesh position getter to parent component
+   * Used for TrainListPanel to zoom to actual mesh position (not API GPS)
+   */
+  useEffect(() => {
+    if (meshManagerRef.current && onMeshPositionGetterReady) {
+      onMeshPositionGetterReady((vehicleKey: string) => {
+        return meshManagerRef.current?.getMeshLngLat(vehicleKey) ?? null;
+      });
+    }
+  }, [stationsLoaded, railwaysLoaded, sceneReady, onMeshPositionGetterReady]);
 
   /**
    * Effect: Check for stale data

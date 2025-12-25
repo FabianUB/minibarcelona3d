@@ -6,6 +6,7 @@ import { TrainListPanel } from './TrainListPanel';
 interface TrainListButtonProps {
   trains: TrainPosition[];
   map: MapboxMap;
+  getMeshPosition?: ((vehicleKey: string) => [number, number] | null) | null;
 }
 
 /**
@@ -15,7 +16,7 @@ interface TrainListButtonProps {
  * re-renders that affect the map's internal state (which was causing
  * crashes in StationLayer).
  */
-export function TrainListButton({ trains, map }: TrainListButtonProps) {
+export function TrainListButton({ trains, map, getMeshPosition }: TrainListButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpen = useCallback(() => {
@@ -63,6 +64,7 @@ export function TrainListButton({ trains, map }: TrainListButtonProps) {
         map={map}
         isOpen={isOpen}
         onClose={handleClose}
+        getMeshPosition={getMeshPosition}
       />
     </>
   );
