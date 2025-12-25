@@ -34,6 +34,7 @@ import { useTrainActions } from '../../state/trains';
 import { useMapActions, useMapHighlightSelectors } from '../../state/map';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
+import { trainDebug } from '../../lib/trains/debugLogger';
 
 export interface TrainLayer3DProps {
   /**
@@ -368,67 +369,53 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         (train) => train.latitude !== null && train.longitude !== null
       );
 
-      if (filledFromStation > 0) {
-        console.log(`[POLL] Filled missing coordinates for ${filledFromStation} STOPPED_AT trains using station locations`);
-      }
-
-      // DEBUG: Log trains that were filtered out due to null coordinates
+      // Calculate statistics for structured logging
       const nullCoordTrains = resolvedPositions.filter(
         (train) => train.latitude === null || train.longitude === null
       );
-      if (nullCoordTrains.length > 0) {
-        console.warn(`[POLL] ${nullCoordTrains.length} trains filtered out (null coords):`,
-          nullCoordTrains.map(t => ({
-            key: t.vehicleKey,
-            status: t.status,
-            routeId: t.routeId,
-            nextStopId: t.nextStopId,
-          }))
-        );
-      }
-
-      // DEBUG: Log trains with null routeId (shows as "N/A" in table)
       const nullRouteTrains = validTrains.filter((train) => train.routeId === null);
-      if (nullRouteTrains.length > 0) {
-        console.warn(`[POLL] ${nullRouteTrains.length} trains have null routeId (N/A line):`,
-          nullRouteTrains.map(t => ({
-            key: t.vehicleKey,
-            status: t.status,
-            coords: t.latitude !== null ? `${t.latitude?.toFixed(4)}, ${t.longitude?.toFixed(4)}` : 'null',
-            nextStopId: t.nextStopId,
-          }))
-        );
-      }
-
-      // DEBUG: Log STOPPED_AT trains to verify they're being processed
       const stoppedAtTrains = validTrains.filter((train) => train.status === 'STOPPED_AT');
-      if (stoppedAtTrains.length > 0) {
-        console.log(`[POLL] ${stoppedAtTrains.length} STOPPED_AT trains with valid coords:`,
-          stoppedAtTrains.slice(0, 5).map(t => ({
-            key: t.vehicleKey,
-            routeId: t.routeId,
-            coords: `${t.latitude?.toFixed(4)}, ${t.longitude?.toFixed(4)}`,
-            stopIds: {
-              current: t.currentStopId,
-              next: t.nextStopId,
-            },
-          })),
-          stoppedAtTrains.length > 5 ? `... and ${stoppedAtTrains.length - 5} more` : ''
-        );
-      }
+      const inTransitTrains = validTrains.filter((train) => train.status === 'IN_TRANSIT_TO');
+      const incomingAtTrains = validTrains.filter((train) => train.status === 'INCOMING_AT');
 
-      // DEBUG: Log trains that disappeared from the response
       const previousKeys = new Set(lastPositionsRef.current.keys());
       const currentKeys = new Set(validTrains.map(t => t.vehicleKey));
       const disappearedTrains = [...previousKeys].filter(key => !currentKeys.has(key));
-      const newTrains = [...currentKeys].filter(key => !previousKeys.has(key));
+      const newTrainKeys = [...currentKeys].filter(key => !previousKeys.has(key));
 
-      if (disappearedTrains.length > 0 || newTrains.length > 0) {
-        console.log(`[POLL] Train changes: +${newTrains.length} new, -${disappearedTrains.length} removed`, {
-          disappeared: disappearedTrains,
-          new: newTrains,
+      // Use structured poll summary
+      trainDebug.startPollSummary();
+      trainDebug.updatePollSummary({
+        totalTrains: resolvedPositions.length,
+        validTrains: validTrains.length,
+        filteredOut: nullCoordTrains.length,
+        nullRouteId: nullRouteTrains.length,
+        stoppedAt: stoppedAtTrains.length,
+        inTransit: inTransitTrains.length,
+        incomingAt: incomingAtTrains.length,
+        filledFromStation,
+        newTrains: newTrainKeys,
+        removedTrains: disappearedTrains,
+      });
+
+      // Add issues for problematic trains
+      nullCoordTrains.forEach(train => {
+        trainDebug.addPollIssue(train.vehicleKey, 'null coordinates', {
+          status: train.status,
+          routeId: train.routeId,
+          nextStopId: train.nextStopId,
         });
-      }
+      });
+
+      // Add issues for STOPPED_AT trains with null routeId (potential visibility issues)
+      stoppedAtTrains.filter(t => t.routeId === null).forEach(train => {
+        trainDebug.addPollIssue(train.vehicleKey, 'STOPPED_AT with null routeId', {
+          coords: `${train.latitude?.toFixed(4)}, ${train.longitude?.toFixed(4)}`,
+          nextStopId: train.nextStopId,
+        });
+      });
+
+      trainDebug.endPollSummary();
 
       const currentPositionsMap = new Map<string, TrainPosition>();
       validTrains.forEach((train) => {

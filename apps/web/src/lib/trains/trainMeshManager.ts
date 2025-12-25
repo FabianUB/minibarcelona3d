@@ -38,6 +38,7 @@ import {
   DEFAULT_PREDICTIVE_CONFIG,
   type PredictiveConfig,
 } from './predictiveCalculator';
+import { trainDebug } from './debugLogger';
 
 // Optional: watchlist of vehicle keys to emit detailed poll logs
 const POLL_WATCH_KEYS: Set<string> = new Set(
@@ -235,7 +236,7 @@ export class TrainMeshManager {
     // Feature 003: Initialize scale manager
     this.scaleManager = new ScaleManager();
 
-    console.log(`TrainMeshManager: Loaded ${this.stationMap.size} stations for bearing calculations`);
+    trainDebug.system.info(`Stations loaded: ${this.stationMap.size}`);
   }
 
   /**
@@ -381,7 +382,10 @@ export class TrainMeshManager {
       if (station && station.lines && station.lines.length > 0) {
         // Return the first line - this is a best guess for multi-line stations
         const inferredLine = station.lines[0];
-        console.log(`[INFER LINE] Train ${train.vehicleKey} (null routeId): inferred line ${inferredLine} from station ${station.name} (${stopId})`);
+        trainDebug.mesh.info(`Line inferred: ${train.vehicleKey} -> ${inferredLine}`, {
+          station: station.name,
+          stopId,
+        });
         return inferredLine;
       }
     }
@@ -466,16 +470,11 @@ export class TrainMeshManager {
 
     // Check if speed exceeds maximum realistic train speed
     if (speedMS > this.MAX_TRAIN_SPEED_MS) {
-      console.warn(
-        `TrainMeshManager: Unrealistic speed detected for train ${vehicleKey}`,
-        {
-          lineId: currentSnap.lineId,
-          distanceTraveled: `${distanceTraveled.toFixed(0)}m`,
-          timeDelta: `${timeDeltaS.toFixed(1)}s`,
-          calculatedSpeed: `${speedMS.toFixed(1)} m/s (${(speedMS * 3.6).toFixed(0)} km/h)`,
-          maxAllowed: `${this.MAX_TRAIN_SPEED_MS.toFixed(1)} m/s (${(this.MAX_TRAIN_SPEED_MS * 3.6).toFixed(0)} km/h)`,
-        }
-      );
+      trainDebug.mesh.warn(`Unrealistic speed: ${vehicleKey}`, {
+        speed: `${(speedMS * 3.6).toFixed(0)} km/h`,
+        distance: `${distanceTraveled.toFixed(0)}m`,
+        timeDelta: `${timeDeltaS.toFixed(1)}s`,
+      });
       return true;
     }
 
@@ -815,9 +814,10 @@ export class TrainMeshManager {
     const gltf = getCachedModel(modelType);
 
     if (!gltf) {
-      console.warn(
-        `Model not loaded for route ${train.routeId} (type: ${modelType}). Skipping train ${train.vehicleKey}.`
-      );
+      trainDebug.mesh.warn(`Model not loaded: ${train.vehicleKey}`, {
+        routeId: train.routeId,
+        modelType,
+      });
       return null;
     }
 
@@ -831,14 +831,7 @@ export class TrainMeshManager {
     const baseScale = this.TRAIN_SIZE_METERS * modelScale;
 
     if (!Number.isFinite(modelScale) || !Number.isFinite(baseScale)) {
-      console.warn('TrainMeshManager: Invalid scale computed', {
-        modelScale,
-        baseScale,
-        vehicleKey: train.vehicleKey,
-      });
-    } else if (this.debugCount < this.DEBUG_LIMIT) {
-      console.log('TrainMeshManager: Scale computed for train', {
-        vehicleKey: train.vehicleKey,
+      trainDebug.mesh.error(`Invalid scale: ${train.vehicleKey}`, {
         modelScale,
         baseScale,
       });
@@ -1014,9 +1007,10 @@ export class TrainMeshManager {
         updateCallsThisSecond: this.updateCallsThisSecond,
       };
       logPollDebug(pollDebug);
-      console.warn(
-        `[TELEPORT GUARD] Ignoring duplicate/older poll update (received=${pollTimestamp}, last=${this.lastProcessedPollTimestamp})`
-      );
+      trainDebug.system.warn('Teleport guard: ignoring duplicate poll', {
+        received: pollTimestamp,
+        lastProcessed: this.lastProcessedPollTimestamp,
+      });
       return;
     }
 
@@ -1030,7 +1024,7 @@ export class TrainMeshManager {
       this.updateCallsThisSecond++;
       // Warn if called multiple times in rapid succession
       if (this.updateCallsThisSecond > 1) {
-        console.warn(`[TELEPORT BUG] updateTrainMeshes called ${this.updateCallsThisSecond}x in 1s! This causes teleportation.`);
+        trainDebug.system.warn(`Teleport bug risk: updateTrainMeshes called ${this.updateCallsThisSecond}x in 1s`);
       }
     } else {
       this.updateCallsThisSecond = 1;
@@ -1207,14 +1201,11 @@ export class TrainMeshManager {
           visualLat = startLat + (endLat - startLat) * progress;
         }
 
-        // Debug logging for updates - only log first 3 trains per poll to reduce noise
+        // Debug logging for updates - only first 3 trains per poll (DEBUG level = hidden by default)
         if (this.debugCount < 3) {
-          console.log(`[POLL UPDATE] Train ${train.vehicleKey}:`, {
+          trainDebug.mesh.debug(`Update: ${train.vehicleKey}`, {
             progress: `${(progress * 100).toFixed(1)}%`,
             elapsed: `${(elapsed / 1000).toFixed(1)}s`,
-            fromPos: `[${startLng.toFixed(5)}, ${startLat.toFixed(5)}]`,
-            visualPos: `[${visualLng.toFixed(5)}, ${visualLat.toFixed(5)}]`,
-            newTarget: `[${targetLngLat[0].toFixed(5)}, ${targetLngLat[1].toFixed(5)}]`,
           });
           this.debugCount++;
         }
@@ -1366,22 +1357,19 @@ export class TrainMeshManager {
           this.trainMeshes.set(train.vehicleKey, meshData);
           createdCount += 1;
 
-          // Enhanced logging for STOPPED_AT trains to help diagnose visibility issues
+          // Use structured logging for mesh creation
           if (train.status === 'STOPPED_AT') {
-            console.log(`[STOPPED_AT NEW] Train ${train.vehicleKey}:`, {
+            trainDebug.mesh.info(`STOPPED_AT mesh created: ${train.vehicleKey}`, {
               routeId: train.routeId,
               lineCode: extractLineFromRouteId(train.routeId),
-              position: { lng: initialLngLat[0], lat: initialLngLat[1] },
-              meshPosition: { x: position.x, y: position.y, z: position.z + zOffset },
-              hasTargetSnap: !!targetSnapState,
+              coords: `${initialLngLat[1].toFixed(5)}, ${initialLngLat[0].toFixed(5)}`,
               stoppedAtStation: meshData.stoppedAtStationId,
               stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
-              scale: meshData.mesh.scale.x,
             });
           } else {
-            console.log(
-              `Created mesh for train ${train.vehicleKey} (route: ${train.routeId})`
-            );
+            trainDebug.mesh.debug(`Mesh created: ${train.vehicleKey}`, {
+              routeId: train.routeId,
+            });
           }
         }
       }
@@ -1432,9 +1420,7 @@ export class TrainMeshManager {
     };
     logPollDebug(pollDebug);
 
-    console.log(
-      `TrainMeshManager: ${this.trainMeshes.size} trains rendered (${toRemove.length} removed)`
-    );
+    // Mesh summary is handled by the poll summary in TrainLayer3D
   }
 
   /**
@@ -1474,7 +1460,7 @@ export class TrainMeshManager {
       // Remove from tracking map
       this.trainMeshes.delete(vehicleKey);
 
-      console.log(`Removed mesh for train ${vehicleKey}`);
+      trainDebug.mesh.debug(`Mesh removed: ${vehicleKey}`);
     }
   }
 
@@ -1635,7 +1621,7 @@ export class TrainMeshManager {
     for (const key of keys) {
       this.removeTrainMesh(key);
     }
-    console.log('TrainMeshManager: All meshes cleared');
+    trainDebug.system.info('All meshes cleared');
   }
 
   /**
@@ -1887,8 +1873,10 @@ export class TrainMeshManager {
     if (!station) {
       // Debug: Log when station lookup fails
       if (this.debugCount < 5) {
-        console.warn('TrainMeshManager: Station not found for nextStopId:', meshData.nextStopId,
-          'Available stations sample:', Array.from(this.stationMap.keys()).slice(0, 5));
+        trainDebug.mesh.debug('Station not found for nextStopId', {
+          stopId: meshData.nextStopId,
+          availableSample: Array.from(this.stationMap.keys()).slice(0, 5),
+        });
         this.debugCount++;
       }
       return null;
@@ -1966,9 +1954,13 @@ export class TrainMeshManager {
   animatePositions(): void {
     const now = Date.now();
 
-    // Log animation call every 5 seconds
+    // Log animation stats every 5 seconds (using debug level to reduce noise)
     if (now - this.lastAnimateLogTime > 5000) {
-      console.log(`[ANIMATE CALLED] ${this.trainMeshes.size} trains at ${new Date().toISOString()}`);
+      const stoppedCount = [...this.trainMeshes.values()].filter(m => m.status === 'STOPPED_AT').length;
+      trainDebug.animate.debug('Animation loop', {
+        totalMeshes: this.trainMeshes.size,
+        stoppedAt: stoppedCount,
+      });
       this.lastAnimateLogTime = now;
     }
 
@@ -1985,20 +1977,18 @@ export class TrainMeshManager {
 
       if (!hasValidCurrent && !hasValidTarget) {
         // Both positions invalid - skip this train entirely
-        console.error(`[ANIMATE] Train ${meshData.vehicleKey} has NO valid positions!`, {
+        trainDebug.animate.error(`No valid positions: ${meshData.vehicleKey}`, {
           status: meshData.status,
           currentPosition,
           targetPosition,
         });
+        trainDebug.addMeshInvalidPosition(meshData.vehicleKey);
         return;
       }
 
       // If current is invalid but target is valid, use target as current
       if (!hasValidCurrent && hasValidTarget) {
-        console.warn(`[ANIMATE] Train ${meshData.vehicleKey} has invalid currentPosition, using target`, {
-          currentPosition,
-          targetPosition,
-        });
+        trainDebug.animate.warn(`Invalid currentPosition, using target: ${meshData.vehicleKey}`);
         meshData.currentPosition = [targetLng, targetLat];
       }
 
@@ -2117,17 +2107,6 @@ export class TrainMeshManager {
       // Performance: This eliminates thousands of redundant offset calculations per second
       // (was recalculating every frame even though the result never changes for stopped trains)
 
-      if (this.debugCount < this.DEBUG_LIMIT) {
-        console.log('TrainMeshManager: Position computed for mesh', {
-          vehicleKey: meshData.vehicleKey,
-          interpolatedLng: interpolatedLngLat[0],
-          interpolatedLat: interpolatedLngLat[1],
-          position,
-          zOffset,
-        });
-        this.debugCount += 1;
-      }
-
       meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
       // Invalidate screen-space cache when position changes
@@ -2154,15 +2133,6 @@ export class TrainMeshManager {
       }
     });
 
-    if (this.debugCount > 0 && this.debugMeshes.length > 0 && this.debugWorldLogsRemaining > 0) {
-      this.debugWorldLogsRemaining -= 1;
-      console.log('TrainMeshManager: Debug mesh world positions', this.debugMeshes.map((mesh) => ({
-        vehicleKey: mesh.userData?.vehicleKey,
-        position: mesh.position.clone(),
-        scale: mesh.scale.clone(),
-        worldPos: mesh.getWorldPosition(new THREE.Vector3()),
-      })));
-    }
   }
 
   /**
@@ -2227,7 +2197,7 @@ export class TrainMeshManager {
               const stoppedStation = this.stationMap.get(stationId);
               if (stoppedStation && stoppedStation.lines && stoppedStation.lines.length > 0) {
                 lineId = stoppedStation.lines[0];
-                console.log(`[PARKING] Train ${meshData.vehicleKey}: inferred line ${lineId} from station ${stoppedStation.name}`);
+                trainDebug.parking.info(`Line inferred for parking: ${meshData.vehicleKey} -> ${lineId}`);
               }
             }
             const railway = lineId ? this.railwayLines.get(lineId.toUpperCase()) : null;
@@ -2296,17 +2266,15 @@ export class TrainMeshManager {
           const logLineId = extractLineFromRouteId(meshData.routeId) ??
             (stationId ? this.stationMap.get(stationId)?.lines?.[0] : null);
 
-          console.warn(`TrainMeshManager: Parking calculation failed for train ${meshData.vehicleKey}`, {
+          trainDebug.parking.warn(`Parking failed: ${meshData.vehicleKey}`, {
             stationId,
             stationFound: !!this.stationMap.get(stationId ?? ''),
             lineId: logLineId,
             lineIdSource: extractLineFromRouteId(meshData.routeId) ? 'routeId' : (logLineId ? 'station' : 'none'),
             railwayFound: !!this.railwayLines.get(logLineId?.toUpperCase() ?? ''),
-            routeId: meshData.routeId,
             hasValidPosition,
-            currentPosition: meshData.currentPosition,
-            meshPosition: [meshData.mesh.position.x, meshData.mesh.position.y, meshData.mesh.position.z],
           });
+          trainDebug.addMeshParkingFailed(meshData.vehicleKey);
 
           // CRITICAL: Explicitly set position when parking fails to ensure train is visible
           // Previously this relied on animatePositions, but that could fail in edge cases
@@ -2320,10 +2288,11 @@ export class TrainMeshManager {
             // Invalidate screen-space cache since we're setting position
             this.screenCandidatesCacheInvalidated = true;
           } else {
-            console.error(`TrainMeshManager: Train ${meshData.vehicleKey} has invalid position - cannot render!`, {
+            trainDebug.parking.error(`Invalid position - cannot render: ${meshData.vehicleKey}`, {
               currentPosition: meshData.currentPosition,
               targetPosition: meshData.targetPosition,
             });
+            trainDebug.addMeshInvalidPosition(meshData.vehicleKey);
           }
 
           meshData.parkingRotationAnim = {
