@@ -94,6 +94,7 @@ const STALE_DATA_THRESHOLD_MS = 60000;
  * Custom Layer ID for Mapbox layer management
  */
 const LAYER_ID = 'train-layer-3d';
+const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
 
 /**
  * Three.js camera parameters for Mapbox coordinate system
@@ -137,6 +138,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   const [retryCount, setRetryCount] = useState(0);
   const [isDataStale, setIsDataStale] = useState(false);
   const [lastPollTime, setLastPollTime] = useState<number>(Date.now());
+  const [isPollingPaused, setIsPollingPaused] = useState(false);
+  const [areDebugToolsEnabled, setAreDebugToolsEnabled] = useState(
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
+  );
 
   // Phase 5: Line color map for hover outlines
   const lineColorMapRef = useRef<Map<string, THREE.Color> | null>(null);
@@ -152,6 +157,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   const stationsRef = useRef<Station[]>([]);
   const railwaysRef = useRef<Map<string, PreprocessedRailwayLine>>(new Map());
 
+  // Fast station lookup for STOPPED_AT coordinate fallbacks
+  const stationMapRef = useRef<Map<string, Station>>(new Map());
+
   // Reference for train mesh manager (T046, T047)
   const meshManagerRef = useRef<TrainMeshManager | null>(null);
   const previousPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
@@ -165,6 +173,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Store retry timeout reference for cleanup (T097)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingPausedRef = useRef(false);
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
@@ -219,6 +228,27 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
    * Updates state and handles errors with exponential backoff retry
    * Task: T096 - Error handling with retry mechanism
    */
+  const resolveTrainPosition = useCallback((train: TrainPosition): TrainPosition => {
+    const hasCoords = train.latitude !== null && train.longitude !== null;
+    const stationIdForStop =
+      train.currentStopId ?? train.nextStopId ?? train.previousStopId ?? null;
+    const isStoppedAtStation = train.status === 'STOPPED_AT' && !!stationIdForStop;
+
+    if (!hasCoords && isStoppedAtStation) {
+      const station = stationMapRef.current.get(stationIdForStop!);
+      if (station) {
+        const [lng, lat] = station.geometry.coordinates;
+        return {
+          ...train,
+          latitude: lat,
+          longitude: lng,
+        };
+      }
+    }
+
+    return train;
+  }, []);
+
   const fetchTrains = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -235,9 +265,25 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         }
       }
 
+      let filledFromStation = 0;
+      const resolvedPositions = response.positions.map((train) => {
+        const resolved = resolveTrainPosition(train);
+        if (
+          resolved !== train &&
+          (train.latitude === null || train.longitude === null) &&
+          resolved.latitude !== null &&
+          resolved.longitude !== null
+        ) {
+          filledFromStation += 1;
+        }
+        return resolved;
+      });
+
+      const resolvedPreviousPositions = response.previousPositions?.map(resolveTrainPosition);
+
       const snapshotPreviousPositions = new Map<string, TrainPosition>();
       if (response.previousPositions) {
-        response.previousPositions.forEach((position) => {
+        resolvedPreviousPositions?.forEach((position) => {
           if (position.latitude !== null && position.longitude !== null) {
             snapshotPreviousPositions.set(position.vehicleKey, position);
           }
@@ -256,7 +302,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       if (!loggedDistinctPreviousRef.current && snapshotPreviousPositions.size > 0) {
         const previousStats = Array.from(snapshotPreviousPositions.values()).reduce(
           (acc, previous) => {
-            const current = response.positions.find((pos) => pos.vehicleKey === previous.vehicleKey);
+            const current = resolvedPositions.find((pos) => pos.vehicleKey === previous.vehicleKey);
             if (
               current &&
               current.latitude !== null &&
@@ -294,14 +340,17 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
 
       previousPositionsRef.current = snapshotPreviousPositions;
 
-
       // Filter out trains without valid GPS coordinates
-      const validTrains = response.positions.filter(
+      const validTrains = resolvedPositions.filter(
         (train) => train.latitude !== null && train.longitude !== null
       );
 
+      if (filledFromStation > 0) {
+        console.log(`[POLL] Filled missing coordinates for ${filledFromStation} STOPPED_AT trains using station locations`);
+      }
+
       // DEBUG: Log trains that were filtered out due to null coordinates
-      const nullCoordTrains = response.positions.filter(
+      const nullCoordTrains = resolvedPositions.filter(
         (train) => train.latitude === null || train.longitude === null
       );
       if (nullCoordTrains.length > 0) {
@@ -345,6 +394,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       const maxRetries = 5;
 
       if (nextRetryCount <= maxRetries) {
+        if (isPollingPausedRef.current) {
+          // Do not schedule retries while polling is paused
+          setRetryCount(0);
+          return;
+        }
         const retryDelayMs = Math.min(2000 * Math.pow(2, retryCount), 32000);
         console.log(`TrainLayer3D: Retrying in ${retryDelayMs / 1000}s (attempt ${nextRetryCount}/${maxRetries})`);
 
@@ -365,7 +419,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     } finally {
       setIsLoading(false);
     }
-  }, [retryCount]);
+  }, [retryCount, resolveTrainPosition]);
 
   /**
    * Manual retry function for user-initiated retry
@@ -376,6 +430,49 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     setError(null);
     void fetchTrains();
   }, [fetchTrains]);
+
+  const handleManualPoll = useCallback(() => {
+    void fetchTrains();
+  }, [fetchTrains]);
+
+  const handleTogglePolling = useCallback(() => {
+    setIsPollingPaused((prev) => !prev);
+  }, []);
+
+  const handleSecretDebugToggle = useCallback(
+    (next?: boolean) => {
+      setAreDebugToolsEnabled((prev) => (typeof next === 'boolean' ? next : !prev));
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const emit = (enabled: boolean) => {
+      window.dispatchEvent(new CustomEvent(DEBUG_TOGGLE_EVENT, { detail: { enabled } }));
+    };
+
+    emit(areDebugToolsEnabled);
+
+    return () => {
+      // No-op cleanup
+    };
+  }, [areDebugToolsEnabled]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ enabled: boolean }>).detail;
+      if (detail && typeof detail.enabled === 'boolean') {
+        setAreDebugToolsEnabled(detail.enabled);
+      }
+    };
+
+    window.addEventListener(DEBUG_TOGGLE_EVENT, handler as EventListener);
+    return () => window.removeEventListener(DEBUG_TOGGLE_EVENT, handler as EventListener);
+  }, []);
 
   /**
    * Converts geographic coordinates (lng, lat) to Mercator meters
@@ -463,12 +560,23 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
 
   // Debug overlay canvas (can be toggled with URL parameter ?debug=true)
   const debugCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const debugEnabledRef = useRef(
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
-  );
+  const debugEnabledRef = useRef(areDebugToolsEnabled);
+
+  useEffect(() => {
+    isPollingPausedRef.current = isPollingPaused;
+  }, [isPollingPaused]);
+
+  useEffect(() => {
+    debugEnabledRef.current = areDebugToolsEnabled;
+  }, [areDebugToolsEnabled]);
 
   useEffect(() => {
     if (!debugEnabledRef.current) {
+      // Cleanup any existing overlay when disabling
+      if (debugCanvasRef.current && debugCanvasRef.current.parentNode) {
+        debugCanvasRef.current.parentNode.removeChild(debugCanvasRef.current);
+      }
+      debugCanvasRef.current = null;
       return;
     }
 
@@ -489,8 +597,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       if (debugCanvasRef.current && debugCanvasRef.current.parentNode) {
         debugCanvasRef.current.parentNode.removeChild(debugCanvasRef.current);
       }
+      debugCanvasRef.current = null;
     };
-  }, [map]);
+  }, [map, areDebugToolsEnabled]);
 
   const drawDebugOverlay = useCallback(() => {
     if (!debugEnabledRef.current) {
@@ -876,6 +985,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         }));
 
         stationsRef.current = stations;
+        stationMapRef.current = new Map(stations.map((station) => [station.id, station]));
         setStationsLoaded(true);
         console.log(`TrainLayer3D: Loaded ${stations.length} stations for bearing calculations`);
       } catch (err) {
@@ -990,10 +1100,65 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   }, [isDataStale]);
 
   /**
-   * Effect: Set up polling for train positions
-   * Fetches on mount and every 30 seconds
+   * Secret command listener to toggle debug tools globally.
+   * Type "toggledebug" anywhere (outside form fields) to flip,
+   * or "showdebug"/"hidedebug" to force state.
    */
   useEffect(() => {
+    const BUFFER_LIMIT = 32;
+    let buffer = '';
+
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTextInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.getAttribute('contenteditable') === 'true');
+      if (isTextInput) {
+        return;
+      }
+
+      if (event.key.length === 1) {
+        buffer = (buffer + event.key.toLowerCase()).slice(-BUFFER_LIMIT);
+
+        if (buffer.includes('toggledebug')) {
+          handleSecretDebugToggle();
+          buffer = '';
+        } else if (buffer.includes('showdebug')) {
+          handleSecretDebugToggle(true);
+          buffer = '';
+        } else if (buffer.includes('hidedebug')) {
+          handleSecretDebugToggle(false);
+          buffer = '';
+        }
+      } else if (event.key === 'Escape') {
+        buffer = '';
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleSecretDebugToggle]);
+
+  /**
+   * Effect: Set up polling for train positions
+   * Fetches on mount and every 30 seconds (unless paused)
+   */
+  useEffect(() => {
+    // If paused, clear any active timers and do nothing
+    if (isPollingPaused) {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      return;
+    }
+
     // Initial fetch
     void fetchTrains();
 
@@ -1002,7 +1167,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       void fetchTrains();
     }, POLLING_INTERVAL_MS);
 
-    // Cleanup: clear interval and retry timeout on unmount
+    // Cleanup: clear interval and retry timeout on unmount or dependency change
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
@@ -1013,7 +1178,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         retryTimeoutRef.current = null;
       }
     };
-  }, [fetchTrains]);
+  }, [fetchTrains, isPollingPaused]);
 
   /**
    * Effect: Add custom layer to map when ready
@@ -1245,11 +1410,18 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   }
 
   return (
-    <TrainDebugPanel
-      meshManager={meshManagerRef.current}
-      currentZoom={map.getZoom()}
-      lastPollTime={lastPollTime}
-      pollingIntervalMs={POLLING_INTERVAL_MS}
-    />
+    <>
+      {areDebugToolsEnabled && (
+        <TrainDebugPanel
+          meshManager={meshManagerRef.current}
+          currentZoom={map.getZoom()}
+          lastPollTime={lastPollTime}
+          pollingIntervalMs={POLLING_INTERVAL_MS}
+          isPollingPaused={isPollingPaused}
+          onTogglePolling={handleTogglePolling}
+          onManualPoll={handleManualPoll}
+        />
+      )}
+    </>
   );
 }

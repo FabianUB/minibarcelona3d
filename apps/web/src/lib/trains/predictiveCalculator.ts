@@ -333,6 +333,12 @@ export function calculatePredictivePosition(
   ];
 
   // Extract line ID from route
+  if (!train.routeId) {
+    if (config.debug) {
+      console.warn('PredictiveCalculator: Train has no routeId', train.vehicleKey);
+    }
+    return null;
+  }
   const lineMatch = train.routeId.match(/R\d+[A-Z]?/i);
   const lineId = lineMatch ? lineMatch[0].toUpperCase() : null;
 

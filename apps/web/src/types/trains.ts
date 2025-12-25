@@ -30,7 +30,7 @@ export interface Train {
 
   // Trip context
   tripId: string | null;
-  routeId: string;
+  routeId: string | null;
 
   // Position (nullable - some trains don't report GPS)
   latitude: number | null;
@@ -68,8 +68,10 @@ export interface TrainPosition {
   vehicleKey: string;
   latitude: number | null;
   longitude: number | null;
+  currentStopId?: string | null;
+  previousStopId?: string | null;
   nextStopId: string | null;
-  routeId: string;
+  routeId: string | null;
   status: VehicleStatus;
   polledAtUtc: string;
 }

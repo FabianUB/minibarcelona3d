@@ -7,9 +7,20 @@ interface TrainDebugPanelProps {
   currentZoom: number;
   lastPollTime?: number;
   pollingIntervalMs?: number;
+  isPollingPaused?: boolean;
+  onTogglePolling?: () => void;
+  onManualPoll?: () => void;
 }
 
-export function TrainDebugPanel({ meshManager, currentZoom, lastPollTime, pollingIntervalMs = 30000 }: TrainDebugPanelProps) {
+export function TrainDebugPanel({
+  meshManager,
+  currentZoom,
+  lastPollTime,
+  pollingIntervalMs = 30000,
+  isPollingPaused = false,
+  onTogglePolling,
+  onManualPoll,
+}: TrainDebugPanelProps) {
   const [debugData, setDebugData] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [showZoomInfo, setShowZoomInfo] = useState(true);
@@ -19,7 +30,10 @@ export function TrainDebugPanel({ meshManager, currentZoom, lastPollTime, pollin
 
   // Update countdown every 100ms for smooth display
   useEffect(() => {
-    if (!lastPollTime) return;
+    if (!lastPollTime || isPollingPaused) {
+      setCountdown(pollingIntervalMs);
+      return;
+    }
 
     const updateCountdown = () => {
       const elapsed = Date.now() - lastPollTime;
@@ -30,7 +44,7 @@ export function TrainDebugPanel({ meshManager, currentZoom, lastPollTime, pollin
     updateCountdown();
     const interval = setInterval(updateCountdown, 100);
     return () => clearInterval(interval);
-  }, [lastPollTime, pollingIntervalMs]);
+  }, [lastPollTime, pollingIntervalMs, isPollingPaused]);
 
   // Update cache stats periodically
   useEffect(() => {
@@ -78,7 +92,7 @@ export function TrainDebugPanel({ meshManager, currentZoom, lastPollTime, pollin
     return `${seconds}s`;
   };
 
-  const countdownProgress = lastPollTime ? (1 - countdown / pollingIntervalMs) * 100 : 0;
+  const countdownProgress = lastPollTime && !isPollingPaused ? (1 - countdown / pollingIntervalMs) * 100 : 0;
 
   return (
     <>
@@ -107,7 +121,7 @@ export function TrainDebugPanel({ meshManager, currentZoom, lastPollTime, pollin
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '12px', opacity: 0.8 }}>Next Poll:</span>
-            <span>{formatCountdown(countdown)}</span>
+            <span>{isPollingPaused ? 'Paused' : formatCountdown(countdown)}</span>
           </div>
           <div
             style={{
@@ -122,11 +136,47 @@ export function TrainDebugPanel({ meshManager, currentZoom, lastPollTime, pollin
               style={{
                 width: `${countdownProgress}%`,
                 height: '100%',
-                backgroundColor: countdown < 3000 ? '#ff5722' : '#4CAF50',
+                backgroundColor: isPollingPaused ? '#9e9e9e' : countdown < 3000 ? '#ff5722' : '#4CAF50',
                 transition: 'width 0.1s linear',
               }}
             />
           </div>
+          {onTogglePolling && (
+            <button
+              onClick={onTogglePolling}
+              style={{
+                backgroundColor: isPollingPaused ? '#4CAF50' : '#ff5722',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+              title={isPollingPaused ? 'Resume polling' : 'Pause polling'}
+            >
+              {isPollingPaused ? 'Resume' : 'Pause'}
+            </button>
+          )}
+          {onManualPoll && (
+            <button
+              onClick={onManualPoll}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '4px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+              title="Fetch trains once"
+              disabled={isPollingPaused && !lastPollTime}
+            >
+              Poll now
+            </button>
+          )}
           <button
             onClick={() => setShowCountdown(false)}
             style={{

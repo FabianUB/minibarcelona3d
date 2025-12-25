@@ -128,7 +128,7 @@ export function TrainInfoPanelMobile() {
     ? stationNames.get(selectedTrain.previousStopId) || selectedTrain.previousStopId
     : null;
 
-  const lineCode = selectedTrain.routeId.match(/R\w+/)?.[0] || selectedTrain.routeId;
+  const lineCode = selectedTrain.routeId?.match(/R\w+/)?.[0] || selectedTrain.routeId || 'N/A';
   const lineInfo = lines.find((line) => line.id === lineCode);
 
   const currentStopName = selectedTrain.currentStopId
@@ -146,7 +146,7 @@ export function TrainInfoPanelMobile() {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Badge variant="default" className="text-sm font-semibold">
-              {selectedTrain.routeId}
+              {selectedTrain.routeId || 'N/A'}
             </Badge>
             <span className="text-base font-normal text-muted-foreground">
               {selectedTrain.vehicleLabel}
