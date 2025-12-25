@@ -12,9 +12,10 @@ interface TrainListPanelProps {
   map: MapboxMap;
   isOpen: boolean;
   onClose: () => void;
+  getMeshPosition?: ((vehicleKey: string) => [number, number] | null) | null;
 }
 
-export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelProps) {
+export function TrainListPanel({ trains, map, isOpen, onClose, getMeshPosition }: TrainListPanelProps) {
   const [sortField, setSortField] = useState<keyof TrainPosition | 'line'>('line');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filter, setFilter] = useState('');
@@ -89,12 +90,17 @@ export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelP
   const handleRowClick = useCallback((train: TrainPosition) => {
     if (train.latitude === null || train.longitude === null) return;
 
+    // Use mesh position if available (accounts for railway snapping and parking)
+    // Fall back to API GPS coordinates if mesh position not available
+    const meshPos = getMeshPosition?.(train.vehicleKey);
+    const center: [number, number] = meshPos ?? [train.longitude, train.latitude];
+
     map.flyTo({
-      center: [train.longitude, train.latitude],
+      center,
       zoom: 15,
       duration: 1000,
     });
-  }, [map]);
+  }, [map, getMeshPosition]);
 
   // Extract line code from routeId (e.g., "51T0048RL4" -> "RL4")
   const getLineCode = (routeId: string | null): string => {

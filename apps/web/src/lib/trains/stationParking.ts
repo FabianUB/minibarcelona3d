@@ -141,7 +141,9 @@ export function getStationTrackBearing(
   stationCoords: [number, number],
   railwayLine: PreprocessedRailwayLine
 ): number | null {
-  const snapResult = snapTrainToRailway(stationCoords, railwayLine, 500);
+  // Use 1000m threshold - some stations may be slightly offset from railway geometry
+  // due to data quality issues or simplified GeoJSON paths
+  const snapResult = snapTrainToRailway(stationCoords, railwayLine, 1000);
 
   if (!snapResult) {
     return null;

@@ -100,6 +100,7 @@ export function MapCanvas() {
   const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
   const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
+  const [getMeshPosition, setGetMeshPosition] = useState<((vehicleKey: string) => [number, number] | null) | null>(null);
   const [debugToolsEnabled, setDebugToolsEnabled] = useState(
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
   );
@@ -775,11 +776,12 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           onRaycastResult={debugToolsEnabled ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
           onTrainsChange={setTrainPositions}
+          onMeshPositionGetterReady={(getter) => setGetMeshPosition(() => getter)}
         />
       ) : null}
       {/* Train List Button - rendered separately to avoid re-render issues with map layers */}
       {mapInstance && isMapLoaded ? (
-        <TrainListButton trains={trainPositions} map={mapInstance} />
+        <TrainListButton trains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
       ) : null}
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>

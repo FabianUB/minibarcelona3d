@@ -671,6 +671,27 @@ export class TrainMeshManager {
      */
   }
 
+  /**
+   * Get the actual mesh position in lng/lat coordinates for a given vehicleKey.
+   * This returns where the train mesh is actually rendered, which may differ
+   * from the API GPS coordinates due to railway snapping and parking offsets.
+   *
+   * @param vehicleKey - The train's unique identifier
+   * @returns [lng, lat] if mesh exists, null otherwise
+   */
+  public getMeshLngLat(vehicleKey: string): [number, number] | null {
+    const meshData = this.trainMeshes.get(vehicleKey);
+    if (!meshData) return null;
+
+    // currentPosition stores the [lng, lat] of the mesh
+    // For parked trains, this is updated to the parking position
+    // For moving trains, this is interpolated between positions
+    if (meshData.parkingPosition) {
+      return meshData.parkingPosition.position;
+    }
+    return meshData.currentPosition;
+  }
+
   public getDebugInfo(): Array<{
     vehicleKey: string;
     routeId: string;
@@ -1044,14 +1065,28 @@ export class TrainMeshManager {
     for (const train of trains) {
       const existing = this.trainMeshes.get(train.vehicleKey);
 
-      // If train has null coords, keep existing mesh alive (stale) to avoid pop-out
-      if (train.latitude === null || train.longitude === null) {
+      // If train has null or invalid coords, keep existing mesh alive (stale) to avoid pop-out
+      const hasValidCoords = train.latitude !== null &&
+        train.longitude !== null &&
+        Number.isFinite(train.latitude) &&
+        Number.isFinite(train.longitude) &&
+        Math.abs(train.latitude) <= 90 &&
+        Math.abs(train.longitude) <= 180;
+
+      if (!hasValidCoords) {
         if (existing) {
           activeTrainKeys.add(train.vehicleKey);
           // Keep status tracking consistent even when coords are missing
           const prevStatus = existing.status;
           existing.prevStatus = prevStatus;
           existing.status = train.status ?? existing.status;
+        }
+        if (train.status === 'STOPPED_AT') {
+          trainDebug.mesh.warn(`Invalid coordinates for STOPPED_AT: ${train.vehicleKey}`, {
+            lat: train.latitude,
+            lng: train.longitude,
+            routeId: train.routeId,
+          });
         }
         continue;
       }
@@ -1365,6 +1400,9 @@ export class TrainMeshManager {
               coords: `${initialLngLat[1].toFixed(5)}, ${initialLngLat[0].toFixed(5)}`,
               stoppedAtStation: meshData.stoppedAtStationId,
               stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
+              meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
+              scale: meshData.mesh.scale.x.toExponential(4),
+              snapped: !!targetSnapState,
             });
           } else {
             trainDebug.mesh.debug(`Mesh created: ${train.vehicleKey}`, {
@@ -1373,6 +1411,9 @@ export class TrainMeshManager {
           }
         }
       }
+
+      // Track this train as active (for removal logic)
+      activeTrainKeys.add(train.vehicleKey);
     }
 
     // Remove meshes for trains that are no longer active, with a grace period to avoid pops
@@ -2266,6 +2307,23 @@ export class TrainMeshManager {
           const logLineId = extractLineFromRouteId(meshData.routeId) ??
             (stationId ? this.stationMap.get(stationId)?.lines?.[0] : null);
 
+          // Get station snap info for debugging
+          let stationSnapInfo: string | null = null;
+          if (stationId && logLineId) {
+            const station = this.stationMap.get(stationId);
+            const railway = this.railwayLines.get(logLineId.toUpperCase());
+            if (station && railway) {
+              const stationCoords: [number, number] = [
+                station.geometry.coordinates[0],
+                station.geometry.coordinates[1],
+              ];
+              const snapResult = snapTrainToRailway(stationCoords, railway, 1000);
+              stationSnapInfo = snapResult
+                ? `snapped at ${snapResult.metersAway.toFixed(0)}m`
+                : 'no snap within 1000m';
+            }
+          }
+
           trainDebug.parking.warn(`Parking failed: ${meshData.vehicleKey}`, {
             stationId,
             stationFound: !!this.stationMap.get(stationId ?? ''),
@@ -2273,6 +2331,8 @@ export class TrainMeshManager {
             lineIdSource: extractLineFromRouteId(meshData.routeId) ? 'routeId' : (logLineId ? 'station' : 'none'),
             railwayFound: !!this.railwayLines.get(logLineId?.toUpperCase() ?? ''),
             hasValidPosition,
+            stationSnapInfo,
+            trainCoords: hasValidPosition ? `${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}` : 'invalid',
           });
           trainDebug.addMeshParkingFailed(meshData.vehicleKey);
 
@@ -2287,6 +2347,13 @@ export class TrainMeshManager {
 
             // Invalidate screen-space cache since we're setting position
             this.screenCandidatesCacheInvalidated = true;
+
+            // Log the actual mesh position for debugging
+            trainDebug.parking.info(`Fallback position set: ${meshData.vehicleKey}`, {
+              meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
+              scale: meshData.mesh.scale.x.toExponential(4),
+              inScene: meshData.mesh.parent !== null,
+            });
           } else {
             trainDebug.parking.error(`Invalid position - cannot render: ${meshData.vehicleKey}`, {
               currentPosition: meshData.currentPosition,
