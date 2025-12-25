@@ -32,6 +32,7 @@ const RODALIES_LINE_SOURCE_ID = 'rodalies-lines';
 const RODALIES_LINE_LAYER_ID = 'rodalies-lines-outline';
 const SHOW_CAMERA_DEBUG = false;
 const SHOW_RAYCAST_DEBUG = true;
+const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
 
 type MapboxWindow = Window & {
   __MAPBOX_INSTANCE__?: mapboxgl.Map;
@@ -100,6 +101,9 @@ export function MapCanvas() {
   const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
   const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
+  const [debugToolsEnabled, setDebugToolsEnabled] = useState(
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
+  );
 
   const mapActions = useMapActions();
   const {
@@ -121,6 +125,25 @@ export function MapCanvas() {
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
   }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handler = (event: Event) => {
+        const detail = (event as CustomEvent<{ enabled: boolean }>).detail;
+        if (detail && typeof detail.enabled === 'boolean') {
+          setDebugToolsEnabled(detail.enabled);
+        }
+      };
+      window.addEventListener(DEBUG_TOGGLE_EVENT, handler as EventListener);
+      return () => window.removeEventListener(DEBUG_TOGGLE_EVENT, handler as EventListener);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!debugToolsEnabled && isStationDebugMode) {
+      setIsStationDebugMode(false);
+    }
+  }, [debugToolsEnabled, isStationDebugMode]);
 
   useEffect(() => {
     if (!initialViewportRef.current) {
@@ -759,7 +782,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {mapInstance && isMapLoaded ? (
         <TrainListButton trains={trainPositions} map={mapInstance} />
       ) : null}
-      {process.env.NODE_ENV !== 'production' ? (
+      {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
           <button
             type="button"

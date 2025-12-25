@@ -21,7 +21,7 @@ type Train struct {
 
 	// Trip context (nullable in DB)
 	TripID  *string `db:"trip_id" json:"tripId"`
-	RouteID string  `db:"route_id" json:"routeId"`
+	RouteID *string `db:"route_id" json:"routeId"`
 
 	// Position (nullable in DB - trains may not report GPS)
 	Latitude  *float64 `db:"latitude" json:"latitude"`
@@ -82,10 +82,8 @@ func (t *Train) Validate() error {
 		}
 	}
 
-	// RouteID is required for linking to line data from feature 001
-	if t.RouteID == "" {
-		return errors.New("route_id is required")
-	}
+	// RouteID is optional - some trains on platforms don't have assigned routes
+	// (Previously required, but GTFS-RT feed shows trains with NULL route_id)
 
 	// Status is required (GTFS VehicleStopStatus)
 	if t.Status == "" {
@@ -103,7 +101,7 @@ type TrainPosition struct {
 	Latitude    *float64  `json:"latitude"`
 	Longitude   *float64  `json:"longitude"`
 	NextStopID  *string   `json:"nextStopId"`
-	RouteID     string    `json:"routeId"`
+	RouteID     *string   `json:"routeId"`
 	Status      string    `json:"status"`
 	PolledAtUTC time.Time `json:"polledAtUtc"`
 }

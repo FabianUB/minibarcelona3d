@@ -97,7 +97,8 @@ export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelP
   }, [map]);
 
   // Extract line code from routeId (e.g., "51T0048RL4" -> "RL4")
-  const getLineCode = (routeId: string): string => {
+  const getLineCode = (routeId: string | null): string => {
+    if (!routeId) return 'N/A';
     // Match line codes like R1, R2, R2N, R2S, R3, R4, R7, R8, R11, R14-R17, RG1, RL3, RL4, RT2
     const match = routeId.match(/R[GLT]?\d+[NS]?$/i);
     return match ? match[0].toUpperCase() : routeId.slice(-3);
@@ -114,7 +115,7 @@ export function TrainListPanel({ trains, map, isOpen, onClose }: TrainListPanelP
       const searchLower = filter.toLowerCase();
       return (
         train.vehicleKey.toLowerCase().includes(searchLower) ||
-        train.routeId.toLowerCase().includes(searchLower) ||
+        (train.routeId?.toLowerCase().includes(searchLower) ?? false) ||
         (train.nextStopId?.toLowerCase().includes(searchLower) ?? false) ||
         (train.status?.toLowerCase().includes(searchLower) ?? false) ||
         getLineCode(train.routeId).toLowerCase().includes(searchLower)

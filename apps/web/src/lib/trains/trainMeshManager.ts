@@ -69,7 +69,7 @@ interface LateralOffsetConfig {
 interface TrainMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
-  routeId: string;
+  routeId: string | null;
   currentPosition: [number, number];
   targetPosition: [number, number];
   lastUpdate: number;
@@ -119,7 +119,7 @@ interface PollSnapshotMetadata {
 
 export interface ScreenSpaceCandidate {
   vehicleKey: string;
-  routeId: string;
+  routeId: string | null;
   screenPoint: mapboxgl.Point;
   radiusPx: number;
 }
@@ -924,7 +924,10 @@ export class TrainMeshManager {
       screenSpaceScale: zoomScale,
       lastZoomBucket: Math.round(this.currentZoom * 10) / 10, // Quantize to 0.1
       // Phase 2: Track station for parking
-      stoppedAtStationId: train.status === 'STOPPED_AT' ? train.nextStopId ?? undefined : undefined,
+      stoppedAtStationId:
+        train.status === 'STOPPED_AT'
+          ? this.getStoppedStationId(train)
+          : undefined,
       // Phase 4: Store nextStopId for predictive positioning
       nextStopId: train.nextStopId ?? undefined,
     };
@@ -1083,8 +1086,8 @@ export class TrainMeshManager {
         existing.nextStopId = train.nextStopId ?? undefined;
 
         // Track which station the train is stopped at (for parking calculations)
-        if (train.status === 'STOPPED_AT' && train.nextStopId) {
-          existing.stoppedAtStationId = train.nextStopId;
+        if (train.status === 'STOPPED_AT') {
+          existing.stoppedAtStationId = this.getStoppedStationId(train);
         } else {
           existing.stoppedAtStationId = undefined;
         }
@@ -1801,6 +1804,19 @@ export class TrainMeshManager {
   }
 
   /**
+   * Determine which station ID to use for STOPPED_AT trains.
+   * Prefer the current stop, then next, then previous (as a last resort).
+   */
+  private getStoppedStationId(train: TrainPosition): string | undefined {
+    return (
+      train.currentStopId ??
+      train.nextStopId ??
+      train.previousStopId ??
+      undefined
+    );
+  }
+
+  /**
    * Simple interpolation for INCOMING_AT trains toward their next station
    * Phase 4: Fallback when trip details aren't available
    *
@@ -1908,10 +1924,18 @@ export class TrainMeshManager {
       const [currentLng, currentLat] = currentPosition;
       const [targetLng, targetLat] = targetPosition;
 
-      // If already at target, skip interpolation
-      // For stopped trains, the offset has already been applied in updateTrainMeshes()
-      // and their position is final - no need to recalculate every frame
+      // If already at target, skip interpolation for moving trains
+      // But for STOPPED_AT trains without a parking position, we still need to
+      // ensure position is set (parking calculation may have failed)
       if (currentLng === targetLng && currentLat === targetLat) {
+        // For stopped trains without parking, ensure position is set
+        if (meshData.status === 'STOPPED_AT' && !meshData.parkingPosition) {
+          const position = getModelPosition(currentLng, currentLat, 0);
+          const modelScale = getModelScale();
+          const baseScale = this.TRAIN_SIZE_METERS * modelScale;
+          const zOffset = this.Z_OFFSET_FACTOR * baseScale;
+          meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+        }
         return;
       }
 
@@ -2178,6 +2202,13 @@ export class TrainMeshManager {
 
         // If parking calculation failed, still apply 90° rotation to current bearing
         if (!parkingApplied) {
+          console.warn(`TrainMeshManager: Parking calculation failed for train ${meshData.vehicleKey}`, {
+            stationId,
+            stationFound: !!this.stationMap.get(stationId ?? ''),
+            lineId: extractLineFromRouteId(meshData.routeId),
+            railwayFound: !!this.railwayLines.get(extractLineFromRouteId(meshData.routeId)?.toUpperCase() ?? ''),
+            routeId: meshData.routeId,
+          });
           meshData.parkingRotationAnim = {
             start: meshData.mesh.rotation.z,
             target: meshData.mesh.rotation.z + Math.PI / 2,
