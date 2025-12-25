@@ -359,12 +359,49 @@ export class TrainMeshManager {
     return this.scaleManager;
   }
 
+  /**
+   * Try to infer the line ID for a train from its station's lines
+   * Used when routeId is null (shows as "N/A" in UI)
+   *
+   * Tries currentStopId, nextStopId, and previousStopId in order.
+   * If the station serves only one line, returns that line.
+   * If the station serves multiple lines, returns the first one (best guess).
+   *
+   * @returns Line ID (e.g., "R1", "R4") or null if cannot infer
+   */
+  private inferLineFromStation(train: TrainPosition): string | null {
+    const stopIds = [
+      (train as any).currentStopId ?? train.currentStopId,
+      train.nextStopId,
+      (train as any).previousStopId ?? train.previousStopId,
+    ].filter(Boolean);
+
+    for (const stopId of stopIds) {
+      const station = this.stationMap.get(stopId as string);
+      if (station && station.lines && station.lines.length > 0) {
+        // Return the first line - this is a best guess for multi-line stations
+        const inferredLine = station.lines[0];
+        console.log(`[INFER LINE] Train ${train.vehicleKey} (null routeId): inferred line ${inferredLine} from station ${station.name} (${stopId})`);
+        return inferredLine;
+      }
+    }
+
+    return null;
+  }
+
   private snapPositionToRailway(train: TrainPosition): RailwaySnapState | null {
     if (train.latitude === null || train.longitude === null) {
       return null;
     }
 
-    const lineId = extractLineFromRouteId(train.routeId);
+    // Try to extract line from routeId first
+    let lineId = extractLineFromRouteId(train.routeId);
+
+    // If routeId is null or doesn't match, try to infer from station
+    if (!lineId) {
+      lineId = this.inferLineFromStation(train);
+    }
+
     if (!lineId) {
       return null;
     }
@@ -1329,9 +1366,23 @@ export class TrainMeshManager {
           this.trainMeshes.set(train.vehicleKey, meshData);
           createdCount += 1;
 
-          console.log(
-            `Created mesh for train ${train.vehicleKey} (route: ${train.routeId})`
-          );
+          // Enhanced logging for STOPPED_AT trains to help diagnose visibility issues
+          if (train.status === 'STOPPED_AT') {
+            console.log(`[STOPPED_AT NEW] Train ${train.vehicleKey}:`, {
+              routeId: train.routeId,
+              lineCode: extractLineFromRouteId(train.routeId),
+              position: { lng: initialLngLat[0], lat: initialLngLat[1] },
+              meshPosition: { x: position.x, y: position.y, z: position.z + zOffset },
+              hasTargetSnap: !!targetSnapState,
+              stoppedAtStation: meshData.stoppedAtStationId,
+              stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
+              scale: meshData.mesh.scale.x,
+            });
+          } else {
+            console.log(
+              `Created mesh for train ${train.vehicleKey} (route: ${train.routeId})`
+            );
+          }
         }
       }
     }
@@ -1808,10 +1859,14 @@ export class TrainMeshManager {
    * Prefer the current stop, then next, then previous (as a last resort).
    */
   private getStoppedStationId(train: TrainPosition): string | undefined {
+    const anyTrain = train as any;
+    const current = train.currentStopId ?? anyTrain.current_stop_id ?? null;
+    const next = train.nextStopId ?? anyTrain.next_stop_id ?? null;
+    const previous = train.previousStopId ?? anyTrain.previous_stop_id ?? null;
     return (
-      train.currentStopId ??
-      train.nextStopId ??
-      train.previousStopId ??
+      current ??
+      next ??
+      previous ??
       undefined
     );
   }
@@ -1923,6 +1978,29 @@ export class TrainMeshManager {
       // Check if we need to interpolate
       const [currentLng, currentLat] = currentPosition;
       const [targetLng, targetLat] = targetPosition;
+
+      // DEFENSIVE: Skip trains with invalid positions to prevent NaN propagation
+      const hasValidCurrent = Number.isFinite(currentLng) && Number.isFinite(currentLat);
+      const hasValidTarget = Number.isFinite(targetLng) && Number.isFinite(targetLat);
+
+      if (!hasValidCurrent && !hasValidTarget) {
+        // Both positions invalid - skip this train entirely
+        console.error(`[ANIMATE] Train ${meshData.vehicleKey} has NO valid positions!`, {
+          status: meshData.status,
+          currentPosition,
+          targetPosition,
+        });
+        return;
+      }
+
+      // If current is invalid but target is valid, use target as current
+      if (!hasValidCurrent && hasValidTarget) {
+        console.warn(`[ANIMATE] Train ${meshData.vehicleKey} has invalid currentPosition, using target`, {
+          currentPosition,
+          targetPosition,
+        });
+        meshData.currentPosition = [targetLng, targetLat];
+      }
 
       // If already at target, skip interpolation for moving trains
       // But for STOPPED_AT trains without a parking position, we still need to
@@ -2142,7 +2220,16 @@ export class TrainMeshManager {
             ];
 
             // Get the railway line for this train
-            const lineId = extractLineFromRouteId(meshData.routeId);
+            // Try routeId first, then infer from station if null
+            let lineId = extractLineFromRouteId(meshData.routeId);
+            if (!lineId && stationId) {
+              // Try to infer line from the station the train is stopped at
+              const stoppedStation = this.stationMap.get(stationId);
+              if (stoppedStation && stoppedStation.lines && stoppedStation.lines.length > 0) {
+                lineId = stoppedStation.lines[0];
+                console.log(`[PARKING] Train ${meshData.vehicleKey}: inferred line ${lineId} from station ${stoppedStation.name}`);
+              }
+            }
             const railway = lineId ? this.railwayLines.get(lineId.toUpperCase()) : null;
 
             if (railway) {
@@ -2200,15 +2287,45 @@ export class TrainMeshManager {
           }
         }
 
-        // If parking calculation failed, still apply 90° rotation to current bearing
+        // If parking calculation failed, still apply 90° rotation AND ensure position is set
         if (!parkingApplied) {
+          const [currentLng, currentLat] = meshData.currentPosition;
+          const hasValidPosition = Number.isFinite(currentLng) && Number.isFinite(currentLat);
+
+          // Compute lineId with fallback to station inference for logging
+          const logLineId = extractLineFromRouteId(meshData.routeId) ??
+            (stationId ? this.stationMap.get(stationId)?.lines?.[0] : null);
+
           console.warn(`TrainMeshManager: Parking calculation failed for train ${meshData.vehicleKey}`, {
             stationId,
             stationFound: !!this.stationMap.get(stationId ?? ''),
-            lineId: extractLineFromRouteId(meshData.routeId),
-            railwayFound: !!this.railwayLines.get(extractLineFromRouteId(meshData.routeId)?.toUpperCase() ?? ''),
+            lineId: logLineId,
+            lineIdSource: extractLineFromRouteId(meshData.routeId) ? 'routeId' : (logLineId ? 'station' : 'none'),
+            railwayFound: !!this.railwayLines.get(logLineId?.toUpperCase() ?? ''),
             routeId: meshData.routeId,
+            hasValidPosition,
+            currentPosition: meshData.currentPosition,
+            meshPosition: [meshData.mesh.position.x, meshData.mesh.position.y, meshData.mesh.position.z],
           });
+
+          // CRITICAL: Explicitly set position when parking fails to ensure train is visible
+          // Previously this relied on animatePositions, but that could fail in edge cases
+          if (hasValidPosition) {
+            const position = getModelPosition(currentLng, currentLat, 0);
+            const modelScale = getModelScale();
+            const baseScale = this.TRAIN_SIZE_METERS * modelScale;
+            const zOffset = this.Z_OFFSET_FACTOR * baseScale;
+            meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+
+            // Invalidate screen-space cache since we're setting position
+            this.screenCandidatesCacheInvalidated = true;
+          } else {
+            console.error(`TrainMeshManager: Train ${meshData.vehicleKey} has invalid position - cannot render!`, {
+              currentPosition: meshData.currentPosition,
+              targetPosition: meshData.targetPosition,
+            });
+          }
+
           meshData.parkingRotationAnim = {
             start: meshData.mesh.rotation.z,
             target: meshData.mesh.rotation.z + Math.PI / 2,
