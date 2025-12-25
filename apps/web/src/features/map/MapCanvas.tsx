@@ -31,7 +31,6 @@ const MAPBOX_TOKEN =
 const RODALIES_LINE_SOURCE_ID = 'rodalies-lines';
 const RODALIES_LINE_LAYER_ID = 'rodalies-lines-outline';
 const SHOW_CAMERA_DEBUG = false;
-const SHOW_RAYCAST_DEBUG = true;
 const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
 
 type MapboxWindow = Window & {
@@ -726,7 +725,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           </span>
         </div>
       ) : null}
-      {SHOW_RAYCAST_DEBUG && raycastDebugInfo ? (
+      {debugToolsEnabled && raycastDebugInfo ? (
         <div className="map-canvas__raycast-debug">
           <div className="map-canvas__raycast-debug-title">Raycast debug</div>
           <div className="map-canvas__raycast-debug-row">
@@ -773,7 +772,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {mapInstance && isMapLoaded ? (
         <TrainLayer3D
           map={mapInstance}
-          onRaycastResult={SHOW_RAYCAST_DEBUG ? setRaycastDebugInfo : undefined}
+          onRaycastResult={debugToolsEnabled ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
           onTrainsChange={setTrainPositions}
         />

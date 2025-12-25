@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { TrainMeshManager } from '../../lib/trains/trainMeshManager';
 import { getTripCache, type CacheStats } from '../../lib/trains/tripCache';
+import { trainDebug } from '../../lib/trains/debugLogger';
 
 interface TrainDebugPanelProps {
   meshManager: TrainMeshManager | null;
@@ -275,22 +276,39 @@ export function TrainDebugPanel({
               )}
             </div>
           )}
-          <button
-            onClick={() => setShowZoomInfo(false)}
-            style={{
-              marginTop: '10px',
-              padding: '4px 8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              width: '100%',
-            }}
-          >
-            Hide
-          </button>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+            <button
+              onClick={() => trainDebug.download()}
+              style={{
+                flex: 1,
+                padding: '6px 8px',
+                backgroundColor: '#4a9eff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+              title="Download debug logs as JSON"
+            >
+              📥 Download Logs
+            </button>
+            <button
+              onClick={() => setShowZoomInfo(false)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              Hide
+            </button>
+          </div>
         </div>
       )}
 
