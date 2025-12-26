@@ -70,6 +70,12 @@ export const DEFAULT_PARKING_CONFIG: ParkingConfig = {
 const parkingCache = new Map<string, ParkingPosition>();
 
 /**
+ * Maximum number of parking positions to cache
+ * Prevents memory leaks from accumulated entries over time
+ */
+const MAX_PARKING_CACHE_SIZE = 500;
+
+/**
  * Cache statistics for debugging
  */
 interface CacheStats {
@@ -83,6 +89,27 @@ let cacheStats: CacheStats = {
   misses: 0,
   size: 0,
 };
+
+/**
+ * Auto-cleanup parking cache when it exceeds maximum size
+ * Removes oldest entries (Map maintains insertion order)
+ * Called automatically when cache grows too large
+ */
+function autocleanParkingCache(): void {
+  if (parkingCache.size <= MAX_PARKING_CACHE_SIZE) {
+    return;
+  }
+
+  // Remove oldest entries until we're under the limit
+  const excess = parkingCache.size - MAX_PARKING_CACHE_SIZE;
+  const keys = Array.from(parkingCache.keys());
+
+  for (let i = 0; i < excess; i++) {
+    parkingCache.delete(keys[i]);
+  }
+
+  cacheStats.size = parkingCache.size;
+}
 
 /**
  * Get slot index from train ID using deterministic hashing
@@ -355,6 +382,9 @@ export function getCachedParkingPosition(
   if (parking) {
     parkingCache.set(cacheKey, parking);
     cacheStats.size = parkingCache.size;
+
+    // Auto-cleanup if cache grows too large
+    autocleanParkingCache();
   }
 
   return parking;
