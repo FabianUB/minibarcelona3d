@@ -1387,16 +1387,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       return;
     }
 
-    // T089: Calculate opacity for each train based on line selection
-    // T098: Apply visual indicator for stale data
-    const trainOpacities = new Map<string, number>();
-    trains.forEach(train => {
-      const baseOpacity = getTrainOpacity(train);
-      // If data is stale, reduce opacity by 50% to gray out trains
-      const finalOpacity = isDataStale ? baseOpacity * 0.5 : baseOpacity;
-      trainOpacities.set(train.vehicleKey, finalOpacity);
-    });
-
     // Update train meshes based on current train positions
     // This will apply bearing-based rotation automatically (T047)
     meshManagerRef.current.updateTrainMeshes(trains, previousPositionsRef.current, {
@@ -1405,8 +1395,19 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       receivedAtMs: pollTimestampsRef.current.receivedAt,
     });
 
-    // Apply opacity to all trains based on line selection and stale state
-    meshManagerRef.current.setTrainOpacities(trainOpacities);
+    // T089: Calculate opacity for each train based on line selection
+    // T098: Apply visual indicator for stale data
+    // Performance: Only calculate and apply opacity if highlighting is active or data is stale
+    if (highlightMode !== 'none' || isDataStale) {
+      const trainOpacities = new Map<string, number>();
+      trains.forEach(train => {
+        const baseOpacity = getTrainOpacity(train);
+        // If data is stale, reduce opacity by 50% to gray out trains
+        const finalOpacity = isDataStale ? baseOpacity * 0.5 : baseOpacity;
+        trainOpacities.set(train.vehicleKey, finalOpacity);
+      });
+      meshManagerRef.current.setTrainOpacities(trainOpacities);
+    }
 
     if (trains.length > 0) {
       console.log(
@@ -1419,7 +1420,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         console.warn(`TrainLayer3D: ${stuckTrains.length} trains appear stuck (in transit but no movement):`, stuckTrains);
       }
     }
-  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale]);
+  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale, highlightMode]);
 
   /**
    * Effect: Update train scales when zoom changes
