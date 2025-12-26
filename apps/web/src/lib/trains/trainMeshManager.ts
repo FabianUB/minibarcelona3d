@@ -110,6 +110,8 @@ interface TrainMeshData {
   nextStopId?: string; // Next stop ID for schedule lookup
   lastPredictiveSource?: 'gps' | 'predicted' | 'blended'; // Source of last position update
   predictiveConfidence?: number; // Confidence in predictive position (0-1)
+  // Performance: Cached material references to avoid mesh traversal in setMeshOpacity
+  cachedMaterials?: THREE.Material[];
 }
 
 interface PollSnapshotMetadata {
@@ -1004,6 +1006,18 @@ export class TrainMeshManager {
     const boundingSphere = new THREE.Sphere();
     centerBox.getBoundingSphere(boundingSphere);
 
+    // Collect materials for fast opacity updates (avoids mesh traversal later)
+    const cachedMaterials: THREE.Material[] = [];
+    mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          cachedMaterials.push(...child.material);
+        } else if (child.material) {
+          cachedMaterials.push(child.material);
+        }
+      }
+    });
+
     const meshData: TrainMeshData = {
       mesh,
       vehicleKey: train.vehicleKey,
@@ -1030,6 +1044,8 @@ export class TrainMeshManager {
           : undefined,
       // Phase 4: Store nextStopId for predictive positioning
       nextStopId: train.nextStopId ?? undefined,
+      // Performance: Cache materials for fast opacity updates
+      cachedMaterials: cachedMaterials.length > 0 ? cachedMaterials : undefined,
     };
 
     return meshData;
@@ -1613,7 +1629,17 @@ export class TrainMeshManager {
   setTrainOpacities(opacities: Map<string, number>): void {
     opacities.forEach((opacity, vehicleKey) => {
       const meshData = this.trainMeshes.get(vehicleKey);
-      if (meshData) {
+      if (!meshData) return;
+
+      // Use cached materials if available (performance optimization)
+      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
+        const isTransparent = opacity < 1.0;
+        for (const mat of meshData.cachedMaterials) {
+          mat.transparent = isTransparent;
+          mat.opacity = opacity;
+        }
+      } else {
+        // Fallback to mesh traversal
         this.setMeshOpacity(meshData.mesh, opacity);
       }
     });
@@ -1814,10 +1840,11 @@ export class TrainMeshManager {
    * Uses easeInOutCubic easing for natural-looking movement.
    */
   applyZoomResponsiveScale(): void {
+    // Pre-compute values outside the loop (performance optimization)
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
+    const quantizedZoom = Math.round(this.currentZoom * 10) / 10;
 
     this.trainMeshes.forEach((meshData) => {
-      const quantizedZoom = Math.round(this.currentZoom * 10) / 10;
       if (meshData.lastZoomBucket !== quantizedZoom) {
         const scaleVariation = this.getScaleVariation(meshData.vehicleKey);
         const finalScale = meshData.baseScale * scaleVariation * zoomScale;
@@ -2089,6 +2116,10 @@ export class TrainMeshManager {
     // Track if any train moved significantly this frame
     let anyTrainMoved = false;
 
+    // Pre-compute values that are constant for all trains (performance optimization)
+    const modelScale = getModelScale();
+    const zOffset = this.Z_OFFSET_FACTOR * this.TRAIN_SIZE_METERS * modelScale;
+
     this.trainMeshes.forEach((meshData) => {
       const { currentPosition, targetPosition, lastUpdate } = meshData;
 
@@ -2124,9 +2155,6 @@ export class TrainMeshManager {
         // For stopped trains without parking, ensure position is set
         if (meshData.status === 'STOPPED_AT' && !meshData.parkingPosition) {
           const position = getModelPosition(currentLng, currentLat, 0);
-          const modelScale = getModelScale();
-          const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-          const zOffset = this.Z_OFFSET_FACTOR * baseScale;
           meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
         }
         return;
@@ -2184,11 +2212,7 @@ export class TrainMeshManager {
 
       const position = getModelPosition(interpolatedLngLat[0], interpolatedLngLat[1], 0);
 
-      // Calculate Z-offset elevation to prevent z-fighting with map surface
-      const modelScale = getModelScale();
-      const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-      const zOffset = this.Z_OFFSET_FACTOR * baseScale;
-
+      // Z-offset is pre-computed outside the loop for performance
       let bearingInfo = bearingOverride;
       if (!bearingInfo && meshData.targetSnap) {
         const currentSnap = meshData.currentSnap ?? meshData.targetSnap;
@@ -2282,6 +2306,10 @@ export class TrainMeshManager {
     const easeInOutCubic = (t: number): number =>
       t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
+    // Pre-compute values that are constant for all trains (performance optimization)
+    const modelScale = getModelScale();
+    const zOffset = this.Z_OFFSET_FACTOR * this.TRAIN_SIZE_METERS * modelScale;
+
     this.trainMeshes.forEach((meshData) => {
       const shouldBePerpendicular = meshData.status === 'STOPPED_AT';
       const wasPerpendicular = meshData.prevStatus === 'STOPPED_AT';
@@ -2355,12 +2383,8 @@ export class TrainMeshManager {
               if (parking) {
                 meshData.parkingPosition = parking;
 
-                // Apply offset position
+                // Apply offset position (zOffset is pre-computed outside the loop)
                 const position = getModelPosition(parking.position[0], parking.position[1], 0);
-                const modelScale = getModelScale();
-                const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-                const zOffset = this.Z_OFFSET_FACTOR * baseScale;
-
                 meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
                 // Invalidate screen-space cache since position changed
@@ -2436,11 +2460,9 @@ export class TrainMeshManager {
 
           // CRITICAL: Explicitly set position when parking fails to ensure train is visible
           // Previously this relied on animatePositions, but that could fail in edge cases
+          // (zOffset is pre-computed outside the loop)
           if (hasValidPosition) {
             const position = getModelPosition(currentLng, currentLat, 0);
-            const modelScale = getModelScale();
-            const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-            const zOffset = this.Z_OFFSET_FACTOR * baseScale;
             meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
             // Invalidate screen-space cache since we're setting position
