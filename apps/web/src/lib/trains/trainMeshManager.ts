@@ -181,6 +181,8 @@ export class TrainMeshManager {
   private tripDetailsCache: Map<string, TripDetails> = new Map();
   private predictiveConfig: PredictiveConfig = DEFAULT_PREDICTIVE_CONFIG;
   private lastProcessedPollTimestamp: number | null = null;
+  // Maximum number of trip details to cache before cleanup
+  private readonly MAX_TRIP_CACHE_SIZE = 200;
 
   // Maximum realistic train speed: 200 km/h = ~55.6 m/s
   // Rodalies trains typically max out at 140 km/h (~39 m/s)
@@ -289,6 +291,53 @@ export class TrainMeshManager {
       size: this.tripDetailsCache.size,
       tripIds: Array.from(this.tripDetailsCache.keys()),
     };
+  }
+
+  /**
+   * Clean up trip details cache to prevent memory leaks
+   * Removes entries for trips no longer associated with active trains
+   * Phase 4: Called periodically during train mesh updates
+   */
+  private cleanupTripDetailsCache(): void {
+    // Skip cleanup if cache is small enough
+    if (this.tripDetailsCache.size <= this.MAX_TRIP_CACHE_SIZE) {
+      return;
+    }
+
+    // Get trip IDs currently in use by active trains
+    const activeTrips = new Set<string>();
+    this.trainMeshes.forEach((meshData) => {
+      if (meshData.tripId) {
+        activeTrips.add(meshData.tripId);
+      }
+    });
+
+    // Remove unused trip details
+    const toRemove: string[] = [];
+    this.tripDetailsCache.forEach((_, tripId) => {
+      if (!activeTrips.has(tripId)) {
+        toRemove.push(tripId);
+      }
+    });
+
+    // Remove unused entries
+    for (const tripId of toRemove) {
+      this.tripDetailsCache.delete(tripId);
+    }
+
+    // If still over limit after removing unused, trim oldest entries
+    // (Map maintains insertion order, so first entries are oldest)
+    if (this.tripDetailsCache.size > this.MAX_TRIP_CACHE_SIZE) {
+      const excess = this.tripDetailsCache.size - this.MAX_TRIP_CACHE_SIZE;
+      const keys = Array.from(this.tripDetailsCache.keys());
+      for (let i = 0; i < excess; i++) {
+        this.tripDetailsCache.delete(keys[i]);
+      }
+    }
+
+    if (toRemove.length > 0) {
+      trainDebug.system.debug(`Trip cache cleanup: removed ${toRemove.length} unused entries`);
+    }
   }
 
   /**
@@ -1461,6 +1510,9 @@ export class TrainMeshManager {
     };
     logPollDebug(pollDebug);
 
+    // Clean up trip details cache to prevent memory leaks
+    this.cleanupTripDetailsCache();
+
     // Mesh summary is handled by the poll summary in TrainLayer3D
   }
 
@@ -1483,6 +1535,26 @@ export class TrainMeshManager {
       if (meshData.warningIndicator) {
         meshData.warningIndicator.material.map?.dispose();
         meshData.warningIndicator.material.dispose();
+      }
+
+      // Clean up outline mesh if present (Feature 003: hover outlines)
+      if (meshData.outlineMesh) {
+        // Remove from parent before disposal
+        if (meshData.outlineMesh.parent) {
+          meshData.outlineMesh.parent.remove(meshData.outlineMesh);
+        }
+        // Dispose geometry and materials
+        meshData.outlineMesh.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry?.dispose();
+            if (Array.isArray(child.material)) {
+              child.material.forEach((mat) => mat.dispose());
+            } else {
+              child.material?.dispose();
+            }
+          }
+        });
+        meshData.outlineMesh = undefined;
       }
 
       // Dispose of geometry and materials to free GPU memory
@@ -1819,6 +1891,15 @@ export class TrainMeshManager {
    * Try to calculate predictive position for a train mesh
    * Phase 4: Uses schedule data when GPS is stale
    *
+   * NOTE: This method is fully implemented but NOT YET INTEGRATED into the animation loop.
+   * To enable predictive positioning:
+   * 1. Call this method in animatePositions() when GPS data is stale
+   * 2. Use the returned position/bearing instead of interpolating between poll positions
+   * 3. Populate tripDetailsCache via setTripDetails() with trip schedules
+   *
+   * The decision to skip integration (Phase 5) was made to keep the current
+   * interpolation approach which works well without requiring trip schedule data.
+   *
    * @param meshData - Train mesh data
    * @param currentTime - Current timestamp in ms
    * @returns Predictive result or null if not available
@@ -2005,6 +2086,9 @@ export class TrainMeshManager {
       this.lastAnimateLogTime = now;
     }
 
+    // Track if any train moved significantly this frame
+    let anyTrainMoved = false;
+
     this.trainMeshes.forEach((meshData) => {
       const { currentPosition, targetPosition, lastUpdate } = meshData;
 
@@ -2150,8 +2234,8 @@ export class TrainMeshManager {
 
       meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
-      // Invalidate screen-space cache when position changes
-      this.screenCandidatesCacheInvalidated = true;
+      // Track that a train moved (for cache invalidation outside the loop)
+      anyTrainMoved = true;
 
       if (bearingOverride) {
         this.applyRailwayBearing(
@@ -2174,6 +2258,11 @@ export class TrainMeshManager {
       }
     });
 
+    // Invalidate screen-space cache only if at least one train moved
+    // This prevents redundant cache rebuilds when all trains are stationary
+    if (anyTrainMoved) {
+      this.screenCandidatesCacheInvalidated = true;
+    }
   }
 
   /**
@@ -2196,6 +2285,15 @@ export class TrainMeshManager {
     this.trainMeshes.forEach((meshData) => {
       const shouldBePerpendicular = meshData.status === 'STOPPED_AT';
       const wasPerpendicular = meshData.prevStatus === 'STOPPED_AT';
+      const hasActiveAnimation = !!meshData.parkingRotationAnim;
+
+      // Early exit: Skip trains that don't need parking processing
+      // - Not stopped and wasn't stopped (no transition)
+      // - No active animation to process
+      if (!shouldBePerpendicular && !wasPerpendicular && !hasActiveAnimation) {
+        return;
+      }
+
       const desiredMode: 'hard' | 'none' = shouldBePerpendicular ? 'hard' : 'none';
       const isCurrentlyPerpendicular = meshData.isParkingRotationApplied === true;
 

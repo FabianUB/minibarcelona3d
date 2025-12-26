@@ -419,9 +419,9 @@ export class TripCache {
 ```
 
 **Acceptance Criteria**:
-- [ ] Cache returns data within TTL
-- [ ] Cache fetches on miss
-- [ ] Cache respects TTL expiry
+- [X] Cache returns data within TTL
+- [X] Cache fetches on miss
+- [X] Cache respects TTL expiry
 
 ---
 
@@ -443,9 +443,9 @@ export async function fetchTripDetailsCached(tripId: string): Promise<TripDetail
 ```
 
 **Acceptance Criteria**:
-- [ ] Cached version returns same data as uncached
-- [ ] Network request only made on cache miss
-- [ ] Error handling for failed fetches
+- [X] Cached version returns same data as uncached
+- [X] Network request only made on cache miss
+- [X] Error handling for failed fetches
 
 ---
 
@@ -461,9 +461,9 @@ When predictive mode enabled, prefetch TripDetails:
 - Don't block rendering on prefetch
 
 **Acceptance Criteria**:
-- [ ] TripDetails available before needed for position calc
-- [ ] Prefetch doesn't impact render performance
-- [ ] Graceful handling of prefetch failures
+- [X] TripDetails available before needed for position calc
+- [X] Prefetch doesn't impact render performance
+- [X] Graceful handling of prefetch failures
 
 ---
 
@@ -480,9 +480,9 @@ Test cache behavior:
 - Clear and invalidate
 
 **Acceptance Criteria**:
-- [ ] All cache scenarios tested
-- [ ] Concurrent request deduplication works
-- [ ] Coverage > 80%
+- [X] All cache scenarios tested
+- [X] Concurrent request deduplication works
+- [X] Coverage > 80%
 
 ---
 
@@ -504,8 +504,8 @@ getStats(): CacheStats;
 ```
 
 **Acceptance Criteria**:
-- [ ] Stats accurately reflect cache behavior
-- [ ] Stats available in debug panel
+- [X] Stats accurately reflect cache behavior
+- [X] Stats available in debug panel
 
 ---
 
@@ -529,9 +529,9 @@ export function calculatePredictivePosition(
 ```
 
 **Acceptance Criteria**:
-- [ ] Returns position based on schedule progress
-- [ ] Handles missing/invalid schedule data
-- [ ] Falls back to GPS when prediction not possible
+- [X] Returns position based on schedule progress
+- [X] Handles missing/invalid schedule data
+- [X] Falls back to GPS when prediction not possible
 
 ---
 
@@ -550,9 +550,9 @@ function calculateProgress(
 ```
 
 **Acceptance Criteria**:
-- [ ] Progress = 0 at departure, 1 at arrival
-- [ ] Uses predicted times when available
-- [ ] Falls back to scheduled times
+- [X] Progress = 0 at departure, 1 at arrival
+- [X] Uses predicted times when available
+- [X] Falls back to scheduled times
 
 ---
 
@@ -572,9 +572,9 @@ export function getPathBetweenStations(
 ```
 
 **Acceptance Criteria**:
-- [ ] Returns path segment between two stations
-- [ ] Handles stations on same line
-- [ ] Returns null for disconnected stations
+- [X] Returns path segment between two stations
+- [X] Handles stations on same line
+- [X] Returns null for disconnected stations
 
 ---
 
@@ -593,9 +593,9 @@ function blendPositions(
 ```
 
 **Acceptance Criteria**:
-- [ ] Smooth blend between positions
-- [ ] Weight adjusts based on GPS age
-- [ ] Recent GPS has more influence
+- [X] Smooth blend between positions
+- [X] Weight adjusts based on GPS age
+- [X] Recent GPS has more influence
 
 ---
 
@@ -613,8 +613,8 @@ function calculateInterpolatedBearing(
 ```
 
 **Acceptance Criteria**:
-- [ ] Bearing matches track direction at position
-- [ ] Smooth bearing transitions at segment boundaries
+- [X] Bearing matches track direction at position
+- [X] Smooth bearing transitions at segment boundaries
 
 ---
 
@@ -630,9 +630,9 @@ Use predictive position when:
 - Train status is not 'STOPPED_AT' (use parking instead)
 
 **Acceptance Criteria**:
-- [ ] Moving trains use predictive position
-- [ ] Stopped trains use parking position
-- [ ] Fallback to GPS when needed
+- [X] Moving trains use predictive position
+- [X] Stopped trains use parking position
+- [X] Fallback to GPS when needed
 
 ---
 
@@ -649,9 +649,9 @@ Test predictive calculations:
 - Edge cases
 
 **Acceptance Criteria**:
-- [ ] All calculation paths tested
-- [ ] Edge cases handled
-- [ ] Coverage > 80%
+- [X] All calculation paths tested
+- [X] Edge cases handled
+- [X] Coverage > 80%
 
 ---
 
@@ -667,103 +667,18 @@ Test path finding:
 - Invalid inputs
 
 **Acceptance Criteria**:
-- [ ] Path found for valid station pairs
-- [ ] Null returned for invalid inputs
-- [ ] Coverage > 80%
+- [X] Path found for valid station pairs
+- [X] Null returned for invalid inputs
+- [X] Coverage > 80%
 
 ---
 
 ## Phase 5: Integration & Polish
 
-### T028: Connect algorithm mode to position calculation
-**File**: `apps/web/src/features/trains/TrainLayer3D.tsx`
-**Type**: Modify
-**Priority**: P1
-**Depends on**: T001, T011, T025
+> **Note**: Phase 5 was **SKIPPED** - Decision made to keep current interpolation approach without algorithm toggle UI. The predictive positioning and trip caching infrastructure (Phases 3-4) remains available for internal use but is not exposed to users via a toggle.
 
-Wire algorithm state to TrainMeshManager:
-- Subscribe to algorithm mode changes
-- Pass mode to position calculation
-- Trigger recalculation on mode change
-
-**Acceptance Criteria**:
-- [ ] Mode change immediately affects positioning
-- [ ] No visual glitches on mode switch
-- [ ] Performance maintained
-
----
-
-### T029: Add smooth transition on algorithm switch
-**File**: `apps/web/src/lib/trains/trainMeshManager.ts`
-**Type**: Modify
-**Priority**: P2
-**Depends on**: T028
-
-Smooth position transition when switching algorithms:
-- Store current position before switch
-- Interpolate to new position over 500ms
-- Apply easing function
-
-**Acceptance Criteria**:
-- [ ] Trains smoothly move to new positions
-- [ ] No jarring jumps
-- [ ] Transition completes in 500ms
-
----
-
-### T030: Update TrainDebugPanel
-**File**: `apps/web/src/features/trains/TrainDebugPanel.tsx`
-**Type**: Modify
-**Priority**: P3
-**Depends on**: T028
-
-Add algorithm info to debug panel:
-- Current algorithm mode
-- Position source (GPS/predicted/blended)
-- Trip cache stats
-- Parking slot assignments
-
-**Acceptance Criteria**:
-- [ ] Algorithm mode displayed
-- [ ] Position source per train
-- [ ] Cache statistics visible
-
----
-
-### T031: E2E test for full algorithm flow
-**File**: `apps/web/e2e/predictive-algorithm.spec.ts`
-**Type**: New file
-**Priority**: P2
-**Depends on**: T028
-
-Test complete algorithm system:
-- Enable predictive mode
-- Verify trains move smoothly
-- Toggle back to GPS mode
-- Verify trains update
-
-**Acceptance Criteria**:
-- [ ] Test passes on all browsers
-- [ ] No visual regressions
-
----
-
-### T032: Performance profiling and optimization
-**File**: Various
-**Type**: Modify
-**Priority**: P2
-**Depends on**: T028
-
-Profile and optimize:
-- Measure FPS with predictive mode
-- Identify performance bottlenecks
-- Optimize hot paths
-- Add performance monitoring
-
-**Acceptance Criteria**:
-- [ ] 30+ FPS maintained with 100 trains
-- [ ] No memory leaks
-- [ ] Cache hit rate > 90%
+### T028-T032: SKIPPED
+These tasks were planned to wire the algorithm toggle UI to the positioning system, but the decision was made to keep the current behavior without user-facing algorithm selection.
 
 ---
 

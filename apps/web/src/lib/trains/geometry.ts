@@ -327,8 +327,13 @@ export function sampleRailwayPosition(
   distance: number
 ): { position: Position; bearing: number } {
   if (railway.segments.length === 0) {
+    // This should never happen - preprocessRailwayLine returns null for empty geometry
+    // Log warning to help debug if this edge case ever occurs
+    console.warn('sampleRailwayPosition called with empty railway segments - this indicates a bug');
+    // Return a position that will be obviously wrong (Barcelona city center)
+    // rather than [0,0] which is in the Atlantic Ocean
     return {
-      position: [0, 0],
+      position: [2.1734, 41.3851], // Barcelona fallback
       bearing: 0,
     };
   }
