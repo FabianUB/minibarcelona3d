@@ -32,28 +32,37 @@ describe('pathFinder', () => {
     // Set up mock stations along a line
     mockStations.clear();
     mockStations.set('STOP_A', {
-      type: 'Feature',
+      id: 'STOP_A',
+      name: 'Station A',
+      code: null,
+      lines: ['R1'],
       geometry: { type: 'Point', coordinates: [2.10, 41.35] },
-      properties: { id: 'STOP_A', name: 'Station A', lines: ['R1'] },
     });
     mockStations.set('STOP_B', {
-      type: 'Feature',
+      id: 'STOP_B',
+      name: 'Station B',
+      code: null,
+      lines: ['R1'],
       geometry: { type: 'Point', coordinates: [2.15, 41.38] },
-      properties: { id: 'STOP_B', name: 'Station B', lines: ['R1'] },
     });
     mockStations.set('STOP_C', {
-      type: 'Feature',
+      id: 'STOP_C',
+      name: 'Station C',
+      code: null,
+      lines: ['R1'],
       geometry: { type: 'Point', coordinates: [2.20, 41.40] },
-      properties: { id: 'STOP_C', name: 'Station C', lines: ['R1'] },
     });
     mockStations.set('STOP_OFF_LINE', {
-      type: 'Feature',
+      id: 'STOP_OFF_LINE',
+      name: 'Station Off Line',
+      code: null,
+      lines: ['R2'],
       geometry: { type: 'Point', coordinates: [3.00, 42.00] }, // Far away
-      properties: { id: 'STOP_OFF_LINE', name: 'Station Off Line', lines: ['R2'] },
     });
 
     // Set up mock railway
     mockRailway = {
+      segments: [],
       lineId: 'R1',
       coordinates: [
         [2.10, 41.35],
@@ -72,8 +81,8 @@ describe('pathFinder', () => {
     it('should return path between two stations on same line', () => {
       // Mock snap results
       mockSnapTrainToRailway
-        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, segmentIndex: 0 })
-        .mockReturnValueOnce({ position: [2.20, 41.40], bearing: 40, distance: 2000, segmentIndex: 3 });
+        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, metersAway: 0 })
+        .mockReturnValueOnce({ position: [2.20, 41.40], bearing: 40, distance: 2000, metersAway: 0 });
 
       const result = getPathBetweenStations('STOP_A', 'STOP_C', mockRailway, mockStations);
 
@@ -87,8 +96,8 @@ describe('pathFinder', () => {
     it('should handle reversed direction (going backward)', () => {
       // Mock snap results (from C to A)
       mockSnapTrainToRailway
-        .mockReturnValueOnce({ position: [2.20, 41.40], bearing: 40, distance: 2000, segmentIndex: 3 })
-        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, segmentIndex: 0 });
+        .mockReturnValueOnce({ position: [2.20, 41.40], bearing: 40, distance: 2000, metersAway: 0 })
+        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, metersAway: 0 });
 
       const result = getPathBetweenStations('STOP_C', 'STOP_A', mockRailway, mockStations);
 
@@ -111,7 +120,7 @@ describe('pathFinder', () => {
     it('should return null if from station not on line', () => {
       mockSnapTrainToRailway
         .mockReturnValueOnce(null) // From station not on line
-        .mockReturnValueOnce({ position: [2.20, 41.40], bearing: 40, distance: 2000, segmentIndex: 3 });
+        .mockReturnValueOnce({ position: [2.20, 41.40], bearing: 40, distance: 2000, metersAway: 0 });
 
       const result = getPathBetweenStations('STOP_OFF_LINE', 'STOP_C', mockRailway, mockStations);
       expect(result).toBeNull();
@@ -119,7 +128,7 @@ describe('pathFinder', () => {
 
     it('should return null if to station not on line', () => {
       mockSnapTrainToRailway
-        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, segmentIndex: 0 })
+        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, metersAway: 0 })
         .mockReturnValueOnce(null); // To station not on line
 
       const result = getPathBetweenStations('STOP_A', 'STOP_OFF_LINE', mockRailway, mockStations);
@@ -128,8 +137,8 @@ describe('pathFinder', () => {
 
     it('should handle adjacent stations', () => {
       mockSnapTrainToRailway
-        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, segmentIndex: 0 })
-        .mockReturnValueOnce({ position: [2.15, 41.38], bearing: 50, distance: 1000, segmentIndex: 2 });
+        .mockReturnValueOnce({ position: [2.10, 41.35], bearing: 45, distance: 0, metersAway: 0 })
+        .mockReturnValueOnce({ position: [2.15, 41.38], bearing: 50, distance: 1000, metersAway: 0 });
 
       const result = getPathBetweenStations('STOP_A', 'STOP_B', mockRailway, mockStations);
 
@@ -144,7 +153,7 @@ describe('pathFinder', () => {
         position: [2.10, 41.35],
         bearing: 45,
         distance: 0,
-        segmentIndex: 0,
+        metersAway: 0,
       });
 
       const result = isStationOnLine('STOP_A', mockRailway, mockStations);
@@ -170,7 +179,7 @@ describe('pathFinder', () => {
         position: [2.15, 41.38],
         bearing: 50,
         distance: 1000,
-        segmentIndex: 2,
+        metersAway: 0,
       });
 
       const result = getStationDistanceOnLine('STOP_B', mockRailway, mockStations);
@@ -194,7 +203,7 @@ describe('pathFinder', () => {
         position: [2.10, 41.35],
         bearing: 45,
         distance: 0,
-        segmentIndex: 0,
+        metersAway: 0,
       });
 
       const result = getStationDistanceOnLine('STOP_A', mockRailway, mockStations);

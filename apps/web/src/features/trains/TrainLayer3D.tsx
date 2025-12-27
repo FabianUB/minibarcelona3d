@@ -548,7 +548,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       const candidates = meshManager.getScreenCandidates(map);
       let nearest: {
         vehicleKey: string;
-        routeId: string;
+        routeId: string | null;
         distance: number;
       } | null = null;
 

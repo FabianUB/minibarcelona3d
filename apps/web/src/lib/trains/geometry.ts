@@ -139,6 +139,14 @@ export interface RailwaySegment {
 export interface PreprocessedRailwayLine {
   segments: RailwaySegment[];
   totalLength: number;
+  /** Line identifier (e.g., "R1", "R4") - optional, used by pathFinder */
+  lineId?: string;
+  /** All coordinates along the line - derived from segments for pathFinder */
+  coordinates?: Position[];
+  /** Cumulative distances at each coordinate point */
+  cumulativeDistances?: number[];
+  /** Bearings for each segment */
+  segmentBearings?: number[];
 }
 
 export interface RailwaySnapResult {
@@ -252,9 +260,28 @@ export function preprocessRailwayLine(geometry: RodaliesLineGeometry): Preproces
     return null;
   }
 
+  // Build arrays for pathFinder compatibility
+  const coordinates: Position[] = [];
+  const cumulativeDistances: number[] = [];
+  const segmentBearings: number[] = [];
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (i === 0) {
+      coordinates.push(seg.start);
+      cumulativeDistances.push(seg.startDistance);
+    }
+    coordinates.push(seg.end);
+    cumulativeDistances.push(seg.endDistance);
+    segmentBearings.push(seg.bearing);
+  }
+
   return {
     segments,
     totalLength,
+    coordinates,
+    cumulativeDistances,
+    segmentBearings,
   };
 }
 

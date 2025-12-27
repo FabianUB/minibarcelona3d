@@ -33,8 +33,8 @@ function createMockRailwayLine(): PreprocessedRailwayLine {
   const geometry = {
     type: 'LineString' as const,
     coordinates: [
-      [2.170, 41.380], // Start point
-      [2.175, 41.385], // End point (roughly northeast direction)
+      [2.170, 41.380] as [number, number], // Start point
+      [2.175, 41.385] as [number, number], // End point (roughly northeast direction)
     ],
   };
 
@@ -485,8 +485,8 @@ describe('stationParking', () => {
       const geometry = {
         type: 'LineString' as const,
         coordinates: [
-          [2.170, 41.380],
-          [2.170001, 41.380001], // Very small segment
+          [2.170, 41.380] as [number, number],
+          [2.170001, 41.380001] as [number, number], // Very small segment
         ],
       };
 

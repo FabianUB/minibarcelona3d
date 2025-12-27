@@ -44,7 +44,7 @@ import { trainDebug } from './debugLogger';
 const POLL_WATCH_KEYS: Set<string> = new Set(
   (import.meta.env?.VITE_POLL_DEBUG_WATCH_KEYS ?? '')
     .split(',')
-    .map((s) => s.trim())
+    .map((s: string) => s.trim())
     .filter(Boolean)
 );
 
@@ -156,7 +156,7 @@ export class TrainMeshManager {
   private readonly DEBUG_LIMIT = 10;
   private updateCallCount = 0;
   private readonly debugMeshes: THREE.Object3D[] = [];
-  private debugWorldLogsRemaining = 3;
+  private _debugWorldLogsRemaining = 3;
   private readonly MAX_SNAP_DISTANCE_METERS = 200;
   private readonly INTERPOLATION_DURATION_MS = 30000;
   private readonly MIN_INTERPOLATION_DURATION_MS = 1000;
@@ -746,7 +746,7 @@ export class TrainMeshManager {
 
   public getDebugInfo(): Array<{
     vehicleKey: string;
-    routeId: string;
+    routeId: string | null;
     offsetIndex: number;
     offsetMeters: number;
     currentZoom: number;
@@ -755,7 +755,7 @@ export class TrainMeshManager {
   }> {
     const debugInfo: Array<{
       vehicleKey: string;
-      routeId: string;
+      routeId: string | null;
       offsetIndex: number;
       offsetMeters: number;
       currentZoom: number;
@@ -1199,7 +1199,7 @@ export class TrainMeshManager {
               existing.currentPosition = [snapFromParking.position[0], snapFromParking.position[1]];
               existing.currentSnap = {
                 ...snapFromParking,
-                lineId: snapFromParking.lineId ?? lineId,
+                lineId: lineId!,
               };
               existing.parkingPosition = undefined;
             }
@@ -1932,7 +1932,7 @@ export class TrainMeshManager {
    * @param currentTime - Current timestamp in ms
    * @returns Predictive result or null if not available
    */
-  private tryPredictivePosition(
+  private _tryPredictivePosition(
     meshData: TrainMeshData,
     currentTime: number
   ): { position: [number, number]; bearing: number; source: 'gps' | 'predicted' | 'blended'; confidence: number } | null {

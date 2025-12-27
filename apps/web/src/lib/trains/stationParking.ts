@@ -289,7 +289,7 @@ export function calculateZoomAdjustedSpacing(
  * ```
  */
 export function calculateParkingPosition(
-  stationId: string,
+  _stationId: string,
   trainId: string,
   stationCoords: [number, number],
   railwayLine: PreprocessedRailwayLine,

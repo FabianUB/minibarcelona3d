@@ -327,18 +327,23 @@ describe('calculatePredictivePosition', () => {
   beforeEach(() => {
     // Set up mock stations
     mockStations.set('STOP_1', {
-      type: 'Feature',
+      id: 'STOP_1',
+      name: 'Station 1',
+      code: null,
+      lines: ['R1'],
       geometry: { type: 'Point', coordinates: [2.15, 41.38] },
-      properties: { id: 'STOP_1', name: 'Station 1', lines: ['R1'] },
     });
     mockStations.set('STOP_2', {
-      type: 'Feature',
+      id: 'STOP_2',
+      name: 'Station 2',
+      code: null,
+      lines: ['R1'],
       geometry: { type: 'Point', coordinates: [2.19, 41.40] },
-      properties: { id: 'STOP_2', name: 'Station 2', lines: ['R1'] },
     });
 
     // Set up mock railway
     mockRailways.set('R1', {
+      segments: [],
       lineId: 'R1',
       coordinates: [
         [2.15, 41.38],
