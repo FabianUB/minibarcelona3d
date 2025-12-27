@@ -19,6 +19,7 @@ import { TrainListButton } from '../trains/TrainListButton';
 import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
+import { MetroLineLayer, MetroStationLayer } from '../metro';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
@@ -759,7 +760,21 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       />
       {/* T099: Show skeleton UI while initial train data is loading */}
       {isTrainDataLoading && mapInstance && isMapLoaded ? <TrainLoadingSkeleton /> : null}
-      {/* Station markers layer */}
+      {/* Metro line geometries (below stations) */}
+      {mapInstance && isMapLoaded ? (
+        <MetroLineLayer map={mapInstance} visible={true} />
+      ) : null}
+      {/* Metro station markers */}
+      {mapInstance && isMapLoaded ? (
+        <MetroStationLayer
+          map={mapInstance}
+          visible={true}
+          onStationClick={(stationId, stationName) => {
+            console.log('Metro station clicked:', stationId, stationName);
+          }}
+        />
+      ) : null}
+      {/* Rodalies station markers layer */}
       {mapInstance && isMapLoaded ? (
         <StationLayer
           map={mapInstance}
