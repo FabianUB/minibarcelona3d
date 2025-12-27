@@ -95,7 +95,7 @@ class TrainDebugLogger {
   constructor() {
     // Expose globally for console access
     if (typeof window !== 'undefined') {
-      (window as any).__trainDebug = this;
+      (window as unknown as { __trainDebug: TrainDebugger }).__trainDebug = this;
     }
   }
 
@@ -223,7 +223,6 @@ class TrainDebugLogger {
 
     // Log the summary
     const hasIssues = summary.issues.length > 0;
-    const logMethod = hasIssues ? 'warn' : 'info';
 
     console.groupCollapsed(
       `%c📡 [POLL] ${summary.validTrains}/${summary.totalTrains} trains | ` +

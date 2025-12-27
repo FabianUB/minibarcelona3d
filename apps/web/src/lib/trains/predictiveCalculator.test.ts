@@ -26,7 +26,7 @@ vi.mock('./pathFinder', () => ({
 
 // Mock geometry functions
 vi.mock('./geometry', () => ({
-  sampleRailwayPosition: vi.fn((railway, distance) => ({
+  sampleRailwayPosition: vi.fn(() => ({
     position: [2.17, 41.39],
     bearing: 45,
   })),

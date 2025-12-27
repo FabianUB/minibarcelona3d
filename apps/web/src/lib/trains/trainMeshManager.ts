@@ -8,7 +8,7 @@
  */
 
 import * as THREE from 'three';
-import type { TrainPosition } from '../../types/trains';
+import type { TrainPosition, RawTrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { getCachedModel } from './modelLoader';
 import { extractLineFromRouteId, getModelTypeForRoute } from '../../config/trainModels';
@@ -422,10 +422,11 @@ export class TrainMeshManager {
    * @returns Line ID (e.g., "R1", "R4") or null if cannot infer
    */
   private inferLineFromStation(train: TrainPosition): string | null {
+    const rawTrain = train as RawTrainPosition;
     const stopIds = [
-      (train as any).currentStopId ?? train.currentStopId,
+      rawTrain.current_stop_id ?? train.currentStopId,
       train.nextStopId,
-      (train as any).previousStopId ?? train.previousStopId,
+      rawTrain.previous_stop_id ?? train.previousStopId,
     ].filter(Boolean);
 
     for (const stopId of stopIds) {
@@ -1994,10 +1995,10 @@ export class TrainMeshManager {
    * Prefer the current stop, then next, then previous (as a last resort).
    */
   private getStoppedStationId(train: TrainPosition): string | undefined {
-    const anyTrain = train as any;
-    const current = train.currentStopId ?? anyTrain.current_stop_id ?? null;
-    const next = train.nextStopId ?? anyTrain.next_stop_id ?? null;
-    const previous = train.previousStopId ?? anyTrain.previous_stop_id ?? null;
+    const rawTrain = train as RawTrainPosition;
+    const current = train.currentStopId ?? rawTrain.current_stop_id ?? null;
+    const next = train.nextStopId ?? rawTrain.next_stop_id ?? null;
+    const previous = train.previousStopId ?? rawTrain.previous_stop_id ?? null;
     return (
       current ??
       next ??
