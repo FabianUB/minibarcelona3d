@@ -95,7 +95,7 @@ class TrainDebugLogger {
   constructor() {
     // Expose globally for console access
     if (typeof window !== 'undefined') {
-      (window as unknown as { __trainDebug: TrainDebugger }).__trainDebug = this;
+      (window as unknown as { __trainDebug: TrainDebugLogger }).__trainDebug = this;
     }
   }
 

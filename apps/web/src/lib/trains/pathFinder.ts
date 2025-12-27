@@ -13,14 +13,32 @@ import { snapTrainToRailway } from './geometry';
 
 /**
  * Result of path finding between stations
+ * Requires coordinates, cumulativeDistances, and segmentBearings to be defined
  */
-export interface PathSegment extends PreprocessedRailwayLine {
+export interface PathSegment {
+  segments: { start: [number, number]; end: [number, number]; startDistance: number; endDistance: number; bearing: number }[];
+  totalLength: number;
+  lineId?: string;
+  coordinates: [number, number][];
+  cumulativeDistances: number[];
+  segmentBearings: number[];
   /** Start station ID */
   fromStationId: string;
   /** End station ID */
   toStationId: string;
   /** Whether the path is reversed (going backward along the line) */
   isReversed: boolean;
+}
+
+/**
+ * Validates that a PreprocessedRailwayLine has the required arrays for path finding
+ */
+function hasRequiredArrays(railway: PreprocessedRailwayLine): railway is PreprocessedRailwayLine & {
+  coordinates: [number, number][];
+  cumulativeDistances: number[];
+  segmentBearings: number[];
+} {
+  return !!(railway.coordinates && railway.cumulativeDistances && railway.segmentBearings);
 }
 
 /**
@@ -44,6 +62,11 @@ export function getPathBetweenStations(
   stations: Map<string, Station>,
   maxSnapDistance: number = 500
 ): PathSegment | null {
+  // Validate railway has required arrays
+  if (!hasRequiredArrays(railway)) {
+    return null;
+  }
+
   // Get station data
   const fromStation = stations.get(fromStationId);
   const toStation = stations.get(toStationId);
@@ -124,6 +147,7 @@ export function getPathBetweenStations(
   if (segmentCoordinates.length < 2) {
     // Not enough points for a valid segment - use direct line
     return {
+      segments: [],
       lineId: railway.lineId,
       coordinates: [fromCoords, toCoords],
       cumulativeDistances: [0, endDistance - startDistance],
@@ -151,6 +175,7 @@ export function getPathBetweenStations(
   }
 
   return {
+    segments: [],
     lineId: railway.lineId,
     coordinates: segmentCoordinates,
     cumulativeDistances: segmentDistances,
@@ -162,11 +187,18 @@ export function getPathBetweenStations(
   };
 }
 
+/** Type for railway with required arrays (after validation) */
+type ValidatedRailway = PreprocessedRailwayLine & {
+  coordinates: [number, number][];
+  cumulativeDistances: number[];
+  segmentBearings: number[];
+};
+
 /**
  * Interpolate a point at a specific distance along the railway
  */
 function interpolatePointAtDistance(
-  railway: PreprocessedRailwayLine,
+  railway: ValidatedRailway,
   targetDistance: number
 ): { position: [number, number]; bearing: number } | null {
   if (targetDistance <= 0) {

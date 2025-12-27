@@ -37,7 +37,7 @@ export function TrainListPanel({ trains, map, isOpen, onClose, getMeshPosition }
           // Add # prefix to hex color (matching legendStore.ts)
           colors.set(line.id, `#${line.brand_color}`);
           // Store order for sorting
-          order.set(line.id, line.order);
+          order.set(line.id, line.order ?? 0);
         }
         setLineColors(colors);
         setLineOrder(order);
