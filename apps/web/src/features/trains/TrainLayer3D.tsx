@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import type { TrainPosition } from '../../types/trains';
+import type { TrainPosition, RawTrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
@@ -237,11 +237,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
    * Task: T096 - Error handling with retry mechanism
    */
   const resolveTrainPosition = useCallback((train: TrainPosition): TrainPosition => {
-    const anyTrain = train as any;
+    const rawTrain = train as RawTrainPosition;
     const stopIds = {
-      current: train.currentStopId ?? anyTrain.current_stop_id ?? null,
-      next: train.nextStopId ?? anyTrain.next_stop_id ?? null,
-      previous: train.previousStopId ?? anyTrain.previous_stop_id ?? null,
+      current: train.currentStopId ?? rawTrain.current_stop_id ?? null,
+      next: train.nextStopId ?? rawTrain.next_stop_id ?? null,
+      previous: train.previousStopId ?? rawTrain.previous_stop_id ?? null,
     };
     const hasCoords = train.latitude !== null && train.longitude !== null;
     const stationIdForStop =

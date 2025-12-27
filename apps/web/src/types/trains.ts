@@ -77,6 +77,17 @@ export interface TrainPosition {
 }
 
 /**
+ * Raw API response format with snake_case property names
+ * Some API responses may include snake_case variants alongside camelCase
+ * This type allows type-safe access to both formats
+ */
+export interface RawTrainPosition extends TrainPosition {
+  current_stop_id?: string | null;
+  previous_stop_id?: string | null;
+  next_stop_id?: string | null;
+}
+
+/**
  * Response structure for GET /api/trains
  */
 export interface GetAllTrainsResponse {
