@@ -56,10 +56,10 @@ export function SettingsMenu() {
       {/* Desktop: Expandable card (>768px) - Similar to legend */}
       <div className="hidden md:block">
         {!isExpanded && !isLegendExpanded ? (
-          // Collapsed: Settings icon button
+          // Collapsed: Settings icon button (below legend at top-4 and train list at top-20)
           <button
             onClick={() => setActivePanel('settings')}
-            className="fixed top-20 left-4 w-12 h-12 rounded-full bg-card shadow-lg z-10 flex items-center justify-center hover:scale-105 transition-transform border border-border"
+            className="fixed top-36 left-4 w-12 h-12 rounded-full bg-card shadow-lg z-10 flex items-center justify-center hover:scale-105 transition-transform border border-border"
             aria-label="Show settings"
             title="Open Settings"
             data-testid="settings-trigger"
@@ -68,7 +68,7 @@ export function SettingsMenu() {
           </button>
         ) : isExpanded ? (
           // Expanded: Settings panel
-          <Card className="fixed top-20 left-4 w-80 shadow-lg z-10" data-testid="settings-panel">
+          <Card className="fixed top-36 left-4 w-80 shadow-lg z-10" data-testid="settings-panel">
             <CardHeader className="pb-0">
               <CardTitle className="flex items-center justify-between text-sm">
                 <span>Settings</span>

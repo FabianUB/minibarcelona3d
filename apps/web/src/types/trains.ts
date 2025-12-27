@@ -30,7 +30,7 @@ export interface Train {
 
   // Trip context
   tripId: string | null;
-  routeId: string;
+  routeId: string | null;
 
   // Position (nullable - some trains don't report GPS)
   latitude: number | null;
@@ -68,10 +68,23 @@ export interface TrainPosition {
   vehicleKey: string;
   latitude: number | null;
   longitude: number | null;
+  currentStopId?: string | null;
+  previousStopId?: string | null;
   nextStopId: string | null;
-  routeId: string;
+  routeId: string | null;
   status: VehicleStatus;
   polledAtUtc: string;
+}
+
+/**
+ * Raw API response format with snake_case property names
+ * Some API responses may include snake_case variants alongside camelCase
+ * This type allows type-safe access to both formats
+ */
+export interface RawTrainPosition extends TrainPosition {
+  current_stop_id?: string | null;
+  previous_stop_id?: string | null;
+  next_stop_id?: string | null;
 }
 
 /**

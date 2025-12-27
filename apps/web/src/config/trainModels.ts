@@ -67,10 +67,11 @@ const LINE_TO_MODEL_MAP: Record<string, TrainModelType> = {
  * Extract line identifier from route ID
  * Route IDs follow pattern: "51T0093R11" where R11 is the line
  *
- * @param routeId - Full route ID from GTFS data
+ * @param routeId - Full route ID from GTFS data (can be null for trains without assigned routes)
  * @returns Line identifier (e.g., "R11", "R2N", "RT1") or null if not found
  */
-export function extractLineFromRouteId(routeId: string): string | null {
+export function extractLineFromRouteId(routeId: string | null): string | null {
+  if (!routeId) return null;
   // Match patterns like R1, R2N, R11, RT1, RG1, etc.
   const match = routeId.match(/R[GTLN]?\d+[NS]?/);
   return match ? match[0] : null;
@@ -79,10 +80,10 @@ export function extractLineFromRouteId(routeId: string): string | null {
 /**
  * Get the appropriate 3D model for a train based on its route
  *
- * @param routeId - Route ID from train data (e.g., "51T0093R11")
+ * @param routeId - Route ID from train data (e.g., "51T0093R11"), can be null
  * @returns Model type identifier
  */
-export function getModelTypeForRoute(routeId: string): TrainModelType {
+export function getModelTypeForRoute(routeId: string | null): TrainModelType {
   const line = extractLineFromRouteId(routeId);
 
   if (!line) {
@@ -100,10 +101,10 @@ export function getModelTypeForRoute(routeId: string): TrainModelType {
 /**
  * Get the full model path for a train
  *
- * @param routeId - Route ID from train data
+ * @param routeId - Route ID from train data, can be null
  * @returns Full path to the GLB model file
  */
-export function getModelPathForRoute(routeId: string): string {
+export function getModelPathForRoute(routeId: string | null): string {
   const modelType = getModelTypeForRoute(routeId);
   return TRAIN_MODELS[modelType].modelPath;
 }

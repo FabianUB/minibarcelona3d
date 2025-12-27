@@ -52,7 +52,7 @@ func TestGetAllTrains(t *testing.T) {
 	if firstTrain.VehicleLabel == "" {
 		t.Error("Train VehicleLabel is empty")
 	}
-	if firstTrain.RouteID == "" {
+	if firstTrain.RouteID == nil || *firstTrain.RouteID == "" {
 		t.Error("Train RouteID is empty")
 	}
 	if firstTrain.Status == "" {
@@ -88,8 +88,12 @@ func TestGetAllTrains(t *testing.T) {
 		t.Errorf("Train validation failed: %v", err)
 	}
 
+	routeStr := ""
+	if firstTrain.RouteID != nil {
+		routeStr = *firstTrain.RouteID
+	}
 	t.Logf("Sample train: %s (Label: %s, Route: %s, Status: %s)",
-		firstTrain.VehicleKey, firstTrain.VehicleLabel, firstTrain.RouteID, firstTrain.Status)
+		firstTrain.VehicleKey, firstTrain.VehicleLabel, routeStr, firstTrain.Status)
 }
 
 func TestGetTrainByKey(t *testing.T) {
@@ -126,7 +130,7 @@ func TestGetTrainByKey(t *testing.T) {
 	if train.VehicleLabel == "" {
 		t.Error("Train VehicleLabel is empty")
 	}
-	if train.RouteID == "" {
+	if train.RouteID == nil || *train.RouteID == "" {
 		t.Error("Train RouteID is empty")
 	}
 
@@ -201,7 +205,10 @@ func TestGetTrainsByRoute(t *testing.T) {
 	}
 
 	// Use the first train's route ID for testing
-	testRouteID := allTrains[0].RouteID
+	if allTrains[0].RouteID == nil {
+		t.Skip("First train has no RouteID - skipping route filter test")
+	}
+	testRouteID := *allTrains[0].RouteID
 	t.Logf("Testing GetTrainsByRoute with routeID: %s", testRouteID)
 
 	// Get trains filtered by route
@@ -216,8 +223,12 @@ func TestGetTrainsByRoute(t *testing.T) {
 
 	// Verify all returned trains have the correct route ID
 	for i, train := range routeTrains {
-		if train.RouteID != testRouteID {
-			t.Errorf("Train %d has wrong RouteID: expected %s, got %s", i, testRouteID, train.RouteID)
+		if train.RouteID == nil || *train.RouteID != testRouteID {
+			routeVal := ""
+			if train.RouteID != nil {
+				routeVal = *train.RouteID
+			}
+			t.Errorf("Train %d has wrong RouteID: expected %s, got %s", i, testRouteID, routeVal)
 		}
 	}
 
@@ -250,7 +261,7 @@ func TestGetAllTrainPositions(t *testing.T) {
 	if firstPos.VehicleKey == "" {
 		t.Error("Position VehicleKey is empty")
 	}
-	if firstPos.RouteID == "" {
+	if firstPos.RouteID == nil || *firstPos.RouteID == "" {
 		t.Error("Position RouteID is empty")
 	}
 	if firstPos.Status == "" {
@@ -283,6 +294,8 @@ func TestDatabaseConnection(t *testing.T) {
 func TestTrainModelValidation(t *testing.T) {
 	// Helper to create float64 pointer
 	float64Ptr := func(f float64) *float64 { return &f }
+	// Helper to create string pointer
+	stringPtr := func(s string) *string { return &s }
 
 	tests := []struct {
 		name      string
@@ -294,7 +307,7 @@ func TestTrainModelValidation(t *testing.T) {
 			train: models.Train{
 				VehicleKey:   "vehicle:R12345",
 				VehicleLabel: "R12345",
-				RouteID:      "R1",
+				RouteID:      stringPtr("R1"),
 				Latitude:     float64Ptr(41.3851),
 				Longitude:    float64Ptr(2.1734),
 				Status:       "IN_TRANSIT_TO",
@@ -306,7 +319,7 @@ func TestTrainModelValidation(t *testing.T) {
 			train: models.Train{
 				VehicleKey:   "vehicle:R12345",
 				VehicleLabel: "R12345",
-				RouteID:      "R1",
+				RouteID:      stringPtr("R1"),
 				Latitude:     nil,
 				Longitude:    nil,
 				Status:       "IN_TRANSIT_TO",
@@ -317,7 +330,7 @@ func TestTrainModelValidation(t *testing.T) {
 			name: "missing vehicle key",
 			train: models.Train{
 				VehicleLabel: "R12345",
-				RouteID:      "R1",
+				RouteID:      stringPtr("R1"),
 				Latitude:     float64Ptr(41.3851),
 				Longitude:    float64Ptr(2.1734),
 				Status:       "IN_TRANSIT_TO",
@@ -329,7 +342,7 @@ func TestTrainModelValidation(t *testing.T) {
 			train: models.Train{
 				VehicleKey:   "vehicle:X12345",
 				VehicleLabel: "X12345",
-				RouteID:      "R1",
+				RouteID:      stringPtr("R1"),
 				Latitude:     float64Ptr(41.3851),
 				Longitude:    float64Ptr(2.1734),
 				Status:       "IN_TRANSIT_TO",
@@ -341,7 +354,7 @@ func TestTrainModelValidation(t *testing.T) {
 			train: models.Train{
 				VehicleKey:   "vehicle:R12345",
 				VehicleLabel: "R12345",
-				RouteID:      "R1",
+				RouteID:      stringPtr("R1"),
 				Latitude:     float64Ptr(100.0),
 				Longitude:    float64Ptr(2.1734),
 				Status:       "IN_TRANSIT_TO",
@@ -353,7 +366,7 @@ func TestTrainModelValidation(t *testing.T) {
 			train: models.Train{
 				VehicleKey:   "vehicle:R12345",
 				VehicleLabel: "R12345",
-				RouteID:      "R1",
+				RouteID:      stringPtr("R1"),
 				Latitude:     float64Ptr(41.3851),
 				Longitude:    float64Ptr(200.0),
 				Status:       "IN_TRANSIT_TO",
@@ -361,7 +374,7 @@ func TestTrainModelValidation(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "missing route ID",
+			name: "missing route ID (optional field)",
 			train: models.Train{
 				VehicleKey:   "vehicle:R12345",
 				VehicleLabel: "R12345",
@@ -369,14 +382,14 @@ func TestTrainModelValidation(t *testing.T) {
 				Longitude:    float64Ptr(2.1734),
 				Status:       "IN_TRANSIT_TO",
 			},
-			wantError: true,
+			wantError: false, // RouteID is optional per model validation
 		},
 		{
 			name: "missing status",
 			train: models.Train{
 				VehicleKey:   "vehicle:R12345",
 				VehicleLabel: "R12345",
-				RouteID:      "R1",
+				RouteID:      stringPtr("R1"),
 				Latitude:     float64Ptr(41.3851),
 				Longitude:    float64Ptr(2.1734),
 			},

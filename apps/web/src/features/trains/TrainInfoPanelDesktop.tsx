@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { useMapActions } from '@/state/map';
 import { useTrainState, useTrainActions } from '@/state/trains';
 import { loadStations, loadRodaliesLines } from '@/lib/rodalies/dataLoader';
-import { fetchTripDetails } from '@/lib/api/trains';
+import { fetchTripDetailsCached } from '@/lib/api/trains';
 import { cn } from '@/lib/utils';
 import type { RodaliesLine } from '@/types/rodalies';
 import type { TripDetails } from '@/types/trains';
@@ -41,7 +41,8 @@ export function TrainInfoPanelDesktop() {
   useEffect(() => {
     if (selectedTrain?.tripId) {
       setIsTripDetailsLoading(true);
-      fetchTripDetails(selectedTrain.tripId)
+      // Use cached version to avoid redundant API calls (Phase 3, T017)
+      fetchTripDetailsCached(selectedTrain.tripId)
         .then((details) => {
           setTripDetails(details);
         })
@@ -131,7 +132,7 @@ export function TrainInfoPanelDesktop() {
     ? stationNames.get(selectedTrain.previousStopId) || selectedTrain.previousStopId
     : null;
 
-  const lineCode = selectedTrain.routeId.match(/R\w+/)?.[0] || selectedTrain.routeId;
+  const lineCode = selectedTrain.routeId?.match(/R\w+/)?.[0] || selectedTrain.routeId || 'N/A';
   const lineInfo = lines.find((line) => line.id === lineCode);
 
   const currentStopName = selectedTrain.currentStopId
@@ -149,7 +150,7 @@ export function TrainInfoPanelDesktop() {
         <CardTitle className="flex items-center justify-between text-base">
           <div className="flex items-center gap-2">
             <Badge variant="default" className="text-sm font-semibold">
-              {selectedTrain.routeId}
+              {selectedTrain.routeId || 'N/A'}
             </Badge>
             <span className="text-sm font-normal text-muted-foreground">
               {selectedTrain.vehicleLabel}

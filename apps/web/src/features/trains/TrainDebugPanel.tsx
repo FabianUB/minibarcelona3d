@@ -1,15 +1,67 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { TrainMeshManager } from '../../lib/trains/trainMeshManager';
+import { getTripCache, type CacheStats } from '../../lib/trains/tripCache';
+import { trainDebug } from '../../lib/trains/debugLogger';
 
 interface TrainDebugPanelProps {
   meshManager: TrainMeshManager | null;
   currentZoom: number;
+  lastPollTime?: number;
+  pollingIntervalMs?: number;
+  isPollingPaused?: boolean;
+  onTogglePolling?: () => void;
+  onManualPoll?: () => void;
 }
 
-export function TrainDebugPanel({ meshManager, currentZoom }: TrainDebugPanelProps) {
+export function TrainDebugPanel({
+  meshManager,
+  currentZoom,
+  lastPollTime,
+  pollingIntervalMs = 30000,
+  isPollingPaused = false,
+  onTogglePolling,
+  onManualPoll,
+}: TrainDebugPanelProps) {
   const [debugData, setDebugData] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [showZoomInfo, setShowZoomInfo] = useState(true);
+  const [showCountdown, setShowCountdown] = useState(true);
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
+  const [countdown, setCountdown] = useState<number>(0);
+
+  // Update countdown every 100ms for smooth display
+  useEffect(() => {
+    if (!lastPollTime || isPollingPaused) {
+      setCountdown(pollingIntervalMs);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const elapsed = Date.now() - lastPollTime;
+      const remaining = Math.max(0, pollingIntervalMs - elapsed);
+      setCountdown(remaining);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 100);
+    return () => clearInterval(interval);
+  }, [lastPollTime, pollingIntervalMs, isPollingPaused]);
+
+  // Update cache stats periodically
+  useEffect(() => {
+    const updateStats = () => {
+      try {
+        const stats = getTripCache().getStats();
+        setCacheStats(stats);
+      } catch {
+        // Cache not initialized yet
+      }
+    };
+
+    updateStats();
+    const interval = setInterval(updateStats, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCaptureDebugInfo = () => {
     if (!meshManager) {
@@ -36,8 +88,138 @@ export function TrainDebugPanel({ meshManager, currentZoom }: TrainDebugPanelPro
 
   const bucket = getZoomBucket(currentZoom);
 
+  const formatCountdown = (ms: number) => {
+    const seconds = Math.ceil(ms / 1000);
+    return `${seconds}s`;
+  };
+
+  const countdownProgress = lastPollTime && !isPollingPaused ? (1 - countdown / pollingIntervalMs) * 100 : 0;
+
   return (
     <>
+      {/* Polling countdown - top center of screen */}
+      {lastPollTime && showCountdown && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 999,
+            padding: '12px 20px',
+            backgroundColor: countdown < 3000 ? 'rgba(255, 152, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            borderRadius: '8px',
+            fontFamily: 'monospace',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            transition: 'background-color 0.3s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', opacity: 0.8 }}>Next Poll:</span>
+            <span>{isPollingPaused ? 'Paused' : formatCountdown(countdown)}</span>
+          </div>
+          <div
+            style={{
+              width: '80px',
+              height: '6px',
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              borderRadius: '3px',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${countdownProgress}%`,
+                height: '100%',
+                backgroundColor: isPollingPaused ? '#9e9e9e' : countdown < 3000 ? '#ff5722' : '#4CAF50',
+                transition: 'width 0.1s linear',
+              }}
+            />
+          </div>
+          {onTogglePolling && (
+            <button
+              onClick={onTogglePolling}
+              style={{
+                backgroundColor: isPollingPaused ? '#4CAF50' : '#ff5722',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+              title={isPollingPaused ? 'Resume polling' : 'Pause polling'}
+            >
+              {isPollingPaused ? 'Resume' : 'Pause'}
+            </button>
+          )}
+          {onManualPoll && (
+            <button
+              onClick={onManualPoll}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '4px',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+              title="Fetch trains once"
+              disabled={isPollingPaused && !lastPollTime}
+            >
+              Poll now
+            </button>
+          )}
+          <button
+            onClick={() => setShowCountdown(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'rgba(255, 255, 255, 0.6)',
+              cursor: 'pointer',
+              padding: '0 4px',
+              fontSize: '16px',
+              lineHeight: 1,
+            }}
+            title="Hide countdown"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Show countdown button when hidden */}
+      {lastPollTime && !showCountdown && (
+        <button
+          onClick={() => setShowCountdown(true)}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 999,
+            padding: '6px 12px',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+          }}
+        >
+          Show Poll Timer
+        </button>
+      )}
+
       {showZoomInfo && (
         <div
           style={{
@@ -55,33 +237,78 @@ export function TrainDebugPanel({ meshManager, currentZoom }: TrainDebugPanelPro
           }}
         >
           <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '16px' }}>
-            Zoom Scale Info
+            Debug Info
           </div>
-          <div style={{ marginBottom: '4px' }}>
-            <span style={{ color: '#aaa' }}>Zoom:</span> {currentZoom.toFixed(2)}
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Zoom</div>
+            <div style={{ marginBottom: '2px' }}>
+              <span style={{ color: '#aaa' }}>Level:</span> {currentZoom.toFixed(2)}
+            </div>
+            <div style={{ marginBottom: '2px' }}>
+              <span style={{ color: '#aaa' }}>Bucket:</span> {bucket.range}
+            </div>
+            <div>
+              <span style={{ color: '#aaa' }}>Scale:</span> {bucket.scale}x
+            </div>
           </div>
-          <div style={{ marginBottom: '4px' }}>
-            <span style={{ color: '#aaa' }}>Bucket:</span> {bucket.range}
+          {cacheStats && (
+            <div style={{ borderTop: '1px solid #444', paddingTop: '8px' }}>
+              <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Trip Cache</div>
+              <div style={{ marginBottom: '2px' }}>
+                <span style={{ color: '#aaa' }}>Size:</span> {cacheStats.size}
+              </div>
+              <div style={{ marginBottom: '2px' }}>
+                <span style={{ color: '#aaa' }}>Hits:</span> {cacheStats.hits}
+              </div>
+              <div style={{ marginBottom: '2px' }}>
+                <span style={{ color: '#aaa' }}>Misses:</span> {cacheStats.misses}
+              </div>
+              <div style={{ marginBottom: '2px' }}>
+                <span style={{ color: '#aaa' }}>Hit Rate:</span>{' '}
+                <span style={{ color: cacheStats.hitRate > 0.8 ? '#4CAF50' : cacheStats.hitRate > 0.5 ? '#FFC107' : '#f44336' }}>
+                  {(cacheStats.hitRate * 100).toFixed(1)}%
+                </span>
+              </div>
+              {cacheStats.pendingRequests > 0 && (
+                <div>
+                  <span style={{ color: '#aaa' }}>Pending:</span> {cacheStats.pendingRequests}
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+            <button
+              onClick={() => trainDebug.download()}
+              style={{
+                flex: 1,
+                padding: '6px 8px',
+                backgroundColor: '#4a9eff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+              title="Download debug logs as JSON"
+            >
+              📥 Download Logs
+            </button>
+            <button
+              onClick={() => setShowZoomInfo(false)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              Hide
+            </button>
           </div>
-          <div>
-            <span style={{ color: '#aaa' }}>Scale:</span> {bucket.scale}x
-          </div>
-          <button
-            onClick={() => setShowZoomInfo(false)}
-            style={{
-              marginTop: '10px',
-              padding: '4px 8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              width: '100%',
-            }}
-          >
-            Hide
-          </button>
         </div>
       )}
 

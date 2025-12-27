@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import type { TrainPosition } from '../../types/trains';
+import type { TrainPosition, RawTrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
@@ -34,6 +34,7 @@ import { useTrainActions } from '../../state/trains';
 import { useMapActions, useMapHighlightSelectors } from '../../state/map';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
+import { trainDebug } from '../../lib/trains/debugLogger';
 
 export interface TrainLayer3DProps {
   /**
@@ -61,6 +62,20 @@ export interface TrainLayer3DProps {
    * Task: T099 - Expose loading state for skeleton UI
    */
   onLoadingChange?: (isLoading: boolean) => void;
+
+  /**
+   * Callback invoked when train data changes
+   * Used to expose train list to parent component (MapCanvas)
+   * to avoid re-render issues with StationLayer
+   */
+  onTrainsChange?: (trains: TrainPosition[]) => void;
+
+  /**
+   * Callback to expose the mesh position getter for external use.
+   * The getter returns the actual rendered position [lng, lat] for a given vehicleKey,
+   * which may differ from API GPS coordinates due to railway snapping and parking.
+   */
+  onMeshPositionGetterReady?: (getter: (vehicleKey: string) => [number, number] | null) => void;
 }
 
 export interface RaycastDebugInfo {
@@ -87,6 +102,7 @@ const STALE_DATA_THRESHOLD_MS = 60000;
  * Custom Layer ID for Mapbox layer management
  */
 const LAYER_ID = 'train-layer-3d';
+const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
 
 /**
  * Three.js camera parameters for Mapbox coordinate system
@@ -115,7 +131,7 @@ const LAYER_ID = 'train-layer-3d';
  * Task: T046 - Create model instances based on route mapping
  * Task: T047 - Apply bearing-based rotation
  */
-export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }: TrainLayer3DProps) {
+export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, onTrainsChange, onMeshPositionGetterReady }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
   const { highlightMode, highlightedLineIds, isLineHighlighted } = useMapHighlightSelectors();
@@ -129,6 +145,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   const [sceneReady, setSceneReady] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isDataStale, setIsDataStale] = useState(false);
+  const [lastPollTime, setLastPollTime] = useState<number>(Date.now());
+  const [isPollingPaused, setIsPollingPaused] = useState(false);
+  const [areDebugToolsEnabled, setAreDebugToolsEnabled] = useState(
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
+  );
 
   // Phase 5: Line color map for hover outlines
   const lineColorMapRef = useRef<Map<string, THREE.Color> | null>(null);
@@ -144,6 +165,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   const stationsRef = useRef<Station[]>([]);
   const railwaysRef = useRef<Map<string, PreprocessedRailwayLine>>(new Map());
 
+  // Fast station lookup for STOPPED_AT coordinate fallbacks
+  const stationMapRef = useRef<Map<string, Station>>(new Map());
+
   // Reference for train mesh manager (T046, T047)
   const meshManagerRef = useRef<TrainMeshManager | null>(null);
   const previousPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
@@ -157,6 +181,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Store retry timeout reference for cleanup (T097)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingPausedRef = useRef(false);
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
@@ -211,6 +236,50 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
    * Updates state and handles errors with exponential backoff retry
    * Task: T096 - Error handling with retry mechanism
    */
+  const resolveTrainPosition = useCallback((train: TrainPosition): TrainPosition => {
+    const rawTrain = train as RawTrainPosition;
+    const stopIds = {
+      current: train.currentStopId ?? rawTrain.current_stop_id ?? null,
+      next: train.nextStopId ?? rawTrain.next_stop_id ?? null,
+      previous: train.previousStopId ?? rawTrain.previous_stop_id ?? null,
+    };
+    const hasCoords = train.latitude !== null && train.longitude !== null;
+    const stationIdForStop =
+      stopIds.current ?? stopIds.next ?? stopIds.previous ?? null;
+    const isStoppedAtStation = train.status === 'STOPPED_AT' && !!stationIdForStop;
+
+    if (!hasCoords && isStoppedAtStation) {
+      const station = stationMapRef.current.get(stationIdForStop!);
+      if (station) {
+        const [lng, lat] = station.geometry.coordinates;
+        return {
+          ...train,
+          currentStopId: stopIds.current,
+          nextStopId: stopIds.next,
+          previousStopId: stopIds.previous,
+          latitude: lat,
+          longitude: lng,
+        };
+      }
+    }
+
+    // Normalize stop IDs even when coordinates are present
+    if (
+      stopIds.current !== train.currentStopId ||
+      stopIds.next !== train.nextStopId ||
+      stopIds.previous !== train.previousStopId
+    ) {
+      return {
+        ...train,
+        currentStopId: stopIds.current,
+        nextStopId: stopIds.next,
+        previousStopId: stopIds.previous,
+      };
+    }
+
+    return train;
+  }, []);
+
   const fetchTrains = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -227,9 +296,25 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         }
       }
 
+      let filledFromStation = 0;
+      const resolvedPositions = response.positions.map((train) => {
+        const resolved = resolveTrainPosition(train);
+        if (
+          resolved !== train &&
+          (train.latitude === null || train.longitude === null) &&
+          resolved.latitude !== null &&
+          resolved.longitude !== null
+        ) {
+          filledFromStation += 1;
+        }
+        return resolved;
+      });
+
+      const resolvedPreviousPositions = response.previousPositions?.map(resolveTrainPosition);
+
       const snapshotPreviousPositions = new Map<string, TrainPosition>();
       if (response.previousPositions) {
-        response.previousPositions.forEach((position) => {
+        resolvedPreviousPositions?.forEach((position) => {
           if (position.latitude !== null && position.longitude !== null) {
             snapshotPreviousPositions.set(position.vehicleKey, position);
           }
@@ -248,7 +333,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       if (!loggedDistinctPreviousRef.current && snapshotPreviousPositions.size > 0) {
         const previousStats = Array.from(snapshotPreviousPositions.values()).reduce(
           (acc, previous) => {
-            const current = response.positions.find((pos) => pos.vehicleKey === previous.vehicleKey);
+            const current = resolvedPositions.find((pos) => pos.vehicleKey === previous.vehicleKey);
             if (
               current &&
               current.latitude !== null &&
@@ -287,9 +372,57 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       previousPositionsRef.current = snapshotPreviousPositions;
 
       // Filter out trains without valid GPS coordinates
-      const validTrains = response.positions.filter(
+      const validTrains = resolvedPositions.filter(
         (train) => train.latitude !== null && train.longitude !== null
       );
+
+      // Calculate statistics for structured logging
+      const nullCoordTrains = resolvedPositions.filter(
+        (train) => train.latitude === null || train.longitude === null
+      );
+      const nullRouteTrains = validTrains.filter((train) => train.routeId === null);
+      const stoppedAtTrains = validTrains.filter((train) => train.status === 'STOPPED_AT');
+      const inTransitTrains = validTrains.filter((train) => train.status === 'IN_TRANSIT_TO');
+      const incomingAtTrains = validTrains.filter((train) => train.status === 'INCOMING_AT');
+
+      const previousKeys = new Set(lastPositionsRef.current.keys());
+      const currentKeys = new Set(validTrains.map(t => t.vehicleKey));
+      const disappearedTrains = [...previousKeys].filter(key => !currentKeys.has(key));
+      const newTrainKeys = [...currentKeys].filter(key => !previousKeys.has(key));
+
+      // Use structured poll summary
+      trainDebug.startPollSummary();
+      trainDebug.updatePollSummary({
+        totalTrains: resolvedPositions.length,
+        validTrains: validTrains.length,
+        filteredOut: nullCoordTrains.length,
+        nullRouteId: nullRouteTrains.length,
+        stoppedAt: stoppedAtTrains.length,
+        inTransit: inTransitTrains.length,
+        incomingAt: incomingAtTrains.length,
+        filledFromStation,
+        newTrains: newTrainKeys,
+        removedTrains: disappearedTrains,
+      });
+
+      // Add issues for problematic trains
+      nullCoordTrains.forEach(train => {
+        trainDebug.addPollIssue(train.vehicleKey, 'null coordinates', {
+          status: train.status,
+          routeId: train.routeId,
+          nextStopId: train.nextStopId,
+        });
+      });
+
+      // Add issues for STOPPED_AT trains with null routeId (potential visibility issues)
+      stoppedAtTrains.filter(t => t.routeId === null).forEach(train => {
+        trainDebug.addPollIssue(train.vehicleKey, 'STOPPED_AT with null routeId', {
+          coords: `${train.latitude?.toFixed(4)}, ${train.longitude?.toFixed(4)}`,
+          nextStopId: train.nextStopId,
+        });
+      });
+
+      trainDebug.endPollSummary();
 
       const currentPositionsMap = new Map<string, TrainPosition>();
       validTrains.forEach((train) => {
@@ -300,6 +433,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       setTrains(validTrains);
       setError(null);
       setRetryCount(0);
+      setLastPollTime(Date.now()); // Update poll time for countdown display
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch train positions';
@@ -312,6 +446,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       const maxRetries = 5;
 
       if (nextRetryCount <= maxRetries) {
+        if (isPollingPausedRef.current) {
+          // Do not schedule retries while polling is paused
+          setRetryCount(0);
+          return;
+        }
         const retryDelayMs = Math.min(2000 * Math.pow(2, retryCount), 32000);
         console.log(`TrainLayer3D: Retrying in ${retryDelayMs / 1000}s (attempt ${nextRetryCount}/${maxRetries})`);
 
@@ -332,7 +471,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     } finally {
       setIsLoading(false);
     }
-  }, [retryCount]);
+  }, [retryCount, resolveTrainPosition]);
 
   /**
    * Manual retry function for user-initiated retry
@@ -343,6 +482,49 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     setError(null);
     void fetchTrains();
   }, [fetchTrains]);
+
+  const handleManualPoll = useCallback(() => {
+    void fetchTrains();
+  }, [fetchTrains]);
+
+  const handleTogglePolling = useCallback(() => {
+    setIsPollingPaused((prev) => !prev);
+  }, []);
+
+  const handleSecretDebugToggle = useCallback(
+    (next?: boolean) => {
+      setAreDebugToolsEnabled((prev) => (typeof next === 'boolean' ? next : !prev));
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const emit = (enabled: boolean) => {
+      window.dispatchEvent(new CustomEvent(DEBUG_TOGGLE_EVENT, { detail: { enabled } }));
+    };
+
+    emit(areDebugToolsEnabled);
+
+    return () => {
+      // No-op cleanup
+    };
+  }, [areDebugToolsEnabled]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ enabled: boolean }>).detail;
+      if (detail && typeof detail.enabled === 'boolean') {
+        setAreDebugToolsEnabled(detail.enabled);
+      }
+    };
+
+    window.addEventListener(DEBUG_TOGGLE_EVENT, handler as EventListener);
+    return () => window.removeEventListener(DEBUG_TOGGLE_EVENT, handler as EventListener);
+  }, []);
 
   /**
    * Converts geographic coordinates (lng, lat) to Mercator meters
@@ -366,7 +548,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       const candidates = meshManager.getScreenCandidates(map);
       let nearest: {
         vehicleKey: string;
-        routeId: string;
+        routeId: string | null;
         distance: number;
       } | null = null;
 
@@ -430,12 +612,23 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
 
   // Debug overlay canvas (can be toggled with URL parameter ?debug=true)
   const debugCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const debugEnabledRef = useRef(
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
-  );
+  const debugEnabledRef = useRef(areDebugToolsEnabled);
+
+  useEffect(() => {
+    isPollingPausedRef.current = isPollingPaused;
+  }, [isPollingPaused]);
+
+  useEffect(() => {
+    debugEnabledRef.current = areDebugToolsEnabled;
+  }, [areDebugToolsEnabled]);
 
   useEffect(() => {
     if (!debugEnabledRef.current) {
+      // Cleanup any existing overlay when disabling
+      if (debugCanvasRef.current && debugCanvasRef.current.parentNode) {
+        debugCanvasRef.current.parentNode.removeChild(debugCanvasRef.current);
+      }
+      debugCanvasRef.current = null;
       return;
     }
 
@@ -456,8 +649,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       if (debugCanvasRef.current && debugCanvasRef.current.parentNode) {
         debugCanvasRef.current.parentNode.removeChild(debugCanvasRef.current);
       }
+      debugCanvasRef.current = null;
     };
-  }, [map]);
+  }, [map, areDebugToolsEnabled]);
 
   const drawDebugOverlay = useCallback(() => {
     if (!debugEnabledRef.current) {
@@ -584,7 +778,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         onRaycastResult?.({
           hit: true,
           vehicleKey: hit.vehicleKey,
-          routeId: hit.routeId,
+          routeId: hit.routeId ?? undefined,
           objectsHit: 1,
           timestamp: Date.now(),
         });
@@ -734,6 +928,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
 
       if (meshManagerRef.current) {
         meshManagerRef.current.animatePositions();
+        // Phase 2: Apply parking visuals to stopped trains (rotate 90°)
+        meshManagerRef.current.applyParkingVisuals();
       }
 
       const mapboxMatrix = new THREE.Matrix4().fromArray(matrix);
@@ -841,6 +1037,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         }));
 
         stationsRef.current = stations;
+        stationMapRef.current = new Map(stations.map((station) => [station.id, station]));
         setStationsLoaded(true);
         console.log(`TrainLayer3D: Loaded ${stations.length} stations for bearing calculations`);
       } catch (err) {
@@ -913,6 +1110,26 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   }, [isLoading, trains.length, onLoadingChange]);
 
   /**
+   * Effect: Notify parent of train data changes
+   * Used for TrainListButton to access train data without state in TrainLayer3D
+   */
+  useEffect(() => {
+    onTrainsChange?.(trains);
+  }, [trains, onTrainsChange]);
+
+  /**
+   * Effect: Expose mesh position getter to parent component
+   * Used for TrainListPanel to zoom to actual mesh position (not API GPS)
+   */
+  useEffect(() => {
+    if (meshManagerRef.current && onMeshPositionGetterReady) {
+      onMeshPositionGetterReady((vehicleKey: string) => {
+        return meshManagerRef.current?.getMeshLngLat(vehicleKey) ?? null;
+      });
+    }
+  }, [stationsLoaded, railwaysLoaded, sceneReady, onMeshPositionGetterReady]);
+
+  /**
    * Effect: Check for stale data
    * Task: T097 - Detect when polledAt timestamp is older than 60 seconds
    */
@@ -947,10 +1164,65 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   }, [isDataStale]);
 
   /**
-   * Effect: Set up polling for train positions
-   * Fetches on mount and every 30 seconds
+   * Secret command listener to toggle debug tools globally.
+   * Type "toggledebug" anywhere (outside form fields) to flip,
+   * or "showdebug"/"hidedebug" to force state.
    */
   useEffect(() => {
+    const BUFFER_LIMIT = 32;
+    let buffer = '';
+
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTextInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.getAttribute('contenteditable') === 'true');
+      if (isTextInput) {
+        return;
+      }
+
+      if (event.key.length === 1) {
+        buffer = (buffer + event.key.toLowerCase()).slice(-BUFFER_LIMIT);
+
+        if (buffer.includes('toggledebug')) {
+          handleSecretDebugToggle();
+          buffer = '';
+        } else if (buffer.includes('showdebug')) {
+          handleSecretDebugToggle(true);
+          buffer = '';
+        } else if (buffer.includes('hidedebug')) {
+          handleSecretDebugToggle(false);
+          buffer = '';
+        }
+      } else if (event.key === 'Escape') {
+        buffer = '';
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleSecretDebugToggle]);
+
+  /**
+   * Effect: Set up polling for train positions
+   * Fetches on mount and every 30 seconds (unless paused)
+   */
+  useEffect(() => {
+    // If paused, clear any active timers and do nothing
+    if (isPollingPaused) {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      return;
+    }
+
     // Initial fetch
     void fetchTrains();
 
@@ -959,7 +1231,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       void fetchTrains();
     }, POLLING_INTERVAL_MS);
 
-    // Cleanup: clear interval and retry timeout on unmount
+    // Cleanup: clear interval and retry timeout on unmount or dependency change
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
@@ -970,7 +1242,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         retryTimeoutRef.current = null;
       }
     };
-  }, [fetchTrains]);
+  }, [fetchTrains, isPollingPaused]);
 
   /**
    * Effect: Add custom layer to map when ready
@@ -1065,6 +1337,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
   /**
    * Effect: Create mesh manager when stations and scene are ready
    * Task: T047 - Initialize manager with station data
+   *
+   * NOTE: This effect ONLY creates the manager. Train mesh updates are handled
+   * by a separate effect below to avoid double-calling updateTrainMeshes
+   * which was causing train teleportation issues.
    */
   useEffect(() => {
     if (
@@ -1086,15 +1362,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
         `TrainLayer3D: Mesh manager initialized with ${stationsRef.current.length} stations and ${railwaysRef.current.size} railway lines`
       );
     }
-
-    if (modelsLoaded && trains.length > 0 && meshManagerRef.current) {
-      meshManagerRef.current.updateTrainMeshes(trains, previousPositionsRef.current, {
-        currentPolledAtMs: pollTimestampsRef.current.current,
-        previousPolledAtMs: pollTimestampsRef.current.previous,
-        receivedAtMs: pollTimestampsRef.current.receivedAt,
-      });
-    }
-  }, [stationsLoaded, railwaysLoaded, sceneReady, modelsLoaded, trains]);
+    // NOTE: Do NOT call updateTrainMeshes here - it's handled by the train update effect below
+    // Calling it in both places causes double-updates which corrupt interpolation state
+  }, [stationsLoaded, railwaysLoaded, sceneReady]);
 
   /**
    * Effect: Update train meshes when train data or models change
@@ -1117,16 +1387,6 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       return;
     }
 
-    // T089: Calculate opacity for each train based on line selection
-    // T098: Apply visual indicator for stale data
-    const trainOpacities = new Map<string, number>();
-    trains.forEach(train => {
-      const baseOpacity = getTrainOpacity(train);
-      // If data is stale, reduce opacity by 50% to gray out trains
-      const finalOpacity = isDataStale ? baseOpacity * 0.5 : baseOpacity;
-      trainOpacities.set(train.vehicleKey, finalOpacity);
-    });
-
     // Update train meshes based on current train positions
     // This will apply bearing-based rotation automatically (T047)
     meshManagerRef.current.updateTrainMeshes(trains, previousPositionsRef.current, {
@@ -1135,15 +1395,32 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
       receivedAtMs: pollTimestampsRef.current.receivedAt,
     });
 
-    // Apply opacity to all trains based on line selection and stale state
-    meshManagerRef.current.setTrainOpacities(trainOpacities);
+    // T089: Calculate opacity for each train based on line selection
+    // T098: Apply visual indicator for stale data
+    // Performance: Only calculate and apply opacity if highlighting is active or data is stale
+    if (highlightMode !== 'none' || isDataStale) {
+      const trainOpacities = new Map<string, number>();
+      trains.forEach(train => {
+        const baseOpacity = getTrainOpacity(train);
+        // If data is stale, reduce opacity by 50% to gray out trains
+        const finalOpacity = isDataStale ? baseOpacity * 0.5 : baseOpacity;
+        trainOpacities.set(train.vehicleKey, finalOpacity);
+      });
+      meshManagerRef.current.setTrainOpacities(trainOpacities);
+    }
 
     if (trains.length > 0) {
       console.log(
         `TrainLayer3D: ${meshManagerRef.current.getMeshCount()} train meshes active with rotation${isDataStale ? ' (STALE)' : ''}`
       );
+
+      // Log diagnostic info about trains that appear stuck
+      const stuckTrains = meshManagerRef.current.getStuckTrainsDiagnostic();
+      if (stuckTrains.length > 0) {
+        console.warn(`TrainLayer3D: ${stuckTrains.length} trains appear stuck (in transit but no movement):`, stuckTrains);
+      }
     }
-  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale]);
+  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale, highlightMode]);
 
   /**
    * Effect: Update train scales when zoom changes
@@ -1197,5 +1474,19 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange }
     return <TrainErrorDisplay error={error!} onRetry={handleManualRetry} />;
   }
 
-  return <TrainDebugPanel meshManager={meshManagerRef.current} currentZoom={map.getZoom()} />;
+  return (
+    <>
+      {areDebugToolsEnabled && (
+        <TrainDebugPanel
+          meshManager={meshManagerRef.current}
+          currentZoom={map.getZoom()}
+          lastPollTime={lastPollTime}
+          pollingIntervalMs={POLLING_INTERVAL_MS}
+          isPollingPaused={isPollingPaused}
+          onTogglePolling={handleTogglePolling}
+          onManualPoll={handleManualPoll}
+        />
+      )}
+    </>
+  );
 }

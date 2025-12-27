@@ -126,6 +126,7 @@ describe('StationLayer', () => {
 
     // Create mock Mapbox GL map
     mockMap = {
+      isStyleLoaded: vi.fn(() => true),
       getSource: vi.fn((id: string) => mockSources.get(id)),
       addSource: vi.fn((id: string, config: { type: string; data: unknown }) => {
         mockSources.set(id, {

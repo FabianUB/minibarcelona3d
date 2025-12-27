@@ -8,12 +8,16 @@
  */
 
 import * as THREE from 'three';
-import type { TrainPosition } from '../../types/trains';
+import type { TrainPosition, RawTrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { getCachedModel } from './modelLoader';
 import { extractLineFromRouteId, getModelTypeForRoute } from '../../config/trainModels';
 import { ScaleManager } from './scaleManager';
 import { createOutlineMesh } from './outlineManager';
+import {
+  logPollDebug,
+  type PollDebugEntry,
+} from './pollDebugLogger';
 import {
   calculateBearing,
   interpolatePositionSmooth,
@@ -23,6 +27,25 @@ import {
   type RailwaySnapResult,
 } from './geometry';
 import { getModelPosition, getModelScale, getLngLatFromModelPosition } from '../map/coordinates';
+import {
+  calculateParkingPosition,
+  DEFAULT_PARKING_CONFIG,
+  type ParkingPosition,
+} from './stationParking';
+import type { TripDetails } from '../../types/trains';
+import {
+  DEFAULT_PREDICTIVE_CONFIG,
+  type PredictiveConfig,
+} from './predictiveCalculator';
+import { trainDebug } from './debugLogger';
+
+// Optional: watchlist of vehicle keys to emit detailed poll logs
+const POLL_WATCH_KEYS: Set<string> = new Set(
+  (import.meta.env?.VITE_POLL_DEBUG_WATCH_KEYS ?? '')
+    .split(',')
+    .map((s: string) => s.trim())
+    .filter(Boolean)
+);
 
 /**
  * Metadata stored with each train mesh
@@ -46,7 +69,7 @@ interface LateralOffsetConfig {
 interface TrainMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
-  routeId: string;
+  routeId: string | null;
   currentPosition: [number, number];
   targetPosition: [number, number];
   lastUpdate: number;
@@ -67,6 +90,27 @@ interface TrainMeshData {
   outlineMesh?: THREE.Group; // Created on first hover
   lineCode?: string; // Extracted from routeId
   lineColor?: THREE.Color; // Line brand color
+  // Phase 2: Parking rotation state
+  isParkingRotationApplied?: boolean; // Track if 90° parking rotation is applied
+  // Phase 2: Parking position data
+  parkingPosition?: ParkingPosition; // Calculated parking slot position
+  stoppedAtStationId?: string; // Station ID where train is stopped
+  prevStatus?: string; // Status on previous poll to detect transitions
+  // Parking rotation animation state
+  parkingRotationAnim?: {
+    start: number;
+    target: number;
+    startedAt: number;
+    duration: number;
+    targetIsPerpendicular: boolean;
+  };
+  // Phase 4: Predictive positioning
+  tripId?: string; // Trip ID for schedule lookup
+  nextStopId?: string; // Next stop ID for schedule lookup
+  lastPredictiveSource?: 'gps' | 'predicted' | 'blended'; // Source of last position update
+  predictiveConfidence?: number; // Confidence in predictive position (0-1)
+  // Performance: Cached material references to avoid mesh traversal in setMeshOpacity
+  cachedMaterials?: THREE.Material[];
 }
 
 interface PollSnapshotMetadata {
@@ -77,7 +121,7 @@ interface PollSnapshotMetadata {
 
 export interface ScreenSpaceCandidate {
   vehicleKey: string;
-  routeId: string;
+  routeId: string | null;
   screenPoint: mapboxgl.Point;
   radiusPx: number;
 }
@@ -108,15 +152,18 @@ export class TrainMeshManager {
   private stationMap: Map<string, Station>;
   private railwayLines: Map<string, PreprocessedRailwayLine>;
   private debugCount = 0;
-  private readonly DEBUG_LIMIT = 0;
+  private readonly DEBUG_LIMIT = 10;
+  private updateCallCount = 0;
   private readonly debugMeshes: THREE.Object3D[] = [];
-  private debugWorldLogsRemaining = 3;
   private readonly MAX_SNAP_DISTANCE_METERS = 200;
   private readonly INTERPOLATION_DURATION_MS = 30000;
   private readonly MIN_INTERPOLATION_DURATION_MS = 1000;
   private readonly MODEL_FORWARD_OFFSET = Math.PI; // Train models face negative X by default
   private readonly LATERAL_OFFSET_BUCKETS = 5;
   private readonly LATERAL_OFFSET_STEP_METERS = 40; // meters between trains laterally
+  // Keep meshes for a while if absent to avoid pop-out/pop-in when a poll drops a train
+  private readonly MISSING_TRAIN_GRACE_MS = 180000; // 3 minutes
+  private readonly PARKING_ROTATION_DURATION_MS = 500;
 
   // Feature 003: Zoom-responsive lateral offset configuration
   private lateralOffsetConfig: LateralOffsetConfig;
@@ -129,6 +176,13 @@ export class TrainMeshManager {
   private screenCandidatesCache: ScreenSpaceCandidate[] | null = null;
   private screenCandidatesCacheZoom: number | null = null;
   private screenCandidatesCacheInvalidated: boolean = true;
+
+  // Phase 4: Trip details cache for predictive positioning
+  private tripDetailsCache: Map<string, TripDetails> = new Map();
+  private predictiveConfig: PredictiveConfig = DEFAULT_PREDICTIVE_CONFIG;
+  private lastProcessedPollTimestamp: number | null = null;
+  // Maximum number of trip details to cache before cleanup
+  private readonly MAX_TRIP_CACHE_SIZE = 200;
 
   // Maximum realistic train speed: 200 km/h = ~55.6 m/s
   // Rodalies trains typically max out at 140 km/h (~39 m/s)
@@ -184,7 +238,7 @@ export class TrainMeshManager {
     // Feature 003: Initialize scale manager
     this.scaleManager = new ScaleManager();
 
-    console.log(`TrainMeshManager: Loaded ${this.stationMap.size} stations for bearing calculations`);
+    trainDebug.system.info(`Stations loaded: ${this.stationMap.size}`);
   }
 
   /**
@@ -196,6 +250,158 @@ export class TrainMeshManager {
   }
 
   /**
+   * Update trip details cache for predictive positioning
+   * Phase 4: Called when trip details are fetched for trains
+   *
+   * @param tripId - Trip identifier
+   * @param tripDetails - Full trip schedule with stop times
+   */
+  public setTripDetails(tripId: string, tripDetails: TripDetails): void {
+    this.tripDetailsCache.set(tripId, tripDetails);
+  }
+
+  /**
+   * Update trip details for multiple trips at once
+   * Phase 4: Batch update for efficiency
+   *
+   * @param trips - Map of tripId to TripDetails
+   */
+  public setTripDetailsBatch(trips: Map<string, TripDetails>): void {
+    trips.forEach((details, tripId) => {
+      this.tripDetailsCache.set(tripId, details);
+    });
+  }
+
+  /**
+   * Configure predictive position calculation
+   * Phase 4: Allows tuning of GPS blending behavior
+   *
+   * @param config - Partial configuration to merge with defaults
+   */
+  public setPredictiveConfig(config: Partial<PredictiveConfig>): void {
+    this.predictiveConfig = { ...this.predictiveConfig, ...config };
+  }
+
+  /**
+   * Get trip details cache for debugging
+   * Phase 4: Returns current cache size and trip IDs
+   */
+  public getTripDetailsCacheInfo(): { size: number; tripIds: string[] } {
+    return {
+      size: this.tripDetailsCache.size,
+      tripIds: Array.from(this.tripDetailsCache.keys()),
+    };
+  }
+
+  /**
+   * Clean up trip details cache to prevent memory leaks
+   * Removes entries for trips no longer associated with active trains
+   * Phase 4: Called periodically during train mesh updates
+   */
+  private cleanupTripDetailsCache(): void {
+    // Skip cleanup if cache is small enough
+    if (this.tripDetailsCache.size <= this.MAX_TRIP_CACHE_SIZE) {
+      return;
+    }
+
+    // Get trip IDs currently in use by active trains
+    const activeTrips = new Set<string>();
+    this.trainMeshes.forEach((meshData) => {
+      if (meshData.tripId) {
+        activeTrips.add(meshData.tripId);
+      }
+    });
+
+    // Remove unused trip details
+    const toRemove: string[] = [];
+    this.tripDetailsCache.forEach((_, tripId) => {
+      if (!activeTrips.has(tripId)) {
+        toRemove.push(tripId);
+      }
+    });
+
+    // Remove unused entries
+    for (const tripId of toRemove) {
+      this.tripDetailsCache.delete(tripId);
+    }
+
+    // If still over limit after removing unused, trim oldest entries
+    // (Map maintains insertion order, so first entries are oldest)
+    if (this.tripDetailsCache.size > this.MAX_TRIP_CACHE_SIZE) {
+      const excess = this.tripDetailsCache.size - this.MAX_TRIP_CACHE_SIZE;
+      const keys = Array.from(this.tripDetailsCache.keys());
+      for (let i = 0; i < excess; i++) {
+        this.tripDetailsCache.delete(keys[i]);
+      }
+    }
+
+    if (toRemove.length > 0) {
+      trainDebug.system.debug(`Trip cache cleanup: removed ${toRemove.length} unused entries`);
+    }
+  }
+
+  /**
+   * Associate a train with its trip ID for predictive positioning
+   * Phase 4: Called when trip ID is known for a vehicle
+   *
+   * @param vehicleKey - Train vehicle key
+   * @param tripId - Trip ID for schedule lookup
+   */
+  public setTrainTripId(vehicleKey: string, tripId: string): void {
+    const meshData = this.trainMeshes.get(vehicleKey);
+    if (meshData) {
+      meshData.tripId = tripId;
+    }
+  }
+
+  /**
+   * Associate multiple trains with their trip IDs
+   * Phase 4: Batch update for efficiency
+   *
+   * @param tripIds - Map of vehicleKey to tripId
+   */
+  public setTrainTripIdsBatch(tripIds: Map<string, string>): void {
+    tripIds.forEach((tripId, vehicleKey) => {
+      const meshData = this.trainMeshes.get(vehicleKey);
+      if (meshData) {
+        meshData.tripId = tripId;
+      }
+    });
+  }
+
+  /**
+   * Get predictive position statistics for debugging
+   * Phase 4: Returns info about how many trains are using predictive positioning
+   */
+  public getPredictiveStats(): {
+    totalTrains: number;
+    withTripId: number;
+    usingPredictive: number;
+    bySource: { gps: number; predicted: number; blended: number };
+  } {
+    let withTripId = 0;
+    let usingPredictive = 0;
+    const bySource = { gps: 0, predicted: 0, blended: 0 };
+
+    this.trainMeshes.forEach((meshData) => {
+      if (meshData.tripId) {
+        withTripId++;
+      }
+      if (meshData.lastPredictiveSource) {
+        usingPredictive++;
+        bySource[meshData.lastPredictiveSource]++;
+      }
+    });
+
+    return {
+      totalTrains: this.trainMeshes.size,
+      withTripId,
+      usingPredictive,
+      bySource,
+    };
+  }
+
+  /**
    * Get scale manager instance for zoom-responsive sizing
    * Feature 003: Used by render loop to compute scale multipliers
    */
@@ -203,12 +409,53 @@ export class TrainMeshManager {
     return this.scaleManager;
   }
 
+  /**
+   * Try to infer the line ID for a train from its station's lines
+   * Used when routeId is null (shows as "N/A" in UI)
+   *
+   * Tries currentStopId, nextStopId, and previousStopId in order.
+   * If the station serves only one line, returns that line.
+   * If the station serves multiple lines, returns the first one (best guess).
+   *
+   * @returns Line ID (e.g., "R1", "R4") or null if cannot infer
+   */
+  private inferLineFromStation(train: TrainPosition): string | null {
+    const rawTrain = train as RawTrainPosition;
+    const stopIds = [
+      rawTrain.current_stop_id ?? train.currentStopId,
+      train.nextStopId,
+      rawTrain.previous_stop_id ?? train.previousStopId,
+    ].filter(Boolean);
+
+    for (const stopId of stopIds) {
+      const station = this.stationMap.get(stopId as string);
+      if (station && station.lines && station.lines.length > 0) {
+        // Return the first line - this is a best guess for multi-line stations
+        const inferredLine = station.lines[0];
+        trainDebug.mesh.info(`Line inferred: ${train.vehicleKey} -> ${inferredLine}`, {
+          station: station.name,
+          stopId,
+        });
+        return inferredLine;
+      }
+    }
+
+    return null;
+  }
+
   private snapPositionToRailway(train: TrainPosition): RailwaySnapState | null {
     if (train.latitude === null || train.longitude === null) {
       return null;
     }
 
-    const lineId = extractLineFromRouteId(train.routeId);
+    // Try to extract line from routeId first
+    let lineId = extractLineFromRouteId(train.routeId);
+
+    // If routeId is null or doesn't match, try to infer from station
+    if (!lineId) {
+      lineId = this.inferLineFromStation(train);
+    }
+
     if (!lineId) {
       return null;
     }
@@ -273,16 +520,11 @@ export class TrainMeshManager {
 
     // Check if speed exceeds maximum realistic train speed
     if (speedMS > this.MAX_TRAIN_SPEED_MS) {
-      console.warn(
-        `TrainMeshManager: Unrealistic speed detected for train ${vehicleKey}`,
-        {
-          lineId: currentSnap.lineId,
-          distanceTraveled: `${distanceTraveled.toFixed(0)}m`,
-          timeDelta: `${timeDeltaS.toFixed(1)}s`,
-          calculatedSpeed: `${speedMS.toFixed(1)} m/s (${(speedMS * 3.6).toFixed(0)} km/h)`,
-          maxAllowed: `${this.MAX_TRAIN_SPEED_MS.toFixed(1)} m/s (${(this.MAX_TRAIN_SPEED_MS * 3.6).toFixed(0)} km/h)`,
-        }
-      );
+      trainDebug.mesh.warn(`Unrealistic speed: ${vehicleKey}`, {
+        speed: `${(speedMS * 3.6).toFixed(0)} km/h`,
+        distance: `${distanceTraveled.toFixed(0)}m`,
+        timeDelta: `${timeDeltaS.toFixed(1)}s`,
+      });
       return true;
     }
 
@@ -325,11 +567,22 @@ export class TrainMeshManager {
   private applyRailwayBearing(
     mesh: THREE.Group,
     bearingDegrees: number,
-    isReversed = false
+    isReversed = false,
+    vehicleKey?: string
   ): void {
     const bearingRad = (-bearingDegrees * Math.PI) / 180;
     const rotation = bearingRad + this.MODEL_FORWARD_OFFSET + (isReversed ? Math.PI : 0);
     mesh.rotation.z = rotation;
+
+    // Reset parking rotation flag since we just set a new base rotation
+    // This ensures applyParkingVisuals() will re-apply the 90° offset if needed
+    if (vehicleKey) {
+      const meshData = this.trainMeshes.get(vehicleKey);
+      if (meshData && meshData.status !== 'STOPPED_AT') {
+        meshData.isParkingRotationApplied = false;
+        meshData.parkingRotationAnim = undefined;
+      }
+    }
   }
 
   private getLateralOffsetIndex(vehicleKey: string): number {
@@ -468,9 +721,30 @@ export class TrainMeshManager {
      */
   }
 
+  /**
+   * Get the actual mesh position in lng/lat coordinates for a given vehicleKey.
+   * This returns where the train mesh is actually rendered, which may differ
+   * from the API GPS coordinates due to railway snapping and parking offsets.
+   *
+   * @param vehicleKey - The train's unique identifier
+   * @returns [lng, lat] if mesh exists, null otherwise
+   */
+  public getMeshLngLat(vehicleKey: string): [number, number] | null {
+    const meshData = this.trainMeshes.get(vehicleKey);
+    if (!meshData) return null;
+
+    // currentPosition stores the [lng, lat] of the mesh
+    // For parked trains, this is updated to the parking position
+    // For moving trains, this is interpolated between positions
+    if (meshData.parkingPosition) {
+      return meshData.parkingPosition.position;
+    }
+    return meshData.currentPosition;
+  }
+
   public getDebugInfo(): Array<{
     vehicleKey: string;
-    routeId: string;
+    routeId: string | null;
     offsetIndex: number;
     offsetMeters: number;
     currentZoom: number;
@@ -479,7 +753,7 @@ export class TrainMeshManager {
   }> {
     const debugInfo: Array<{
       vehicleKey: string;
-      routeId: string;
+      routeId: string | null;
       offsetIndex: number;
       offsetMeters: number;
       currentZoom: number;
@@ -611,9 +885,10 @@ export class TrainMeshManager {
     const gltf = getCachedModel(modelType);
 
     if (!gltf) {
-      console.warn(
-        `Model not loaded for route ${train.routeId} (type: ${modelType}). Skipping train ${train.vehicleKey}.`
-      );
+      trainDebug.mesh.warn(`Model not loaded: ${train.vehicleKey}`, {
+        routeId: train.routeId,
+        modelType,
+      });
       return null;
     }
 
@@ -627,14 +902,7 @@ export class TrainMeshManager {
     const baseScale = this.TRAIN_SIZE_METERS * modelScale;
 
     if (!Number.isFinite(modelScale) || !Number.isFinite(baseScale)) {
-      console.warn('TrainMeshManager: Invalid scale computed', {
-        modelScale,
-        baseScale,
-        vehicleKey: train.vehicleKey,
-      });
-    } else if (this.debugCount < this.DEBUG_LIMIT) {
-      console.log('TrainMeshManager: Scale computed for train', {
-        vehicleKey: train.vehicleKey,
+      trainDebug.mesh.error(`Invalid scale: ${train.vehicleKey}`, {
         modelScale,
         baseScale,
       });
@@ -737,6 +1005,18 @@ export class TrainMeshManager {
     const boundingSphere = new THREE.Sphere();
     centerBox.getBoundingSphere(boundingSphere);
 
+    // Collect materials for fast opacity updates (avoids mesh traversal later)
+    const cachedMaterials: THREE.Material[] = [];
+    mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          cachedMaterials.push(...child.material);
+        } else if (child.material) {
+          cachedMaterials.push(child.material);
+        }
+      }
+    });
+
     const meshData: TrainMeshData = {
       mesh,
       vehicleKey: train.vehicleKey,
@@ -756,6 +1036,15 @@ export class TrainMeshManager {
       // Feature 003: Initialize zoom-responsive scaling fields
       screenSpaceScale: zoomScale,
       lastZoomBucket: Math.round(this.currentZoom * 10) / 10, // Quantize to 0.1
+      // Phase 2: Track station for parking
+      stoppedAtStationId:
+        train.status === 'STOPPED_AT'
+          ? this.getStoppedStationId(train)
+          : undefined,
+      // Phase 4: Store nextStopId for predictive positioning
+      nextStopId: train.nextStopId ?? undefined,
+      // Performance: Cache materials for fast opacity updates
+      cachedMaterials: cachedMaterials.length > 0 ? cachedMaterials : undefined,
     };
 
     return meshData;
@@ -776,8 +1065,60 @@ export class TrainMeshManager {
     previousPositions?: Map<string, TrainPosition>,
     pollMetadata?: PollSnapshotMetadata
   ): void {
+    let pollDebug: PollDebugEntry | null = null;
+    const watchLoggedThisPoll = new Set<string>();
+
+    // Deduplicate identical/older poll updates to avoid resetting animation mid-flight
+    const pollTimestamp =
+      (pollMetadata?.currentPolledAtMs ?? pollMetadata?.receivedAtMs) ?? null;
+    if (
+      pollTimestamp !== null &&
+      this.lastProcessedPollTimestamp !== null &&
+      pollTimestamp <= this.lastProcessedPollTimestamp
+    ) {
+      pollDebug = {
+        pollTimestampMs: pollMetadata?.currentPolledAtMs ?? null,
+        receivedAtMs: pollMetadata?.receivedAtMs ?? null,
+        processed: false,
+        reason: 'duplicate',
+        trainCount: trains.length,
+        addedCount: 0,
+        removedCount: 0,
+        stuckCount: 0,
+        dataAgeMs:
+          pollMetadata?.currentPolledAtMs !== undefined
+            ? Date.now() - pollMetadata.currentPolledAtMs
+            : null,
+        updateCallsThisSecond: this.updateCallsThisSecond,
+      };
+      logPollDebug(pollDebug);
+      trainDebug.system.warn('Teleport guard: ignoring duplicate poll', {
+        received: pollTimestamp,
+        lastProcessed: this.lastProcessedPollTimestamp,
+      });
+      return;
+    }
+
     const activeTrainKeys = new Set<string>();
     const now = Date.now();
+    let createdCount = 0;
+
+    // Track how often updateTrainMeshes is called to detect double-calls that cause teleportation
+    this.updateCallCount++;
+    if (now - this.lastUpdateCallTime < 1000) {
+      this.updateCallsThisSecond++;
+      // Warn if called multiple times in rapid succession
+      if (this.updateCallsThisSecond > 1) {
+        trainDebug.system.warn(`Teleport bug risk: updateTrainMeshes called ${this.updateCallsThisSecond}x in 1s`);
+      }
+    } else {
+      this.updateCallsThisSecond = 1;
+      this.lastUpdateCallTime = now;
+    }
+
+    // Reset debug counter for this poll batch
+    this.debugCount = 0;
+
     const interpolationDuration = this.calculateEffectiveInterpolationDuration(pollMetadata);
     const baseLastUpdate =
       pollMetadata?.receivedAtMs && Number.isFinite(pollMetadata.receivedAtMs)
@@ -786,12 +1127,33 @@ export class TrainMeshManager {
 
     // Create or update meshes for each train
     for (const train of trains) {
-      // Skip trains without valid GPS coordinates
-      if (train.latitude === null || train.longitude === null) {
+      const existing = this.trainMeshes.get(train.vehicleKey);
+
+      // If train has null or invalid coords, keep existing mesh alive (stale) to avoid pop-out
+      const hasValidCoords = train.latitude !== null &&
+        train.longitude !== null &&
+        Number.isFinite(train.latitude) &&
+        Number.isFinite(train.longitude) &&
+        Math.abs(train.latitude) <= 90 &&
+        Math.abs(train.longitude) <= 180;
+
+      if (!hasValidCoords) {
+        if (existing) {
+          activeTrainKeys.add(train.vehicleKey);
+          // Keep status tracking consistent even when coords are missing
+          const prevStatus = existing.status;
+          existing.prevStatus = prevStatus;
+          existing.status = train.status ?? existing.status;
+        }
+        if (train.status === 'STOPPED_AT') {
+          trainDebug.mesh.warn(`Invalid coordinates for STOPPED_AT: ${train.vehicleKey}`, {
+            lat: train.latitude,
+            lng: train.longitude,
+            routeId: train.routeId,
+          });
+        }
         continue;
       }
-
-      activeTrainKeys.add(train.vehicleKey);
 
       const targetSnapState = this.snapPositionToRailway(train);
       const targetLngLat: [number, number] = targetSnapState
@@ -801,27 +1163,64 @@ export class TrainMeshManager {
       const previousPosition = previousPositions?.get(train.vehicleKey);
       let previousLngLat: [number, number] | null = null;
       let previousSnapState: RailwaySnapState | null = null;
-
       if (
         previousPosition &&
         previousPosition.latitude !== null &&
         previousPosition.longitude !== null
       ) {
-        previousLngLat = [previousPosition.longitude, previousPosition.latitude];
         previousSnapState = this.snapPositionToRailway(previousPosition);
+        // Use SNAPPED position (just like targetLngLat) to prevent jumps between raw/snapped coords
+        previousLngLat = previousSnapState
+          ? [previousSnapState.position[0], previousSnapState.position[1]]
+          : [previousPosition.longitude, previousPosition.latitude];
       }
 
       const initialLngLat: [number, number] = previousLngLat ?? targetLngLat;
 
-      const existing = this.trainMeshes.get(train.vehicleKey);
-
       if (existing) {
+        const prevStatus = existing.status;
+
+        // If we were parked and are now moving, project the parking position back onto the track
+        if (existing.parkingPosition && train.status !== 'STOPPED_AT') {
+          const lineId =
+            targetSnapState?.lineId ??
+            existing.currentSnap?.lineId ??
+            extractLineFromRouteId(existing.routeId)?.toUpperCase();
+          const railway = lineId ? this.railwayLines.get(lineId) : undefined;
+          if (railway) {
+            const snapFromParking = snapTrainToRailway(
+              existing.parkingPosition.position,
+              railway,
+              this.MAX_SNAP_DISTANCE_METERS
+            );
+            if (snapFromParking) {
+              existing.currentPosition = [snapFromParking.position[0], snapFromParking.position[1]];
+              existing.currentSnap = {
+                ...snapFromParking,
+                lineId: lineId!,
+              };
+              existing.parkingPosition = undefined;
+            }
+          }
+        }
+
         if (typeof existing.lateralOffsetIndex !== 'number') {
           existing.lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
         }
 
         // Update train status for offset logic
         existing.status = train.status;
+        existing.prevStatus = prevStatus;
+
+        // Phase 4: Update nextStopId for predictive positioning
+        existing.nextStopId = train.nextStopId ?? undefined;
+
+        // Track which station the train is stopped at (for parking calculations)
+        if (train.status === 'STOPPED_AT') {
+          existing.stoppedAtStationId = this.getStoppedStationId(train);
+        } else {
+          existing.stoppedAtStationId = undefined;
+        }
 
         // Validate position update to detect unrealistic jumps
         const effectivePreviousSnap = previousSnapState ?? existing.currentSnap ?? null;
@@ -852,16 +1251,131 @@ export class TrainMeshManager {
           existing.hasUnrealisticSpeed = false;
         }
 
-        if (previousLngLat) {
-          existing.currentPosition = previousLngLat;
+        // CRITICAL FIX: Calculate the train's CURRENT VISUAL POSITION (interpolated)
+        // and use that as the starting point for the new animation.
+        //
+        // THE BUG: When a new poll arrives mid-animation:
+        // - Train is visually at interpolated position M (between currentPosition A and targetPosition B)
+        // - But existing.currentPosition still holds A (the START of the animation)
+        // - If we use A as the new starting position, train JUMPS BACKWARD from M to A
+        //
+        // THE FIX: Calculate where the train IS right now (the interpolated position M)
+        // and use M as the starting point for the new animation to the new target C.
+        // This ensures smooth continuous motion: ... → M → C (no jump)
+
+        const now = baseLastUpdate; // Use the poll timestamp for consistency
+        const elapsed = now - existing.lastUpdate;
+        const duration = existing.interpolationDuration ?? this.INTERPOLATION_DURATION_MS;
+        const progress = Math.min(Math.max(elapsed / duration, 0), 1.0);
+
+        // Calculate the visual (interpolated) position
+        const [startLng, startLat] = existing.currentPosition;
+        const [endLng, endLat] = existing.targetPosition;
+
+        let visualLng: number;
+        let visualLat: number;
+
+        // If we have railway snap data, use railway-based interpolation for accuracy
+        if (
+          existing.currentSnap &&
+          existing.targetSnap &&
+          existing.currentSnap.lineId === existing.targetSnap.lineId
+        ) {
+          const railway = this.railwayLines.get(existing.currentSnap.lineId);
+          if (railway) {
+            const distanceStart = existing.currentSnap.distance;
+            const distanceEnd = existing.targetSnap.distance;
+            const interpolatedDistance = distanceStart + (distanceEnd - distanceStart) * progress;
+            const sample = sampleRailwayPosition(railway, interpolatedDistance);
+            visualLng = sample.position[0];
+            visualLat = sample.position[1];
+          } else {
+            // Fallback to linear interpolation
+            visualLng = startLng + (endLng - startLng) * progress;
+            visualLat = startLat + (endLat - startLat) * progress;
+          }
+        } else {
+          // Linear interpolation (no railway data)
+          visualLng = startLng + (endLng - startLng) * progress;
+          visualLat = startLat + (endLat - startLat) * progress;
         }
 
+        // Debug logging for updates - only first 3 trains per poll (DEBUG level = hidden by default)
+        if (this.debugCount < 3) {
+          trainDebug.mesh.debug(`Update: ${train.vehicleKey}`, {
+            progress: `${(progress * 100).toFixed(1)}%`,
+            elapsed: `${(elapsed / 1000).toFixed(1)}s`,
+          });
+          this.debugCount++;
+        }
+
+        // Watchlist logging: capture detailed per-train info for specified keys
+        if (POLL_WATCH_KEYS.has(train.vehicleKey) && !watchLoggedThisPoll.has(train.vehicleKey)) {
+          const watchPayload = {
+            vehicleKey: train.vehicleKey,
+            status: train.status,
+            progress,
+            elapsedMs: elapsed,
+            interpolationDurationMs: duration,
+            startPosition: [startLng, startLat],
+            visualPosition: [visualLng, visualLat],
+            targetPosition: targetLngLat,
+            previousSnap: previousSnapState,
+            currentSnapBefore: existing.currentSnap,
+            targetSnap: targetSnapState,
+          };
+
+          logPollDebug({
+            pollTimestampMs: pollMetadata?.currentPolledAtMs ?? null,
+            receivedAtMs: pollMetadata?.receivedAtMs ?? null,
+            processed: true,
+            reason: 'ok',
+            trainCount: trains.length,
+            addedCount: createdCount,
+            removedCount: 0,
+            stuckCount: 0,
+            dataAgeMs:
+              pollMetadata?.currentPolledAtMs !== undefined
+                ? now - pollMetadata.currentPolledAtMs
+                : null,
+            updateCallsThisSecond: this.updateCallsThisSecond,
+            watch: watchPayload,
+          });
+
+          watchLoggedThisPoll.add(train.vehicleKey);
+        }
+
+        // Choose the best start position for the next segment to minimize jumps:
+        // - Prefer previous snapped position if available
+        // - Otherwise use the VISUAL interpolated position (where the train is drawn now)
+        // - Fallback to target if nothing else
         if (previousSnapState) {
+          existing.currentPosition = [previousSnapState.position[0], previousSnapState.position[1]];
           existing.currentSnap = previousSnapState;
-        } else if (!existing.currentSnap && existing.targetSnap) {
-          existing.currentSnap = existing.targetSnap;
+        } else {
+          existing.currentPosition = [visualLng, visualLat];
+
+          if (
+            existing.currentSnap &&
+            existing.targetSnap &&
+            existing.currentSnap.lineId === existing.targetSnap.lineId
+          ) {
+            // Interpolate snap distance to match visual position
+            const distanceStart = existing.currentSnap.distance;
+            const distanceEnd = existing.targetSnap.distance;
+            const interpolatedDistance = distanceStart + (distanceEnd - distanceStart) * progress;
+
+            existing.currentSnap = {
+              ...existing.currentSnap,
+              position: [visualLng, visualLat],
+              distance: interpolatedDistance,
+            };
+          } else if (!existing.currentSnap && existing.targetSnap) {
+            existing.currentSnap = existing.targetSnap;
+          }
         }
 
+        // Update target position and timing
         existing.targetPosition = targetLngLat;
         existing.targetSnap = targetSnapState ?? undefined;
         existing.lastUpdate = baseLastUpdate;
@@ -870,19 +1384,17 @@ export class TrainMeshManager {
         // T047: Update rotation based on (potentially new) next station
         this.applyBearingRotation(existing.mesh, train);
 
-        if (targetSnapState) {
+        // Apply bearing based on travel direction using current mesh snap states
+        // (not API's previousSnapState which may cause inconsistencies)
+        if (existing.targetSnap) {
           const travellingForward =
-            previousSnapState &&
-            targetSnapState &&
-            previousSnapState.lineId === targetSnapState.lineId
-              ? targetSnapState.distance >= previousSnapState.distance
-              : existing.currentSnap &&
-                  existing.targetSnap &&
-                  existing.currentSnap.lineId === existing.targetSnap.lineId
-                ? existing.targetSnap.distance >= existing.currentSnap.distance
-                : true;
+            existing.currentSnap &&
+            existing.targetSnap &&
+            existing.currentSnap.lineId === existing.targetSnap.lineId
+              ? existing.targetSnap.distance >= existing.currentSnap.distance
+              : true;
 
-          this.applyRailwayBearing(existing.mesh, targetSnapState.bearing, !travellingForward);
+          this.applyRailwayBearing(existing.mesh, existing.targetSnap.bearing, !travellingForward, train.vehicleKey);
         }
       } else {
         // Create new mesh for this train
@@ -897,6 +1409,8 @@ export class TrainMeshManager {
         );
 
         if (meshData) {
+          // Leave prevStatus undefined on first render so parking animation can run for initial STOPPED_AT
+          meshData.prevStatus = undefined;
           const nextStationBearing = this.calculateBearingToNextStation(train);
           // T052g, T052j: Position using correct coordinate system with Z-offset
           // getModelPosition returns position relative to model origin with Y negated
@@ -940,19 +1454,42 @@ export class TrainMeshManager {
 
           // Track in our map
           this.trainMeshes.set(train.vehicleKey, meshData);
+          createdCount += 1;
 
-          console.log(
-            `Created mesh for train ${train.vehicleKey} (route: ${train.routeId})`
-          );
+          // Use structured logging for mesh creation
+          if (train.status === 'STOPPED_AT') {
+            trainDebug.mesh.info(`STOPPED_AT mesh created: ${train.vehicleKey}`, {
+              routeId: train.routeId,
+              lineCode: extractLineFromRouteId(train.routeId),
+              coords: `${initialLngLat[1].toFixed(5)}, ${initialLngLat[0].toFixed(5)}`,
+              stoppedAtStation: meshData.stoppedAtStationId,
+              stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
+              meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
+              scale: meshData.mesh.scale.x.toExponential(4),
+              snapped: !!targetSnapState,
+            });
+          } else {
+            trainDebug.mesh.debug(`Mesh created: ${train.vehicleKey}`, {
+              routeId: train.routeId,
+            });
+          }
         }
       }
+
+      // Track this train as active (for removal logic)
+      activeTrainKeys.add(train.vehicleKey);
     }
 
-    // Remove meshes for trains that are no longer active
+    // Remove meshes for trains that are no longer active, with a grace period to avoid pops
+    const nowMs = now;
     const toRemove: string[] = [];
-    this.trainMeshes.forEach((_meshData, vehicleKey) => {
+    this.trainMeshes.forEach((meshData, vehicleKey) => {
       if (!activeTrainKeys.has(vehicleKey)) {
-        toRemove.push(vehicleKey);
+        const ageSinceSeen = nowMs - meshData.lastUpdate;
+        // Keep for a short grace period to avoid pop-out/pop-in when API temporarily drops a train
+        if (ageSinceSeen > this.MISSING_TRAIN_GRACE_MS) {
+          toRemove.push(vehicleKey);
+        }
       }
     });
 
@@ -960,12 +1497,38 @@ export class TrainMeshManager {
       this.removeTrainMesh(vehicleKey);
     }
 
+    // Remember last processed poll timestamp to ignore duplicates next time
+    if (pollTimestamp !== null) {
+      this.lastProcessedPollTimestamp = pollTimestamp;
+    } else {
+      this.lastProcessedPollTimestamp = now;
+    }
+
     // Invalidate screen-space cache after train updates
     this.screenCandidatesCacheInvalidated = true;
 
-    console.log(
-      `TrainMeshManager: ${this.trainMeshes.size} trains rendered (${toRemove.length} removed)`
-    );
+    // Log poll debug summary for offline debugging (download via window.__trainPollDebugLog.download())
+    const dataAgeMs =
+      pollMetadata?.currentPolledAtMs !== undefined ? now - pollMetadata.currentPolledAtMs : null;
+    const stuckCount = this.getStuckTrainsDiagnostic().length;
+    pollDebug = {
+      pollTimestampMs: pollMetadata?.currentPolledAtMs ?? null,
+      receivedAtMs: pollMetadata?.receivedAtMs ?? null,
+      processed: true,
+      reason: 'ok',
+      trainCount: trains.length,
+      addedCount: createdCount,
+      removedCount: toRemove.length,
+      stuckCount,
+      dataAgeMs,
+      updateCallsThisSecond: this.updateCallsThisSecond,
+    };
+    logPollDebug(pollDebug);
+
+    // Clean up trip details cache to prevent memory leaks
+    this.cleanupTripDetailsCache();
+
+    // Mesh summary is handled by the poll summary in TrainLayer3D
   }
 
   /**
@@ -989,6 +1552,26 @@ export class TrainMeshManager {
         meshData.warningIndicator.material.dispose();
       }
 
+      // Clean up outline mesh if present (Feature 003: hover outlines)
+      if (meshData.outlineMesh) {
+        // Remove from parent before disposal
+        if (meshData.outlineMesh.parent) {
+          meshData.outlineMesh.parent.remove(meshData.outlineMesh);
+        }
+        // Dispose geometry and materials
+        meshData.outlineMesh.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry?.dispose();
+            if (Array.isArray(child.material)) {
+              child.material.forEach((mat) => mat.dispose());
+            } else {
+              child.material?.dispose();
+            }
+          }
+        });
+        meshData.outlineMesh = undefined;
+      }
+
       // Dispose of geometry and materials to free GPU memory
       meshData.mesh.traverse((child) => {
         if (child instanceof THREE.Mesh) {
@@ -1005,7 +1588,7 @@ export class TrainMeshManager {
       // Remove from tracking map
       this.trainMeshes.delete(vehicleKey);
 
-      console.log(`Removed mesh for train ${vehicleKey}`);
+      trainDebug.mesh.debug(`Mesh removed: ${vehicleKey}`);
     }
   }
 
@@ -1045,7 +1628,17 @@ export class TrainMeshManager {
   setTrainOpacities(opacities: Map<string, number>): void {
     opacities.forEach((opacity, vehicleKey) => {
       const meshData = this.trainMeshes.get(vehicleKey);
-      if (meshData) {
+      if (!meshData) return;
+
+      // Use cached materials if available (performance optimization)
+      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
+        const isTransparent = opacity < 1.0;
+        for (const mat of meshData.cachedMaterials) {
+          mat.transparent = isTransparent;
+          mat.opacity = opacity;
+        }
+      } else {
+        // Fallback to mesh traversal
         this.setMeshOpacity(meshData.mesh, opacity);
       }
     });
@@ -1166,7 +1759,7 @@ export class TrainMeshManager {
     for (const key of keys) {
       this.removeTrainMesh(key);
     }
-    console.log('TrainMeshManager: All meshes cleared');
+    trainDebug.system.info('All meshes cleared');
   }
 
   /**
@@ -1246,10 +1839,11 @@ export class TrainMeshManager {
    * Uses easeInOutCubic easing for natural-looking movement.
    */
   applyZoomResponsiveScale(): void {
+    // Pre-compute values outside the loop (performance optimization)
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
+    const quantizedZoom = Math.round(this.currentZoom * 10) / 10;
 
     this.trainMeshes.forEach((meshData) => {
-      const quantizedZoom = Math.round(this.currentZoom * 10) / 10;
       if (meshData.lastZoomBucket !== quantizedZoom) {
         const scaleVariation = this.getScaleVariation(meshData.vehicleKey);
         const finalScale = meshData.baseScale * scaleVariation * zoomScale;
@@ -1264,8 +1858,101 @@ export class TrainMeshManager {
     });
   }
 
+  /**
+   * Get diagnostic info about trains that appear stuck (not animating)
+   * Useful for debugging trains that should be moving but aren't
+   */
+  public getStuckTrainsDiagnostic(): Array<{
+    vehicleKey: string;
+    status: string;
+    hasMovement: boolean;
+    currentPosition: [number, number];
+    targetPosition: [number, number];
+    distanceMeters: number;
+    timeSinceUpdateMs: number;
+  }> {
+    const now = Date.now();
+    const stuckTrains: Array<{
+      vehicleKey: string;
+      status: string;
+      hasMovement: boolean;
+      currentPosition: [number, number];
+      targetPosition: [number, number];
+      distanceMeters: number;
+      timeSinceUpdateMs: number;
+    }> = [];
+
+    this.trainMeshes.forEach((meshData) => {
+      const [currentLng, currentLat] = meshData.currentPosition;
+      const [targetLng, targetLat] = meshData.targetPosition;
+
+      // Calculate approximate distance in meters
+      const latDiff = targetLat - currentLat;
+      const lngDiff = targetLng - currentLng;
+      const latMeters = latDiff * 111320; // ~111km per degree latitude
+      const lngMeters = lngDiff * 111320 * Math.cos(currentLat * Math.PI / 180);
+      const distanceMeters = Math.sqrt(latMeters * latMeters + lngMeters * lngMeters);
+
+      const hasMovement = currentLng !== targetLng || currentLat !== targetLat;
+      const timeSinceUpdateMs = now - meshData.lastUpdate;
+
+      // Report trains that are "in transit" but have no movement
+      if (meshData.status !== 'STOPPED_AT' && !hasMovement) {
+        stuckTrains.push({
+          vehicleKey: meshData.vehicleKey,
+          status: meshData.status,
+          hasMovement,
+          currentPosition: meshData.currentPosition,
+          targetPosition: meshData.targetPosition,
+          distanceMeters,
+          timeSinceUpdateMs,
+        });
+      }
+    });
+
+    return stuckTrains;
+  }
+
+  /**
+   * Determine which station ID to use for STOPPED_AT trains.
+   * Prefer the current stop, then next, then previous (as a last resort).
+   */
+  private getStoppedStationId(train: TrainPosition): string | undefined {
+    const rawTrain = train as RawTrainPosition;
+    const current = train.currentStopId ?? rawTrain.current_stop_id ?? null;
+    const next = train.nextStopId ?? rawTrain.next_stop_id ?? null;
+    const previous = train.previousStopId ?? rawTrain.previous_stop_id ?? null;
+    return (
+      current ??
+      next ??
+      previous ??
+      undefined
+    );
+  }
+
+  private lastAnimateLogTime = 0;
+  private lastUpdateCallTime = 0;
+  private updateCallsThisSecond = 0;
+
   animatePositions(): void {
     const now = Date.now();
+
+    // Log animation stats every 5 seconds (using debug level to reduce noise)
+    if (now - this.lastAnimateLogTime > 5000) {
+      const stoppedCount = [...this.trainMeshes.values()].filter(m => m.status === 'STOPPED_AT').length;
+      trainDebug.animate.debug('Animation loop', {
+        totalMeshes: this.trainMeshes.size,
+        stoppedAt: stoppedCount,
+      });
+      this.lastAnimateLogTime = now;
+    }
+
+    // Track if any train moved significantly this frame
+    let anyTrainMoved = false;
+
+    // Pre-compute values that are constant for all trains (performance optimization)
+    const modelScale = getModelScale();
+    const zOffset = this.Z_OFFSET_FACTOR * this.TRAIN_SIZE_METERS * modelScale;
 
     this.trainMeshes.forEach((meshData) => {
       const { currentPosition, targetPosition, lastUpdate } = meshData;
@@ -1274,10 +1961,36 @@ export class TrainMeshManager {
       const [currentLng, currentLat] = currentPosition;
       const [targetLng, targetLat] = targetPosition;
 
-      // If already at target, skip interpolation
-      // For stopped trains, the offset has already been applied in updateTrainMeshes()
-      // and their position is final - no need to recalculate every frame
+      // DEFENSIVE: Skip trains with invalid positions to prevent NaN propagation
+      const hasValidCurrent = Number.isFinite(currentLng) && Number.isFinite(currentLat);
+      const hasValidTarget = Number.isFinite(targetLng) && Number.isFinite(targetLat);
+
+      if (!hasValidCurrent && !hasValidTarget) {
+        // Both positions invalid - skip this train entirely
+        trainDebug.animate.error(`No valid positions: ${meshData.vehicleKey}`, {
+          status: meshData.status,
+          currentPosition,
+          targetPosition,
+        });
+        trainDebug.addMeshInvalidPosition(meshData.vehicleKey);
+        return;
+      }
+
+      // If current is invalid but target is valid, use target as current
+      if (!hasValidCurrent && hasValidTarget) {
+        trainDebug.animate.warn(`Invalid currentPosition, using target: ${meshData.vehicleKey}`);
+        meshData.currentPosition = [targetLng, targetLat];
+      }
+
+      // If already at target, skip interpolation for moving trains
+      // But for STOPPED_AT trains without a parking position, we still need to
+      // ensure position is set (parking calculation may have failed)
       if (currentLng === targetLng && currentLat === targetLat) {
+        // For stopped trains without parking, ensure position is set
+        if (meshData.status === 'STOPPED_AT' && !meshData.parkingPosition) {
+          const position = getModelPosition(currentLng, currentLat, 0);
+          meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+        }
         return;
       }
 
@@ -1295,6 +2008,7 @@ export class TrainMeshManager {
 
       // Calculate progress (0 to 1)
       const progress = Math.min(elapsed / interpolationDuration, 1.0);
+
 
       // Interpolate position with easing
       // Note: Position is [lng, lat]
@@ -1332,11 +2046,7 @@ export class TrainMeshManager {
 
       const position = getModelPosition(interpolatedLngLat[0], interpolatedLngLat[1], 0);
 
-      // Calculate Z-offset elevation to prevent z-fighting with map surface
-      const modelScale = getModelScale();
-      const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-      const zOffset = this.Z_OFFSET_FACTOR * baseScale;
-
+      // Z-offset is pre-computed outside the loop for performance
       let bearingInfo = bearingOverride;
       if (!bearingInfo && meshData.targetSnap) {
         const currentSnap = meshData.currentSnap ?? meshData.targetSnap;
@@ -1380,33 +2090,24 @@ export class TrainMeshManager {
       // Performance: This eliminates thousands of redundant offset calculations per second
       // (was recalculating every frame even though the result never changes for stopped trains)
 
-      if (this.debugCount < this.DEBUG_LIMIT) {
-        console.log('TrainMeshManager: Position computed for mesh', {
-          vehicleKey: meshData.vehicleKey,
-          interpolatedLng: interpolatedLngLat[0],
-          interpolatedLat: interpolatedLngLat[1],
-          position,
-          zOffset,
-        });
-        this.debugCount += 1;
-      }
-
       meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
-      // Invalidate screen-space cache when position changes
-      this.screenCandidatesCacheInvalidated = true;
+      // Track that a train moved (for cache invalidation outside the loop)
+      anyTrainMoved = true;
 
       if (bearingOverride) {
         this.applyRailwayBearing(
           meshData.mesh,
           bearingOverride.bearing,
-          bearingOverride.reversed
+          bearingOverride.reversed,
+          meshData.vehicleKey
         );
       }
 
       // If interpolation complete, update current position to target
+      // IMPORTANT: Create a copy to avoid reference issues where both arrays point to same data
       if (progress >= 1.0) {
-        meshData.currentPosition = targetPosition;
+        meshData.currentPosition = [targetPosition[0], targetPosition[1]];
         if (meshData.targetSnap) {
           meshData.currentSnap = meshData.targetSnap;
         } else {
@@ -1415,14 +2116,233 @@ export class TrainMeshManager {
       }
     });
 
-    if (this.debugCount > 0 && this.debugMeshes.length > 0 && this.debugWorldLogsRemaining > 0) {
-      this.debugWorldLogsRemaining -= 1;
-      console.log('TrainMeshManager: Debug mesh world positions', this.debugMeshes.map((mesh) => ({
-        vehicleKey: mesh.userData?.vehicleKey,
-        position: mesh.position.clone(),
-        scale: mesh.scale.clone(),
-        worldPos: mesh.getWorldPosition(new THREE.Vector3()),
-      })));
+    // Invalidate screen-space cache only if at least one train moved
+    // This prevents redundant cache rebuilds when all trains are stationary
+    if (anyTrainMoved) {
+      this.screenCandidatesCacheInvalidated = true;
     }
+  }
+
+  /**
+   * Apply parking visuals to stopped trains
+   *
+   * Phase 2: For trains with STOPPED_AT status:
+   * 1. Calculate parking slot position (offset along track to prevent overlap)
+   * 2. Apply position offset so trains don't overlap station marker or each other
+   * 3. Rotate 90° to appear perpendicular to the track
+   *
+   * NOTE: This method is called every frame, so we track state to avoid
+   * recalculating/reapplying unnecessarily.
+   */
+  public applyParkingVisuals(): void {
+    const now = Date.now();
+
+    const easeInOutCubic = (t: number): number =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    // Pre-compute values that are constant for all trains (performance optimization)
+    const modelScale = getModelScale();
+    const zOffset = this.Z_OFFSET_FACTOR * this.TRAIN_SIZE_METERS * modelScale;
+
+    this.trainMeshes.forEach((meshData) => {
+      const shouldBePerpendicular = meshData.status === 'STOPPED_AT';
+      const wasPerpendicular = meshData.prevStatus === 'STOPPED_AT';
+      const hasActiveAnimation = !!meshData.parkingRotationAnim;
+
+      // Early exit: Skip trains that don't need parking processing
+      // - Not stopped and wasn't stopped (no transition)
+      // - No active animation to process
+      if (!shouldBePerpendicular && !wasPerpendicular && !hasActiveAnimation) {
+        return;
+      }
+
+      const desiredMode: 'hard' | 'none' = shouldBePerpendicular ? 'hard' : 'none';
+      const isCurrentlyPerpendicular = meshData.isParkingRotationApplied === true;
+
+      // Apply ongoing parking rotation animation if present
+      if (meshData.parkingRotationAnim) {
+        const { start, target, startedAt, duration, targetIsPerpendicular } = meshData.parkingRotationAnim;
+        const elapsed = now - startedAt;
+        const progress = Math.min(Math.max(elapsed / duration, 0), 1);
+        const eased = easeInOutCubic(progress);
+        const angle = start + (target - start) * eased;
+        meshData.mesh.rotation.z = angle;
+
+        if (progress >= 1) {
+          meshData.parkingRotationAnim = undefined;
+          meshData.isParkingRotationApplied = targetIsPerpendicular;
+        }
+      }
+
+      // Only trigger parking rotation when transitioning into STOPPED_AT
+      const justStopped = desiredMode === 'hard' && meshData.prevStatus !== 'STOPPED_AT';
+      if (justStopped && !meshData.parkingRotationAnim) {
+        // Train just stopped - calculate parking position
+        const stationId = meshData.stoppedAtStationId;
+        let parkingApplied = false;
+
+        if (stationId) {
+          // Get station coordinates
+          const station = this.stationMap.get(stationId);
+          if (station) {
+            const stationCoords: [number, number] = [
+              station.geometry.coordinates[0],
+              station.geometry.coordinates[1],
+            ];
+
+            // Get the railway line for this train
+            // Try routeId first, then infer from station if null
+            let lineId = extractLineFromRouteId(meshData.routeId);
+            if (!lineId && stationId) {
+              // Try to infer line from the station the train is stopped at
+              const stoppedStation = this.stationMap.get(stationId);
+              if (stoppedStation && stoppedStation.lines && stoppedStation.lines.length > 0) {
+                lineId = stoppedStation.lines[0];
+                trainDebug.parking.info(`Line inferred for parking: ${meshData.vehicleKey} -> ${lineId}`);
+              }
+            }
+            const railway = lineId ? this.railwayLines.get(lineId.toUpperCase()) : null;
+
+            if (railway) {
+              // Calculate parking position with slot offset
+              const parking = calculateParkingPosition(
+                stationId,
+                meshData.vehicleKey,
+                stationCoords,
+                railway,
+                DEFAULT_PARKING_CONFIG,
+                this.currentZoom
+              );
+
+              if (parking) {
+                meshData.parkingPosition = parking;
+
+                // Apply offset position (zOffset is pre-computed outside the loop)
+                const position = getModelPosition(parking.position[0], parking.position[1], 0);
+                meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+
+                // Invalidate screen-space cache since position changed
+                this.screenCandidatesCacheInvalidated = true;
+
+                // CRITICAL: Align logical positions with the parked visual position so
+                // the next poll starts from where the train is actually drawn.
+                // Without this, resuming from STOPPED_AT uses stale track coordinates
+                // and produces a visible teleport from parking slot back to the track.
+                meshData.currentPosition = [parking.position[0], parking.position[1]];
+                meshData.targetPosition = [parking.position[0], parking.position[1]];
+                meshData.currentSnap = undefined;
+                meshData.targetSnap = undefined;
+                meshData.lastUpdate = Date.now();
+
+                // Apply track bearing, then add 90° rotation for perpendicular parking
+                const bearingRad = (-parking.trackBearing * Math.PI) / 180;
+                const trackRotation = bearingRad + this.MODEL_FORWARD_OFFSET;
+                const parkingRotation = trackRotation + Math.PI / 2; // Add 90° for perpendicular
+
+                // Animate rotation into parking instead of snapping
+                meshData.parkingRotationAnim = {
+                  start: meshData.mesh.rotation.z,
+                  target: parkingRotation,
+                  startedAt: now,
+                  duration: this.PARKING_ROTATION_DURATION_MS,
+                  targetIsPerpendicular: true,
+                };
+
+                parkingApplied = true;
+              }
+            }
+          }
+        }
+
+        // If parking calculation failed, still apply 90° rotation AND ensure position is set
+        if (!parkingApplied) {
+          const [currentLng, currentLat] = meshData.currentPosition;
+          const hasValidPosition = Number.isFinite(currentLng) && Number.isFinite(currentLat);
+
+          // Compute lineId with fallback to station inference for logging
+          const logLineId = extractLineFromRouteId(meshData.routeId) ??
+            (stationId ? this.stationMap.get(stationId)?.lines?.[0] : null);
+
+          // Get station snap info for debugging
+          let stationSnapInfo: string | null = null;
+          if (stationId && logLineId) {
+            const station = this.stationMap.get(stationId);
+            const railway = this.railwayLines.get(logLineId.toUpperCase());
+            if (station && railway) {
+              const stationCoords: [number, number] = [
+                station.geometry.coordinates[0],
+                station.geometry.coordinates[1],
+              ];
+              const snapResult = snapTrainToRailway(stationCoords, railway, 1000);
+              stationSnapInfo = snapResult
+                ? `snapped at ${snapResult.metersAway.toFixed(0)}m`
+                : 'no snap within 1000m';
+            }
+          }
+
+          trainDebug.parking.warn(`Parking failed: ${meshData.vehicleKey}`, {
+            stationId,
+            stationFound: !!this.stationMap.get(stationId ?? ''),
+            lineId: logLineId,
+            lineIdSource: extractLineFromRouteId(meshData.routeId) ? 'routeId' : (logLineId ? 'station' : 'none'),
+            railwayFound: !!this.railwayLines.get(logLineId?.toUpperCase() ?? ''),
+            hasValidPosition,
+            stationSnapInfo,
+            trainCoords: hasValidPosition ? `${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}` : 'invalid',
+          });
+          trainDebug.addMeshParkingFailed(meshData.vehicleKey);
+
+          // CRITICAL: Explicitly set position when parking fails to ensure train is visible
+          // Previously this relied on animatePositions, but that could fail in edge cases
+          // (zOffset is pre-computed outside the loop)
+          if (hasValidPosition) {
+            const position = getModelPosition(currentLng, currentLat, 0);
+            meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+
+            // Invalidate screen-space cache since we're setting position
+            this.screenCandidatesCacheInvalidated = true;
+
+            // Log the actual mesh position for debugging
+            trainDebug.parking.info(`Fallback position set: ${meshData.vehicleKey}`, {
+              meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
+              scale: meshData.mesh.scale.x.toExponential(4),
+              inScene: meshData.mesh.parent !== null,
+            });
+          } else {
+            trainDebug.parking.error(`Invalid position - cannot render: ${meshData.vehicleKey}`, {
+              currentPosition: meshData.currentPosition,
+              targetPosition: meshData.targetPosition,
+            });
+            trainDebug.addMeshInvalidPosition(meshData.vehicleKey);
+          }
+
+          meshData.parkingRotationAnim = {
+            start: meshData.mesh.rotation.z,
+            target: meshData.mesh.rotation.z + Math.PI / 2,
+            startedAt: now,
+            duration: this.PARKING_ROTATION_DURATION_MS,
+            targetIsPerpendicular: true,
+          };
+        }
+      } else if (desiredMode === 'none' && (isCurrentlyPerpendicular || meshData.parkingRotationAnim || wasPerpendicular)) {
+        // Train started moving - clear parking data and rotate back to track bearing smoothly
+        const baseRotation =
+          (meshData.targetSnap?.bearing ?? meshData.currentSnap?.bearing ?? 0) * -Math.PI / 180 +
+          this.MODEL_FORWARD_OFFSET;
+
+        meshData.parkingPosition = undefined;
+        meshData.parkingRotationAnim = {
+          start: meshData.mesh.rotation.z,
+          target: baseRotation,
+          startedAt: now,
+          duration: this.PARKING_ROTATION_DURATION_MS,
+          targetIsPerpendicular: false,
+        };
+        meshData.isParkingRotationApplied = false;
+      }
+
+      // Track soft park state in prevStatus proxy to avoid retriggers
+      meshData.prevStatus = shouldBePerpendicular ? 'STOPPED_AT' : meshData.status;
+    });
   }
 }
