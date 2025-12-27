@@ -19,6 +19,7 @@ from poll_to_postgres import ensure_schema
 
 LOGGER = logging.getLogger(__name__)
 BATCH_SIZE = 2000
+NETWORK = "renfe"
 
 
 def parse_args() -> argparse.Namespace:
@@ -113,12 +114,17 @@ def _download_zip(url: str, dest: Path) -> Path:
     return dest
 
 
-def truncate_dimensions(conn: psycopg2.extensions.connection) -> None:
+def delete_renfe_data(conn: psycopg2.extensions.connection) -> None:
+    """Delete Renfe dimension data before reload (preserves other networks like TMB)."""
     with conn.cursor() as cur:
-        cur.execute(
-            "TRUNCATE TABLE dim_stop_times, dim_trips, dim_routes, dim_stops RESTART IDENTITY CASCADE"
-        )
+        # Delete in order respecting foreign keys
+        cur.execute("DELETE FROM dim_shapes WHERE network = %s", (NETWORK,))
+        cur.execute("DELETE FROM dim_stop_times WHERE network = %s", (NETWORK,))
+        cur.execute("DELETE FROM dim_trips WHERE network = %s", (NETWORK,))
+        cur.execute("DELETE FROM dim_stops WHERE network = %s", (NETWORK,))
+        cur.execute("DELETE FROM dim_routes WHERE network = %s", (NETWORK,))
     conn.commit()
+    LOGGER.info("Deleted existing %s dimension data", NETWORK)
 
 
 def load_routes(conn: psycopg2.extensions.connection, reader: Iterable[dict[str, str]]) -> int:
@@ -144,6 +150,7 @@ def load_routes(conn: psycopg2.extensions.connection, reader: Iterable[dict[str,
                     route_type,
                     color,
                     text_color,
+                    NETWORK,
                 )
             )
             count += 1
@@ -153,8 +160,8 @@ def load_routes(conn: psycopg2.extensions.connection, reader: Iterable[dict[str,
                     """
                     INSERT INTO dim_routes (
                         route_id, line_code, short_name, long_name,
-                        route_type, color, text_color
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        route_type, color, text_color, network
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     rows,
                 )
@@ -165,8 +172,8 @@ def load_routes(conn: psycopg2.extensions.connection, reader: Iterable[dict[str,
                 """
                 INSERT INTO dim_routes (
                     route_id, line_code, short_name, long_name,
-                    route_type, color, text_color
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    route_type, color, text_color, network
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 rows,
             )
@@ -187,15 +194,15 @@ def load_stops(conn: psycopg2.extensions.connection, reader: Iterable[dict[str, 
             lat = _to_float(row.get("stop_lat"))
             lon = _to_float(row.get("stop_lon"))
             wheelchair = _to_int(row.get("wheelchair_boarding"))
-            rows.append((stop_id, name, lat, lon, wheelchair))
+            rows.append((stop_id, name, lat, lon, wheelchair, NETWORK))
             count += 1
             if len(rows) >= BATCH_SIZE:
                 execute_batch(
                     cur,
                     """
                     INSERT INTO dim_stops (
-                        stop_id, name, lat, lon, wheelchair_boarding
-                    ) VALUES (%s, %s, %s, %s, %s)
+                        stop_id, name, lat, lon, wheelchair_boarding, network
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
                     """,
                     rows,
                 )
@@ -205,8 +212,8 @@ def load_stops(conn: psycopg2.extensions.connection, reader: Iterable[dict[str, 
                 cur,
                 """
                 INSERT INTO dim_stops (
-                    stop_id, name, lat, lon, wheelchair_boarding
-                ) VALUES (%s, %s, %s, %s, %s)
+                    stop_id, name, lat, lon, wheelchair_boarding, network
+                ) VALUES (%s, %s, %s, %s, %s, %s)
                 """,
                 rows,
             )
@@ -228,15 +235,15 @@ def load_trips(conn: psycopg2.extensions.connection, reader: Iterable[dict[str, 
             shape_id = _clean(row.get("shape_id"))
             block_id = _clean(row.get("block_id"))
             wheelchair = _to_int(row.get("wheelchair_accessible"))
-            rows.append((trip_id, route_id, service_id, shape_id, block_id, wheelchair))
+            rows.append((trip_id, route_id, service_id, shape_id, block_id, wheelchair, NETWORK))
             count += 1
             if len(rows) >= BATCH_SIZE:
                 execute_batch(
                     cur,
                     """
                     INSERT INTO dim_trips (
-                        trip_id, route_id, service_id, shape_id, block_id, wheelchair_accessible
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
+                        trip_id, route_id, service_id, shape_id, block_id, wheelchair_accessible, network
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """,
                     rows,
                 )
@@ -246,8 +253,8 @@ def load_trips(conn: psycopg2.extensions.connection, reader: Iterable[dict[str, 
                 cur,
                 """
                 INSERT INTO dim_trips (
-                    trip_id, route_id, service_id, shape_id, block_id, wheelchair_accessible
-                ) VALUES (%s, %s, %s, %s, %s, %s)
+                    trip_id, route_id, service_id, shape_id, block_id, wheelchair_accessible, network
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
                 rows,
             )
@@ -288,6 +295,7 @@ def load_stop_times(
                     stop_id,
                     arrival_seconds,
                     departure_seconds,
+                    NETWORK,
                 )
             )
             count += 1
@@ -296,8 +304,8 @@ def load_stop_times(
                     cur,
                     """
                     INSERT INTO dim_stop_times (
-                        trip_id, stop_sequence, stop_id, arrival_seconds, departure_seconds
-                    ) VALUES (%s, %s, %s, %s, %s)
+                        trip_id, stop_sequence, stop_id, arrival_seconds, departure_seconds, network
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
                     """,
                     rows,
                 )
@@ -307,8 +315,8 @@ def load_stop_times(
                 cur,
                 """
                 INSERT INTO dim_stop_times (
-                    trip_id, stop_sequence, stop_id, arrival_seconds, departure_seconds
-                ) VALUES (%s, %s, %s, %s, %s)
+                    trip_id, stop_sequence, stop_id, arrival_seconds, departure_seconds, network
+                ) VALUES (%s, %s, %s, %s, %s, %s)
                 """,
                 rows,
             )
@@ -337,8 +345,8 @@ def main() -> None:
         LOGGER.info("Ensuring dimension tables exist before reload.")
         ensure_schema(conn)
 
-        LOGGER.info("Truncating dimension tables before reload.")
-        truncate_dimensions(conn)
+        LOGGER.info("Deleting existing Renfe dimension data before reload.")
+        delete_renfe_data(conn)
 
         with zipfile.ZipFile(zip_path) as zf:
             LOGGER.info("Loading routes.txt")

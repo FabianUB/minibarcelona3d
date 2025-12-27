@@ -1,0 +1,49 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.163269,
+          41.368956
+        ]
+      },
+      "properties": {
+        "id": "1.9902",
+        "name": "Parc de Montjuïc",
+        "stop_code": "9902",
+        "lines": [
+          "FM"
+        ],
+        "primary_color": "#004C38",
+        "colors": [
+          "#004C38"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.168853,
+          41.373847
+        ]
+      },
+      "properties": {
+        "id": "1.9901",
+        "name": "Paral·lel",
+        "stop_code": "9901",
+        "lines": [
+          "FM"
+        ],
+        "primary_color": "#004C38",
+        "colors": [
+          "#004C38"
+        ]
+      }
+    }
+  ]
+}

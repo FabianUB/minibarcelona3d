@@ -508,6 +508,9 @@ def fetch_latest_archive_date(
 
 def ensure_schema(conn: psycopg2.extensions.connection) -> None:
     statements = [
+        # =====================================================================
+        # Dimension Tables (Static GTFS Data)
+        # =====================================================================
         """
         CREATE TABLE IF NOT EXISTS dim_routes (
             route_id TEXT PRIMARY KEY,
@@ -520,6 +523,18 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             updated_at TIMESTAMPTZ DEFAULT now()
         );
         """,
+        # Multi-network support: add network column (Phase 1 migration)
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_routes' AND column_name = 'network'
+            ) THEN
+                ALTER TABLE dim_routes ADD COLUMN network TEXT NOT NULL DEFAULT 'renfe';
+            END IF;
+        END $$;
+        """,
         """
         CREATE TABLE IF NOT EXISTS dim_trips (
             trip_id TEXT PRIMARY KEY,
@@ -531,6 +546,30 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             updated_at TIMESTAMPTZ DEFAULT now()
         );
         """,
+        # Multi-network support: add network, direction_id, trip_headsign columns
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_trips' AND column_name = 'network'
+            ) THEN
+                ALTER TABLE dim_trips ADD COLUMN network TEXT NOT NULL DEFAULT 'renfe';
+            END IF;
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_trips' AND column_name = 'direction_id'
+            ) THEN
+                ALTER TABLE dim_trips ADD COLUMN direction_id INTEGER;
+            END IF;
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_trips' AND column_name = 'trip_headsign'
+            ) THEN
+                ALTER TABLE dim_trips ADD COLUMN trip_headsign TEXT;
+            END IF;
+        END $$;
+        """,
         """
         CREATE TABLE IF NOT EXISTS dim_stops (
             stop_id TEXT PRIMARY KEY,
@@ -540,6 +579,36 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             wheelchair_boarding INTEGER,
             updated_at TIMESTAMPTZ DEFAULT now()
         );
+        """,
+        # Multi-network support: add network, stop_code, location_type, parent_station
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_stops' AND column_name = 'network'
+            ) THEN
+                ALTER TABLE dim_stops ADD COLUMN network TEXT NOT NULL DEFAULT 'renfe';
+            END IF;
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_stops' AND column_name = 'stop_code'
+            ) THEN
+                ALTER TABLE dim_stops ADD COLUMN stop_code TEXT;
+            END IF;
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_stops' AND column_name = 'location_type'
+            ) THEN
+                ALTER TABLE dim_stops ADD COLUMN location_type INTEGER DEFAULT 0;
+            END IF;
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_stops' AND column_name = 'parent_station'
+            ) THEN
+                ALTER TABLE dim_stops ADD COLUMN parent_station TEXT;
+            END IF;
+        END $$;
         """,
         """
         CREATE TABLE IF NOT EXISTS dim_stop_times (
@@ -551,9 +620,38 @@ def ensure_schema(conn: psycopg2.extensions.connection) -> None:
             PRIMARY KEY (trip_id, stop_sequence)
         );
         """,
+        # Multi-network support: add network column
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'dim_stop_times' AND column_name = 'network'
+            ) THEN
+                ALTER TABLE dim_stop_times ADD COLUMN network TEXT NOT NULL DEFAULT 'renfe';
+            END IF;
+        END $$;
+        """,
         """
         CREATE INDEX IF NOT EXISTS dim_stop_times_by_trip_stop_idx
             ON dim_stop_times (trip_id, stop_id);
+        """,
+        # =====================================================================
+        # Shapes Table (Line Geometries) - NEW for multi-network support
+        # =====================================================================
+        """
+        CREATE TABLE IF NOT EXISTS dim_shapes (
+            network TEXT NOT NULL DEFAULT 'renfe',
+            shape_id TEXT NOT NULL,
+            shape_pt_sequence INTEGER NOT NULL,
+            shape_pt_lat DOUBLE PRECISION NOT NULL,
+            shape_pt_lon DOUBLE PRECISION NOT NULL,
+            PRIMARY KEY (shape_id, shape_pt_sequence)
+        );
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS dim_shapes_by_network_shape_idx
+            ON dim_shapes (network, shape_id);
         """,
         """
         CREATE TABLE IF NOT EXISTS rt_snapshots (

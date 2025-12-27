@@ -1,0 +1,65 @@
+{
+  "network": "tmb",
+  "generated_at": "2025-12-27T19:21:26.142907+00:00",
+  "files": [
+    {
+      "type": "metro_stations",
+      "path": "metro/stations.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L1",
+      "path": "metro/lines/L1.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L2",
+      "path": "metro/lines/L2.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L3",
+      "path": "metro/lines/L3.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L4",
+      "path": "metro/lines/L4.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L5",
+      "path": "metro/lines/L5.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L9N",
+      "path": "metro/lines/L9N.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L9S",
+      "path": "metro/lines/L9S.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L10N",
+      "path": "metro/lines/L10N.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L10S",
+      "path": "metro/lines/L10S.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L11",
+      "path": "metro/lines/L11.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "FM",
+      "path": "metro/lines/FM.geojson"
+    }
+  ]
+}
