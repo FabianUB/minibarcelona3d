@@ -11,6 +11,8 @@ import type {
   Station,
   StationFeatureCollection,
 } from '../../types/rodalies';
+import type { RodaliesLineResolver } from '../trains/lineResolver';
+import { preprocessRailwayLine, snapTrainToRailway } from '../trains/geometry';
 
 const RODALIES_DATA_ROOT = 'rodalies_data';
 const MANIFEST_FILENAME = 'manifest.json';
@@ -324,4 +326,101 @@ function validateHighlightMode(
     return mode;
   }
   return 'none';
+}
+
+/**
+ * Precompute and cache line bearings at all stations
+ *
+ * For each station, for each line that serves it:
+ * 1. Snap the station position to the line's geometry
+ * 2. Extract the bearing at that snap point
+ * 3. Store in the LineResolver's bearing cache
+ *
+ * This computation happens once at load time to avoid per-frame calculations
+ * during rendering and position updates.
+ *
+ * Phase 0, Task T000c
+ *
+ * @param lineResolver - RodaliesLineResolver to populate with bearings
+ * @param manifest - Optional manifest (uses cached if not provided)
+ * @returns Number of line-station bearings computed
+ */
+export async function precomputeLineBearings(
+  lineResolver: RodaliesLineResolver,
+  manifest?: RodaliesManifest,
+): Promise<number> {
+  const [stations, lineGeometries, lines] = await Promise.all([
+    loadStationList(manifest),
+    loadLineGeometryCollection(manifest),
+    loadRodaliesLines(manifest),
+  ]);
+
+  // Build a map of line geometries for quick lookup
+  const lineGeometryMap = new Map(
+    lineGeometries.features.map((feature) => [
+      feature.properties.id,
+      feature.geometry,
+    ]),
+  );
+
+  // Build a set of line IDs for validation
+  const lineIdSet = new Set(lines.map((line) => line.id));
+
+  let bearingsComputed = 0;
+
+  // For each station
+  for (const station of stations) {
+    const stationPosition: [number, number] = [
+      station.geometry.coordinates[0],
+      station.geometry.coordinates[1],
+    ];
+
+    // For each line that serves this station
+    for (const lineId of station.lines) {
+      // Validate line exists
+      if (!lineIdSet.has(lineId)) {
+        console.warn(
+          `Station ${station.id} references unknown line ${lineId}. Skipping bearing computation.`,
+        );
+        continue;
+      }
+
+      // Get line geometry
+      const geometry = lineGeometryMap.get(lineId);
+      if (!geometry) {
+        console.warn(
+          `No geometry found for line ${lineId} at station ${station.id}. Skipping bearing computation.`,
+        );
+        continue;
+      }
+
+      // Preprocess railway line for snapping
+      const preprocessed = preprocessRailwayLine(geometry);
+      if (!preprocessed) {
+        console.warn(
+          `Failed to preprocess geometry for line ${lineId}. Skipping bearing computation.`,
+        );
+        continue;
+      }
+
+      // Snap station to railway line to get bearing
+      const snapResult = snapTrainToRailway(stationPosition, preprocessed);
+      if (!snapResult) {
+        console.warn(
+          `Failed to snap station ${station.id} to line ${lineId}. Skipping bearing computation.`,
+        );
+        continue;
+      }
+
+      // Store bearing in cache
+      lineResolver.setBearingAtStation(lineId, station.id, snapResult.bearing);
+
+      // Also store membership (line serves station)
+      lineResolver.setLineServesStation(lineId, station.id, true);
+
+      bearingsComputed++;
+    }
+  }
+
+  return bearingsComputed;
 }

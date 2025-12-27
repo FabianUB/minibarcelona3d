@@ -139,6 +139,14 @@ export interface RailwaySegment {
 export interface PreprocessedRailwayLine {
   segments: RailwaySegment[];
   totalLength: number;
+  /** Line identifier (e.g., "R1", "R4") - optional, used by pathFinder */
+  lineId?: string;
+  /** All coordinates along the line - derived from segments for pathFinder */
+  coordinates?: Position[];
+  /** Cumulative distances at each coordinate point */
+  cumulativeDistances?: number[];
+  /** Bearings for each segment */
+  segmentBearings?: number[];
 }
 
 export interface RailwaySnapResult {
@@ -252,9 +260,28 @@ export function preprocessRailwayLine(geometry: RodaliesLineGeometry): Preproces
     return null;
   }
 
+  // Build arrays for pathFinder compatibility
+  const coordinates: Position[] = [];
+  const cumulativeDistances: number[] = [];
+  const segmentBearings: number[] = [];
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    if (i === 0) {
+      coordinates.push(seg.start);
+      cumulativeDistances.push(seg.startDistance);
+    }
+    coordinates.push(seg.end);
+    cumulativeDistances.push(seg.endDistance);
+    segmentBearings.push(seg.bearing);
+  }
+
   return {
     segments,
     totalLength,
+    coordinates,
+    cumulativeDistances,
+    segmentBearings,
   };
 }
 
@@ -327,8 +354,13 @@ export function sampleRailwayPosition(
   distance: number
 ): { position: Position; bearing: number } {
   if (railway.segments.length === 0) {
+    // This should never happen - preprocessRailwayLine returns null for empty geometry
+    // Log warning to help debug if this edge case ever occurs
+    console.warn('sampleRailwayPosition called with empty railway segments - this indicates a bug');
+    // Return a position that will be obviously wrong (Barcelona city center)
+    // rather than [0,0] which is in the Atlantic Ocean
     return {
-      position: [0, 0],
+      position: [2.1734, 41.3851], // Barcelona fallback
       bearing: 0,
     };
   }
