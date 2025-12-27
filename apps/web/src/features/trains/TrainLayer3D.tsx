@@ -778,7 +778,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         onRaycastResult?.({
           hit: true,
           vehicleKey: hit.vehicleKey,
-          routeId: hit.routeId,
+          routeId: hit.routeId ?? undefined,
           objectsHit: 1,
           timestamp: Date.now(),
         });
