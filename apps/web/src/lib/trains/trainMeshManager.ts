@@ -34,7 +34,6 @@ import {
 } from './stationParking';
 import type { TripDetails } from '../../types/trains';
 import {
-  calculatePredictivePosition,
   DEFAULT_PREDICTIVE_CONFIG,
   type PredictiveConfig,
 } from './predictiveCalculator';
@@ -156,7 +155,6 @@ export class TrainMeshManager {
   private readonly DEBUG_LIMIT = 10;
   private updateCallCount = 0;
   private readonly debugMeshes: THREE.Object3D[] = [];
-  private _debugWorldLogsRemaining = 3;
   private readonly MAX_SNAP_DISTANCE_METERS = 200;
   private readonly INTERPOLATION_DURATION_MS = 30000;
   private readonly MIN_INTERPOLATION_DURATION_MS = 1000;
@@ -1916,81 +1914,6 @@ export class TrainMeshManager {
   }
 
   /**
-   * Try to calculate predictive position for a train mesh
-   * Phase 4: Uses schedule data when GPS is stale
-   *
-   * NOTE: This method is fully implemented but NOT YET INTEGRATED into the animation loop.
-   * To enable predictive positioning:
-   * 1. Call this method in animatePositions() when GPS data is stale
-   * 2. Use the returned position/bearing instead of interpolating between poll positions
-   * 3. Populate tripDetailsCache via setTripDetails() with trip schedules
-   *
-   * The decision to skip integration (Phase 5) was made to keep the current
-   * interpolation approach which works well without requiring trip schedule data.
-   *
-   * @param meshData - Train mesh data
-   * @param currentTime - Current timestamp in ms
-   * @returns Predictive result or null if not available
-   */
-  private _tryPredictivePosition(
-    meshData: TrainMeshData,
-    currentTime: number
-  ): { position: [number, number]; bearing: number; source: 'gps' | 'predicted' | 'blended'; confidence: number } | null {
-    // If the train is stopped, don't use predictive positioning
-    if (meshData.status === 'STOPPED_AT') {
-      return null;
-    }
-
-    // For INCOMING_AT trains, use simple interpolation toward station
-    // This doesn't require trip details - just move toward nextStopId
-    if (meshData.status === 'INCOMING_AT' && meshData.nextStopId) {
-      return this.tryIncomingAtInterpolation(meshData, currentTime);
-    }
-
-    // For IN_TRANSIT_TO, try full predictive if we have trip details
-    if (meshData.tripId) {
-      const tripDetails = this.tripDetailsCache.get(meshData.tripId);
-      if (tripDetails && tripDetails.stopTimes.length >= 2) {
-        // Create a minimal TrainPosition-like object for the calculator
-        const trainData = {
-          vehicleKey: meshData.vehicleKey,
-          latitude: meshData.targetPosition[1],
-          longitude: meshData.targetPosition[0],
-          nextStopId: meshData.nextStopId ?? null,
-          routeId: meshData.routeId,
-          status: meshData.status as 'IN_TRANSIT_TO' | 'STOPPED_AT' | 'INCOMING_AT',
-          polledAtUtc: new Date(meshData.lastUpdate).toISOString(),
-        };
-
-        const result = calculatePredictivePosition(
-          trainData,
-          tripDetails,
-          currentTime,
-          this.railwayLines,
-          this.stationMap,
-          this.predictiveConfig
-        );
-
-        if (result) {
-          return {
-            position: result.position,
-            bearing: result.bearing,
-            source: result.source,
-            confidence: result.confidence,
-          };
-        }
-      }
-    }
-
-    // Fallback: For IN_TRANSIT_TO without trip details, try simple interpolation
-    if (meshData.status === 'IN_TRANSIT_TO' && meshData.nextStopId) {
-      return this.tryIncomingAtInterpolation(meshData, currentTime);
-    }
-
-    return null;
-  }
-
-  /**
    * Determine which station ID to use for STOPPED_AT trains.
    * Prefer the current stop, then next, then previous (as a last resort).
    */
@@ -2005,96 +1928,6 @@ export class TrainMeshManager {
       previous ??
       undefined
     );
-  }
-
-  /**
-   * Simple interpolation for INCOMING_AT trains toward their next station
-   * Phase 4: Fallback when trip details aren't available
-   *
-   * Uses time since last GPS update to estimate progress toward station.
-   * Interpolates along the railway line for realistic movement.
-   * Assumes train is close to station and will arrive within ~30 seconds.
-   */
-  private tryIncomingAtInterpolation(
-    meshData: TrainMeshData,
-    currentTime: number
-  ): { position: [number, number]; bearing: number; source: 'predicted'; confidence: number } | null {
-    const station = this.stationMap.get(meshData.nextStopId!);
-    if (!station) {
-      // Debug: Log when station lookup fails
-      if (this.debugCount < 5) {
-        trainDebug.mesh.debug('Station not found for nextStopId', {
-          stopId: meshData.nextStopId,
-          availableSample: Array.from(this.stationMap.keys()).slice(0, 5),
-        });
-        this.debugCount++;
-      }
-      return null;
-    }
-
-    const stationCoords: [number, number] = [
-      station.geometry.coordinates[0],
-      station.geometry.coordinates[1],
-    ];
-
-    // Get railway line for snapping
-    const lineId = extractLineFromRouteId(meshData.routeId);
-    const railway = lineId ? this.railwayLines.get(lineId.toUpperCase()) : null;
-
-    // Calculate time since last update
-    const timeSinceUpdate = currentTime - meshData.lastUpdate;
-
-    // For INCOMING_AT, assume train will reach station in ~30 seconds from when it was marked incoming
-    // This creates a smooth approach animation
-    const INCOMING_DURATION_MS = 30000; // 30 seconds
-    const progress = Math.min(timeSinceUpdate / INCOMING_DURATION_MS, 1.0);
-
-    // Current train position
-    const currentPos = meshData.targetPosition;
-
-    // Try to interpolate along railway line if available
-    if (railway) {
-      // Snap current position and station to railway
-      const currentSnap = snapTrainToRailway(currentPos, railway, 500);
-      const stationSnap = snapTrainToRailway(stationCoords, railway, 500);
-
-      if (currentSnap && stationSnap) {
-        // Interpolate along railway using distances
-        const startDistance = currentSnap.distance;
-        const endDistance = stationSnap.distance;
-        const interpolatedDistance = startDistance + (endDistance - startDistance) * progress;
-
-        // Sample position along railway
-        const sample = sampleRailwayPosition(railway, interpolatedDistance);
-        const travellingForward = endDistance >= startDistance;
-
-        return {
-          position: [sample.position[0], sample.position[1]],
-          bearing: travellingForward ? sample.bearing : (sample.bearing + 180) % 360,
-          source: 'predicted',
-          confidence: 0.7,
-        };
-      }
-    }
-
-    // Fallback: linear interpolation (only if no railway available)
-    const interpolatedPosition: [number, number] = [
-      currentPos[0] + (stationCoords[0] - currentPos[0]) * progress,
-      currentPos[1] + (stationCoords[1] - currentPos[1]) * progress,
-    ];
-
-    // Calculate bearing toward station
-    const bearing = calculateBearing(
-      currentPos[1], currentPos[0],
-      stationCoords[1], stationCoords[0]
-    );
-
-    return {
-      position: interpolatedPosition,
-      bearing,
-      source: 'predicted',
-      confidence: 0.5,
-    };
   }
 
   private lastAnimateLogTime = 0;

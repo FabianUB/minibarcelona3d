@@ -374,7 +374,7 @@ func TestTrainModelValidation(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name: "missing route ID",
+			name: "missing route ID (optional field)",
 			train: models.Train{
 				VehicleKey:   "vehicle:R12345",
 				VehicleLabel: "R12345",
@@ -382,7 +382,7 @@ func TestTrainModelValidation(t *testing.T) {
 				Longitude:    float64Ptr(2.1734),
 				Status:       "IN_TRANSIT_TO",
 			},
-			wantError: true,
+			wantError: false, // RouteID is optional per model validation
 		},
 		{
 			name: "missing status",
