@@ -1,0 +1,216 @@
+/**
+ * Data loader for Barcelona Metro static data.
+ * Uses promise caching to prevent duplicate fetches.
+ */
+
+import type {
+  TmbManifest,
+  MetroStationCollection,
+  MetroLineCollection,
+  MetroLine,
+} from '../../types/metro';
+import { METRO_LINES } from '../../types/metro';
+
+const TMB_DATA_ROOT = 'tmb_data';
+const MANIFEST_FILENAME = 'manifest.json';
+
+const baseUrl =
+  (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/';
+
+// Promise caches
+let manifestPromise: Promise<TmbManifest> | null = null;
+let metroStationsPromise: Promise<MetroStationCollection> | null = null;
+const metroLineCache = new Map<string, Promise<MetroLineCollection>>();
+let allMetroLinesPromise: Promise<MetroLineCollection> | null = null;
+
+/**
+ * Load the TMB manifest file
+ */
+export async function loadTmbManifest(): Promise<TmbManifest> {
+  if (!manifestPromise) {
+    manifestPromise = fetchJson<TmbManifest>(
+      resolveFromBase(`${TMB_DATA_ROOT}/${MANIFEST_FILENAME}`)
+    );
+  }
+  return manifestPromise;
+}
+
+/**
+ * Load Metro stations GeoJSON
+ */
+export async function loadMetroStations(
+  manifest?: TmbManifest
+): Promise<MetroStationCollection> {
+  if (!metroStationsPromise) {
+    metroStationsPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const stationsFile = manifestData.files.find(
+        (f) => f.type === 'metro_stations'
+      );
+      if (!stationsFile) {
+        throw new Error('TMB manifest is missing metro_stations entry');
+      }
+      const url = resolveAssetUrl(stationsFile.path);
+      return fetchJson<MetroStationCollection>(url);
+    })();
+  }
+  return metroStationsPromise;
+}
+
+/**
+ * Load a single Metro line geometry
+ */
+export async function loadMetroLine(
+  lineCode: string,
+  manifest?: TmbManifest
+): Promise<MetroLineCollection> {
+  const normalizedCode = lineCode.trim().toUpperCase();
+
+  if (!metroLineCache.has(normalizedCode)) {
+    metroLineCache.set(
+      normalizedCode,
+      (async () => {
+        const manifestData = manifest ?? (await loadTmbManifest());
+        const lineFile = manifestData.files.find(
+          (f) => f.type === 'metro_line' && f.line_code === lineCode
+        );
+        if (!lineFile) {
+          throw new Error(`Metro line ${lineCode} not found in manifest`);
+        }
+        const url = resolveAssetUrl(lineFile.path);
+        return fetchJson<MetroLineCollection>(url);
+      })()
+    );
+  }
+
+  return metroLineCache.get(normalizedCode)!;
+}
+
+/**
+ * Load all Metro line geometries as a single FeatureCollection
+ */
+export async function loadAllMetroLines(
+  manifest?: TmbManifest
+): Promise<MetroLineCollection> {
+  if (!allMetroLinesPromise) {
+    allMetroLinesPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const lineFiles = manifestData.files.filter(
+        (f) => f.type === 'metro_line'
+      );
+
+      // Load all line files in parallel
+      const lineCollections = await Promise.all(
+        lineFiles.map(async (file) => {
+          const url = resolveAssetUrl(file.path);
+          return fetchJson<MetroLineCollection>(url);
+        })
+      );
+
+      // Merge all features into a single FeatureCollection
+      const allFeatures = lineCollections.flatMap((c) => c.features);
+
+      return {
+        type: 'FeatureCollection' as const,
+        features: allFeatures,
+      };
+    })();
+  }
+  return allMetroLinesPromise;
+}
+
+/**
+ * Get Metro line metadata (colors, names)
+ */
+export function getMetroLines(): MetroLine[] {
+  return METRO_LINES;
+}
+
+/**
+ * Get Metro line by code
+ */
+export function getMetroLineByCode(lineCode: string): MetroLine | undefined {
+  return METRO_LINES.find(
+    (line) => line.lineCode.toUpperCase() === lineCode.toUpperCase()
+  );
+}
+
+/**
+ * Get available Metro line codes from manifest
+ */
+export async function getAvailableMetroLineCodes(
+  manifest?: TmbManifest
+): Promise<string[]> {
+  const manifestData = manifest ?? (await loadTmbManifest());
+  return manifestData.files
+    .filter((f) => f.type === 'metro_line' && f.line_code)
+    .map((f) => f.line_code!);
+}
+
+// --- Helper functions ---
+
+function resolveAssetUrl(path: string): string {
+  return resolveFromBase(
+    path.startsWith(TMB_DATA_ROOT)
+      ? path
+      : `${TMB_DATA_ROOT}/${stripLeadingSlash(path)}`
+  );
+}
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    credentials: 'same-origin',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to fetch ${url}: ${response.status} ${response.statusText}`;
+
+    if (response.status === 404) {
+      errorMessage = `Resource not found: ${url}. Check that the file exists in the public/tmb_data directory.`;
+    } else if (response.status === 403) {
+      errorMessage = `Access forbidden: ${url}. Check file permissions.`;
+    } else if (response.status >= 500) {
+      errorMessage = `Server error loading ${url}: ${response.status}. Please try again later.`;
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  try {
+    return (await response.json()) as T;
+  } catch (parseError) {
+    throw new Error(
+      `Invalid JSON in ${url}: ${parseError instanceof Error ? parseError.message : 'Parse error'}`
+    );
+  }
+}
+
+function resolveFromBase(path: string): string {
+  if (isAbsoluteUrl(path)) {
+    return path;
+  }
+  const sanitizedPath = `/${stripLeadingSlash(path)}`;
+  const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  return `${base}${sanitizedPath}`;
+}
+
+function stripLeadingSlash(path: string): string {
+  return path.startsWith('/') ? path.slice(1) : path;
+}
+
+function isAbsoluteUrl(path: string): boolean {
+  return /^https?:\/\//i.test(path);
+}
+
+/**
+ * Clear all cached data (useful for testing or forced refresh)
+ */
+export function clearMetroCache(): void {
+  manifestPromise = null;
+  metroStationsPromise = null;
+  metroLineCache.clear();
+  allMetroLinesPromise = null;
+}
