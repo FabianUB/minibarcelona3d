@@ -11,6 +11,7 @@
 import { useEffect, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { useStationMarkers } from './hooks/useStationMarkers';
+import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 // import { useStationHover } from './hooks/useStationHover'; // TODO: Re-enable when hover is active
 
 export interface StationLayerProps {
@@ -65,29 +66,7 @@ export function StationLayer({
     highlightMode,
   });
   const [isClickable, setIsClickable] = useState(false);
-  const [isStyleLoaded, setIsStyleLoaded] = useState(() => map?.isStyleLoaded() ?? false);
-
-  // Listen for style load event
-  useEffect(() => {
-    if (!map) return;
-
-    if (map.isStyleLoaded()) {
-      setIsStyleLoaded(true);
-      return;
-    }
-
-    const handleStyleLoad = () => {
-      setIsStyleLoaded(true);
-    };
-
-    map.on('style.load', handleStyleLoad);
-    map.on('load', handleStyleLoad);
-
-    return () => {
-      map.off('style.load', handleStyleLoad);
-      map.off('load', handleStyleLoad);
-    };
-  }, [map]);
+  const styleReady = useMapStyleReady(map);
 
   useEffect(() => {
     if (!map) return;
@@ -115,7 +94,7 @@ export function StationLayer({
     if (!map || !geoJSON || isLoading || error) return;
 
     // Guard against map being in invalid state (style not loaded or removed)
-    if (!isStyleLoaded) return;
+    if (!styleReady) return;
 
     // Check if source already exists
     if (map.getSource(SOURCE_ID)) {
@@ -213,22 +192,22 @@ export function StationLayer({
         map.removeSource(SOURCE_ID);
       }
     };
-  }, [map, geoJSON, isLoading, error, isStyleLoaded]);
+  }, [map, geoJSON, isLoading, error, styleReady]);
 
   // Update layer styles when highlighting changes
   useEffect(() => {
-    if (!map || !isStyleLoaded || !map.getLayer(LAYER_ID_LOW)) return;
+    if (!map || !styleReady || !map.getLayer(LAYER_ID_LOW)) return;
 
     const isAnyLineHighlighted = highlightMode !== 'none' && highlightedLineIds.length > 0;
     const isDimmed = highlightMode === 'isolate' && isAnyLineHighlighted;
     const iconOpacity = isDimmed ? 0.3 : 1.0;
 
     map.setPaintProperty(LAYER_ID_LOW, 'icon-opacity', iconOpacity);
-  }, [map, highlightedLineIds, highlightMode]);
+  }, [map, highlightedLineIds, highlightMode, styleReady]);
 
   // Add click handlers
   useEffect(() => {
-    if (!map || !map.isStyleLoaded() || !map.getLayer(LAYER_ID_LOW)) return;
+    if (!map || !styleReady || !map.getLayer(LAYER_ID_LOW)) return;
 
     const interactiveLayers = [LAYER_ID_LOW];
 
@@ -279,12 +258,12 @@ export function StationLayer({
     return () => {
       unregisterHandlers();
     };
-  }, [map, geoJSON, isLoading, error, onStationClick, isClickable]);
+  }, [map, geoJSON, isLoading, error, onStationClick, isClickable, styleReady]);
 
   // Add hover handlers if provided
   useEffect(() => {
     if (!map || !onStationHover || !isClickable) return;
-    if (!map.isStyleLoaded() || !map.getLayer(LAYER_ID_LOW)) return;
+    if (!styleReady || !map.getLayer(LAYER_ID_LOW)) return;
 
     const interactiveLayers = [LAYER_ID_LOW];
 
@@ -325,7 +304,7 @@ export function StationLayer({
     return () => {
       unregisterHandlers();
     };
-  }, [map, geoJSON, isLoading, error, onStationHover, isClickable]);
+  }, [map, geoJSON, isLoading, error, onStationHover, isClickable, styleReady]);
 
 
   // Register teardrop icon for station markers

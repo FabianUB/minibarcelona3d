@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadAllMetroLines } from '../../lib/metro/dataLoader';
 import type { MetroLineCollection } from '../../types/metro';
+import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 
 export interface MetroLineLayerProps {
   map: MapboxMap;
@@ -33,41 +34,7 @@ export function MetroLineLayer({
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [styleReady, setStyleReady] = useState(false);
-
-  // Wait for map style to be ready
-  useEffect(() => {
-    if (!map) return;
-
-    const checkStyle = () => {
-      if (map.isStyleLoaded()) {
-        setStyleReady(true);
-      }
-    };
-
-    // Check immediately
-    checkStyle();
-
-    // If not ready, poll until it is (style.load may have already fired)
-    if (!map.isStyleLoaded()) {
-      const interval = setInterval(() => {
-        if (map.isStyleLoaded()) {
-          setStyleReady(true);
-          clearInterval(interval);
-        }
-      }, 50);
-
-      // Also listen for events as backup
-      map.on('style.load', checkStyle);
-      map.on('idle', checkStyle);
-
-      return () => {
-        clearInterval(interval);
-        map.off('style.load', checkStyle);
-        map.off('idle', checkStyle);
-      };
-    }
-  }, [map]);
+  const styleReady = useMapStyleReady(map);
 
   // Load Metro line geometries
   useEffect(() => {
