@@ -33,6 +33,30 @@ export function MetroLineLayer({
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isStyleLoaded, setIsStyleLoaded] = useState(() => map?.isStyleLoaded() ?? false);
+
+  // Listen for style load event
+  useEffect(() => {
+    if (!map) return;
+
+    if (map.isStyleLoaded()) {
+      setIsStyleLoaded(true);
+      return;
+    }
+
+    const handleStyleLoad = () => {
+      setIsStyleLoaded(true);
+    };
+
+    map.on('style.load', handleStyleLoad);
+    // Also listen for 'load' as fallback
+    map.on('load', handleStyleLoad);
+
+    return () => {
+      map.off('style.load', handleStyleLoad);
+      map.off('load', handleStyleLoad);
+    };
+  }, [map]);
 
   // Load Metro line geometries
   useEffect(() => {
@@ -65,84 +89,93 @@ export function MetroLineLayer({
   // Add source and layers when data is ready
   useEffect(() => {
     if (!map || !geoJSON || isLoading || error) return;
-    if (!map.isStyleLoaded()) return;
+    if (!isStyleLoaded) return;
 
-    // Check if source already exists
-    if (map.getSource(SOURCE_ID)) {
-      const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
-      source.setData(geoJSON);
-      return;
+    try {
+      // Check if source already exists
+      if (map.getSource(SOURCE_ID)) {
+        const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
+        source.setData(geoJSON);
+        return;
+      }
+
+      // Add source
+      map.addSource(SOURCE_ID, {
+        type: 'geojson',
+        data: geoJSON,
+      });
+
+      // Line casing (outer stroke for contrast)
+      map.addLayer({
+        id: LINE_CASING_LAYER_ID,
+        type: 'line',
+        source: SOURCE_ID,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': [
+            'interpolate',
+            ['exponential', 1.5],
+            ['zoom'],
+            10, 3,
+            13, 5,
+            15, 8,
+            18, 14,
+          ],
+          'line-opacity': visible ? 0.8 : 0,
+        },
+      });
+
+      // Main line layer
+      map.addLayer({
+        id: LINE_LAYER_ID,
+        type: 'line',
+        source: SOURCE_ID,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': [
+            'interpolate',
+            ['exponential', 1.5],
+            ['zoom'],
+            10, 2,
+            13, 3,
+            15, 5,
+            18, 10,
+          ],
+          'line-opacity': visible ? 0.9 : 0,
+        },
+      });
+
+    } catch (err) {
+      // Layer addition failed - source may have been removed
     }
-
-    // Add source
-    map.addSource(SOURCE_ID, {
-      type: 'geojson',
-      data: geoJSON,
-    });
-
-    // Line casing (outer stroke for contrast)
-    map.addLayer({
-      id: LINE_CASING_LAYER_ID,
-      type: 'line',
-      source: SOURCE_ID,
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': '#ffffff',
-        'line-width': [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 3,
-          13, 5,
-          15, 8,
-          18, 14,
-        ],
-        'line-opacity': visible ? 0.8 : 0,
-      },
-    });
-
-    // Main line layer
-    map.addLayer({
-      id: LINE_LAYER_ID,
-      type: 'line',
-      source: SOURCE_ID,
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': ['get', 'color'],
-        'line-width': [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 2,
-          13, 3,
-          15, 5,
-          18, 10,
-        ],
-        'line-opacity': visible ? 0.9 : 0,
-      },
-    });
 
     // Cleanup on unmount
     return () => {
       if (!map.isStyleLoaded()) return;
 
-      if (map.getLayer(LINE_LAYER_ID)) {
-        map.removeLayer(LINE_LAYER_ID);
-      }
-      if (map.getLayer(LINE_CASING_LAYER_ID)) {
-        map.removeLayer(LINE_CASING_LAYER_ID);
-      }
-      if (map.getSource(SOURCE_ID)) {
-        map.removeSource(SOURCE_ID);
+      try {
+        if (map.getLayer(LINE_LAYER_ID)) {
+          map.removeLayer(LINE_LAYER_ID);
+        }
+        if (map.getLayer(LINE_CASING_LAYER_ID)) {
+          map.removeLayer(LINE_CASING_LAYER_ID);
+        }
+        if (map.getSource(SOURCE_ID)) {
+          map.removeSource(SOURCE_ID);
+        }
+      } catch {
+        // Cleanup failed - map may have been removed
       }
     };
-  }, [map, geoJSON, isLoading, error, visible]);
+  }, [map, geoJSON, isLoading, error, visible, isStyleLoaded]);
 
   // Update visibility and highlighting
   useEffect(() => {
