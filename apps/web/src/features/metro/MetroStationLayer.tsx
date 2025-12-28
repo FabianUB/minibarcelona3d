@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadMetroStations } from '../../lib/metro/dataLoader';
 import type { MetroStationCollection } from '../../types/metro';
+import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 
 export interface MetroStationLayerProps {
   map: MapboxMap;
@@ -29,40 +30,7 @@ export function MetroStationLayer({
   const [geoJSON, setGeoJSON] = useState<MetroStationCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [styleReady, setStyleReady] = useState(false);
-
-  // Wait for map style to be ready
-  useEffect(() => {
-    if (!map) return;
-
-    const checkStyle = () => {
-      if (map.isStyleLoaded()) {
-        setStyleReady(true);
-      }
-    };
-
-    // Check immediately
-    checkStyle();
-
-    // If not ready, poll until it is (style.load may have already fired)
-    if (!map.isStyleLoaded()) {
-      const interval = setInterval(() => {
-        if (map.isStyleLoaded()) {
-          setStyleReady(true);
-          clearInterval(interval);
-        }
-      }, 50);
-
-      map.on('style.load', checkStyle);
-      map.on('idle', checkStyle);
-
-      return () => {
-        clearInterval(interval);
-        map.off('style.load', checkStyle);
-        map.off('idle', checkStyle);
-      };
-    }
-  }, [map]);
+  const styleReady = useMapStyleReady(map);
 
   // Load Metro station data
   useEffect(() => {
