@@ -822,6 +822,14 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           }}
         />
       ) : null}
+      {/* Bus vehicle layer (3D simulated buses) */}
+      {mapInstance && isMapLoaded ? (
+        <TransitVehicleLayer3D
+          map={mapInstance}
+          networkType="bus"
+          visible={transportFilters.bus}
+        />
+      ) : null}
       {/* Rodalies station markers layer */}
       {mapInstance && isMapLoaded ? (
         <StationLayer

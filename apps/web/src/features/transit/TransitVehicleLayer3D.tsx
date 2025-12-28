@@ -15,6 +15,7 @@ import type { TransportType } from '../../types/rodalies';
 import { TransitMeshManager } from '../../lib/transit/transitMeshManager';
 import { getModelOrigin, setModelOrigin } from '../../lib/map/coordinates';
 import { useMetroPositions } from './hooks/useMetroPositions';
+import { useBusPositions } from './hooks/useBusPositions';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 
 export interface TransitVehicleLayer3DProps {
@@ -65,14 +66,24 @@ export function TransitVehicleLayer3D({
     enabled: networkType === 'metro' && visible,
   });
 
+  const {
+    positions: busPositions,
+    isReady: busReady,
+    isLoading: busLoading,
+  } = useBusPositions({
+    enabled: networkType === 'bus' && visible,
+  });
+
   // Use appropriate positions based on network type
   // Wrap in useMemo to avoid changing dependency on every render
   const positions = useMemo(() => {
-    return networkType === 'metro' ? metroPositions : [];
-  }, [networkType, metroPositions]);
+    if (networkType === 'metro') return metroPositions;
+    if (networkType === 'bus') return busPositions;
+    return [];
+  }, [networkType, metroPositions, busPositions]);
 
-  const isDataReady = networkType === 'metro' ? metroReady : false;
-  const isDataLoading = networkType === 'metro' ? metroLoading : false;
+  const isDataReady = networkType === 'metro' ? metroReady : networkType === 'bus' ? busReady : false;
+  const isDataLoading = networkType === 'metro' ? metroLoading : networkType === 'bus' ? busLoading : false;
 
   // Notify parent of loading state
   useEffect(() => {
