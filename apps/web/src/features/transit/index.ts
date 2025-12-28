@@ -12,3 +12,9 @@ export type {
   UseMetroPositionsOptions,
   UseMetroPositionsResult,
 } from './hooks/useMetroPositions';
+
+export { useBusPositions } from './hooks/useBusPositions';
+export type {
+  UseBusPositionsOptions,
+  UseBusPositionsResult,
+} from './hooks/useBusPositions';
