@@ -20,6 +20,7 @@ import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
 import { MetroLineLayer, MetroStationLayer } from '../metro';
+import { TransportFilterButton } from '../filter';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
@@ -130,6 +131,7 @@ export function MapCanvas() {
   } = useDefaultViewport();
 
   const isHighContrast = ui.isHighContrast;
+  const { transportFilters } = ui;
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -632,6 +634,20 @@ export function MapCanvas() {
     });
   }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
 
+  // Control Rodalies line layer visibility based on transport filter
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer(RODALIES_LINE_LAYER_ID)) {
+      return;
+    }
+
+    map.setLayoutProperty(
+      RODALIES_LINE_LAYER_ID,
+      'visibility',
+      transportFilters.rodalies ? 'visible' : 'none'
+    );
+  }, [transportFilters.rodalies]);
+
   const handleRetryTiles = () => {
     const map = mapRef.current;
     if (!map) return;
@@ -770,13 +786,13 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {isTrainDataLoading && mapInstance && isMapLoaded ? <TrainLoadingSkeleton /> : null}
       {/* Metro line geometries (below stations) */}
       {mapInstance && isMapLoaded ? (
-        <MetroLineLayer map={mapInstance} visible={true} />
+        <MetroLineLayer map={mapInstance} visible={transportFilters.metro} />
       ) : null}
       {/* Metro station markers */}
       {mapInstance && isMapLoaded ? (
         <MetroStationLayer
           map={mapInstance}
-          visible={true}
+          visible={transportFilters.metro}
           onStationClick={(stationId, stationName) => {
             console.log('Metro station clicked:', stationId, stationName);
           }}
@@ -789,6 +805,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={highlightedLineIds}
           highlightMode={highlightMode}
           onStationClick={selectStation}
+          visible={transportFilters.rodalies}
         />
       ) : null}
       {/* Phase B 2D markers replaced by Phase C 3D models */}
@@ -800,12 +817,15 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           onLoadingChange={setIsTrainDataLoading}
           onTrainsChange={setTrainPositions}
           onMeshPositionGetterReady={handleMeshPositionGetterReady}
+          visible={transportFilters.rodalies}
         />
       ) : null}
       {/* Train List Button - rendered separately to avoid re-render issues with map layers */}
       {mapInstance && isMapLoaded ? (
         <TrainListButton trains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
       ) : null}
+      {/* Transport Filter Button */}
+      <TransportFilterButton />
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
           <button
