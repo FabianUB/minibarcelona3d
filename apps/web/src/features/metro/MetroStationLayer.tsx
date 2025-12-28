@@ -29,28 +29,39 @@ export function MetroStationLayer({
   const [geoJSON, setGeoJSON] = useState<MetroStationCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isStyleLoaded, setIsStyleLoaded] = useState(() => map?.isStyleLoaded() ?? false);
+  const [styleReady, setStyleReady] = useState(false);
 
-  // Listen for style load event
+  // Wait for map style to be ready
   useEffect(() => {
     if (!map) return;
 
-    if (map.isStyleLoaded()) {
-      setIsStyleLoaded(true);
-      return;
+    const checkStyle = () => {
+      if (map.isStyleLoaded()) {
+        setStyleReady(true);
+      }
+    };
+
+    // Check immediately
+    checkStyle();
+
+    // If not ready, poll until it is (style.load may have already fired)
+    if (!map.isStyleLoaded()) {
+      const interval = setInterval(() => {
+        if (map.isStyleLoaded()) {
+          setStyleReady(true);
+          clearInterval(interval);
+        }
+      }, 50);
+
+      map.on('style.load', checkStyle);
+      map.on('idle', checkStyle);
+
+      return () => {
+        clearInterval(interval);
+        map.off('style.load', checkStyle);
+        map.off('idle', checkStyle);
+      };
     }
-
-    const handleStyleLoad = () => {
-      setIsStyleLoaded(true);
-    };
-
-    map.on('style.load', handleStyleLoad);
-    map.on('load', handleStyleLoad);
-
-    return () => {
-      map.off('style.load', handleStyleLoad);
-      map.off('load', handleStyleLoad);
-    };
   }, [map]);
 
   // Load Metro station data
@@ -83,8 +94,7 @@ export function MetroStationLayer({
 
   // Add source and layers when data is ready
   useEffect(() => {
-    if (!map || !geoJSON || isLoading || error) return;
-    if (!isStyleLoaded) return;
+    if (!map || !geoJSON || isLoading || error || !styleReady) return;
 
     try {
       // Check if source already exists
@@ -187,7 +197,7 @@ export function MetroStationLayer({
         // Cleanup failed - map may have been removed
       }
     };
-  }, [map, geoJSON, isLoading, error, visible, isStyleLoaded]);
+  }, [map, geoJSON, isLoading, error, visible, styleReady]);
 
   // Update visibility when prop changes
   useEffect(() => {
