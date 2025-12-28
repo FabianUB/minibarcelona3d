@@ -22,6 +22,8 @@ let manifestPromise: Promise<TmbManifest> | null = null;
 let metroStationsPromise: Promise<MetroStationCollection> | null = null;
 const metroLineCache = new Map<string, Promise<MetroLineCollection>>();
 let allMetroLinesPromise: Promise<MetroLineCollection> | null = null;
+let busStopsPromise: Promise<MetroStationCollection> | null = null;
+let allBusRoutesPromise: Promise<MetroLineCollection> | null = null;
 
 /**
  * Load the TMB manifest file
@@ -146,6 +148,77 @@ export async function getAvailableMetroLineCodes(
     .map((f) => f.line_code!);
 }
 
+// --- Bus data loading functions ---
+
+/**
+ * Load Bus stops GeoJSON
+ * Uses same structure as Metro stations
+ */
+export async function loadBusStops(
+  manifest?: TmbManifest
+): Promise<MetroStationCollection> {
+  if (!busStopsPromise) {
+    busStopsPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const stopsFile = manifestData.files.find(
+        (f) => f.type === 'bus_stops'
+      );
+      if (!stopsFile) {
+        throw new Error('TMB manifest is missing bus_stops entry');
+      }
+      const url = resolveAssetUrl(stopsFile.path);
+      return fetchJson<MetroStationCollection>(url);
+    })();
+  }
+  return busStopsPromise;
+}
+
+/**
+ * Load all Bus route geometries as a single FeatureCollection
+ * Uses same structure as Metro lines
+ */
+export async function loadAllBusRoutes(
+  manifest?: TmbManifest
+): Promise<MetroLineCollection> {
+  if (!allBusRoutesPromise) {
+    allBusRoutesPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const routeFiles = manifestData.files.filter(
+        (f) => f.type === 'bus_route'
+      );
+
+      // Load all route files in parallel
+      const routeCollections = await Promise.all(
+        routeFiles.map(async (file) => {
+          const url = resolveAssetUrl(file.path);
+          return fetchJson<MetroLineCollection>(url);
+        })
+      );
+
+      // Merge all features into a single FeatureCollection
+      const allFeatures = routeCollections.flatMap((c) => c.features);
+
+      return {
+        type: 'FeatureCollection' as const,
+        features: allFeatures,
+      };
+    })();
+  }
+  return allBusRoutesPromise;
+}
+
+/**
+ * Get available Bus route codes from manifest
+ */
+export async function getAvailableBusRouteCodes(
+  manifest?: TmbManifest
+): Promise<string[]> {
+  const manifestData = manifest ?? (await loadTmbManifest());
+  return manifestData.files
+    .filter((f) => f.type === 'bus_route' && f.route_code)
+    .map((f) => f.route_code!);
+}
+
 // --- Helper functions ---
 
 function resolveAssetUrl(path: string): string {
@@ -212,4 +285,6 @@ export function clearMetroCache(): void {
   metroStationsPromise = null;
   metroLineCache.clear();
   allMetroLinesPromise = null;
+  busStopsPromise = null;
+  allBusRoutesPromise = null;
 }

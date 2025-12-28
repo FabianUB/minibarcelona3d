@@ -22,8 +22,6 @@ export const FILTER_OPTIONS: FilterOption[] = [
   {
     type: 'bus',
     label: 'Bus',
-    description: 'Show bus lines and stops',
-    disabled: true,
-    disabledReason: 'Coming soon',
+    description: 'Show bus routes and stops',
   },
 ];
