@@ -20,6 +20,7 @@ import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
 import { MetroLineLayer, MetroStationLayer } from '../metro';
+import { BusLineLayer, BusStopLayer } from '../bus';
 import { TransportFilterButton } from '../filter';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
@@ -795,6 +796,20 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           visible={transportFilters.metro}
           onStationClick={(stationId, stationName) => {
             console.log('Metro station clicked:', stationId, stationName);
+          }}
+        />
+      ) : null}
+      {/* Bus route lines (below stops) */}
+      {mapInstance && isMapLoaded ? (
+        <BusLineLayer map={mapInstance} visible={transportFilters.bus} />
+      ) : null}
+      {/* Bus stop markers */}
+      {mapInstance && isMapLoaded ? (
+        <BusStopLayer
+          map={mapInstance}
+          visible={transportFilters.bus}
+          onStopClick={(stopId, stopName) => {
+            console.log('Bus stop clicked:', stopId, stopName);
           }}
         />
       ) : null}
