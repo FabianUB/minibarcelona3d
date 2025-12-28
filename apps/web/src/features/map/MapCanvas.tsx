@@ -106,6 +106,14 @@ export function MapCanvas() {
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
   );
 
+  // Memoize callbacks for TrainLayer3D to prevent infinite re-render loops
+  const handleMeshPositionGetterReady = useCallback(
+    (getter: (vehicleKey: string) => [number, number] | null) => {
+      setGetMeshPosition(() => getter);
+    },
+    []
+  );
+
   const mapActions = useMapActions();
   const {
     setMapInstance,
@@ -791,7 +799,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           onRaycastResult={debugToolsEnabled ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
           onTrainsChange={setTrainPositions}
-          onMeshPositionGetterReady={(getter) => setGetMeshPosition(() => getter)}
+          onMeshPositionGetterReady={handleMeshPositionGetterReady}
         />
       ) : null}
       {/* Train List Button - rendered separately to avoid re-render issues with map layers */}

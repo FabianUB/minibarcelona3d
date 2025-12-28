@@ -1396,15 +1396,13 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     });
 
     // T089: Calculate opacity for each train based on line selection
-    // T098: Apply visual indicator for stale data
-    // Performance: Only calculate and apply opacity if highlighting is active or data is stale
-    if (highlightMode !== 'none' || isDataStale) {
+    // T098: Stale data opacity effect temporarily disabled
+    // Performance: Only calculate and apply opacity if highlighting is active
+    if (highlightMode !== 'none') {
       const trainOpacities = new Map<string, number>();
       trains.forEach(train => {
         const baseOpacity = getTrainOpacity(train);
-        // If data is stale, reduce opacity by 50% to gray out trains
-        const finalOpacity = isDataStale ? baseOpacity * 0.5 : baseOpacity;
-        trainOpacities.set(train.vehicleKey, finalOpacity);
+        trainOpacities.set(train.vehicleKey, baseOpacity);
       });
       meshManagerRef.current.setTrainOpacities(trainOpacities);
     }
@@ -1420,7 +1418,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         console.warn(`TrainLayer3D: ${stuckTrains.length} trains appear stuck (in transit but no movement):`, stuckTrains);
       }
     }
-  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, isDataStale, highlightMode]);
+  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, highlightMode]);
 
   /**
    * Effect: Update train scales when zoom changes

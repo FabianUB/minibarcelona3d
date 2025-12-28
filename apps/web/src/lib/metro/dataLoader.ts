@@ -28,9 +28,8 @@ let allMetroLinesPromise: Promise<MetroLineCollection> | null = null;
  */
 export async function loadTmbManifest(): Promise<TmbManifest> {
   if (!manifestPromise) {
-    manifestPromise = fetchJson<TmbManifest>(
-      resolveFromBase(`${TMB_DATA_ROOT}/${MANIFEST_FILENAME}`)
-    );
+    const url = resolveFromBase(`${TMB_DATA_ROOT}/${MANIFEST_FILENAME}`);
+    manifestPromise = fetchJson<TmbManifest>(url);
   }
   return manifestPromise;
 }

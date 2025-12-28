@@ -65,6 +65,29 @@ export function StationLayer({
     highlightMode,
   });
   const [isClickable, setIsClickable] = useState(false);
+  const [isStyleLoaded, setIsStyleLoaded] = useState(() => map?.isStyleLoaded() ?? false);
+
+  // Listen for style load event
+  useEffect(() => {
+    if (!map) return;
+
+    if (map.isStyleLoaded()) {
+      setIsStyleLoaded(true);
+      return;
+    }
+
+    const handleStyleLoad = () => {
+      setIsStyleLoaded(true);
+    };
+
+    map.on('style.load', handleStyleLoad);
+    map.on('load', handleStyleLoad);
+
+    return () => {
+      map.off('style.load', handleStyleLoad);
+      map.off('load', handleStyleLoad);
+    };
+  }, [map]);
 
   useEffect(() => {
     if (!map) return;
@@ -92,7 +115,7 @@ export function StationLayer({
     if (!map || !geoJSON || isLoading || error) return;
 
     // Guard against map being in invalid state (style not loaded or removed)
-    if (!map.isStyleLoaded()) return;
+    if (!isStyleLoaded) return;
 
     // Check if source already exists
     if (map.getSource(SOURCE_ID)) {
@@ -190,11 +213,11 @@ export function StationLayer({
         map.removeSource(SOURCE_ID);
       }
     };
-  }, [map, geoJSON, isLoading, error]);
+  }, [map, geoJSON, isLoading, error, isStyleLoaded]);
 
   // Update layer styles when highlighting changes
   useEffect(() => {
-    if (!map || !map.isStyleLoaded() || !map.getLayer(LAYER_ID_LOW)) return;
+    if (!map || !isStyleLoaded || !map.getLayer(LAYER_ID_LOW)) return;
 
     const isAnyLineHighlighted = highlightMode !== 'none' && highlightedLineIds.length > 0;
     const isDimmed = highlightMode === 'isolate' && isAnyLineHighlighted;
