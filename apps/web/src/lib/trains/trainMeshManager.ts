@@ -1769,6 +1769,17 @@ export class TrainMeshManager {
     return this.trainMeshes.size;
   }
 
+  /**
+   * Show or hide all train meshes
+   * Used by transport filter to toggle layer visibility
+   */
+  setAllMeshesVisible(visible: boolean): void {
+    this.trainMeshes.forEach((meshData) => {
+      meshData.mesh.visible = visible;
+    });
+    trainDebug.system.info(`All meshes visibility set to ${visible}`);
+  }
+
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
     const currentZoom = map.getZoom();
 

@@ -122,7 +122,21 @@ export interface LegendEntry {
 
 export type MapHighlightMode = 'none' | 'highlight' | 'isolate';
 
-export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo' | 'stationInfo';
+export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo' | 'stationInfo' | 'transportFilter';
+
+/**
+ * Transport types that can be filtered on/off
+ */
+export type TransportType = 'rodalies' | 'metro' | 'bus';
+
+/**
+ * Filter visibility state for each transport type
+ */
+export interface TransportFilterState {
+  rodalies: boolean;
+  metro: boolean;
+  bus: boolean;
+}
 
 export interface MapUIState {
   selectedLineId: string | null; // Deprecated: kept for backwards compatibility
@@ -133,6 +147,7 @@ export interface MapUIState {
   activePanel: ActivePanel; // Which panel is currently expanded on desktop
   selectedStationId: string | null; // Currently selected station
   stationLoadError: string | null; // Error message from station data load failure
+  transportFilters: TransportFilterState; // Visibility filters for transport types
 }
 
 export interface ManifestLineEntry {

@@ -76,6 +76,12 @@ export interface TrainLayer3DProps {
    * which may differ from API GPS coordinates due to railway snapping and parking.
    */
   onMeshPositionGetterReady?: (getter: (vehicleKey: string) => [number, number] | null) => void;
+
+  /**
+   * Whether train layer is visible (controlled by transport filter)
+   * When false, trains are hidden and API polling is paused for performance
+   */
+  visible?: boolean;
 }
 
 export interface RaycastDebugInfo {
@@ -131,7 +137,7 @@ const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
  * Task: T046 - Create model instances based on route mapping
  * Task: T047 - Apply bearing-based rotation
  */
-export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, onTrainsChange, onMeshPositionGetterReady }: TrainLayer3DProps) {
+export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, onTrainsChange, onMeshPositionGetterReady, visible = true }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
   const { highlightMode, highlightedLineIds, isLineHighlighted } = useMapHighlightSelectors();
@@ -1204,6 +1210,27 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [handleSecretDebugToggle]);
+
+  /**
+   * Effect: Control visibility and pause polling when layer is hidden
+   * When visible=false:
+   * - Pause API polling to save resources
+   * - Hide all train meshes by setting their visibility to false
+   */
+  useEffect(() => {
+    // Pause/resume polling based on visibility
+    if (!visible) {
+      setIsPollingPaused(true);
+    } else {
+      // Only resume if we were paused due to visibility (not user action)
+      setIsPollingPaused(false);
+    }
+
+    // Hide/show all train meshes
+    if (meshManagerRef.current) {
+      meshManagerRef.current.setAllMeshesVisible(visible);
+    }
+  }, [visible]);
 
   /**
    * Effect: Set up polling for train positions

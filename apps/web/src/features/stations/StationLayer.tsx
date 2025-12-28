@@ -29,6 +29,9 @@ export interface StationLayerProps {
 
   /** Callback when user hovers over a station marker (desktop only) */
   onStationHover?: (stationId: string | null) => void;
+
+  /** Whether station layer is visible (controlled by transport filter) */
+  visible?: boolean;
 }
 
 const SOURCE_ID = 'stations-source';
@@ -58,6 +61,7 @@ export function StationLayer({
   highlightMode,
   onStationClick,
   onStationHover,
+  visible = true,
 }: StationLayerProps) {
   // Load station data with offsets
   const { geoJSON, isLoading, error } = useStationMarkers({
@@ -204,6 +208,13 @@ export function StationLayer({
 
     map.setPaintProperty(LAYER_ID_LOW, 'icon-opacity', iconOpacity);
   }, [map, highlightedLineIds, highlightMode, styleReady]);
+
+  // Control layer visibility based on transport filter
+  useEffect(() => {
+    if (!map || !styleReady || !map.getLayer(LAYER_ID_LOW)) return;
+
+    map.setLayoutProperty(LAYER_ID_LOW, 'visibility', visible ? 'visible' : 'none');
+  }, [map, visible, styleReady]);
 
   // Add click handlers
   useEffect(() => {
