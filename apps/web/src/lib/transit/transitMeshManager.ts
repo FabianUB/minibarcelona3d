@@ -1,32 +1,48 @@
 /**
  * Transit Vehicle Mesh Manager
  *
- * Simplified mesh manager for Metro and Bus vehicles.
- * Handles 3D model creation, positioning, and animation.
+ * Manages 3D vehicle meshes for Metro and Bus vehicles.
+ * Uses continuous position calculation for smooth animation.
  *
- * Based on TrainMeshManager patterns but simplified for schedule-based positioning.
+ * Key features:
+ * - Positions calculated every frame based on elapsed time
+ * - No "catch-up" interpolation needed
+ * - Perfectly smooth movement at any frame rate
+ * - Never moves backward: if an update would cause backward movement,
+ *   the current position is kept and vehicle continues forward
  */
 
 import * as THREE from 'three';
-import type { VehiclePosition, TransportType } from '../../types/transit';
+import type { VehiclePosition, TransportType, TravelDirection } from '../../types/transit';
+import type { PreprocessedRailwayLine } from '../trains/geometry';
+import { sampleRailwayPosition } from '../trains/geometry';
 import { getCachedModel, loadTrainModel } from '../trains/modelLoader';
 import { ScaleManager } from '../trains/scaleManager';
 import { getModelPosition, getModelScale } from '../map/coordinates';
-import { VehicleAnimationManager } from './scheduleInterpolator';
+import { getPreprocessedMetroLine } from '../metro/positionSimulator';
+import { getPreprocessedBusRoute } from '../bus/positionSimulator';
 
 /**
- * Mesh data stored for each vehicle
+ * Mesh data stored for each vehicle - includes continuous motion parameters
  */
 interface TransitMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
   lineCode: string;
   networkType: TransportType;
+  direction: TravelDirection;
+
+  // Continuous motion parameters
+  referenceDistance: number;    // Distance along line at referenceTime
+  referenceTime: number;        // When this position was established
+  speedMetersPerSecond: number; // Vehicle speed
+  lineTotalLength: number;      // For wrapping around
+
+  // Current state
   currentPosition: [number, number];
-  targetPosition: [number, number];
   currentBearing: number;
-  targetBearing: number;
-  lastUpdate: number;
+
+  // Visual
   baseScale: number;
   screenSpaceScale: number;
   lineColor: THREE.Color;
@@ -43,29 +59,25 @@ export interface TransitMeshManagerConfig {
   modelType?: '447' | '470' | 'civia';
   /** Z offset factor for elevation (default: 0.5) */
   zOffsetFactor?: number;
-  /** Interpolation duration in ms (default: 4500) */
-  interpolationDurationMs?: number;
 }
 
 const DEFAULT_CONFIG: Required<TransitMeshManagerConfig> = {
   vehicleSizeMeters: 25,
   modelType: 'civia',
   zOffsetFactor: 0.5,
-  interpolationDurationMs: 4500,
 };
 
 /**
  * TransitMeshManager
  *
- * Manages 3D vehicle meshes for transit systems.
- * Simplified from TrainMeshManager for schedule-based positioning.
+ * Manages 3D vehicle meshes with continuous position calculation.
+ * Positions are calculated every frame based on elapsed time for smooth animation.
  */
 export class TransitMeshManager {
   private meshes: Map<string, TransitMeshData> = new Map();
   private scene: THREE.Scene;
   private config: Required<TransitMeshManagerConfig>;
   private scaleManager: ScaleManager;
-  private animationManager: VehicleAnimationManager;
   private modelLoaded = false;
   private currentZoom = 12;
 
@@ -80,9 +92,6 @@ export class TransitMeshManager {
       maxHeightPx: 50,
       targetHeightPx: 30,
     });
-    this.animationManager = new VehicleAnimationManager(
-      this.config.interpolationDurationMs
-    );
   }
 
   /**
@@ -116,7 +125,91 @@ export class TransitMeshManager {
   }
 
   /**
-   * Update vehicle meshes from position data
+   * Get preprocessed geometry for a vehicle
+   */
+  private getGeometry(networkType: TransportType, lineCode: string): PreprocessedRailwayLine | null {
+    if (networkType === 'metro') {
+      return getPreprocessedMetroLine(lineCode);
+    } else if (networkType === 'bus') {
+      return getPreprocessedBusRoute(lineCode);
+    }
+    return null;
+  }
+
+  /**
+   * Convert distanceAlongLine from simulator to raw animation distance.
+   *
+   * The simulator produces:
+   * - Direction 0: distanceAlongLine increases over time
+   * - Direction 1: distanceAlongLine = totalLength - adjusted (decreases over time)
+   *
+   * The animate function expects:
+   * - Raw distance that increases for both directions, then mirrors for direction 1
+   *
+   * So for direction 1, we undo the simulator's transform.
+   */
+  private toRawAnimationDistance(
+    distanceAlongLine: number,
+    direction: TravelDirection,
+    totalLength: number
+  ): number {
+    if (direction === 0) {
+      return distanceAlongLine;
+    }
+    // For direction 1: raw = totalLength - distanceAlongLine
+    // This undoes the simulator's transform (distanceAlongLine = totalLength - adjusted)
+    return totalLength - distanceAlongLine;
+  }
+
+  /**
+   * Calculate current raw animation distance for a vehicle.
+   * This is where the vehicle currently appears to be (before any visual mirroring).
+   */
+  private getCurrentRawDistance(data: TransitMeshData, now: number): number {
+    const elapsedSeconds = (now - data.referenceTime) / 1000;
+    const distanceTraveled = elapsedSeconds * data.speedMetersPerSecond;
+    return (data.referenceDistance + distanceTraveled) % data.lineTotalLength;
+  }
+
+  /**
+   * Check if accepting a new position would move the vehicle backward.
+   *
+   * In the raw animation frame, vehicles always move in the positive direction.
+   * We check the shortest path between current and new positions.
+   *
+   * @param currentRaw - Current raw animation distance
+   * @param newRaw - Proposed new raw animation distance
+   * @param totalLength - Total length of the line
+   * @param tolerance - Allow small backward corrections (meters)
+   * @returns true if the update would move backward beyond tolerance
+   */
+  private wouldMoveBackward(
+    currentRaw: number,
+    newRaw: number,
+    totalLength: number,
+    tolerance: number = 50
+  ): boolean {
+    // Normalize positions to [0, totalLength)
+    currentRaw = ((currentRaw % totalLength) + totalLength) % totalLength;
+    newRaw = ((newRaw % totalLength) + totalLength) % totalLength;
+
+    // Calculate forward distance (clockwise on the circular line)
+    const forwardDist = (newRaw - currentRaw + totalLength) % totalLength;
+
+    // Calculate backward distance
+    const backwardDist = totalLength - forwardDist;
+
+    // If backward distance is shorter than forward distance,
+    // and it's more than our tolerance, it's a backward move
+    return backwardDist < forwardDist && backwardDist > tolerance;
+  }
+
+  /**
+   * Update vehicle meshes from position data.
+   *
+   * Key behavior: Never allows backward movement.
+   * If an update would place the vehicle behind its current animated position,
+   * we keep the current position and continue forward from there.
    */
   updateVehicles(vehicles: VehiclePosition[]): void {
     if (!this.modelLoaded) {
@@ -136,23 +229,37 @@ export class TransitMeshManager {
     for (const vehicle of vehicles) {
       activeKeys.add(vehicle.vehicleKey);
 
-      // Update animation target
-      this.animationManager.updateTarget(
-        vehicle.vehicleKey,
-        [vehicle.longitude, vehicle.latitude],
-        vehicle.bearing
-      );
-
       const existingMesh = this.meshes.get(vehicle.vehicleKey);
 
       if (existingMesh) {
-        // Update existing mesh target
-        existingMesh.targetPosition = [vehicle.longitude, vehicle.latitude];
-        existingMesh.targetBearing = vehicle.bearing;
-        existingMesh.lastUpdate = now;
+        // Convert new position to raw animation distance
+        const newRawDistance = this.toRawAnimationDistance(
+          vehicle.distanceAlongLine,
+          vehicle.direction,
+          vehicle.lineTotalLength
+        );
+
+        // Calculate current animated raw distance
+        const currentRawDistance = this.getCurrentRawDistance(existingMesh, now);
+
+        // Check if this update would move the vehicle backward
+        if (this.wouldMoveBackward(currentRawDistance, newRawDistance, existingMesh.lineTotalLength)) {
+          // Keep current position - don't go backward
+          // Update reference to current animated position
+          existingMesh.referenceDistance = currentRawDistance;
+          existingMesh.referenceTime = now;
+        } else {
+          // Update normally - vehicle is moving forward (or very small correction)
+          existingMesh.referenceDistance = newRawDistance;
+          existingMesh.referenceTime = vehicle.estimatedAt;
+        }
+
+        // Always update speed and length (they might have changed)
+        existingMesh.speedMetersPerSecond = vehicle.speedMetersPerSecond;
+        existingMesh.lineTotalLength = vehicle.lineTotalLength;
       } else {
         // Create new mesh
-        this.createMesh(vehicle, now);
+        this.createMesh(vehicle);
         newMeshes++;
       }
     }
@@ -168,7 +275,7 @@ export class TransitMeshManager {
   /**
    * Create a new mesh for a vehicle
    */
-  private createMesh(vehicle: VehiclePosition, now: number): void {
+  private createMesh(vehicle: VehiclePosition): void {
     const gltf = getCachedModel(this.config.modelType);
     if (!gltf) {
       console.warn(`[TransitMeshManager] Model ${this.config.modelType} not in cache, cannot create mesh`);
@@ -179,11 +286,9 @@ export class TransitMeshManager {
     const trainModel = gltf.scene.clone();
 
     // Create a parent group to handle rotation properly
-    // This allows us to separate "lay flat" rotation from "direction" rotation
     const mesh = new THREE.Group();
 
-    // First, rotate the model to lay flat on the map (XY plane)
-    // The models are oriented with Z-up; rotating +90° around X keeps the roof up
+    // Rotate the model to lay flat on the map (XY plane)
     trainModel.rotation.x = Math.PI / 2;
 
     // Add the rotated model to the parent group
@@ -200,7 +305,7 @@ export class TransitMeshManager {
     const pos = getModelPosition(vehicle.longitude, vehicle.latitude, 0);
     mesh.position.set(pos.x, pos.y, pos.z + this.config.zOffsetFactor * baseScale);
 
-    // Set rotation based on bearing (applied to parent group's Z-axis)
+    // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
     // Apply line color to the model
@@ -210,17 +315,32 @@ export class TransitMeshManager {
     // Add to scene
     this.scene.add(mesh);
 
-    // Store mesh data
+    // Convert to raw animation distance for consistent forward movement
+    const rawDistance = this.toRawAnimationDistance(
+      vehicle.distanceAlongLine,
+      vehicle.direction,
+      vehicle.lineTotalLength
+    );
+
+    // Store mesh data with continuous motion parameters
     this.meshes.set(vehicle.vehicleKey, {
       mesh,
       vehicleKey: vehicle.vehicleKey,
       lineCode: vehicle.lineCode,
       networkType: vehicle.networkType,
+      direction: vehicle.direction,
+
+      // Continuous motion parameters (using raw distance for consistent forward movement)
+      referenceDistance: rawDistance,
+      referenceTime: vehicle.estimatedAt,
+      speedMetersPerSecond: vehicle.speedMetersPerSecond,
+      lineTotalLength: vehicle.lineTotalLength,
+
+      // Current state
       currentPosition: [vehicle.longitude, vehicle.latitude],
-      targetPosition: [vehicle.longitude, vehicle.latitude],
       currentBearing: vehicle.bearing,
-      targetBearing: vehicle.bearing,
-      lastUpdate: now,
+
+      // Visual
       baseScale,
       screenSpaceScale: 1.0,
       lineColor,
@@ -232,15 +352,12 @@ export class TransitMeshManager {
    * Apply bearing rotation to mesh
    */
   private applyBearing(mesh: THREE.Group, bearing: number): void {
-    // Convert bearing to radians (bearing is clockwise from north, Three.js is CCW)
     const bearingRad = (bearing * Math.PI) / 180;
-    // Apply rotation with model offset
     mesh.rotation.z = -bearingRad + this.MODEL_FORWARD_OFFSET;
   }
 
   /**
    * Apply line color to the train model materials
-   * Colors the entire model with the metro line's brand color
    */
   private applyLineColor(model: THREE.Object3D, color: THREE.Color): void {
     model.traverse((child) => {
@@ -252,10 +369,8 @@ export class TransitMeshManager {
 
         for (const material of materials) {
           if (material && 'color' in material) {
-            // Clone the material to avoid affecting other instances
             const clonedMaterial = material.clone();
             (clonedMaterial as THREE.MeshStandardMaterial).color = color;
-            // Ensure the material responds to lighting
             if ('metalness' in clonedMaterial) {
               (clonedMaterial as THREE.MeshStandardMaterial).metalness = 0.3;
             }
@@ -285,32 +400,46 @@ export class TransitMeshManager {
     for (const key of toRemove) {
       this.meshes.delete(key);
     }
-
-    // Also prune animation manager
-    this.animationManager.pruneExcept(activeKeys);
   }
 
   /**
    * Animate mesh positions (call every frame)
+   *
+   * Calculates position continuously based on elapsed time.
+   * No interpolation needed - positions are exact for current time.
    */
   animatePositions(): void {
     const now = Date.now();
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
 
-    for (const [vehicleKey, data] of this.meshes) {
-      // Get interpolated state
-      const interpolated = this.animationManager.getInterpolatedState(
-        vehicleKey,
-        now
-      );
+    for (const [, data] of this.meshes) {
+      // Calculate current distance based on elapsed time
+      const elapsedSeconds = (now - data.referenceTime) / 1000;
+      const distanceTraveled = elapsedSeconds * data.speedMetersPerSecond;
 
-      if (interpolated) {
+      // Calculate current distance along line (with wrapping)
+      let currentDistance = (data.referenceDistance + distanceTraveled) % data.lineTotalLength;
+
+      // For reverse direction, mirror the distance
+      if (data.direction === 1) {
+        currentDistance = data.lineTotalLength - currentDistance;
+        if (currentDistance < 0) {
+          currentDistance += data.lineTotalLength;
+        }
+      }
+
+      // Get line geometry to sample position
+      const geometry = this.getGeometry(data.networkType, data.lineCode);
+
+      if (geometry) {
+        // Sample position and bearing from geometry
+        const { position, bearing } = sampleRailwayPosition(geometry, currentDistance);
+
+        // Adjust bearing for reverse direction
+        const finalBearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+
         // Update position
-        const pos = getModelPosition(
-          interpolated.position[0],
-          interpolated.position[1],
-          0
-        );
+        const pos = getModelPosition(position[0], position[1], 0);
         data.mesh.position.set(
           pos.x,
           pos.y,
@@ -318,11 +447,11 @@ export class TransitMeshManager {
         );
 
         // Update bearing
-        this.applyBearing(data.mesh, interpolated.bearing);
+        this.applyBearing(data.mesh, finalBearing);
 
         // Update current state
-        data.currentPosition = interpolated.position;
-        data.currentBearing = interpolated.bearing;
+        data.currentPosition = position;
+        data.currentBearing = finalBearing;
       }
 
       // Apply zoom-responsive scale if changed
@@ -370,7 +499,6 @@ export class TransitMeshManager {
       this.scene.remove(data.mesh);
     }
     this.meshes.clear();
-    this.animationManager.clear();
   }
 
   /**

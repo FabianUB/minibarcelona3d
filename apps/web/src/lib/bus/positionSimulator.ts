@@ -41,7 +41,7 @@ async function loadAndPreprocessRoutes(): Promise<void> {
     const routeCollection: MetroLineCollection = await loadAllBusRoutes();
 
     for (const feature of routeCollection.features) {
-      const routeCode = feature.properties?.route_code || feature.properties?.line_code;
+      const routeCode = feature.properties?.line_code || feature.properties?.route_id;
       if (!routeCode) continue;
 
       const geometry = feature.geometry as RodaliesLineGeometry;
@@ -128,6 +128,9 @@ export function generateRoutePositions(
       // Calculate progress as fraction of route length
       const progressFraction = finalDistance / route.totalLength;
 
+      // Calculate speed in meters per second
+      const speedMetersPerSecond = (config.avgSpeedKmh * 1000) / 3600;
+
       vehicles.push({
         vehicleKey: `bus-${routeCode}-${direction}-${i}`,
         networkType: 'bus',
@@ -145,6 +148,8 @@ export function generateRoutePositions(
         status: 'IN_TRANSIT_TO',
         progressFraction,
         distanceAlongLine: finalDistance,
+        speedMetersPerSecond,
+        lineTotalLength: route.totalLength,
         lineColor: config.color,
       });
     }
@@ -198,6 +203,16 @@ export async function preloadBusGeometries(): Promise<void> {
 export function clearBusSimulatorCache(): void {
   preprocessedRouteCache.clear();
   cachedRouteCodes = null;
+}
+
+/**
+ * Get a preprocessed bus route geometry by route code
+ * Returns null if not yet loaded
+ */
+export function getPreprocessedBusRoute(
+  routeCode: string
+): PreprocessedRailwayLine | null {
+  return preprocessedRouteCache.get(routeCode) ?? null;
 }
 
 /**
