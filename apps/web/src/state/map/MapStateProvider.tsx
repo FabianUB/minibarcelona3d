@@ -23,8 +23,10 @@ import { getPreference, loadPreferences, savePreferences } from './persistence';
 
 const DEFAULT_TRANSPORT_FILTERS: TransportFilterState = {
   rodalies: true,
-  metro: true,
-  bus: false, // Disabled by default, not yet implemented
+  metro: false,
+  bus: false,
+  tram: false,
+  fgc: false,
 };
 
 type MapAction =

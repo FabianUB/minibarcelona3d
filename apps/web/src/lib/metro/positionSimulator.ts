@@ -12,11 +12,11 @@
  */
 
 import type { VehiclePosition, TravelDirection } from '../../types/transit';
-import type { MetroLineCollection } from '../../types/metro';
+import type { MetroLineCollection, MetroStationFeature } from '../../types/metro';
 import type { RodaliesLineGeometry } from '../../types/rodalies';
 import type { PreprocessedRailwayLine } from '../trains/geometry';
 import { preprocessRailwayLine, sampleRailwayPosition } from '../trains/geometry';
-import { loadMetroLine, getMetroLineByCode } from './dataLoader';
+import { loadMetroLine, loadMetroStations, getMetroLineByCode } from './dataLoader';
 import {
   METRO_LINE_CONFIG,
   getMetroLineCodes,
@@ -24,9 +24,187 @@ import {
 } from '../../config/metroConfig';
 
 /**
+ * Station with distance along line for ordering
+ */
+interface StationWithDistance {
+  id: string;
+  name: string;
+  distance: number;  // Distance along the line in meters
+  coordinates: [number, number];
+}
+
+/**
  * Cache for preprocessed railway lines
  */
 const preprocessedLineCache = new Map<string, PreprocessedRailwayLine>();
+
+/**
+ * Cache for ordered stations per line
+ */
+const orderedStationsCache = new Map<string, StationWithDistance[]>();
+
+/**
+ * Promise for loading all metro stations (to avoid duplicate fetches)
+ */
+let stationsLoadPromise: Promise<Map<string, MetroStationFeature>> | null = null;
+
+/**
+ * Load all metro stations into a map by ID
+ */
+async function getStationsMap(): Promise<Map<string, MetroStationFeature>> {
+  if (!stationsLoadPromise) {
+    stationsLoadPromise = (async () => {
+      const stations = await loadMetroStations();
+      const map = new Map<string, MetroStationFeature>();
+      for (const feature of stations.features) {
+        map.set(feature.properties.id, feature);
+      }
+      return map;
+    })();
+  }
+  return stationsLoadPromise;
+}
+
+/**
+ * Get ordered stations for a metro line
+ * Stations are ordered by their distance along the line geometry
+ */
+async function getOrderedStations(
+  lineCode: string,
+  railway: PreprocessedRailwayLine
+): Promise<StationWithDistance[]> {
+  const cacheKey = lineCode.toUpperCase();
+
+  if (orderedStationsCache.has(cacheKey)) {
+    return orderedStationsCache.get(cacheKey)!;
+  }
+
+  const stationsMap = await getStationsMap();
+  const lineStations: StationWithDistance[] = [];
+
+  // Find stations that belong to this line
+  for (const [id, feature] of stationsMap) {
+    if (feature.properties.lines.includes(lineCode)) {
+      const coords = feature.geometry.coordinates as [number, number];
+
+      // Find closest point on line to station
+      const distance = findClosestDistanceOnLine(coords, railway);
+
+      lineStations.push({
+        id,
+        name: feature.properties.name,
+        distance,
+        coordinates: coords,
+      });
+    }
+  }
+
+  // Sort by distance along line
+  lineStations.sort((a, b) => a.distance - b.distance);
+
+  orderedStationsCache.set(cacheKey, lineStations);
+  console.log(`[MetroSimulator] Ordered ${lineStations.length} stations for line ${lineCode}`);
+
+  return lineStations;
+}
+
+/**
+ * Find the closest distance along the railway line to a given point
+ */
+function findClosestDistanceOnLine(
+  point: [number, number],
+  railway: PreprocessedRailwayLine
+): number {
+  let closestDistance = 0;
+  let minDist = Infinity;
+
+  // Check each segment
+  for (const segment of railway.segments) {
+    const [x1, y1] = segment.start;
+    const [x2, y2] = segment.end;
+    const [px, py] = point;
+
+    // Segment length is the difference between end and start distances
+    const segmentLength = segment.endDistance - segment.startDistance;
+
+    // Project point onto segment
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const segmentLengthSq = dx * dx + dy * dy;
+
+    let t = 0;
+    if (segmentLengthSq > 0) {
+      t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / segmentLengthSq));
+    }
+
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+
+    const dist = Math.hypot(px - projX, py - projY);
+
+    if (dist < minDist) {
+      minDist = dist;
+      closestDistance = segment.startDistance + t * segmentLength;
+    }
+  }
+
+  return closestDistance;
+}
+
+/**
+ * Find previous and next station for a given distance along the line
+ */
+function findStationsBetween(
+  distance: number,
+  stations: StationWithDistance[],
+  direction: TravelDirection
+): { previousStopId: string | null; nextStopId: string | null; previousStopName: string | null; nextStopName: string | null } {
+  if (stations.length === 0) {
+    return { previousStopId: null, nextStopId: null, previousStopName: null, nextStopName: null };
+  }
+
+  // For direction 0 (outbound): increasing distance
+  // For direction 1 (inbound): decreasing distance
+  let prevStation: StationWithDistance | null = null;
+  let nextStation: StationWithDistance | null = null;
+
+  if (direction === 0) {
+    // Outbound: previous is behind, next is ahead
+    for (let i = 0; i < stations.length; i++) {
+      if (stations[i].distance <= distance) {
+        prevStation = stations[i];
+      } else {
+        nextStation = stations[i];
+        break;
+      }
+    }
+    // If no next station, wrap to first
+    if (!nextStation && stations.length > 0) {
+      nextStation = stations[0];
+    }
+  } else {
+    // Inbound: reversed order
+    for (let i = stations.length - 1; i >= 0; i--) {
+      if (stations[i].distance >= distance) {
+        prevStation = stations[i];
+      } else {
+        nextStation = stations[i];
+        break;
+      }
+    }
+    // If no next station, wrap to last
+    if (!nextStation && stations.length > 0) {
+      nextStation = stations[stations.length - 1];
+    }
+  }
+
+  return {
+    previousStopId: prevStation?.id ?? null,
+    nextStopId: nextStation?.id ?? null,
+    previousStopName: prevStation?.name ?? null,
+    nextStopName: nextStation?.name ?? null,
+  };
+}
 
 /**
  * Load and preprocess a metro line geometry
@@ -91,6 +269,9 @@ export async function generateLinePositions(
     return [];
   }
 
+  // Load ordered stations for this line
+  const orderedStations = await getOrderedStations(lineCode, railway);
+
   const lineInfo = getMetroLineByCode(lineCode);
   const lineColor = lineInfo?.color ?? config.color;
 
@@ -140,6 +321,9 @@ export async function generateLinePositions(
       // Calculate progress as fraction of line length
       const progressFraction = finalDistance / railway.totalLength;
 
+      // Find previous and next stations
+      const stationInfo = findStationsBetween(finalDistance, orderedStations, direction);
+
       vehicles.push({
         vehicleKey: `metro-${lineCode}-${direction}-${i}`,
         networkType: 'metro',
@@ -152,8 +336,10 @@ export async function generateLinePositions(
         confidence: 'medium',
         estimatedAt: currentTimeMs,
         direction,
-        previousStopId: null,
-        nextStopId: null,
+        previousStopId: stationInfo.previousStopId,
+        nextStopId: stationInfo.nextStopId,
+        previousStopName: stationInfo.previousStopName,
+        nextStopName: stationInfo.nextStopName,
         status: 'IN_TRANSIT_TO',
         progressFraction,
         distanceAlongLine: finalDistance,

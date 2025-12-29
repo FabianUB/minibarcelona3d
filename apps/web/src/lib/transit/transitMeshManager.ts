@@ -18,9 +18,20 @@ import type { PreprocessedRailwayLine } from '../trains/geometry';
 import { sampleRailwayPosition } from '../trains/geometry';
 import { getCachedModel, loadTrainModel } from '../trains/modelLoader';
 import { ScaleManager } from '../trains/scaleManager';
-import { getModelPosition, getModelScale } from '../map/coordinates';
+import { getModelPosition, getModelScale, getLngLatFromModelPosition } from '../map/coordinates';
 import { getPreprocessedMetroLine } from '../metro/positionSimulator';
 import { getPreprocessedBusRoute } from '../bus/positionSimulator';
+
+/**
+ * Screen-space candidate for click/hover detection
+ */
+export interface ScreenSpaceCandidate {
+  vehicleKey: string;
+  lineCode: string;
+  networkType: TransportType;
+  screenPoint: { x: number; y: number };
+  radiusPx: number;
+}
 
 /**
  * Mesh data stored for each vehicle - includes continuous motion parameters
@@ -499,6 +510,62 @@ export class TransitMeshManager {
       this.scene.remove(data.mesh);
     }
     this.meshes.clear();
+  }
+
+  /**
+   * Get screen-space candidates for click/hover detection.
+   * Projects vehicle positions to screen coordinates.
+   */
+  getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
+    const candidates: ScreenSpaceCandidate[] = [];
+
+    for (const [, data] of this.meshes) {
+      const { mesh, vehicleKey, lineCode, networkType } = data;
+
+      // Get lng/lat from mesh position
+      const centerLngLat = getLngLatFromModelPosition(
+        mesh.position.x,
+        mesh.position.y,
+        mesh.position.z
+      );
+
+      // Project to screen coordinates
+      const centerPoint = map.project(centerLngLat);
+
+      // Calculate screen radius from scale
+      const currentScale = mesh.scale.x;
+      const worldRadius = currentScale * 0.5; // Approximate radius
+
+      // Project edge point to get screen radius
+      const edgeLngLat = getLngLatFromModelPosition(
+        mesh.position.x + worldRadius,
+        mesh.position.y,
+        mesh.position.z
+      );
+      const edgePoint = map.project(edgeLngLat);
+
+      // Calculate pixel radius
+      const dx = edgePoint.x - centerPoint.x;
+      const dy = edgePoint.y - centerPoint.y;
+      const radiusPx = Math.max(Math.hypot(dx, dy), 10);
+
+      candidates.push({
+        vehicleKey,
+        lineCode,
+        networkType,
+        screenPoint: { x: centerPoint.x, y: centerPoint.y },
+        radiusPx,
+      });
+    }
+
+    return candidates;
+  }
+
+  /**
+   * Get vehicle data by key (for retrieving clicked vehicle info)
+   */
+  getVehicleData(vehicleKey: string): TransitMeshData | null {
+    return this.meshes.get(vehicleKey) ?? null;
   }
 
   /**

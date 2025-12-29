@@ -66,6 +66,8 @@ export interface VehiclePosition {
   // Transit context
   previousStopId: string | null;
   nextStopId: string | null;
+  previousStopName: string | null;
+  nextStopName: string | null;
   status: VehicleStatus;
 
   // Progress along segment

@@ -7,16 +7,21 @@
  * Based on TrainLayer3D patterns but simplified for schedule-based positioning.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapboxMap, CustomLayerInterface } from 'mapbox-gl';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { TransportType } from '../../types/rodalies';
+import type { VehiclePosition } from '../../types/transit';
 import { TransitMeshManager } from '../../lib/transit/transitMeshManager';
 import { getModelOrigin, setModelOrigin } from '../../lib/map/coordinates';
 import { useMetroPositions } from './hooks/useMetroPositions';
 import { useBusPositions } from './hooks/useBusPositions';
+import { useTramPositions } from './hooks/useTramPositions';
+import { useFgcPositions } from './hooks/useFgcPositions';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
+import { useTransitActions } from '../../state/transit';
+import { useMapActions } from '../../state/map';
 
 export interface TransitVehicleLayer3DProps {
   /** Mapbox GL Map instance */
@@ -47,12 +52,19 @@ export function TransitVehicleLayer3D({
   const [modelLoaded, setModelLoaded] = useState(false);
   const styleReady = useMapStyleReady(map);
 
+  // State actions
+  const { selectVehicle } = useTransitActions();
+  const { setActivePanel } = useMapActions();
+
   // Three.js references
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const meshManagerRef = useRef<TransitMeshManager | null>(null);
   const layerAddedRef = useRef(false);
+
+  // Store current positions for lookup on click
+  const positionsRef = useRef<VehiclePosition[]>([]);
 
   // Layer ID based on network type
   const layerId = `transit-${networkType}-layer-3d`;
@@ -74,16 +86,47 @@ export function TransitVehicleLayer3D({
     enabled: networkType === 'bus' && visible,
   });
 
+  const {
+    positions: tramPositions,
+    isReady: tramReady,
+    isLoading: tramLoading,
+  } = useTramPositions({
+    enabled: networkType === 'tram' && visible,
+  });
+
+  const {
+    positions: fgcPositions,
+    isReady: fgcReady,
+    isLoading: fgcLoading,
+  } = useFgcPositions({
+    enabled: networkType === 'fgc' && visible,
+  });
+
   // Use appropriate positions based on network type
   // Wrap in useMemo to avoid changing dependency on every render
   const positions = useMemo(() => {
     if (networkType === 'metro') return metroPositions;
     if (networkType === 'bus') return busPositions;
+    if (networkType === 'tram') return tramPositions;
+    if (networkType === 'fgc') return fgcPositions;
     return [];
-  }, [networkType, metroPositions, busPositions]);
+  }, [networkType, metroPositions, busPositions, tramPositions, fgcPositions]);
 
-  const isDataReady = networkType === 'metro' ? metroReady : networkType === 'bus' ? busReady : false;
-  const isDataLoading = networkType === 'metro' ? metroLoading : networkType === 'bus' ? busLoading : false;
+  const isDataReady = useMemo(() => {
+    if (networkType === 'metro') return metroReady;
+    if (networkType === 'bus') return busReady;
+    if (networkType === 'tram') return tramReady;
+    if (networkType === 'fgc') return fgcReady;
+    return false;
+  }, [networkType, metroReady, busReady, tramReady, fgcReady]);
+
+  const isDataLoading = useMemo(() => {
+    if (networkType === 'metro') return metroLoading;
+    if (networkType === 'bus') return busLoading;
+    if (networkType === 'tram') return tramLoading;
+    if (networkType === 'fgc') return fgcLoading;
+    return false;
+  }, [networkType, metroLoading, busLoading, tramLoading, fgcLoading]);
 
   // Notify parent of loading state
   useEffect(() => {
@@ -153,8 +196,16 @@ export function TransitVehicleLayer3D({
         scene.add(fillLight);
 
         // Initialize mesh manager
+        // Vehicle sizes: Metro 25m, FGC 20m (similar to metro but smaller), TRAM 15m, Bus 12m
+        const vehicleSizes: Record<TransportType, number> = {
+          metro: 25,
+          fgc: 20,
+          tram: 15,
+          bus: 12,
+          rodalies: 25, // Not used here but needed for type completeness
+        };
         const meshManager = new TransitMeshManager(scene, {
-          vehicleSizeMeters: networkType === 'metro' ? 25 : 12, // Buses smaller
+          vehicleSizeMeters: vehicleSizes[networkType] ?? 15,
           modelType: 'civia', // Use Civia as placeholder for all
         });
         meshManagerRef.current = meshManager;
@@ -263,6 +314,9 @@ export function TransitVehicleLayer3D({
     console.log(`TransitVehicleLayer3D [${networkType}]: Updating ${positions.length} vehicles`);
     meshManagerRef.current.updateVehicles(positions);
 
+    // Store positions for click lookup
+    positionsRef.current = positions;
+
     // Trigger map repaint
     map.triggerRepaint();
   }, [positions, sceneReady, modelLoaded, isDataReady, map, networkType]);
@@ -290,6 +344,92 @@ export function TransitVehicleLayer3D({
       map.off('zoom', handleZoom);
     };
   }, [map]);
+
+  /**
+   * Resolve screen-space hit from click position
+   */
+  const resolveScreenHit = useCallback(
+    (point: { x: number; y: number }, paddingPx: number) => {
+      const meshManager = meshManagerRef.current;
+      if (!meshManager) {
+        return null;
+      }
+
+      const candidates = meshManager.getScreenCandidates(map);
+      let nearest: {
+        vehicleKey: string;
+        lineCode: string;
+        distance: number;
+      } | null = null;
+
+      for (const candidate of candidates) {
+        const dx = point.x - candidate.screenPoint.x;
+        const dy = point.y - candidate.screenPoint.y;
+        const distance = Math.hypot(dx, dy);
+
+        // Check if within radius + padding
+        if (distance <= candidate.radiusPx + paddingPx) {
+          if (!nearest || distance < nearest.distance) {
+            nearest = {
+              vehicleKey: candidate.vehicleKey,
+              lineCode: candidate.lineCode,
+              distance,
+            };
+          }
+        }
+      }
+
+      return nearest;
+    },
+    [map]
+  );
+
+  /**
+   * Handle click on vehicle
+   */
+  const handlePointerClick = useCallback(
+    (event: MouseEvent) => {
+      if (!visible) return;
+
+      const canvas = map.getCanvas();
+      const rect = canvas.getBoundingClientRect();
+      const point = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+
+      const hit = resolveScreenHit(point, 4);
+
+      if (hit) {
+        console.log(`🎯 ${networkType} clicked: ${hit.vehicleKey} (line: ${hit.lineCode})`);
+
+        // Find the vehicle position from our stored positions
+        const vehicleData = positionsRef.current.find(
+          (v) => v.vehicleKey === hit.vehicleKey
+        );
+
+        if (vehicleData) {
+          selectVehicle(vehicleData);
+          setActivePanel('transitInfo');
+        }
+      }
+    },
+    [map, visible, networkType, resolveScreenHit, selectVehicle, setActivePanel]
+  );
+
+  /**
+   * Attach click event listener
+   */
+  useEffect(() => {
+    if (!map || !sceneReady) return;
+
+    const canvas = map.getCanvas();
+    canvas.addEventListener('click', handlePointerClick);
+
+    return () => {
+      canvas.removeEventListener('click', handlePointerClick);
+    };
+  }, [map, sceneReady, handlePointerClick]);
 
   // This component renders nothing - all rendering is done via Mapbox custom layer
   return null;

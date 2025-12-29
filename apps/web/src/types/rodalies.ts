@@ -122,12 +122,12 @@ export interface LegendEntry {
 
 export type MapHighlightMode = 'none' | 'highlight' | 'isolate';
 
-export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo' | 'stationInfo' | 'transportFilter';
+export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo' | 'stationInfo' | 'transportFilter' | 'transitInfo';
 
 /**
  * Transport types that can be filtered on/off
  */
-export type TransportType = 'rodalies' | 'metro' | 'bus';
+export type TransportType = 'rodalies' | 'metro' | 'bus' | 'tram' | 'fgc';
 
 /**
  * Filter visibility state for each transport type
@@ -136,6 +136,8 @@ export interface TransportFilterState {
   rodalies: boolean;
   metro: boolean;
   bus: boolean;
+  tram: boolean;
+  fgc: boolean;
 }
 
 export interface MapUIState {

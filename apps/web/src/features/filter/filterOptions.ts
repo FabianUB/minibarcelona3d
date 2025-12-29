@@ -20,6 +20,16 @@ export const FILTER_OPTIONS: FilterOption[] = [
     description: 'Show metro lines and stations',
   },
   {
+    type: 'tram',
+    label: 'TRAM',
+    description: 'Show tram lines and stops (Trambaix)',
+  },
+  {
+    type: 'fgc',
+    label: 'FGC',
+    description: 'Show FGC suburban rail lines and stations',
+  },
+  {
     type: 'bus',
     label: 'Bus',
     description: 'Show bus routes and stops',

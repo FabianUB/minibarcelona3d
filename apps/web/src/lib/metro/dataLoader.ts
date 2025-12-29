@@ -219,6 +219,146 @@ export async function getAvailableBusRouteCodes(
     .map((f) => f.route_code!);
 }
 
+// --- TRAM data loading functions ---
+
+let tramStopsPromise: Promise<MetroStationCollection> | null = null;
+let allTramLinesPromise: Promise<MetroLineCollection> | null = null;
+
+/**
+ * Load TRAM stops GeoJSON
+ */
+export async function loadTramStops(
+  manifest?: TmbManifest
+): Promise<MetroStationCollection> {
+  if (!tramStopsPromise) {
+    tramStopsPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const stopsFile = manifestData.files.find(
+        (f) => f.type === 'tram_stations'
+      );
+      if (!stopsFile) {
+        throw new Error('TMB manifest is missing tram_stations entry');
+      }
+      const url = resolveAssetUrl(stopsFile.path);
+      return fetchJson<MetroStationCollection>(url);
+    })();
+  }
+  return tramStopsPromise;
+}
+
+/**
+ * Load all TRAM line geometries as a single FeatureCollection
+ */
+export async function loadAllTramLines(
+  manifest?: TmbManifest
+): Promise<MetroLineCollection> {
+  if (!allTramLinesPromise) {
+    allTramLinesPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const lineFiles = manifestData.files.filter(
+        (f) => f.type === 'tram_line'
+      );
+
+      const lineCollections = await Promise.all(
+        lineFiles.map(async (file) => {
+          const url = resolveAssetUrl(file.path);
+          return fetchJson<MetroLineCollection>(url);
+        })
+      );
+
+      const allFeatures = lineCollections.flatMap((c) => c.features);
+
+      return {
+        type: 'FeatureCollection' as const,
+        features: allFeatures,
+      };
+    })();
+  }
+  return allTramLinesPromise;
+}
+
+/**
+ * Get available TRAM line codes from manifest
+ */
+export async function getAvailableTramLineCodes(
+  manifest?: TmbManifest
+): Promise<string[]> {
+  const manifestData = manifest ?? (await loadTmbManifest());
+  return manifestData.files
+    .filter((f) => f.type === 'tram_line' && f.line_code)
+    .map((f) => f.line_code!);
+}
+
+// --- FGC data loading functions ---
+
+let fgcStationsPromise: Promise<MetroStationCollection> | null = null;
+let allFgcLinesPromise: Promise<MetroLineCollection> | null = null;
+
+/**
+ * Load FGC stations GeoJSON
+ */
+export async function loadFgcStations(
+  manifest?: TmbManifest
+): Promise<MetroStationCollection> {
+  if (!fgcStationsPromise) {
+    fgcStationsPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const stationsFile = manifestData.files.find(
+        (f) => f.type === 'fgc_stations'
+      );
+      if (!stationsFile) {
+        throw new Error('TMB manifest is missing fgc_stations entry');
+      }
+      const url = resolveAssetUrl(stationsFile.path);
+      return fetchJson<MetroStationCollection>(url);
+    })();
+  }
+  return fgcStationsPromise;
+}
+
+/**
+ * Load all FGC line geometries as a single FeatureCollection
+ */
+export async function loadAllFgcLines(
+  manifest?: TmbManifest
+): Promise<MetroLineCollection> {
+  if (!allFgcLinesPromise) {
+    allFgcLinesPromise = (async () => {
+      const manifestData = manifest ?? (await loadTmbManifest());
+      const lineFiles = manifestData.files.filter(
+        (f) => f.type === 'fgc_line'
+      );
+
+      const lineCollections = await Promise.all(
+        lineFiles.map(async (file) => {
+          const url = resolveAssetUrl(file.path);
+          return fetchJson<MetroLineCollection>(url);
+        })
+      );
+
+      const allFeatures = lineCollections.flatMap((c) => c.features);
+
+      return {
+        type: 'FeatureCollection' as const,
+        features: allFeatures,
+      };
+    })();
+  }
+  return allFgcLinesPromise;
+}
+
+/**
+ * Get available FGC line codes from manifest
+ */
+export async function getAvailableFgcLineCodes(
+  manifest?: TmbManifest
+): Promise<string[]> {
+  const manifestData = manifest ?? (await loadTmbManifest());
+  return manifestData.files
+    .filter((f) => f.type === 'fgc_line' && f.line_code)
+    .map((f) => f.line_code!);
+}
+
 // --- Helper functions ---
 
 function resolveAssetUrl(path: string): string {
@@ -287,4 +427,8 @@ export function clearMetroCache(): void {
   allMetroLinesPromise = null;
   busStopsPromise = null;
   allBusRoutesPromise = null;
+  tramStopsPromise = null;
+  allTramLinesPromise = null;
+  fgcStationsPromise = null;
+  allFgcLinesPromise = null;
 }

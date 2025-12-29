@@ -182,7 +182,7 @@ export async function loadMapUiState(
           activePanel: 'none',
           selectedStationId: null,
           stationLoadError: null,
-          transportFilters: { rodalies: true, metro: true, bus: false },
+          transportFilters: { rodalies: true, metro: false, bus: false, tram: false, fgc: false },
         };
       }
       const url = resolveManifestAssetUrl(path);
@@ -319,8 +319,10 @@ function normaliseMapUiState(
     stationLoadError: null,
     transportFilters: {
       rodalies: candidate?.transportFilters?.rodalies ?? true,
-      metro: candidate?.transportFilters?.metro ?? true,
+      metro: candidate?.transportFilters?.metro ?? false,
       bus: candidate?.transportFilters?.bus ?? false,
+      tram: candidate?.transportFilters?.tram ?? false,
+      fgc: candidate?.transportFilters?.fgc ?? false,
     },
   };
 }

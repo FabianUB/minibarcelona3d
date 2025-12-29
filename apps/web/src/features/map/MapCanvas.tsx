@@ -15,12 +15,14 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 // import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
-import { TrainListButton } from '../trains/TrainListButton';
+import { VehicleListButton } from '../trains/VehicleListButton';
 import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
 import { MetroLineLayer, MetroStationLayer } from '../metro';
 import { BusLineLayer, BusStopLayer } from '../bus';
+import { TramLineLayer, TramStopLayer } from '../tram';
+import { FGCLineLayer, FGCStationLayer } from '../fgc';
 import { TransportFilterButton } from '../filter';
 import { TransitVehicleLayer3D } from '../transit';
 import type { MapActions as MapActionsType } from '../../state/map/types';
@@ -134,6 +136,10 @@ export function MapCanvas() {
 
   const isHighContrast = ui.isHighContrast;
   const { transportFilters } = ui;
+
+  // Keep a ref to current transportFilters for use in closures
+  const transportFiltersRef = useRef(transportFilters);
+  transportFiltersRef.current = transportFilters;
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -390,6 +396,7 @@ export function MapCanvas() {
             layout: {
               'line-join': 'round',
               'line-cap': 'round',
+              'visibility': transportFiltersRef.current.rodalies ? 'visible' : 'none',
             },
             paint: getLinePaintProperties({
               highlightMode: 'none',
@@ -830,6 +837,50 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           visible={transportFilters.bus}
         />
       ) : null}
+      {/* TRAM line geometries */}
+      {mapInstance && isMapLoaded ? (
+        <TramLineLayer map={mapInstance} visible={transportFilters.tram} />
+      ) : null}
+      {/* TRAM stop markers */}
+      {mapInstance && isMapLoaded ? (
+        <TramStopLayer
+          map={mapInstance}
+          visible={transportFilters.tram}
+          onStopClick={(stopId, stopName) => {
+            console.log('TRAM stop clicked:', stopId, stopName);
+          }}
+        />
+      ) : null}
+      {/* TRAM vehicle layer (3D simulated trams) */}
+      {mapInstance && isMapLoaded ? (
+        <TransitVehicleLayer3D
+          map={mapInstance}
+          networkType="tram"
+          visible={transportFilters.tram}
+        />
+      ) : null}
+      {/* FGC line geometries */}
+      {mapInstance && isMapLoaded ? (
+        <FGCLineLayer map={mapInstance} visible={transportFilters.fgc} />
+      ) : null}
+      {/* FGC station markers */}
+      {mapInstance && isMapLoaded ? (
+        <FGCStationLayer
+          map={mapInstance}
+          visible={transportFilters.fgc}
+          onStationClick={(stationId, stationName) => {
+            console.log('FGC station clicked:', stationId, stationName);
+          }}
+        />
+      ) : null}
+      {/* FGC vehicle layer (3D simulated trains) */}
+      {mapInstance && isMapLoaded ? (
+        <TransitVehicleLayer3D
+          map={mapInstance}
+          networkType="fgc"
+          visible={transportFilters.fgc}
+        />
+      ) : null}
       {/* Rodalies station markers layer */}
       {mapInstance && isMapLoaded ? (
         <StationLayer
@@ -852,9 +903,9 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           visible={transportFilters.rodalies}
         />
       ) : null}
-      {/* Train List Button - rendered separately to avoid re-render issues with map layers */}
+      {/* Vehicle List Button - shows trains, metros, and buses in a tabbed interface */}
       {mapInstance && isMapLoaded ? (
-        <TrainListButton trains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
+        <VehicleListButton trains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
       ) : null}
       {/* Transport Filter Button */}
       <TransportFilterButton />

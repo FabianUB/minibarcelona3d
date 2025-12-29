@@ -160,6 +160,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   // Phase 5: Line color map for hover outlines
   const lineColorMapRef = useRef<Map<string, THREE.Color> | null>(null);
 
+  // Keep ref to current visibility for use in closures
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
+
   // References for Three.js scene components
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
@@ -1388,6 +1392,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       console.log(
         `TrainLayer3D: Mesh manager initialized with ${stationsRef.current.length} stations and ${railwaysRef.current.size} railway lines`
       );
+      // Apply initial visibility state (in case visible=false from the start)
+      if (!visibleRef.current) {
+        meshManagerRef.current.setAllMeshesVisible(false);
+      }
     }
     // NOTE: Do NOT call updateTrainMeshes here - it's handled by the train update effect below
     // Calling it in both places causes double-updates which corrupt interpolation state
@@ -1421,6 +1429,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       previousPolledAtMs: pollTimestampsRef.current.previous,
       receivedAtMs: pollTimestampsRef.current.receivedAt,
     });
+
+    // Apply visibility state after updating meshes (handles case when new trains are added while hidden)
+    if (!visibleRef.current) {
+      meshManagerRef.current.setAllMeshesVisible(false);
+    }
 
     // T089: Calculate opacity for each train based on line selection
     // T098: Stale data opacity effect temporarily disabled
