@@ -8,6 +8,9 @@
 
 import type { TransportType } from './rodalies';
 
+// Re-export TransportType for convenience
+export type { TransportType };
+
 /**
  * How the vehicle position was determined
  */
@@ -68,6 +71,10 @@ export interface VehiclePosition {
   // Progress along segment
   progressFraction: number;     // 0.0-1.0 between previous and next stop
   distanceAlongLine: number;    // Meters from start of line
+
+  // Continuous motion parameters (for smooth per-frame animation)
+  speedMetersPerSecond: number; // Vehicle speed in m/s
+  lineTotalLength: number;      // Total length of line in meters
 
   // Timing (optional, for iBus-based)
   arrivalMinutes?: number;      // Minutes until next stop (from iBus)

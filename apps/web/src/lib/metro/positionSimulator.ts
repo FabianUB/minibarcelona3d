@@ -111,6 +111,9 @@ export async function generateLinePositions(
   const headwayMs = config.headwaySeconds * 1000;
   const timeOffset = (currentTimeMs % headwayMs) / headwayMs;
 
+  // Calculate speed in meters per second
+  const speedMetersPerSecond = (config.avgSpeedKmh * 1000) / 3600;
+
   // Generate positions for both directions
   for (const direction of [0, 1] as TravelDirection[]) {
     for (let i = 0; i < trainsPerDirection; i++) {
@@ -154,6 +157,8 @@ export async function generateLinePositions(
         status: 'IN_TRANSIT_TO',
         progressFraction,
         distanceAlongLine: finalDistance,
+        speedMetersPerSecond,
+        lineTotalLength: railway.totalLength,
         lineColor,
       });
     }
@@ -209,6 +214,16 @@ export async function preloadMetroGeometries(): Promise<void> {
  */
 export function clearPositionSimulatorCache(): void {
   preprocessedLineCache.clear();
+}
+
+/**
+ * Get a preprocessed metro line geometry by line code
+ * Returns null if not yet loaded
+ */
+export function getPreprocessedMetroLine(
+  lineCode: string
+): PreprocessedRailwayLine | null {
+  return preprocessedLineCache.get(lineCode.toUpperCase()) ?? null;
 }
 
 /**
