@@ -46,7 +46,7 @@ export type MetroLineCollection = FeatureCollection<MetroLineFeature>;
  * TMB manifest structure
  */
 export interface TmbManifestFile {
-  type: 'metro_stations' | 'metro_line' | 'bus_stops' | 'bus_route';
+  type: 'metro_stations' | 'metro_line' | 'bus_stops' | 'bus_route' | 'tram_stations' | 'tram_line' | 'fgc_stations' | 'fgc_line';
   path: string;
   line_code?: string;
   route_code?: string;

@@ -12,12 +12,22 @@
  */
 
 import type { VehiclePosition, TravelDirection } from '../../types/transit';
-import type { MetroLineCollection } from '../../types/metro';
+import type { MetroLineCollection, MetroStationFeature } from '../../types/metro';
 import type { RodaliesLineGeometry } from '../../types/rodalies';
 import type { PreprocessedRailwayLine } from '../trains/geometry';
 import { preprocessRailwayLine, sampleRailwayPosition } from '../trains/geometry';
-import { loadAllBusRoutes, getAvailableBusRouteCodes } from '../metro/dataLoader';
+import { loadAllBusRoutes, getAvailableBusRouteCodes, loadBusStops } from '../metro/dataLoader';
 import { getBusRouteConfig, calculateBusesPerDirection } from '../../config/busConfig';
+
+/**
+ * Stop with distance along route for ordering
+ */
+interface StopWithDistance {
+  id: string;
+  name: string;
+  distance: number;  // Distance along the route in meters
+  coordinates: [number, number];
+}
 
 /**
  * Cache for preprocessed bus routes
@@ -25,9 +35,172 @@ import { getBusRouteConfig, calculateBusesPerDirection } from '../../config/busC
 const preprocessedRouteCache = new Map<string, PreprocessedRailwayLine>();
 
 /**
+ * Cache for ordered stops per route
+ */
+const orderedStopsCache = new Map<string, StopWithDistance[]>();
+
+/**
  * Cached route codes
  */
 let cachedRouteCodes: string[] | null = null;
+
+/**
+ * Promise for loading all bus stops (to avoid duplicate fetches)
+ */
+let stopsLoadPromise: Promise<Map<string, MetroStationFeature>> | null = null;
+
+/**
+ * Load all bus stops into a map by ID
+ */
+async function getStopsMap(): Promise<Map<string, MetroStationFeature>> {
+  if (!stopsLoadPromise) {
+    stopsLoadPromise = (async () => {
+      const stops = await loadBusStops();
+      const map = new Map<string, MetroStationFeature>();
+      for (const feature of stops.features) {
+        map.set(feature.properties.id, feature);
+      }
+      return map;
+    })();
+  }
+  return stopsLoadPromise;
+}
+
+/**
+ * Get ordered stops for a bus route
+ * Stops are ordered by their distance along the route geometry
+ */
+async function getOrderedStops(
+  routeCode: string,
+  route: PreprocessedRailwayLine
+): Promise<StopWithDistance[]> {
+  const cacheKey = routeCode.toUpperCase();
+
+  if (orderedStopsCache.has(cacheKey)) {
+    return orderedStopsCache.get(cacheKey)!;
+  }
+
+  const stopsMap = await getStopsMap();
+  const routeStops: StopWithDistance[] = [];
+
+  // Find stops that belong to this route
+  for (const [id, feature] of stopsMap) {
+    if (feature.properties.lines.includes(routeCode)) {
+      const coords = feature.geometry.coordinates as [number, number];
+
+      // Find closest point on route to stop
+      const distance = findClosestDistanceOnRoute(coords, route);
+
+      routeStops.push({
+        id,
+        name: feature.properties.name,
+        distance,
+        coordinates: coords,
+      });
+    }
+  }
+
+  // Sort by distance along route
+  routeStops.sort((a, b) => a.distance - b.distance);
+
+  orderedStopsCache.set(cacheKey, routeStops);
+
+  return routeStops;
+}
+
+/**
+ * Find the closest distance along the route to a given point
+ */
+function findClosestDistanceOnRoute(
+  point: [number, number],
+  route: PreprocessedRailwayLine
+): number {
+  let closestDistance = 0;
+  let minDist = Infinity;
+
+  // Check each segment
+  for (const segment of route.segments) {
+    const [x1, y1] = segment.start;
+    const [x2, y2] = segment.end;
+    const [px, py] = point;
+
+    // Segment length is the difference between end and start distances
+    const segmentLength = segment.endDistance - segment.startDistance;
+
+    // Project point onto segment
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const segmentLengthSq = dx * dx + dy * dy;
+
+    let t = 0;
+    if (segmentLengthSq > 0) {
+      t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / segmentLengthSq));
+    }
+
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+
+    const dist = Math.hypot(px - projX, py - projY);
+
+    if (dist < minDist) {
+      minDist = dist;
+      closestDistance = segment.startDistance + t * segmentLength;
+    }
+  }
+
+  return closestDistance;
+}
+
+/**
+ * Find previous and next stop for a given distance along the route
+ */
+function findStopsBetween(
+  distance: number,
+  stops: StopWithDistance[],
+  direction: TravelDirection
+): { previousStopId: string | null; nextStopId: string | null; previousStopName: string | null; nextStopName: string | null } {
+  if (stops.length === 0) {
+    return { previousStopId: null, nextStopId: null, previousStopName: null, nextStopName: null };
+  }
+
+  let prevStop: StopWithDistance | null = null;
+  let nextStop: StopWithDistance | null = null;
+
+  if (direction === 0) {
+    // Outbound: previous is behind, next is ahead
+    for (let i = 0; i < stops.length; i++) {
+      if (stops[i].distance <= distance) {
+        prevStop = stops[i];
+      } else {
+        nextStop = stops[i];
+        break;
+      }
+    }
+    if (!nextStop && stops.length > 0) {
+      nextStop = stops[0];
+    }
+  } else {
+    // Inbound: reversed order
+    for (let i = stops.length - 1; i >= 0; i--) {
+      if (stops[i].distance >= distance) {
+        prevStop = stops[i];
+      } else {
+        nextStop = stops[i];
+        break;
+      }
+    }
+    if (!nextStop && stops.length > 0) {
+      nextStop = stops[stops.length - 1];
+    }
+  }
+
+  return {
+    previousStopId: prevStop?.id ?? null,
+    nextStopId: nextStop?.id ?? null,
+    previousStopName: prevStop?.name ?? null,
+    nextStopName: nextStop?.name ?? null,
+  };
+}
 
 /**
  * Load and preprocess all bus route geometries
@@ -79,14 +252,17 @@ async function getRouteCodes(): Promise<string[]> {
  * @param currentTimeMs - Current timestamp in milliseconds
  * @returns Array of simulated vehicle positions
  */
-export function generateRoutePositions(
+export async function generateRoutePositions(
   routeCode: string,
   currentTimeMs: number
-): VehiclePosition[] {
+): Promise<VehiclePosition[]> {
   const route = preprocessedRouteCache.get(routeCode);
   if (!route) {
     return [];
   }
+
+  // Load ordered stops for this route
+  const orderedStops = await getOrderedStops(routeCode, route);
 
   const config = getBusRouteConfig(routeCode);
   const vehicles: VehiclePosition[] = [];
@@ -131,6 +307,9 @@ export function generateRoutePositions(
       // Calculate speed in meters per second
       const speedMetersPerSecond = (config.avgSpeedKmh * 1000) / 3600;
 
+      // Find previous and next stops
+      const stopInfo = findStopsBetween(finalDistance, orderedStops, direction);
+
       vehicles.push({
         vehicleKey: `bus-${routeCode}-${direction}-${i}`,
         networkType: 'bus',
@@ -143,8 +322,10 @@ export function generateRoutePositions(
         confidence: 'low', // Bus positions are less accurate than Metro
         estimatedAt: currentTimeMs,
         direction,
-        previousStopId: null,
-        nextStopId: null,
+        previousStopId: stopInfo.previousStopId,
+        nextStopId: stopInfo.nextStopId,
+        previousStopName: stopInfo.previousStopName,
+        nextStopName: stopInfo.nextStopName,
         status: 'IN_TRANSIT_TO',
         progressFraction,
         distanceAlongLine: finalDistance,
@@ -171,13 +352,14 @@ export async function generateAllBusPositions(
   await loadAndPreprocessRoutes();
 
   const routeCodes = await getRouteCodes();
-  const allPositions: VehiclePosition[] = [];
 
-  // Generate positions for all routes
-  for (const routeCode of routeCodes) {
-    const positions = generateRoutePositions(routeCode, currentTimeMs);
-    allPositions.push(...positions);
-  }
+  // Generate positions for all routes in parallel
+  const routePositions = await Promise.all(
+    routeCodes.map((routeCode) => generateRoutePositions(routeCode, currentTimeMs))
+  );
+
+  // Flatten into single array
+  const allPositions = routePositions.flat();
 
   if (allPositions.length > 0) {
     console.log(`[BusSimulator] Generated ${allPositions.length} vehicle positions`);
