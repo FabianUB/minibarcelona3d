@@ -167,13 +167,7 @@ export async function generateAllTramPositions(
     lineCodes.map((lineCode) => generateLinePositions(lineCode, currentTimeMs))
   );
 
-  const allPositions = linePositions.flat();
-
-  if (allPositions.length > 0) {
-    console.log(`[TramSimulator] Generated ${allPositions.length} vehicle positions`);
-  }
-
-  return allPositions;
+  return linePositions.flat();
 }
 
 /**

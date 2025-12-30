@@ -359,13 +359,7 @@ export async function generateAllBusPositions(
   );
 
   // Flatten into single array
-  const allPositions = routePositions.flat();
-
-  if (allPositions.length > 0) {
-    console.log(`[BusSimulator] Generated ${allPositions.length} vehicle positions`);
-  }
-
-  return allPositions;
+  return routePositions.flat();
 }
 
 /**

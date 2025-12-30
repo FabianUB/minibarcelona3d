@@ -102,7 +102,7 @@ export function MetroLineLayer({
             15, 8,
             18, 14,
           ],
-          'line-opacity': visible ? 0.8 : 0,
+          'line-opacity': 0.8, // Initial opacity, updated by visibility effect
         },
       });
 
@@ -126,7 +126,7 @@ export function MetroLineLayer({
             15, 5,
             18, 10,
           ],
-          'line-opacity': visible ? 0.9 : 0,
+          'line-opacity': 0.9, // Initial opacity, updated by visibility effect
         },
       });
 
@@ -152,7 +152,8 @@ export function MetroLineLayer({
         // Cleanup failed - map may have been removed
       }
     };
-  }, [map, geoJSON, isLoading, error, visible, styleReady]);
+    // Note: visible intentionally excluded - visibility is handled by the highlighting effect below
+  }, [map, geoJSON, isLoading, error, styleReady]);
 
   // Update visibility and highlighting
   useEffect(() => {

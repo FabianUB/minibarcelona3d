@@ -370,13 +370,7 @@ export async function generateAllMetroPositions(
   );
 
   // Flatten into single array
-  const allPositions = linePositions.flat();
-
-  if (allPositions.length > 0) {
-    console.log(`[MetroSimulator] Generated ${allPositions.length} vehicle positions`);
-  }
-
-  return allPositions;
+  return linePositions.flat();
 }
 
 /**
