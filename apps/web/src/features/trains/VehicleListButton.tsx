@@ -12,6 +12,7 @@ import { useMetroPositions } from '../transit/hooks/useMetroPositions';
 import { useBusPositions } from '../transit/hooks/useBusPositions';
 import { useTramPositions } from '../transit/hooks/useTramPositions';
 import { useFgcPositions } from '../transit/hooks/useFgcPositions';
+import { useMapState, useMapActions } from '../../state/map/useMapStore';
 
 interface VehicleListButtonProps {
   trains: TrainPosition[];
@@ -21,6 +22,10 @@ interface VehicleListButtonProps {
 
 export function VehicleListButton({ trains, map, getMeshPosition }: VehicleListButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Get transport filters state and actions
+  const { ui } = useMapState();
+  const { setTransportFilter } = useMapActions();
 
   // Get Metro, Bus, TRAM, and FGC positions from hooks
   const { positions: metroPositions } = useMetroPositions({ enabled: true });
@@ -75,6 +80,8 @@ export function VehicleListButton({ trains, map, getMeshPosition }: VehicleListB
         busPositions={busPositions}
         tramPositions={tramPositions}
         fgcPositions={fgcPositions}
+        transportFilters={ui.transportFilters}
+        setTransportFilter={setTransportFilter}
         map={map}
         isOpen={isOpen}
         onClose={handleClose}
