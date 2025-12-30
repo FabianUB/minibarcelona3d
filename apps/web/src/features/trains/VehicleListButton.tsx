@@ -1,7 +1,7 @@
 /**
  * VehicleListButton - Button and panel for viewing all vehicles
  *
- * Shows Rodalies, Metro, and Bus vehicles in a unified tabbed interface.
+ * Shows Rodalies, Metro, Bus, TRAM, and FGC vehicles in a unified tabbed interface.
  */
 
 import { useState, useCallback } from 'react';
@@ -10,6 +10,8 @@ import type { TrainPosition } from '../../types/trains';
 import { VehicleListPanel } from './VehicleListPanel';
 import { useMetroPositions } from '../transit/hooks/useMetroPositions';
 import { useBusPositions } from '../transit/hooks/useBusPositions';
+import { useTramPositions } from '../transit/hooks/useTramPositions';
+import { useFgcPositions } from '../transit/hooks/useFgcPositions';
 
 interface VehicleListButtonProps {
   trains: TrainPosition[];
@@ -20,9 +22,11 @@ interface VehicleListButtonProps {
 export function VehicleListButton({ trains, map, getMeshPosition }: VehicleListButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Get Metro and Bus positions from hooks
+  // Get Metro, Bus, TRAM, and FGC positions from hooks
   const { positions: metroPositions } = useMetroPositions({ enabled: true });
   const { positions: busPositions } = useBusPositions({ enabled: true });
+  const { positions: tramPositions } = useTramPositions({ enabled: true });
+  const { positions: fgcPositions } = useFgcPositions({ enabled: true });
 
   const handleOpen = useCallback(() => {
     setIsOpen(true);
@@ -69,6 +73,8 @@ export function VehicleListButton({ trains, map, getMeshPosition }: VehicleListB
         trains={trains}
         metroPositions={metroPositions}
         busPositions={busPositions}
+        tramPositions={tramPositions}
+        fgcPositions={fgcPositions}
         map={map}
         isOpen={isOpen}
         onClose={handleClose}
