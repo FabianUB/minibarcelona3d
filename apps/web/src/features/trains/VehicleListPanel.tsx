@@ -1,7 +1,7 @@
 /**
  * VehicleListPanel - Unified list panel for all transport types
  *
- * Shows Rodalies trains, Metro, and Bus vehicles in a tabbed interface.
+ * Shows Rodalies trains, Metro, Bus, TRAM, and FGC vehicles in a tabbed interface.
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
@@ -14,24 +14,30 @@ import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadRodaliesLines, loadStations } from '../../lib/rodalies/dataLoader';
 import { METRO_LINE_CONFIG } from '../../config/metroConfig';
 import { getBusRouteConfig } from '../../config/busConfig';
+import { TRAM_LINE_CONFIG } from '../../config/tramConfig';
+import { FGC_LINE_CONFIG } from '../../config/fgcConfig';
 import type { Station, StationFeatureCollection } from '../../types/rodalies';
 
 interface VehicleListPanelProps {
   trains: TrainPosition[];
   metroPositions: VehiclePosition[];
   busPositions: VehiclePosition[];
+  tramPositions: VehiclePosition[];
+  fgcPositions: VehiclePosition[];
   map: MapboxMap;
   isOpen: boolean;
   onClose: () => void;
   getMeshPosition?: ((vehicleKey: string) => [number, number] | null) | null;
 }
 
-type TransportTab = 'rodalies' | 'metro' | 'bus';
+type TransportTab = 'rodalies' | 'metro' | 'bus' | 'tram' | 'fgc';
 
 export function VehicleListPanel({
   trains,
   metroPositions,
   busPositions,
+  tramPositions,
+  fgcPositions,
   map,
   isOpen,
   onClose,
@@ -132,6 +138,14 @@ export function VehicleListPanel({
       const metroConfig = METRO_LINE_CONFIG[lineCode];
       if (metroConfig) return metroConfig.color;
 
+      // Check TRAM config (color already includes #)
+      const tramConfig = TRAM_LINE_CONFIG[lineCode];
+      if (tramConfig) return tramConfig.color;
+
+      // Check FGC config (color already includes #)
+      const fgcConfig = FGC_LINE_CONFIG[lineCode];
+      if (fgcConfig) return fgcConfig.color;
+
       // Use Bus config function (color already includes #)
       const busConfig = getBusRouteConfig(lineCode);
       if (busConfig) return busConfig.color;
@@ -209,6 +223,38 @@ export function VehicleListPanel({
       });
   }, [busPositions, filter, sortDirection]);
 
+  // Filter and sort TRAM positions
+  const filteredTram = useMemo(() => {
+    return tramPositions
+      .filter((v) => {
+        if (!filter) return true;
+        return (
+          v.vehicleKey.toLowerCase().includes(filter.toLowerCase()) ||
+          v.lineCode.toLowerCase().includes(filter.toLowerCase())
+        );
+      })
+      .sort((a, b) => {
+        const comparison = a.lineCode.localeCompare(b.lineCode, undefined, { numeric: true });
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+  }, [tramPositions, filter, sortDirection]);
+
+  // Filter and sort FGC positions
+  const filteredFgc = useMemo(() => {
+    return fgcPositions
+      .filter((v) => {
+        if (!filter) return true;
+        return (
+          v.vehicleKey.toLowerCase().includes(filter.toLowerCase()) ||
+          v.lineCode.toLowerCase().includes(filter.toLowerCase())
+        );
+      })
+      .sort((a, b) => {
+        const comparison = a.lineCode.localeCompare(b.lineCode, undefined, { numeric: true });
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+  }, [fgcPositions, filter, sortDirection]);
+
   if (!isOpen) return null;
 
   const getLineCodeFromRouteId = (routeId: string | null): string => {
@@ -280,6 +326,26 @@ export function VehicleListPanel({
               }`}
             >
               🚌 Bus ({filteredBus.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('tram')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'tram'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              🚊 TRAM ({filteredTram.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('fgc')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'fgc'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              🚃 FGC ({filteredFgc.length})
             </button>
           </div>
 
@@ -420,6 +486,84 @@ export function VehicleListPanel({
                       </td>
                       <td className="px-3 py-2 text-xs">
                         {vehicle.nextStopName || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {/* TRAM Tab */}
+            {activeTab === 'tram' && (
+              <table className="w-full text-sm">
+                <thead className="bg-muted sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">Line</th>
+                    <th className="px-3 py-2 text-left font-medium">Direction</th>
+                    <th className="px-3 py-2 text-left font-medium">Progress</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTram.map((vehicle) => (
+                    <tr
+                      key={vehicle.vehicleKey}
+                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude)}
+                      className="border-b cursor-pointer hover:bg-accent transition-colors"
+                    >
+                      <td className="px-3 py-2">
+                        <span
+                          className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                          style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
+                        >
+                          {vehicle.lineCode}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-xs">
+                        {vehicle.direction === 0 ? 'Outbound' : 'Inbound'}
+                      </td>
+                      <td className="px-3 py-2 text-xs">
+                        {vehicle.progressFraction !== undefined
+                          ? `${(vehicle.progressFraction * 100).toFixed(0)}%`
+                          : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {/* FGC Tab */}
+            {activeTab === 'fgc' && (
+              <table className="w-full text-sm">
+                <thead className="bg-muted sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">Line</th>
+                    <th className="px-3 py-2 text-left font-medium">Direction</th>
+                    <th className="px-3 py-2 text-left font-medium">Progress</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredFgc.map((vehicle) => (
+                    <tr
+                      key={vehicle.vehicleKey}
+                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude)}
+                      className="border-b cursor-pointer hover:bg-accent transition-colors"
+                    >
+                      <td className="px-3 py-2">
+                        <span
+                          className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                          style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
+                        >
+                          {vehicle.lineCode}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-xs">
+                        {vehicle.direction === 0 ? 'Outbound' : 'Inbound'}
+                      </td>
+                      <td className="px-3 py-2 text-xs">
+                        {vehicle.progressFraction !== undefined
+                          ? `${(vehicle.progressFraction * 100).toFixed(0)}%`
+                          : '-'}
                       </td>
                     </tr>
                   ))}
