@@ -142,18 +142,6 @@ export function useMetroPositions(
     };
   }, [enabled, isReady, intervalMs, generatePositions]);
 
-  /**
-   * Cleanup on unmount
-   */
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, []);
-
   return {
     positions,
     isReady,

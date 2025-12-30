@@ -525,19 +525,22 @@ export function MapCanvas() {
       setViewport(getViewportFromMap(map, baseViewport));
     };
 
-    // Handle tile load errors
+    // Handle tile load errors - use functional update to avoid stale closure
     const handleTileError = (event: { error?: Error; tile?: { tileID: { canonical: { x: number; y: number; z: number } } }; source?: { id: string } }) => {
-      const errorCount = tileErrorCount + 1;
-      setTileErrorCount(errorCount);
+      setTileErrorCount((prev) => {
+        const errorCount = prev + 1;
 
-      if (errorCount <= 3) {
-        // Show warning for first 3 errors
-        setTileError(`Map tiles failed to load (attempt ${errorCount}/3). Retrying...`);
-        console.warn('Tile load error:', event.error?.message || 'Unknown tile error');
-      } else {
-        // After 3 errors, show persistent error message
-        setTileError('Map tiles failed to load. Check your internet connection.');
-      }
+        if (errorCount <= 3) {
+          // Show warning for first 3 errors
+          setTileError(`Map tiles failed to load (attempt ${errorCount}/3). Retrying...`);
+          console.warn('Tile load error:', event.error?.message || 'Unknown tile error');
+        } else {
+          // After 3 errors, show persistent error message
+          setTileError('Map tiles failed to load. Check your internet connection.');
+        }
+
+        return errorCount;
+      });
     };
 
     map.on('error', handleTileError);
@@ -573,7 +576,8 @@ export function MapCanvas() {
         delete globalWindow.__MAPBOX_INSTANCE__;
       }
     };
-  }, [effectiveViewport, setMapInstance, setMapLoaded, setViewport, tileErrorCount, isHighContrast, updateCameraSnapshot]);
+  // Note: tileErrorCount intentionally excluded - we don't want to recreate the map on tile errors
+  }, [effectiveViewport, setMapInstance, setMapLoaded, setViewport, isHighContrast, updateCameraSnapshot]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -167,13 +167,7 @@ export async function generateAllFgcPositions(
     lineCodes.map((lineCode) => generateLinePositions(lineCode, currentTimeMs))
   );
 
-  const allPositions = linePositions.flat();
-
-  if (allPositions.length > 0) {
-    console.log(`[FgcSimulator] Generated ${allPositions.length} vehicle positions`);
-  }
-
-  return allPositions;
+  return linePositions.flat();
 }
 
 /**
