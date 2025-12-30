@@ -16,7 +16,7 @@ import { METRO_LINE_CONFIG } from '../../config/metroConfig';
 import { getBusRouteConfig } from '../../config/busConfig';
 import { TRAM_LINE_CONFIG } from '../../config/tramConfig';
 import { FGC_LINE_CONFIG } from '../../config/fgcConfig';
-import type { Station, StationFeatureCollection } from '../../types/rodalies';
+import type { Station, StationFeatureCollection, TransportFilterState, TransportType } from '../../types/rodalies';
 
 interface VehicleListPanelProps {
   trains: TrainPosition[];
@@ -24,6 +24,8 @@ interface VehicleListPanelProps {
   busPositions: VehiclePosition[];
   tramPositions: VehiclePosition[];
   fgcPositions: VehiclePosition[];
+  transportFilters: TransportFilterState;
+  setTransportFilter: (type: TransportType, visible: boolean) => void;
   map: MapboxMap;
   isOpen: boolean;
   onClose: () => void;
@@ -38,6 +40,8 @@ export function VehicleListPanel({
   busPositions,
   tramPositions,
   fgcPositions,
+  transportFilters,
+  setTransportFilter,
   map,
   isOpen,
   onClose,
@@ -114,7 +118,12 @@ export function VehicleListPanel({
   };
 
   const handleRowClick = useCallback(
-    (lng: number, lat: number, vehicleKey?: string) => {
+    (lng: number, lat: number, transportType: TransportType, vehicleKey?: string) => {
+      // Enable the transport layer if not already visible
+      if (!transportFilters[transportType]) {
+        setTransportFilter(transportType, true);
+      }
+
       const meshPos = vehicleKey ? getMeshPosition?.(vehicleKey) : null;
       const center: [number, number] = meshPos ?? [lng, lat];
 
@@ -124,7 +133,7 @@ export function VehicleListPanel({
         duration: 1000,
       });
     },
-    [map, getMeshPosition]
+    [map, getMeshPosition, transportFilters, setTransportFilter]
   );
 
   // Get line color from loaded data or config
@@ -387,7 +396,7 @@ export function VehicleListPanel({
                       onClick={() =>
                         train.longitude &&
                         train.latitude &&
-                        handleRowClick(train.longitude, train.latitude, train.vehicleKey)
+                        handleRowClick(train.longitude, train.latitude, 'rodalies', train.vehicleKey)
                       }
                       className="border-b cursor-pointer hover:bg-accent transition-colors"
                     >
@@ -433,7 +442,7 @@ export function VehicleListPanel({
                   {filteredMetro.map((vehicle) => (
                     <tr
                       key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude)}
+                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'metro')}
                       className="border-b cursor-pointer hover:bg-accent transition-colors"
                     >
                       <td className="px-3 py-2">
@@ -470,7 +479,7 @@ export function VehicleListPanel({
                   {filteredBus.map((vehicle) => (
                     <tr
                       key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude)}
+                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'bus')}
                       className="border-b cursor-pointer hover:bg-accent transition-colors"
                     >
                       <td className="px-3 py-2">
@@ -507,7 +516,7 @@ export function VehicleListPanel({
                   {filteredTram.map((vehicle) => (
                     <tr
                       key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude)}
+                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'tram')}
                       className="border-b cursor-pointer hover:bg-accent transition-colors"
                     >
                       <td className="px-3 py-2">
@@ -546,7 +555,7 @@ export function VehicleListPanel({
                   {filteredFgc.map((vehicle) => (
                     <tr
                       key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude)}
+                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'fgc')}
                       className="border-b cursor-pointer hover:bg-accent transition-colors"
                     >
                       <td className="px-3 py-2">
