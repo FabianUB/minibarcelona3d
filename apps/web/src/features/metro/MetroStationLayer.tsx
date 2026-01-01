@@ -165,7 +165,9 @@ export function MetroStationLayer({
         // Cleanup failed - map may have been removed
       }
     };
-  }, [map, geoJSON, isLoading, error, visible, styleReady]);
+  // Note: visible intentionally excluded - visibility handled by separate effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, geoJSON, isLoading, error, styleReady]);
 
   // Update visibility when prop changes
   useEffect(() => {
