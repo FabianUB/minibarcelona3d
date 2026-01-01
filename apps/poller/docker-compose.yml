@@ -45,6 +45,25 @@ services:
     networks:
       - renfe_gtfs
 
+  metro-poller:
+    build:
+      context: .
+      dockerfile: docker/metro-poller.Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      TMB_APP_ID: ${TMB_APP_ID}
+      TMB_APP_KEY: ${TMB_APP_KEY}
+      POLL_INTERVAL: "30"
+    volumes:
+      # Mount web public data for station and line geometries
+      - ../web/public/tmb_data:/app/tmb_data:ro
+    restart: unless-stopped
+    networks:
+      - renfe_gtfs
+
 volumes:
   postgres_data:
 

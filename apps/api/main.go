@@ -41,6 +41,10 @@ func main() {
 	// Create train handler with repository
 	trainHandler := handlers.NewTrainHandler(repo)
 
+	// Create Metro repository and handler (shares connection pool with trains)
+	metroRepo := repository.NewMetroRepository(repo.GetPool())
+	metroHandler := handlers.NewMetroHandler(metroRepo)
+
 	// Setup router
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -90,11 +94,15 @@ func main() {
 		w.Write([]byte("pong"))
 	})
 
-	// Train API routes
+	// Train API routes (Rodalies)
 	r.Get("/api/trains", trainHandler.GetAllTrains)
 	r.Get("/api/trains/positions", trainHandler.GetAllTrainPositions)
 	r.Get("/api/trains/{vehicleKey}", trainHandler.GetTrainByKey)
 	r.Get("/api/trips/{tripId}", trainHandler.GetTripDetails)
+
+	// Metro API routes
+	r.Get("/api/metro/positions", metroHandler.GetAllMetroPositions)
+	r.Get("/api/metro/lines/{lineCode}", metroHandler.GetMetroByLine)
 
 	// Static file serving (if configured)
 	staticDir := os.Getenv("STATIC_DIR")
@@ -110,11 +118,15 @@ func main() {
 	}
 
 	log.Printf("API server starting on :%s", port)
-	log.Println("Train endpoints:")
+	log.Println("Train endpoints (Rodalies):")
 	log.Println("  GET /api/trains")
 	log.Println("  GET /api/trains/positions")
 	log.Println("  GET /api/trains/{vehicleKey}")
 	log.Println("  GET /api/trips/{tripId}")
+	log.Println("Metro endpoints:")
+	log.Println("  GET /api/metro/positions")
+	log.Println("  GET /api/metro/lines/{lineCode}")
+	log.Println("Health:")
 	log.Println("  GET /health (with database check)")
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {

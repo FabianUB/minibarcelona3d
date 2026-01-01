@@ -89,3 +89,72 @@ export function getMetroLineColor(lineCode: string): string {
   const line = getMetroLineByCode(lineCode);
   return line?.color ?? '#888888';
 }
+
+// =============================================================================
+// API Response Types for real-time Metro tracking via iMetro API
+// Matches the API contract from apps/api/handlers/metro.go
+// =============================================================================
+
+import type { VehicleStatus, TravelDirection, PositionConfidence } from './transit';
+
+/**
+ * Metro position data from GET /api/metro/positions
+ * Contains estimated position computed from iMetro arrival predictions
+ */
+export interface MetroApiPosition {
+  // Identity
+  vehicleKey: string;           // "metro-L1-0-3" format
+  networkType: 'metro';
+  lineCode: string;             // "L1", "L3", etc.
+  routeId: string | null;       // TMB route_id if available
+  direction: TravelDirection;   // 0=outbound, 1=inbound
+
+  // Position (estimated from arrival times + line geometry)
+  latitude: number;
+  longitude: number;
+  bearing: number | null;       // Direction in degrees (0-360)
+
+  // Transit context
+  previousStopId: string | null;
+  nextStopId: string | null;
+  previousStopName: string | null;
+  nextStopName: string | null;
+  status: VehicleStatus;
+
+  // Position estimation metrics
+  progressFraction: number | null;      // 0.0-1.0 between stops
+  distanceAlongLine: number | null;     // Meters from line start
+  speedMetersPerSecond: number | null;  // Estimated speed in m/s
+  lineTotalLength: number | null;       // Total line length in meters
+
+  // Confidence and source
+  source: 'imetro' | 'schedule_fallback';
+  confidence: PositionConfidence;
+  arrivalSecondsToNext: number | null;  // Seconds until next stop
+
+  // Timestamps
+  estimatedAt: string;    // When position was estimated (ISO 8601)
+  polledAt: string;       // When iMetro API was polled (ISO 8601)
+
+  // Visual
+  lineColor: string;      // Hex color for the line
+}
+
+/**
+ * Response structure for GET /api/metro/positions
+ */
+export interface GetMetroPositionsResponse {
+  positions: MetroApiPosition[];
+  previousPositions?: MetroApiPosition[];  // For animation interpolation
+  count: number;
+  polledAt: string;
+  previousPolledAt?: string;
+}
+
+/**
+ * API error response structure
+ */
+export interface MetroApiError {
+  error: string;
+  details?: Record<string, unknown>;
+}
