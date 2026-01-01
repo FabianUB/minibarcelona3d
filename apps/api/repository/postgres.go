@@ -49,6 +49,11 @@ func (r *TrainRepository) Close() {
 	r.pool.Close()
 }
 
+// GetPool returns the underlying connection pool for sharing with other repositories
+func (r *TrainRepository) GetPool() *pgxpool.Pool {
+	return r.pool
+}
+
 func (r *TrainRepository) GetAllTrains(ctx context.Context) ([]models.Train, error) {
 	query := `
 		SELECT
