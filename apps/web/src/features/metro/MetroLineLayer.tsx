@@ -102,7 +102,7 @@ export function MetroLineLayer({
             15, 8,
             18, 14,
           ],
-          'line-opacity': 0.8, // Initial opacity, updated by visibility effect
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
 
@@ -126,7 +126,7 @@ export function MetroLineLayer({
             15, 5,
             18, 10,
           ],
-          'line-opacity': 0.9, // Initial opacity, updated by visibility effect
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
 
