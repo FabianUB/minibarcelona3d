@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -54,11 +55,18 @@ func (p *Poller) Poll(ctx context.Context) error {
 	}
 
 	// Fetch trip updates (for delay info)
-	delays, err := p.fetchTripUpdates(ctx)
+	delays, _, err := p.fetchTripUpdates(ctx)
 	if err != nil {
 		// Non-fatal: continue without delay info
 		log.Printf("Rodalies: failed to fetch trip updates (continuing without delays): %v", err)
 		delays = make(map[DelayKey]TripDelay)
+	}
+
+	// Get previous vehicle states (for deriving previous_stop)
+	prevStates, err := p.db.GetRodaliesVehicleStopStates(ctx)
+	if err != nil {
+		log.Printf("Rodalies: failed to get previous states (continuing without previous_stop): %v", err)
+		prevStates = make(map[string]db.VehicleStopState)
 	}
 
 	// Create snapshot
@@ -101,6 +109,26 @@ func (p *Poller) Poll(ctx context.Context) error {
 				dbPos.ScheduleRelationship = delay.ScheduleRelationship
 				dbPos.PredictedArrival = delay.PredictedArrival
 				dbPos.PredictedDeparture = delay.PredictedDeparture
+			}
+		}
+
+		// Derive previous stop from vehicle's last known state
+		if prev, ok := prevStates[pos.VehicleKey]; ok {
+			// If previous state was STOPPED_AT, that stop becomes the previous stop
+			if prev.Status != nil && *prev.Status == "STOPPED_AT" && prev.CurrentStopID != nil {
+				// Only set as previous if we're now at a different stop or moving to a new stop
+				currentStop := pos.CurrentStopID
+				nextStop := pos.NextStopID
+				if (currentStop != nil && *currentStop != *prev.CurrentStopID) ||
+					(nextStop != nil && *nextStop != *prev.CurrentStopID) ||
+					(pos.Status != "STOPPED_AT") {
+					dbPos.PreviousStopID = prev.CurrentStopID
+				}
+			}
+
+			// Preserve existing previous_stop_id if we didn't compute a new one
+			if dbPos.PreviousStopID == nil && prev.PreviousStopID != nil {
+				dbPos.PreviousStopID = prev.PreviousStopID
 			}
 		}
 
@@ -215,13 +243,16 @@ func (p *Poller) fetchVehiclePositions(ctx context.Context) ([]VehiclePosition, 
 }
 
 // fetchTripUpdates fetches and parses the trip updates feed
-func (p *Poller) fetchTripUpdates(ctx context.Context) (map[DelayKey]TripDelay, error) {
+// Returns delay info and trip stops (for deriving previous stop)
+func (p *Poller) fetchTripUpdates(ctx context.Context) (map[DelayKey]TripDelay, map[string]*TripStops, error) {
 	feed, err := p.fetchFeed(ctx, p.cfg.GTFSTripUpdatesURL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	delays := make(map[DelayKey]TripDelay)
+	tripStopsMap := make(map[string]*TripStops)
+
 	for _, entity := range feed.Entity {
 		if entity.TripUpdate == nil {
 			continue
@@ -234,9 +265,20 @@ func (p *Poller) fetchTripUpdates(ctx context.Context) (map[DelayKey]TripDelay, 
 
 		tripID := *tripUpdate.Trip.TripId
 
+		// Collect stops for this trip
+		var stops []TripStop
+
 		for _, stu := range tripUpdate.StopTimeUpdate {
 			if stu.StopId == nil {
 				continue
+			}
+
+			// Build stop list with sequences
+			if stu.StopSequence != nil {
+				stops = append(stops, TripStop{
+					StopID:       *stu.StopId,
+					StopSequence: int(*stu.StopSequence),
+				})
 			}
 
 			delay := TripDelay{
@@ -278,9 +320,17 @@ func (p *Poller) fetchTripUpdates(ctx context.Context) (map[DelayKey]TripDelay, 
 			key := DelayKey{TripID: tripID, StopID: *stu.StopId}
 			delays[key] = delay
 		}
+
+		// Sort stops by sequence and store
+		if len(stops) > 0 {
+			sort.Slice(stops, func(i, j int) bool {
+				return stops[i].StopSequence < stops[j].StopSequence
+			})
+			tripStopsMap[tripID] = &TripStops{Stops: stops}
+		}
 	}
 
-	return delays, nil
+	return delays, tripStopsMap, nil
 }
 
 // fetchFeed fetches a GTFS-RT feed from the given URL

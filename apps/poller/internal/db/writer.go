@@ -267,3 +267,35 @@ func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polle
 
 	return tx.Commit()
 }
+
+// VehicleStopState represents the last known stop state of a vehicle
+type VehicleStopState struct {
+	VehicleKey     string
+	CurrentStopID  *string
+	PreviousStopID *string
+	NextStopID     *string
+	Status         *string
+}
+
+// GetRodaliesVehicleStopStates returns the current stop state of all Rodalies vehicles
+func (db *DB) GetRodaliesVehicleStopStates(ctx context.Context) (map[string]VehicleStopState, error) {
+	rows, err := db.conn.QueryContext(ctx, `
+		SELECT vehicle_key, current_stop_id, previous_stop_id, next_stop_id, status
+		FROM rt_rodalies_vehicle_current
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query vehicle states: %w", err)
+	}
+	defer rows.Close()
+
+	states := make(map[string]VehicleStopState)
+	for rows.Next() {
+		var state VehicleStopState
+		if err := rows.Scan(&state.VehicleKey, &state.CurrentStopID, &state.PreviousStopID, &state.NextStopID, &state.Status); err != nil {
+			return nil, fmt.Errorf("failed to scan vehicle state: %w", err)
+		}
+		states[state.VehicleKey] = state
+	}
+
+	return states, rows.Err()
+}
