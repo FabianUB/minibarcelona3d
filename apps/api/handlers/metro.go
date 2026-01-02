@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -8,16 +9,22 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/you/myapp/apps/api/models"
-	"github.com/you/myapp/apps/api/repository"
 )
+
+// MetroRepository defines the interface for Metro data operations
+type MetroRepository interface {
+	GetAllMetroPositions(ctx context.Context) ([]models.MetroPosition, error)
+	GetMetroPositionsByLine(ctx context.Context, lineCode string) ([]models.MetroPosition, error)
+	GetMetroPositionsWithHistory(ctx context.Context, lineCode string) ([]models.MetroPosition, []models.MetroPosition, time.Time, *time.Time, error)
+}
 
 // MetroHandler handles HTTP requests for Metro vehicle position data
 type MetroHandler struct {
-	repo *repository.MetroRepository
+	repo MetroRepository
 }
 
 // NewMetroHandler creates a new handler with the given repository
-func NewMetroHandler(repo *repository.MetroRepository) *MetroHandler {
+func NewMetroHandler(repo MetroRepository) *MetroHandler {
 	return &MetroHandler{repo: repo}
 }
 

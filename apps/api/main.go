@@ -22,27 +22,29 @@ func main() {
 	_ = godotenv.Load("../../.env")
 	_ = godotenv.Overload("../../.env.local") // Overload forces override of existing values
 
-	// Initialize database connection from DATABASE_URL environment variable
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		log.Fatal("DATABASE_URL environment variable is required")
+	// Initialize SQLite database connection
+	// Default to ../../data/transit.db relative to the api directory
+	dbPath := os.Getenv("SQLITE_DATABASE")
+	if dbPath == "" {
+		dbPath = "../../data/transit.db"
 	}
-	log.Printf("Connecting to database: %s", databaseURL)
+	log.Printf("Connecting to SQLite database: %s", dbPath)
 
-	// Create repository with connection pool
-	repo, err := repository.NewTrainRepository(databaseURL)
+	// Create SQLite database connection
+	sqliteDB, err := repository.NewSQLiteDB(dbPath)
 	if err != nil {
-		log.Fatalf("Failed to initialize database repository: %v", err)
+		log.Fatalf("Failed to initialize SQLite database: %v", err)
 	}
-	defer repo.Close()
+	defer sqliteDB.Close()
 
-	log.Println("Database connection established")
+	log.Println("SQLite database connection established")
 
-	// Create train handler with repository
-	trainHandler := handlers.NewTrainHandler(repo)
+	// Create train repository and handler
+	trainRepo := repository.NewSQLiteTrainRepository(sqliteDB.GetDB())
+	trainHandler := handlers.NewTrainHandler(trainRepo)
 
-	// Create Metro repository and handler (shares connection pool with trains)
-	metroRepo := repository.NewMetroRepository(repo.GetPool())
+	// Create Metro repository and handler
+	metroRepo := repository.NewSQLiteMetroRepository(sqliteDB.GetDB())
 	metroHandler := handlers.NewMetroHandler(metroRepo)
 
 	// Setup router
@@ -60,7 +62,7 @@ func main() {
 		defer cancel()
 
 		// Test database connectivity by attempting to get all trains
-		_, err := repo.GetAllTrains(ctx)
+		_, err := trainRepo.GetAllTrains(ctx)
 
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
