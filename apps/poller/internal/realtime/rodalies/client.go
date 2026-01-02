@@ -86,9 +86,15 @@ func (p *Poller) Poll(ctx context.Context) error {
 			VehicleTimestamp: pos.Timestamp,
 		}
 
-		// Look up delay info
-		if pos.TripID != nil && pos.CurrentStopID != nil {
-			key := DelayKey{TripID: *pos.TripID, StopID: *pos.CurrentStopID}
+		// Look up delay info - use whichever stop ID is available
+		var stopIDForDelay *string
+		if pos.CurrentStopID != nil {
+			stopIDForDelay = pos.CurrentStopID
+		} else if pos.NextStopID != nil {
+			stopIDForDelay = pos.NextStopID
+		}
+		if pos.TripID != nil && stopIDForDelay != nil {
+			key := DelayKey{TripID: *pos.TripID, StopID: *stopIDForDelay}
 			if delay, ok := delays[key]; ok {
 				dbPos.ArrivalDelaySeconds = delay.ArrivalDelay
 				dbPos.DepartureDelaySeconds = delay.DepartureDelay
@@ -173,17 +179,26 @@ func (p *Poller) fetchVehiclePositions(ctx context.Context) ([]VehiclePosition, 
 			}
 		}
 
-		// Stop info
+		// Status (need this first to determine stop_id meaning)
+		if vehicle.CurrentStatus != nil {
+			if status, ok := StatusMap[int32(*vehicle.CurrentStatus)]; ok {
+				pos.Status = status
+			}
+		}
+
+		// Stop info - stop_id meaning depends on status:
+		// STOPPED_AT (1): stop_id is current stop
+		// INCOMING_AT (0) / IN_TRANSIT_TO (2): stop_id is next stop
 		if vehicle.CurrentStopSequence != nil {
 			seq := int(*vehicle.CurrentStopSequence)
 			pos.NextStopSeq = &seq
 		}
-		pos.CurrentStopID = vehicle.StopId
-
-		// Status
-		if vehicle.CurrentStatus != nil {
-			if status, ok := StatusMap[int32(*vehicle.CurrentStatus)]; ok {
-				pos.Status = status
+		if vehicle.StopId != nil {
+			if pos.Status == "STOPPED_AT" {
+				pos.CurrentStopID = vehicle.StopId
+			} else {
+				// INCOMING_AT or IN_TRANSIT_TO - stop_id is the next stop
+				pos.NextStopID = vehicle.StopId
 			}
 		}
 
