@@ -1,53 +1,45 @@
 version: "3.9"
 
 services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-renfe}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-9PqvU85v}
-      POSTGRES_DB: ${POSTGRES_DB:-renfe_gtfs}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - app_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-renfe} -d ${POSTGRES_DB:-renfe_gtfs}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
+  # ═══════════════════════════════════════════════════════════
+  # POLLER: Static data refresh + Real-time polling (Go)
+  # Handles Rodalies (GTFS-RT) and Metro (iMetro API) polling
+  # Auto-deletes data older than 1 hour
+  # ═══════════════════════════════════════════════════════════
   poller:
     build:
       context: ./apps/poller
-      dockerfile: docker/poller.Dockerfile
-    depends_on:
-      db:
-        condition: service_healthy
+      dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-renfe}:${POSTGRES_PASSWORD:-9PqvU85v}@db:5432/${POSTGRES_DB:-renfe_gtfs}
-      RENFE_GTFS_FEEDS: ${RENFE_GTFS_FEEDS}
-      POLL_INTERVAL: ${POLL_INTERVAL:-30}
-      POLL_ALIGN_INTERVAL: ${POLL_ALIGN_INTERVAL}
-      POLL_ALIGN_OFFSET: ${POLL_ALIGN_OFFSET}
-      FAILURE_ALERT_THRESHOLD: ${FAILURE_ALERT_THRESHOLD}
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
-      DISCORD_USERNAME: ${DISCORD_USERNAME}
-      DISCORD_AVATAR_URL: ${DISCORD_AVATAR_URL}
-      DISCORD_REPORT_WEBHOOK_URL: ${DISCORD_REPORT_WEBHOOK_URL}
-      DISCORD_REPORT_USERNAME: ${DISCORD_REPORT_USERNAME}
-      DISCORD_REPORT_AVATAR_URL: ${DISCORD_REPORT_AVATAR_URL}
-      AUTO_REFRESH_STATIC: "true"
-      STATIC_REFRESH_TIME: "10:00"
-      STATIC_REFRESH_ZIP_URL: ${RENFE_STATIC_ZIP_URL}
-      STATIC_REFRESH_ZIP_PATH: "/tmp/fomento_transit.zip"
+      # Database
+      SQLITE_DATABASE: /data/transit.db
+      # Real-time polling
+      POLL_INTERVAL: "30"
+      RETENTION_HOURS: "1"
+      # Static data refresh (7 days)
+      STATIC_REFRESH_DAYS: "7"
+      WEB_PUBLIC_DIR: /app/web_public
+      CACHE_DIR: /data/cache
+      # Rodalies (real-time + static)
+      GTFS_VEHICLE_POSITIONS_URL: https://gtfsrt.renfe.com/vehicle_positions.pb
+      GTFS_TRIP_UPDATES_URL: https://gtfsrt.renfe.com/trip_updates.pb
+      RENFE_GTFS_URL: https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip
+      # Metro/TMB
+      TMB_APP_ID: ${TMB_APP_ID}
+      TMB_APP_KEY: ${TMB_APP_KEY}
+      TMB_GTFS_URL: https://api.tmb.cat/v1/static/datasets/gtfs.zip
+      STATIONS_GEOJSON: /app/web_public/tmb_data/metro/stations.geojson
+      LINES_DIR: /app/web_public/tmb_data/metro/lines
+    volumes:
+      - transit_data:/data
+      - ./apps/web/public:/app/web_public
     networks:
       - app_network
     restart: unless-stopped
 
+  # ═══════════════════════════════════════════════════════════
+  # API: Go backend serving SQLite data
+  # ═══════════════════════════════════════════════════════════
   api:
     build:
       context: ./apps/api
@@ -56,18 +48,19 @@ services:
     volumes:
       - ./apps/api:/app
       - aircache:/root/.cache
+      - transit_data:/data:ro
     environment:
       - PORT=8080
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-renfe}:${POSTGRES_PASSWORD:-9PqvU85v}@db:5432/${POSTGRES_DB:-renfe_gtfs}
+      - SQLITE_DATABASE=/data/transit.db
     ports:
       - "8080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
     networks:
       - app_network
     restart: unless-stopped
 
+  # ═══════════════════════════════════════════════════════════
+  # WEB: Frontend (reads GeoJSON written by poller)
+  # ═══════════════════════════════════════════════════════════
   web:
     build:
       context: ./apps/web
@@ -85,30 +78,10 @@ services:
     networks:
       - app_network
     restart: unless-stopped
-
-  metro-poller:
-    build:
-      context: ./apps/poller
-      dockerfile: docker/metro-poller.Dockerfile
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-renfe}:${POSTGRES_PASSWORD:-9PqvU85v}@db:5432/${POSTGRES_DB:-renfe_gtfs}
-      TMB_APP_ID: ${TMB_APP_ID}
-      TMB_APP_KEY: ${TMB_APP_KEY}
-      POLL_INTERVAL: "30"
-    volumes:
-      # Mount web public data for station and line geometries
-      - ./apps/web/public/tmb_data:/app/tmb_data:ro
-    networks:
-      - app_network
-    restart: unless-stopped
-
 volumes:
   aircache:
   webnode:
-  postgres_data:
+  transit_data:
 
 networks:
   app_network:

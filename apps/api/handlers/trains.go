@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -8,17 +9,26 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/you/myapp/apps/api/models"
-	"github.com/you/myapp/apps/api/repository"
 )
+
+// TrainRepository defines the interface for train data operations
+type TrainRepository interface {
+	GetAllTrains(ctx context.Context) ([]models.Train, error)
+	GetTrainByKey(ctx context.Context, vehicleKey string) (*models.Train, error)
+	GetTrainsByRoute(ctx context.Context, routeID string) ([]models.Train, error)
+	GetAllTrainPositions(ctx context.Context) ([]models.TrainPosition, error)
+	GetTrainPositionsWithHistory(ctx context.Context) ([]models.TrainPosition, []models.TrainPosition, time.Time, *time.Time, error)
+	GetTripDetails(ctx context.Context, tripID string) (*models.TripDetails, error)
+}
 
 // TrainHandler handles HTTP requests for train data
 // Implements the API contract defined in contracts/api.yaml
 type TrainHandler struct {
-	repo *repository.TrainRepository
+	repo TrainRepository
 }
 
 // NewTrainHandler creates a new handler with the given repository
-func NewTrainHandler(repo *repository.TrainRepository) *TrainHandler {
+func NewTrainHandler(repo TrainRepository) *TrainHandler {
 	return &TrainHandler{repo: repo}
 }
 
