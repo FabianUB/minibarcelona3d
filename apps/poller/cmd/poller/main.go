@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -13,6 +14,12 @@ import (
 	"github.com/mini-rodalies-3d/poller/internal/realtime/metro"
 	"github.com/mini-rodalies-3d/poller/internal/realtime/rodalies"
 	"github.com/mini-rodalies-3d/poller/internal/static"
+)
+
+// cleanupState tracks async cleanup to prevent overlapping runs
+var (
+	cleanupMu      sync.Mutex
+	cleanupRunning bool
 )
 
 func main() {
@@ -131,8 +138,27 @@ func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller 
 		log.Printf("Metro poll error: %v", err)
 	}
 
-	// Cleanup old data
-	if err := database.Cleanup(ctx, cfg.RetentionDuration); err != nil {
+	// Async cleanup - don't block polling, skip if already running
+	go runCleanupAsync(database, cfg.RetentionDuration)
+}
+
+// runCleanupAsync runs cleanup in background, skipping if already running
+func runCleanupAsync(database *db.DB, retention time.Duration) {
+	cleanupMu.Lock()
+	if cleanupRunning {
+		cleanupMu.Unlock()
+		return // Skip if cleanup is already in progress
+	}
+	cleanupRunning = true
+	cleanupMu.Unlock()
+
+	defer func() {
+		cleanupMu.Lock()
+		cleanupRunning = false
+		cleanupMu.Unlock()
+	}()
+
+	if err := database.Cleanup(context.Background(), retention); err != nil {
 		log.Printf("Cleanup error: %v", err)
 	}
 }
