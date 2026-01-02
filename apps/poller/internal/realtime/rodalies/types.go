@@ -4,19 +4,20 @@ import "time"
 
 // VehiclePosition represents a parsed vehicle position from GTFS-RT
 type VehiclePosition struct {
-	VehicleKey    string
-	VehicleID     *string
-	EntityID      string
-	VehicleLabel  string
-	TripID        *string
-	RouteID       *string
-	CurrentStopID *string
-	NextStopID    *string
-	NextStopSeq   *int
-	Status        string
-	Latitude      *float64
-	Longitude     *float64
-	Timestamp     *time.Time
+	VehicleKey     string
+	VehicleID      *string
+	EntityID       string
+	VehicleLabel   string
+	TripID         *string
+	RouteID        *string
+	CurrentStopID  *string
+	PreviousStopID *string
+	NextStopID     *string
+	NextStopSeq    *int
+	Status         string
+	Latitude       *float64
+	Longitude      *float64
+	Timestamp      *time.Time
 }
 
 // TripDelay represents delay information from a TripUpdate
@@ -49,4 +50,15 @@ var ScheduleRelationshipMap = map[int32]string{
 	1: "ADDED",
 	2: "UNSCHEDULED",
 	3: "CANCELED",
+}
+
+// TripStop represents a single stop in a trip's sequence
+type TripStop struct {
+	StopID       string
+	StopSequence int
+}
+
+// TripStops holds an ordered list of stops for a trip
+type TripStops struct {
+	Stops []TripStop // Sorted by StopSequence
 }
