@@ -35,6 +35,19 @@ func Connect(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
+	// Performance tuning PRAGMAs
+	pragmas := []string{
+		"PRAGMA synchronous = NORMAL",  // Faster writes, still safe with WAL
+		"PRAGMA cache_size = 10000",    // ~40MB cache for faster reads
+		"PRAGMA temp_store = MEMORY",   // Use RAM for temp tables
+		"PRAGMA mmap_size = 268435456", // 256MB memory-mapped I/O
+	}
+	for _, pragma := range pragmas {
+		if _, err := conn.Exec(pragma); err != nil {
+			log.Printf("Warning: failed to set %s: %v", pragma, err)
+		}
+	}
+
 	log.Printf("Connected to SQLite database: %s", dbPath)
 	return &DB{conn: conn}, nil
 }
@@ -90,6 +103,7 @@ func (db *DB) EnsureSchema(ctx context.Context) error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_rodalies_current_route ON rt_rodalies_vehicle_current(route_id);
 	CREATE INDEX IF NOT EXISTS idx_rodalies_current_snapshot ON rt_rodalies_vehicle_current(snapshot_id);
+	CREATE INDEX IF NOT EXISTS idx_rodalies_current_updated ON rt_rodalies_vehicle_current(updated_at DESC);
 
 	-- Rodalies history
 	CREATE TABLE IF NOT EXISTS rt_rodalies_vehicle_history (
@@ -147,6 +161,7 @@ func (db *DB) EnsureSchema(ctx context.Context) error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_metro_current_line ON rt_metro_vehicle_current(line_code);
 	CREATE INDEX IF NOT EXISTS idx_metro_current_snapshot ON rt_metro_vehicle_current(snapshot_id);
+	CREATE INDEX IF NOT EXISTS idx_metro_current_updated ON rt_metro_vehicle_current(updated_at DESC);
 
 	-- Metro history
 	CREATE TABLE IF NOT EXISTS rt_metro_vehicle_history (
