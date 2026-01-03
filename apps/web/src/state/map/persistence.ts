@@ -11,6 +11,8 @@
  * - Type-safe: validates loaded data structure
  */
 
+import type { TransportFilterState } from '../../types/rodalies';
+
 const STORAGE_KEY = 'rodalies-map-preferences';
 
 /**
@@ -19,6 +21,7 @@ const STORAGE_KEY = 'rodalies-map-preferences';
 export interface MapPreferences {
   isHighContrast?: boolean;
   isLegendOpen?: boolean;
+  transportFilters?: TransportFilterState;
   // Future preferences can be added here
   [key: string]: unknown;
 }

@@ -215,24 +215,25 @@ describe('StationLayer', () => {
 
       // Should add source
       expect(mockMap.addSource).toHaveBeenCalledWith(
-        'stations-source',
+        'rodalies-stations-source',
         expect.objectContaining({
           type: 'geojson',
         })
       );
 
-      // Should add one layer (teardrop symbol layer)
-      expect(mockMap.addLayer).toHaveBeenCalledTimes(1);
+      // Should add two layers (circle layer + label layer)
+      expect(mockMap.addLayer).toHaveBeenCalledTimes(2);
 
-      // Check layer ID
+      // Check layer IDs
       const layerIds = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls.map(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (call: any) => call[0].id
       );
-      expect(layerIds).toContain('stations-lowmarkers');
+      expect(layerIds).toContain('rodalies-stations-circles');
+      expect(layerIds).toContain('rodalies-stations-labels');
     });
 
-    it('should create symbol layer with text labels', () => {
+    it('should create circle layer for station markers', () => {
       render(
         <StationLayer
           map={mockMap}
@@ -242,16 +243,18 @@ describe('StationLayer', () => {
         />
       );
 
-      const layerCall = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls[0];
-      const layer = layerCall[0];
+      const layerCalls = (mockMap.addLayer as ReturnType<typeof vi.fn>).mock.calls;
+      const circleLayer = layerCalls.find((call: unknown[]) => (call[0] as { id: string }).id === 'rodalies-stations-circles')?.[0];
+      const labelLayer = layerCalls.find((call: unknown[]) => (call[0] as { id: string }).id === 'rodalies-stations-labels')?.[0];
 
-      // Should be a symbol layer
-      expect(layer.type).toBe('symbol');
+      // Should have a circle layer
+      expect(circleLayer?.type).toBe('circle');
+      expect(circleLayer?.paint).toHaveProperty('circle-radius');
+      expect(circleLayer?.paint).toHaveProperty('circle-color');
 
-      // Should have icon and text configuration
-      expect(layer.layout).toHaveProperty('icon-image');
-      expect(layer.layout).toHaveProperty('text-field');
-      expect(layer.layout).toHaveProperty('text-font');
+      // Should have a symbol layer for labels
+      expect(labelLayer?.type).toBe('symbol');
+      expect(labelLayer?.layout).toHaveProperty('text-field');
     });
 
     it('should update source data instead of recreating if source exists', () => {
@@ -287,7 +290,7 @@ describe('StationLayer', () => {
       expect(mockMap.addSource).toHaveBeenCalledTimes(1);
     });
 
-    it('should clean up layer and source on unmount', () => {
+    it('should clean up layers and source on unmount', () => {
       const { unmount } = render(
         <StationLayer
           map={mockMap}
@@ -297,13 +300,18 @@ describe('StationLayer', () => {
         />
       );
 
-      // Mock that layer exists
-      mockLayers.set('stations-lowmarkers', {
-        id: 'stations-lowmarkers',
-        type: 'symbol',
-        source: 'stations-source',
+      // Mock that layers exist
+      mockLayers.set('rodalies-stations-circles', {
+        id: 'rodalies-stations-circles',
+        type: 'circle',
+        source: 'rodalies-stations-source',
       });
-      mockSources.set('stations-source', {
+      mockLayers.set('rodalies-stations-labels', {
+        id: 'rodalies-stations-labels',
+        type: 'symbol',
+        source: 'rodalies-stations-source',
+      });
+      mockSources.set('rodalies-stations-source', {
         type: 'geojson',
         data: null,
         setData: vi.fn(),
@@ -311,8 +319,9 @@ describe('StationLayer', () => {
 
       unmount();
 
-      expect(mockMap.removeLayer).toHaveBeenCalledWith('stations-lowmarkers');
-      expect(mockMap.removeSource).toHaveBeenCalledWith('stations-source');
+      expect(mockMap.removeLayer).toHaveBeenCalledWith('rodalies-stations-circles');
+      expect(mockMap.removeLayer).toHaveBeenCalledWith('rodalies-stations-labels');
+      expect(mockMap.removeSource).toHaveBeenCalledWith('rodalies-stations-source');
     });
   });
 
@@ -331,7 +340,7 @@ describe('StationLayer', () => {
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       // Should register click handler
-      expect(mockMap.on).toHaveBeenCalledWith('click', 'stations-lowmarkers', expect.any(Function));
+      expect(mockMap.on).toHaveBeenCalledWith('click', 'rodalies-stations-circles', expect.any(Function));
     });
 
     it('should register mouseenter/mouseleave handlers for cursor changes', () => {
@@ -348,10 +357,10 @@ describe('StationLayer', () => {
       (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       // Should register mouseenter handlers
-      expect(mockMap.on).toHaveBeenCalledWith('mouseenter', 'stations-lowmarkers', expect.any(Function));
+      expect(mockMap.on).toHaveBeenCalledWith('mouseenter', 'rodalies-stations-circles', expect.any(Function));
 
       // Should register mouseleave handlers
-      expect(mockMap.on).toHaveBeenCalledWith('mouseleave', 'stations-lowmarkers', expect.any(Function));
+      expect(mockMap.on).toHaveBeenCalledWith('mouseleave', 'rodalies-stations-circles', expect.any(Function));
     });
 
     it('should call onStationClick when station marker is clicked', () => {
@@ -380,33 +389,13 @@ describe('StationLayer', () => {
       ]);
 
       // Get the click handler
-      const clickHandler = mockEventHandlers.get('click')?.get('stations-lowmarkers');
+      const clickHandler = mockEventHandlers.get('click')?.get('rodalies-stations-circles');
       expect(clickHandler).toBeDefined();
 
       // Simulate click
       clickHandler!({ point: { x: 100, y: 100 } });
 
       expect(mockOnStationClick).toHaveBeenCalledWith('station-123');
-    });
-
-    it('should register hover handlers when onStationHover provided', () => {
-      const mockOnStationHover = vi.fn();
-
-      render(
-        <StationLayer
-          map={mockMap}
-          highlightedLineIds={[]}
-          highlightMode="none"
-          onStationClick={vi.fn()}
-          onStationHover={mockOnStationHover}
-        />
-      );
-
-      // Mock that layer exists
-      (mockMap.getLayer as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-      // Should register mousemove handler
-      expect(mockMap.on).toHaveBeenCalledWith('mousemove', 'stations-lowmarkers', expect.any(Function));
     });
 
     it('should remove all event handlers on unmount', () => {
@@ -416,7 +405,6 @@ describe('StationLayer', () => {
           highlightedLineIds={[]}
           highlightMode="none"
           onStationClick={vi.fn()}
-          onStationHover={vi.fn()}
         />
       );
 
@@ -426,19 +414,16 @@ describe('StationLayer', () => {
       unmount();
 
       // Should remove click handler
-      expect(mockMap.off).toHaveBeenCalledWith('click', 'stations-lowmarkers', expect.any(Function));
+      expect(mockMap.off).toHaveBeenCalledWith('click', 'rodalies-stations-circles', expect.any(Function));
 
       // Should remove mouse handlers
-      expect(mockMap.off).toHaveBeenCalledWith('mouseenter', 'stations-lowmarkers', expect.any(Function));
-      expect(mockMap.off).toHaveBeenCalledWith('mouseleave', 'stations-lowmarkers', expect.any(Function));
-
-      // Should remove hover handler
-      expect(mockMap.off).toHaveBeenCalledWith('mousemove', 'stations-lowmarkers', expect.any(Function));
+      expect(mockMap.off).toHaveBeenCalledWith('mouseenter', 'rodalies-stations-circles', expect.any(Function));
+      expect(mockMap.off).toHaveBeenCalledWith('mouseleave', 'rodalies-stations-circles', expect.any(Function));
     });
   });
 
   describe('Style Updates', () => {
-    it('should update icon opacity when highlighting changes', () => {
+    it('should update circle opacity when highlighting changes', () => {
       const { rerender } = render(
         <StationLayer
           map={mockMap}
@@ -461,10 +446,10 @@ describe('StationLayer', () => {
         />
       );
 
-      // Should update icon opacity
+      // Should update circle opacity
       expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
-        'stations-lowmarkers',
-        'icon-opacity',
+        'rodalies-stations-circles',
+        'circle-opacity',
         expect.anything()
       );
     });
@@ -497,8 +482,8 @@ describe('StationLayer', () => {
 
       // Should set opacity to 0.3 (dimmed)
       expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
-        'stations-lowmarkers',
-        'icon-opacity',
+        'rodalies-stations-circles',
+        'circle-opacity',
         0.3
       );
     });

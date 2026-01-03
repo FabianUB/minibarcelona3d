@@ -16,8 +16,18 @@ import type {
   MapHighlightMode,
   MapUIState,
   MapViewport,
+  TransportFilterState,
+  TransportType,
 } from '../../types/rodalies';
-import { getPreference, savePreferences } from './persistence';
+import { getPreference, loadPreferences, savePreferences } from './persistence';
+
+const DEFAULT_TRANSPORT_FILTERS: TransportFilterState = {
+  rodalies: true,
+  metro: false,
+  bus: false,
+  tram: false,
+  fgc: false,
+};
 
 type MapAction =
   | { type: 'set-default-viewport'; payload: MapViewport }
@@ -38,12 +48,22 @@ type MapAction =
   | { type: 'set-map-instance'; payload: MapboxMap | null }
   | { type: 'set-map-loaded'; payload: boolean }
   | { type: 'select-station'; payload: string | null }
-  | { type: 'set-station-load-error'; payload: string | null };
+  | { type: 'set-station-load-error'; payload: string | null }
+  | { type: 'set-transport-filter'; payload: { transportType: TransportType; visible: boolean } }
+  | { type: 'toggle-transport-filter'; payload: TransportType };
 
 /**
  * Create initial UI state with preferences loaded from localStorage
  */
 function createInitialUiState(): MapUIState {
+  // Load transport filters from preferences, merging with defaults
+  const prefs = loadPreferences();
+  const savedFilters = prefs.transportFilters;
+  const transportFilters: TransportFilterState = {
+    ...DEFAULT_TRANSPORT_FILTERS,
+    ...(savedFilters && typeof savedFilters === 'object' ? savedFilters : {}),
+  };
+
   return {
     selectedLineId: null,
     selectedLineIds: [],
@@ -53,6 +73,7 @@ function createInitialUiState(): MapUIState {
     activePanel: 'none', // Don't persist - always start with no panel open
     selectedStationId: null,
     stationLoadError: null,
+    transportFilters,
   };
 }
 
@@ -157,6 +178,28 @@ function mapReducer(state: MapState, action: MapAction): MapState {
           stationLoadError: action.payload,
         },
       };
+    case 'set-transport-filter':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          transportFilters: {
+            ...state.ui.transportFilters,
+            [action.payload.transportType]: action.payload.visible,
+          },
+        },
+      };
+    case 'toggle-transport-filter':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          transportFilters: {
+            ...state.ui.transportFilters,
+            [action.payload]: !state.ui.transportFilters[action.payload],
+          },
+        },
+      };
     default:
       return state;
   }
@@ -165,19 +208,15 @@ function mapReducer(state: MapState, action: MapAction): MapState {
 export function MapStateProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(mapReducer, undefined, createInitialState);
 
-  // Persist high contrast preference to localStorage when it changes
+  // Persist UI preferences to localStorage when they change
+  // Combined into single effect to reduce localStorage writes
   useEffect(() => {
     savePreferences({
       isHighContrast: state.ui.isHighContrast,
-    });
-  }, [state.ui.isHighContrast]);
-
-  // Persist legend open state to localStorage when it changes
-  useEffect(() => {
-    savePreferences({
       isLegendOpen: state.ui.isLegendOpen,
+      transportFilters: state.ui.transportFilters,
     });
-  }, [state.ui.isLegendOpen]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters]);
 
   const actions = useMemo<MapActions>(
     () => ({
@@ -240,6 +279,12 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       setStationLoadError(message) {
         dispatch({ type: 'set-station-load-error', payload: message });
+      },
+      setTransportFilter(transportType, visible) {
+        dispatch({ type: 'set-transport-filter', payload: { transportType, visible } });
+      },
+      toggleTransportFilter(transportType) {
+        dispatch({ type: 'toggle-transport-filter', payload: transportType });
       },
     }),
     [dispatch],

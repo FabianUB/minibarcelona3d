@@ -15,10 +15,16 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 // import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
-import { TrainListButton } from '../trains/TrainListButton';
+import { VehicleListButton } from '../trains/VehicleListButton';
 import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
+import { MetroLineLayer, MetroStationLayer } from '../metro';
+import { BusLineLayer, BusStopLayer } from '../bus';
+import { TramLineLayer, TramStopLayer } from '../tram';
+import { FGCLineLayer, FGCStationLayer } from '../fgc';
+import { TransportFilterButton } from '../filter';
+import { TransitVehicleLayer3D } from '../transit';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
@@ -105,6 +111,14 @@ export function MapCanvas() {
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
   );
 
+  // Memoize callbacks for TrainLayer3D to prevent infinite re-render loops
+  const handleMeshPositionGetterReady = useCallback(
+    (getter: (vehicleKey: string) => [number, number] | null) => {
+      setGetMeshPosition(() => getter);
+    },
+    []
+  );
+
   const mapActions = useMapActions();
   const {
     setMapInstance,
@@ -121,6 +135,11 @@ export function MapCanvas() {
   } = useDefaultViewport();
 
   const isHighContrast = ui.isHighContrast;
+  const { transportFilters } = ui;
+
+  // Keep a ref to current transportFilters for use in closures
+  const transportFiltersRef = useRef(transportFilters);
+  transportFiltersRef.current = transportFilters;
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -377,6 +396,7 @@ export function MapCanvas() {
             layout: {
               'line-join': 'round',
               'line-cap': 'round',
+              'visibility': transportFiltersRef.current.rodalies ? 'visible' : 'none',
             },
             paint: getLinePaintProperties({
               highlightMode: 'none',
@@ -505,19 +525,22 @@ export function MapCanvas() {
       setViewport(getViewportFromMap(map, baseViewport));
     };
 
-    // Handle tile load errors
+    // Handle tile load errors - use functional update to avoid stale closure
     const handleTileError = (event: { error?: Error; tile?: { tileID: { canonical: { x: number; y: number; z: number } } }; source?: { id: string } }) => {
-      const errorCount = tileErrorCount + 1;
-      setTileErrorCount(errorCount);
+      setTileErrorCount((prev) => {
+        const errorCount = prev + 1;
 
-      if (errorCount <= 3) {
-        // Show warning for first 3 errors
-        setTileError(`Map tiles failed to load (attempt ${errorCount}/3). Retrying...`);
-        console.warn('Tile load error:', event.error?.message || 'Unknown tile error');
-      } else {
-        // After 3 errors, show persistent error message
-        setTileError('Map tiles failed to load. Check your internet connection.');
-      }
+        if (errorCount <= 3) {
+          // Show warning for first 3 errors
+          setTileError(`Map tiles failed to load (attempt ${errorCount}/3). Retrying...`);
+          console.warn('Tile load error:', event.error?.message || 'Unknown tile error');
+        } else {
+          // After 3 errors, show persistent error message
+          setTileError('Map tiles failed to load. Check your internet connection.');
+        }
+
+        return errorCount;
+      });
     };
 
     map.on('error', handleTileError);
@@ -553,7 +576,8 @@ export function MapCanvas() {
         delete globalWindow.__MAPBOX_INSTANCE__;
       }
     };
-  }, [effectiveViewport, setMapInstance, setMapLoaded, setViewport, tileErrorCount, isHighContrast, updateCameraSnapshot]);
+  // Note: tileErrorCount intentionally excluded - we don't want to recreate the map on tile errors
+  }, [effectiveViewport, setMapInstance, setMapLoaded, setViewport, isHighContrast, updateCameraSnapshot]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -622,6 +646,20 @@ export function MapCanvas() {
       map.setPaintProperty(RODALIES_LINE_LAYER_ID, property as any, value);
     });
   }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
+
+  // Control Rodalies line layer visibility based on transport filter
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer(RODALIES_LINE_LAYER_ID)) {
+      return;
+    }
+
+    map.setLayoutProperty(
+      RODALIES_LINE_LAYER_ID,
+      'visibility',
+      transportFilters.rodalies ? 'visible' : 'none'
+    );
+  }, [transportFilters.rodalies]);
 
   const handleRetryTiles = () => {
     const map = mapRef.current;
@@ -759,13 +797,102 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       />
       {/* T099: Show skeleton UI while initial train data is loading */}
       {isTrainDataLoading && mapInstance && isMapLoaded ? <TrainLoadingSkeleton /> : null}
-      {/* Station markers layer */}
+      {/* Metro line geometries (below stations) */}
+      {mapInstance && isMapLoaded ? (
+        <MetroLineLayer map={mapInstance} visible={transportFilters.metro} />
+      ) : null}
+      {/* Metro station markers */}
+      {mapInstance && isMapLoaded ? (
+        <MetroStationLayer
+          map={mapInstance}
+          visible={transportFilters.metro}
+          onStationClick={(stationId, stationName) => {
+            console.log('Metro station clicked:', stationId, stationName);
+          }}
+        />
+      ) : null}
+      {/* Metro vehicle layer (3D simulated trains) */}
+      {mapInstance && isMapLoaded ? (
+        <TransitVehicleLayer3D
+          map={mapInstance}
+          networkType="metro"
+          visible={transportFilters.metro}
+        />
+      ) : null}
+      {/* Bus route lines (below stops) */}
+      {mapInstance && isMapLoaded ? (
+        <BusLineLayer map={mapInstance} visible={transportFilters.bus} />
+      ) : null}
+      {/* Bus stop markers */}
+      {mapInstance && isMapLoaded ? (
+        <BusStopLayer
+          map={mapInstance}
+          visible={transportFilters.bus}
+          onStopClick={(stopId, stopName) => {
+            console.log('Bus stop clicked:', stopId, stopName);
+          }}
+        />
+      ) : null}
+      {/* Bus vehicle layer (3D simulated buses) */}
+      {mapInstance && isMapLoaded ? (
+        <TransitVehicleLayer3D
+          map={mapInstance}
+          networkType="bus"
+          visible={transportFilters.bus}
+        />
+      ) : null}
+      {/* TRAM line geometries */}
+      {mapInstance && isMapLoaded ? (
+        <TramLineLayer map={mapInstance} visible={transportFilters.tram} />
+      ) : null}
+      {/* TRAM stop markers */}
+      {mapInstance && isMapLoaded ? (
+        <TramStopLayer
+          map={mapInstance}
+          visible={transportFilters.tram}
+          onStopClick={(stopId, stopName) => {
+            console.log('TRAM stop clicked:', stopId, stopName);
+          }}
+        />
+      ) : null}
+      {/* TRAM vehicle layer (3D simulated trams) */}
+      {mapInstance && isMapLoaded ? (
+        <TransitVehicleLayer3D
+          map={mapInstance}
+          networkType="tram"
+          visible={transportFilters.tram}
+        />
+      ) : null}
+      {/* FGC line geometries */}
+      {mapInstance && isMapLoaded ? (
+        <FGCLineLayer map={mapInstance} visible={transportFilters.fgc} />
+      ) : null}
+      {/* FGC station markers */}
+      {mapInstance && isMapLoaded ? (
+        <FGCStationLayer
+          map={mapInstance}
+          visible={transportFilters.fgc}
+          onStationClick={(stationId, stationName) => {
+            console.log('FGC station clicked:', stationId, stationName);
+          }}
+        />
+      ) : null}
+      {/* FGC vehicle layer (3D simulated trains) */}
+      {mapInstance && isMapLoaded ? (
+        <TransitVehicleLayer3D
+          map={mapInstance}
+          networkType="fgc"
+          visible={transportFilters.fgc}
+        />
+      ) : null}
+      {/* Rodalies station markers layer */}
       {mapInstance && isMapLoaded ? (
         <StationLayer
           map={mapInstance}
           highlightedLineIds={highlightedLineIds}
           highlightMode={highlightMode}
           onStationClick={selectStation}
+          visible={transportFilters.rodalies}
         />
       ) : null}
       {/* Phase B 2D markers replaced by Phase C 3D models */}
@@ -776,13 +903,16 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           onRaycastResult={debugToolsEnabled ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
           onTrainsChange={setTrainPositions}
-          onMeshPositionGetterReady={(getter) => setGetMeshPosition(() => getter)}
+          onMeshPositionGetterReady={handleMeshPositionGetterReady}
+          visible={transportFilters.rodalies}
         />
       ) : null}
-      {/* Train List Button - rendered separately to avoid re-render issues with map layers */}
+      {/* Vehicle List Button - shows trains, metros, and buses in a tabbed interface */}
       {mapInstance && isMapLoaded ? (
-        <TrainListButton trains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
+        <VehicleListButton trains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
       ) : null}
+      {/* Transport Filter Button */}
+      <TransportFilterButton />
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
           <button

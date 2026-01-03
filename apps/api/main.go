@@ -22,24 +22,30 @@ func main() {
 	_ = godotenv.Load("../../.env")
 	_ = godotenv.Overload("../../.env.local") // Overload forces override of existing values
 
-	// Initialize database connection from DATABASE_URL environment variable
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		log.Fatal("DATABASE_URL environment variable is required")
+	// Initialize SQLite database connection
+	// Default to ../../data/transit.db relative to the api directory
+	dbPath := os.Getenv("SQLITE_DATABASE")
+	if dbPath == "" {
+		dbPath = "../../data/transit.db"
 	}
-	log.Printf("Connecting to database: %s", databaseURL)
+	log.Printf("Connecting to SQLite database: %s", dbPath)
 
-	// Create repository with connection pool
-	repo, err := repository.NewTrainRepository(databaseURL)
+	// Create SQLite database connection
+	sqliteDB, err := repository.NewSQLiteDB(dbPath)
 	if err != nil {
-		log.Fatalf("Failed to initialize database repository: %v", err)
+		log.Fatalf("Failed to initialize SQLite database: %v", err)
 	}
-	defer repo.Close()
+	defer sqliteDB.Close()
 
-	log.Println("Database connection established")
+	log.Println("SQLite database connection established")
 
-	// Create train handler with repository
-	trainHandler := handlers.NewTrainHandler(repo)
+	// Create train repository and handler
+	trainRepo := repository.NewSQLiteTrainRepository(sqliteDB.GetDB())
+	trainHandler := handlers.NewTrainHandler(trainRepo)
+
+	// Create Metro repository and handler
+	metroRepo := repository.NewSQLiteMetroRepository(sqliteDB.GetDB())
+	metroHandler := handlers.NewMetroHandler(metroRepo)
 
 	// Setup router
 	r := chi.NewRouter()
@@ -56,7 +62,7 @@ func main() {
 		defer cancel()
 
 		// Test database connectivity by attempting to get all trains
-		_, err := repo.GetAllTrains(ctx)
+		_, err := trainRepo.GetAllTrains(ctx)
 
 		if err != nil {
 			w.Header().Set("Content-Type", "application/json")
@@ -90,11 +96,15 @@ func main() {
 		w.Write([]byte("pong"))
 	})
 
-	// Train API routes
+	// Train API routes (Rodalies)
 	r.Get("/api/trains", trainHandler.GetAllTrains)
 	r.Get("/api/trains/positions", trainHandler.GetAllTrainPositions)
 	r.Get("/api/trains/{vehicleKey}", trainHandler.GetTrainByKey)
 	r.Get("/api/trips/{tripId}", trainHandler.GetTripDetails)
+
+	// Metro API routes
+	r.Get("/api/metro/positions", metroHandler.GetAllMetroPositions)
+	r.Get("/api/metro/lines/{lineCode}", metroHandler.GetMetroByLine)
 
 	// Static file serving (if configured)
 	staticDir := os.Getenv("STATIC_DIR")
@@ -110,11 +120,15 @@ func main() {
 	}
 
 	log.Printf("API server starting on :%s", port)
-	log.Println("Train endpoints:")
+	log.Println("Train endpoints (Rodalies):")
 	log.Println("  GET /api/trains")
 	log.Println("  GET /api/trains/positions")
 	log.Println("  GET /api/trains/{vehicleKey}")
 	log.Println("  GET /api/trips/{tripId}")
+	log.Println("Metro endpoints:")
+	log.Println("  GET /api/metro/positions")
+	log.Println("  GET /api/metro/lines/{lineCode}")
+	log.Println("Health:")
 	log.Println("  GET /health (with database check)")
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {

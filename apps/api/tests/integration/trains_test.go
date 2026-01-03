@@ -264,7 +264,7 @@ func TestGetAllTrainPositions(t *testing.T) {
 	if firstPos.RouteID == nil || *firstPos.RouteID == "" {
 		t.Error("Position RouteID is empty")
 	}
-	if firstPos.Status == "" {
+	if firstPos.Status == nil || *firstPos.Status == "" {
 		t.Error("Position Status is empty")
 	}
 
