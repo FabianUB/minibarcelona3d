@@ -208,26 +208,15 @@ function mapReducer(state: MapState, action: MapAction): MapState {
 export function MapStateProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(mapReducer, undefined, createInitialState);
 
-  // Persist high contrast preference to localStorage when it changes
+  // Persist UI preferences to localStorage when they change
+  // Combined into single effect to reduce localStorage writes
   useEffect(() => {
     savePreferences({
       isHighContrast: state.ui.isHighContrast,
-    });
-  }, [state.ui.isHighContrast]);
-
-  // Persist legend open state to localStorage when it changes
-  useEffect(() => {
-    savePreferences({
       isLegendOpen: state.ui.isLegendOpen,
-    });
-  }, [state.ui.isLegendOpen]);
-
-  // Persist transport filter preferences to localStorage when they change
-  useEffect(() => {
-    savePreferences({
       transportFilters: state.ui.transportFilters,
     });
-  }, [state.ui.transportFilters]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters]);
 
   const actions = useMemo<MapActions>(
     () => ({

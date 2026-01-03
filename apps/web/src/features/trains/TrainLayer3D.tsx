@@ -192,6 +192,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   // Store retry timeout reference for cleanup (T097)
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isPollingPausedRef = useRef(false);
+  // Ref to track retry count for use in fetchTrains closure (avoids stale closure)
+  const retryCountRef = useRef(0);
+  // Keep retry count ref in sync with state for stable closure access
+  retryCountRef.current = retryCount;
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
@@ -240,6 +244,22 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       return 0.0; // Invisible for non-selected lines in isolate mode
     }
   }, [highlightMode, highlightedLineIds, isLineHighlighted]);
+
+  /**
+   * Memoized train opacities map
+   * Only recalculates when trains or highlight state changes
+   * Performance: Avoids recalculating opacities on every render
+   */
+  const trainOpacities = useMemo(() => {
+    if (highlightMode === 'none') {
+      return null; // No opacity map needed when no highlighting
+    }
+    const opacities = new Map<string, number>();
+    trains.forEach(train => {
+      opacities.set(train.vehicleKey, getTrainOpacity(train));
+    });
+    return opacities;
+  }, [trains, highlightMode, getTrainOpacity]);
 
   /**
    * Fetches latest train positions from the API
@@ -452,7 +472,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
 
       // T097: Implement exponential backoff retry
       // Retry with increasing delays: 2s, 4s, 8s, 16s, 32s (max)
-      const nextRetryCount = retryCount + 1;
+      // Use ref to avoid stale closure - retryCountRef is kept in sync with state
+      const currentRetryCount = retryCountRef.current;
+      const nextRetryCount = currentRetryCount + 1;
       const maxRetries = 5;
 
       if (nextRetryCount <= maxRetries) {
@@ -461,7 +483,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
           setRetryCount(0);
           return;
         }
-        const retryDelayMs = Math.min(2000 * Math.pow(2, retryCount), 32000);
+        const retryDelayMs = Math.min(2000 * Math.pow(2, currentRetryCount), 32000);
         console.log(`TrainLayer3D: Retrying in ${retryDelayMs / 1000}s (attempt ${nextRetryCount}/${maxRetries})`);
 
         setRetryCount(nextRetryCount);
@@ -481,7 +503,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     } finally {
       setIsLoading(false);
     }
-  }, [retryCount, resolveTrainPosition]);
+  }, [resolveTrainPosition]);
 
   /**
    * Manual retry function for user-initiated retry
@@ -623,6 +645,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   // Debug overlay canvas (can be toggled with URL parameter ?debug=true)
   const debugCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const debugEnabledRef = useRef(areDebugToolsEnabled);
+  const debugRafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     isPollingPausedRef.current = isPollingPaused;
@@ -634,7 +657,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
 
   useEffect(() => {
     if (!debugEnabledRef.current) {
-      // Cleanup any existing overlay when disabling
+      // Cleanup any existing overlay and RAF when disabling
+      if (debugRafIdRef.current !== null) {
+        cancelAnimationFrame(debugRafIdRef.current);
+        debugRafIdRef.current = null;
+      }
       if (debugCanvasRef.current && debugCanvasRef.current.parentNode) {
         debugCanvasRef.current.parentNode.removeChild(debugCanvasRef.current);
       }
@@ -656,6 +683,11 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     console.log('🔍 Debug overlay enabled - red circles show click areas');
 
     return () => {
+      // Cancel pending RAF to prevent memory leak
+      if (debugRafIdRef.current !== null) {
+        cancelAnimationFrame(debugRafIdRef.current);
+        debugRafIdRef.current = null;
+      }
       if (debugCanvasRef.current && debugCanvasRef.current.parentNode) {
         debugCanvasRef.current.parentNode.removeChild(debugCanvasRef.current);
       }
@@ -664,17 +696,21 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   }, [map, areDebugToolsEnabled]);
 
   const drawDebugOverlay = useCallback(() => {
-    if (!debugEnabledRef.current) {
+    // Early exit if debug disabled or canvas removed
+    if (!debugEnabledRef.current || !debugCanvasRef.current) {
+      debugRafIdRef.current = null;
       return;
     }
 
     const canvas = debugCanvasRef.current;
-    if (!canvas || !meshManagerRef.current) {
+    if (!meshManagerRef.current) {
+      debugRafIdRef.current = null;
       return;
     }
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
+      debugRafIdRef.current = null;
       return;
     }
 
@@ -710,7 +746,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       }
     });
 
-    requestAnimationFrame(drawDebugOverlay);
+    // Store RAF ID for cleanup
+    debugRafIdRef.current = requestAnimationFrame(drawDebugOverlay);
   }, [map]);
 
   useEffect(() => {
@@ -898,17 +935,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       // Note: Manager creation deferred until stations are loaded
       // This will be handled in the mesh update effect
 
-      // T045: Preload all train models (447, 470, Civia)
-      // Load in background to avoid blocking map initialization
-      preloadAllTrainModels()
-        .then(() => {
-          setModelsLoaded(true);
-          console.log('TrainLayer3D: All train models loaded and ready');
-        })
-        .catch((error) => {
-          console.error('TrainLayer3D: Failed to load train models:', error);
-          setError('Failed to load 3D train models');
-        });
+      // Note: Model preloading moved to separate useEffect for parallel loading
     },
 
     /**
@@ -1109,6 +1136,23 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     };
 
     void loadLineData();
+  }, []);
+
+  /**
+   * Effect: Preload 3D train models
+   * T045: Load in parallel with other static data (stations, railways, lines)
+   * Moved here from onAdd to start loading earlier
+   */
+  useEffect(() => {
+    preloadAllTrainModels()
+      .then(() => {
+        setModelsLoaded(true);
+        console.log('TrainLayer3D: All train models loaded and ready');
+      })
+      .catch((error) => {
+        console.error('TrainLayer3D: Failed to load train models:', error);
+        setError('Failed to load 3D train models');
+      });
   }, []);
 
   /**
@@ -1435,15 +1479,9 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       meshManagerRef.current.setAllMeshesVisible(false);
     }
 
-    // T089: Calculate opacity for each train based on line selection
-    // T098: Stale data opacity effect temporarily disabled
-    // Performance: Only calculate and apply opacity if highlighting is active
-    if (highlightMode !== 'none') {
-      const trainOpacities = new Map<string, number>();
-      trains.forEach(train => {
-        const baseOpacity = getTrainOpacity(train);
-        trainOpacities.set(train.vehicleKey, baseOpacity);
-      });
+    // T089: Apply memoized train opacities based on line selection
+    // Performance: Uses memoized trainOpacities map instead of recalculating
+    if (trainOpacities) {
       meshManagerRef.current.setTrainOpacities(trainOpacities);
     }
 
@@ -1458,7 +1496,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         console.warn(`TrainLayer3D: ${stuckTrains.length} trains appear stuck (in transit but no movement):`, stuckTrains);
       }
     }
-  }, [trains, modelsLoaded, stationsLoaded, getTrainOpacity, highlightMode]);
+  }, [trains, modelsLoaded, stationsLoaded, trainOpacities]);
 
   /**
    * Effect: Update train scales when zoom changes
