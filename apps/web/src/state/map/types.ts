@@ -5,6 +5,7 @@ import type {
   MapHighlightMode,
   MapUIState,
   MapViewport,
+  TransportType,
 } from '../../types/rodalies';
 
 export interface MapState {
@@ -33,6 +34,8 @@ export interface MapActions {
   selectStation(stationId: string | null): void;
   retryStationLoad(): void;
   setStationLoadError(message: string | null): void;
+  setTransportFilter(type: TransportType, visible: boolean): void;
+  toggleTransportFilter(type: TransportType): void;
 }
 
 export interface MapHighlightSelectors {

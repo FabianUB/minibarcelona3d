@@ -100,20 +100,24 @@ type TrainPosition struct {
 	VehicleKey  string    `json:"vehicleKey"`
 	Latitude    *float64  `json:"latitude"`
 	Longitude   *float64  `json:"longitude"`
-	NextStopID  *string   `json:"nextStopId"`
-	RouteID     *string   `json:"routeId"`
-	Status      string    `json:"status"`
+	NextStopID  *string   `json:"nextStopId,omitempty"`
+	RouteID     *string   `json:"routeId,omitempty"`
+	Status      *string   `json:"status,omitempty"`
 	PolledAtUTC time.Time `json:"polledAtUtc"`
 }
 
 func (t *Train) ToTrainPosition() TrainPosition {
+	var status *string
+	if t.Status != "" {
+		status = &t.Status
+	}
 	return TrainPosition{
 		VehicleKey:  t.VehicleKey,
 		Latitude:    t.Latitude,
 		Longitude:   t.Longitude,
 		NextStopID:  t.NextStopID,
 		RouteID:     t.RouteID,
-		Status:      t.Status,
+		Status:      status,
 		PolledAtUTC: t.PolledAtUTC,
 	}
 }
