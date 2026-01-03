@@ -947,6 +947,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
      * Task: T054 - Performance monitoring
      */
     render(_gl: WebGLRenderingContext, matrix: Array<number>) {
+      // Skip rendering entirely when layer is not visible
+      // This prevents unnecessary WebGL state resets and render calls
+      if (!visibleRef.current) {
+        return;
+      }
+
       const frameStartTime = performance.now();
 
       if (!sceneRef.current || !cameraRef.current || !rendererRef.current) {
@@ -1043,7 +1049,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       }
 
       // Request next frame to continue animation loop
-      map.triggerRepaint();
+      // Only trigger repaint when layer is visible and has trains to animate
+      // This prevents unnecessary render calls to all 5 custom layers when hidden
+      const meshCount = meshManagerRef.current?.getMeshCount() ?? 0;
+      if (visibleRef.current && meshCount > 0) {
+        map.triggerRepaint();
+      }
     },
 
     /**

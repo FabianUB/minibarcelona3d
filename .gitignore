@@ -81,3 +81,9 @@ webnode/
 aircache/
 .codex/
 .claude/
+
+# === SQLite Database ===
+*.db
+*.db-shm
+*.db-wal
+data/
