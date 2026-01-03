@@ -1436,10 +1436,8 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       console.log(
         `TrainLayer3D: Mesh manager initialized with ${stationsRef.current.length} stations and ${railwaysRef.current.size} railway lines`
       );
-      // Apply initial visibility state (in case visible=false from the start)
-      if (!visibleRef.current) {
-        meshManagerRef.current.setAllMeshesVisible(false);
-      }
+      // Apply initial visibility state
+      meshManagerRef.current.setAllMeshesVisible(visibleRef.current);
     }
     // NOTE: Do NOT call updateTrainMeshes here - it's handled by the train update effect below
     // Calling it in both places causes double-updates which corrupt interpolation state
@@ -1474,10 +1472,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       receivedAtMs: pollTimestampsRef.current.receivedAt,
     });
 
-    // Apply visibility state after updating meshes (handles case when new trains are added while hidden)
-    if (!visibleRef.current) {
-      meshManagerRef.current.setAllMeshesVisible(false);
-    }
+    // Apply visibility state after updating meshes
+    // Always set visibility explicitly to ensure meshes are shown/hidden correctly
+    // This handles both: new trains added while hidden AND initial load with visible=true
+    meshManagerRef.current.setAllMeshesVisible(visibleRef.current);
 
     // T089: Apply memoized train opacities based on line selection
     // Performance: Uses memoized trainOpacities map instead of recalculating
