@@ -541,60 +541,57 @@ func (r *SQLiteMetroRepository) GetMetroPositionsWithHistory(
 	ctx context.Context,
 	lineCode string,
 ) ([]models.MetroPosition, []models.MetroPosition, time.Time, *time.Time, error) {
-	// Get the current snapshot ID
-	const currentSnapshotQuery = `
-		SELECT c.snapshot_id, s.polled_at_utc
-		FROM rt_metro_vehicle_current c
-		JOIN rt_snapshots s ON s.snapshot_id = c.snapshot_id
-		ORDER BY s.polled_at_utc DESC
+	// Get the most recent polled_at_utc directly from metro current table
+	// (don't join rt_snapshots as old snapshots may be cleaned up)
+	const currentPolledAtQuery = `
+		SELECT polled_at_utc
+		FROM rt_metro_vehicle_current
+		ORDER BY polled_at_utc DESC
 		LIMIT 1
 	`
 
-	var currentSnapshotID string
 	var currentPolledAtStr string
 
-	if err := r.db.QueryRowContext(ctx, currentSnapshotQuery).Scan(&currentSnapshotID, &currentPolledAtStr); err != nil {
+	if err := r.db.QueryRowContext(ctx, currentPolledAtQuery).Scan(&currentPolledAtStr); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return []models.MetroPosition{}, nil, time.Time{}, nil, nil
 		}
-		return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch current snapshot: %w", err)
+		return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch current polled_at: %w", err)
 	}
 
 	currentPolledAt, _ := time.Parse(time.RFC3339, currentPolledAtStr)
 
-	// Fetch current positions
-	currentPositions, err := r.fetchMetroPositionsForSnapshot(ctx, "rt_metro_vehicle_current", currentSnapshotID, lineCode)
+	// Fetch all current positions (no snapshot filtering needed - current table only has latest)
+	currentPositions, err := r.fetchAllMetroPositions(ctx, lineCode)
 	if err != nil {
 		return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch current metro positions: %w", err)
 	}
 
-	// Get the previous snapshot for animation interpolation
-	const previousSnapshotQuery = `
-		SELECT s.snapshot_id, s.polled_at_utc
-		FROM rt_metro_vehicle_history h
-		JOIN rt_snapshots s ON s.snapshot_id = h.snapshot_id
-		WHERE s.polled_at_utc < ?
-		GROUP BY s.snapshot_id, s.polled_at_utc
-		ORDER BY s.polled_at_utc DESC
+	// Get previous positions from history for animation interpolation
+	// Use polled_at_utc directly from history table (don't depend on rt_snapshots)
+	const previousPolledAtQuery = `
+		SELECT polled_at_utc
+		FROM rt_metro_vehicle_history
+		WHERE polled_at_utc < ?
+		ORDER BY polled_at_utc DESC
 		LIMIT 1
 	`
 
 	var previousPositions []models.MetroPosition
 	var previousPolledAtPtr *time.Time
 
-	var previousSnapshotID string
 	var previousPolledAtStr string
 
-	err = r.db.QueryRowContext(ctx, previousSnapshotQuery, currentPolledAtStr).Scan(&previousSnapshotID, &previousPolledAtStr)
+	err = r.db.QueryRowContext(ctx, previousPolledAtQuery, currentPolledAtStr).Scan(&previousPolledAtStr)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch previous snapshot: %w", err)
+			return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch previous polled_at: %w", err)
 		}
 	} else {
 		previousPolledAt, _ := time.Parse(time.RFC3339, previousPolledAtStr)
 		previousPolledAtPtr = &previousPolledAt
 
-		previousPositions, err = r.fetchMetroPositionsForSnapshot(ctx, "rt_metro_vehicle_history", previousSnapshotID, lineCode)
+		previousPositions, err = r.fetchMetroHistoryPositions(ctx, previousPolledAtStr, lineCode)
 		if err != nil {
 			return nil, nil, time.Time{}, nil, fmt.Errorf("failed to fetch previous metro positions: %w", err)
 		}
@@ -653,6 +650,167 @@ func (r *SQLiteMetroRepository) fetchMetroPositionsForSnapshot(
 	}
 	defer rows.Close()
 
+	var positions []models.MetroPosition
+	for rows.Next() {
+		var p models.MetroPosition
+		var estimatedAtStr, polledAtStr sql.NullString
+		if err := rows.Scan(
+			&p.VehicleKey,
+			&p.LineCode,
+			&p.RouteID,
+			&p.DirectionID,
+			&p.Latitude,
+			&p.Longitude,
+			&p.Bearing,
+			&p.PreviousStopID,
+			&p.NextStopID,
+			&p.PreviousStopName,
+			&p.NextStopName,
+			&p.Status,
+			&p.ProgressFraction,
+			&p.DistanceAlongLine,
+			&p.SpeedMetersPerSec,
+			&p.LineTotalLength,
+			&p.Source,
+			&p.Confidence,
+			&p.ArrivalSecondsToNext,
+			&estimatedAtStr,
+			&polledAtStr,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan metro position row: %w", err)
+		}
+
+		// Parse timestamp strings
+		if estimatedAtStr.Valid {
+			if t, err := time.Parse(time.RFC3339, estimatedAtStr.String); err == nil {
+				p.EstimatedAtUTC = t
+			}
+		}
+		if polledAtStr.Valid {
+			if t, err := time.Parse(time.RFC3339, polledAtStr.String); err == nil {
+				p.PolledAtUTC = t
+			}
+		}
+
+		// Set constant fields
+		p.NetworkType = "metro"
+		p.LineColor = models.GetLineColor(p.LineCode)
+
+		positions = append(positions, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating metro position rows: %w", err)
+	}
+
+	return positions, nil
+}
+
+// fetchAllMetroPositions fetches all current metro positions (no snapshot filter)
+func (r *SQLiteMetroRepository) fetchAllMetroPositions(
+	ctx context.Context,
+	lineCode string,
+) ([]models.MetroPosition, error) {
+	var query string
+	var args []interface{}
+
+	baseQuery := `
+		SELECT
+			vehicle_key,
+			line_code,
+			route_id,
+			direction_id,
+			latitude,
+			longitude,
+			bearing,
+			previous_stop_id,
+			next_stop_id,
+			previous_stop_name,
+			next_stop_name,
+			status,
+			progress_fraction,
+			distance_along_line,
+			estimated_speed_mps,
+			line_total_length,
+			source,
+			confidence,
+			arrival_seconds_to_next,
+			estimated_at_utc,
+			polled_at_utc
+		FROM rt_metro_vehicle_current
+	`
+
+	if lineCode != "" {
+		query = baseQuery + " WHERE line_code = ? ORDER BY direction_id, vehicle_key"
+		args = []interface{}{lineCode}
+	} else {
+		query = baseQuery + " ORDER BY line_code, direction_id, vehicle_key"
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query metro positions: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanMetroPositions(rows)
+}
+
+// fetchMetroHistoryPositions fetches metro positions from history at a specific polled_at_utc
+func (r *SQLiteMetroRepository) fetchMetroHistoryPositions(
+	ctx context.Context,
+	polledAtUTC string,
+	lineCode string,
+) ([]models.MetroPosition, error) {
+	var query string
+	var args []interface{}
+
+	baseQuery := `
+		SELECT
+			vehicle_key,
+			line_code,
+			'' as route_id,
+			direction_id,
+			latitude,
+			longitude,
+			bearing,
+			previous_stop_id,
+			next_stop_id,
+			'' as previous_stop_name,
+			'' as next_stop_name,
+			status,
+			progress_fraction,
+			0.0 as distance_along_line,
+			0.0 as estimated_speed_mps,
+			0.0 as line_total_length,
+			'history' as source,
+			'low' as confidence,
+			0 as arrival_seconds_to_next,
+			polled_at_utc as estimated_at_utc,
+			polled_at_utc
+		FROM rt_metro_vehicle_history
+		WHERE polled_at_utc = ?
+	`
+
+	if lineCode != "" {
+		query = baseQuery + " AND line_code = ? ORDER BY direction_id, vehicle_key"
+		args = []interface{}{polledAtUTC, lineCode}
+	} else {
+		query = baseQuery + " ORDER BY line_code, direction_id, vehicle_key"
+		args = []interface{}{polledAtUTC}
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query metro history positions: %w", err)
+	}
+	defer rows.Close()
+
+	return r.scanMetroPositions(rows)
+}
+
+// scanMetroPositions scans rows into MetroPosition slice
+func (r *SQLiteMetroRepository) scanMetroPositions(rows *sql.Rows) ([]models.MetroPosition, error) {
 	var positions []models.MetroPosition
 	for rows.Next() {
 		var p models.MetroPosition
