@@ -25,8 +25,10 @@ func Connect(dbPath string) (*DB, error) {
 	}
 
 	// Configure connection pool
-	conn.SetMaxOpenConns(10)
-	conn.SetMaxIdleConns(5)
+	// SQLite only supports one writer at a time, so we limit to 1 connection
+	// to prevent "cannot start a transaction within a transaction" errors
+	conn.SetMaxOpenConns(1)
+	conn.SetMaxIdleConns(1)
 	conn.SetConnMaxLifetime(time.Hour)
 
 	// Test connection
