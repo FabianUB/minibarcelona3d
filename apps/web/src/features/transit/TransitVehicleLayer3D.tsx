@@ -52,6 +52,10 @@ export function TransitVehicleLayer3D({
   const [modelLoaded, setModelLoaded] = useState(false);
   const styleReady = useMapStyleReady(map);
 
+  // Track visibility in a ref for use in render loop
+  const visibleRef = useRef(visible);
+  visibleRef.current = visible;
+
   // State actions
   const { selectVehicle } = useTransitActions();
   const { setActivePanel } = useMapActions();
@@ -229,6 +233,12 @@ export function TransitVehicleLayer3D({
       },
 
       render(_gl: WebGLRenderingContext, matrix: number[]) {
+        // Skip rendering entirely when layer is not visible
+        // This prevents unnecessary WebGL state resets and render calls
+        if (!visibleRef.current) {
+          return;
+        }
+
         if (!sceneRef.current || !cameraRef.current || !rendererRef.current) {
           return;
         }
