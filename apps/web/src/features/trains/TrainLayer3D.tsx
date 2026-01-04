@@ -149,6 +149,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
   const [stationsLoaded, setStationsLoaded] = useState(false);
   const [railwaysLoaded, setRailwaysLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
+  const [meshManagerReady, setMeshManagerReady] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isDataStale, setIsDataStale] = useState(false);
   const [lastPollTime, setLastPollTime] = useState<number>(Date.now());
@@ -946,6 +947,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
      * Task: T054 - Performance monitoring
      */
     render(_gl: WebGLRenderingContext, matrix: Array<number>) {
+      // Skip rendering entirely when layer is not visible
+      // This prevents unnecessary WebGL state resets and render calls
+      if (!visibleRef.current) {
+        return;
+      }
+
       const frameStartTime = performance.now();
 
       if (!sceneRef.current || !cameraRef.current || !rendererRef.current) {
@@ -1042,7 +1049,12 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       }
 
       // Request next frame to continue animation loop
-      map.triggerRepaint();
+      // Only trigger repaint when layer is visible and has trains to animate
+      // This prevents unnecessary render calls to all 5 custom layers when hidden
+      const meshCount = meshManagerRef.current?.getMeshCount() ?? 0;
+      if (visibleRef.current && meshCount > 0) {
+        map.triggerRepaint();
+      }
     },
 
     /**
@@ -1277,8 +1289,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     // Hide/show all train meshes
     if (meshManagerRef.current) {
       meshManagerRef.current.setAllMeshesVisible(visible);
+      // Trigger Mapbox repaint to reflect visibility change
+      map.triggerRepaint();
     }
-  }, [visible]);
+  }, [visible, map]);
 
   /**
    * Effect: Set up polling for train positions
@@ -1436,10 +1450,10 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       console.log(
         `TrainLayer3D: Mesh manager initialized with ${stationsRef.current.length} stations and ${railwaysRef.current.size} railway lines`
       );
-      // Apply initial visibility state (in case visible=false from the start)
-      if (!visibleRef.current) {
-        meshManagerRef.current.setAllMeshesVisible(false);
-      }
+      // Apply initial visibility state
+      meshManagerRef.current.setAllMeshesVisible(visibleRef.current);
+      // Signal that mesh manager is ready - this triggers train mesh update effect
+      setMeshManagerReady(true);
     }
     // NOTE: Do NOT call updateTrainMeshes here - it's handled by the train update effect below
     // Calling it in both places causes double-updates which corrupt interpolation state
@@ -1453,12 +1467,13 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
    */
   useEffect(() => {
     // Only update meshes when models, stations, and manager are ready
-    if (!modelsLoaded || !stationsLoaded || !meshManagerRef.current) {
+    // meshManagerReady is a state (not ref) so this effect re-runs when manager is created
+    if (!modelsLoaded || !stationsLoaded || !meshManagerReady || !meshManagerRef.current) {
       if (trains.length > 0) {
         const waiting: string[] = [];
         if (!modelsLoaded) waiting.push('models');
         if (!stationsLoaded) waiting.push('stations');
-        if (!meshManagerRef.current) waiting.push('mesh manager');
+        if (!meshManagerReady) waiting.push('mesh manager');
         console.log(
           `TrainLayer3D: ${trains.length} trains fetched, waiting for ${waiting.join(', ')}...`
         );
@@ -1474,16 +1489,22 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       receivedAtMs: pollTimestampsRef.current.receivedAt,
     });
 
-    // Apply visibility state after updating meshes (handles case when new trains are added while hidden)
-    if (!visibleRef.current) {
-      meshManagerRef.current.setAllMeshesVisible(false);
-    }
+    // Apply visibility state after updating meshes
+    // Always set visibility explicitly to ensure meshes are shown/hidden correctly
+    // This handles both: new trains added while hidden AND initial load with visible=true
+    meshManagerRef.current.setAllMeshesVisible(visibleRef.current);
 
     // T089: Apply memoized train opacities based on line selection
     // Performance: Uses memoized trainOpacities map instead of recalculating
     if (trainOpacities) {
       meshManagerRef.current.setTrainOpacities(trainOpacities);
     }
+
+    // CRITICAL: Trigger Mapbox repaint after updating meshes
+    // Without this, Mapbox doesn't know the scene changed and won't render
+    // the new train meshes until something else triggers a repaint (like map movement).
+    // This fixes the bug where trains don't appear on initial load.
+    map.triggerRepaint();
 
     if (trains.length > 0) {
       console.log(
@@ -1496,7 +1517,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
         console.warn(`TrainLayer3D: ${stuckTrains.length} trains appear stuck (in transit but no movement):`, stuckTrains);
       }
     }
-  }, [trains, modelsLoaded, stationsLoaded, trainOpacities]);
+  }, [trains, modelsLoaded, stationsLoaded, meshManagerReady, trainOpacities, map]);
 
   /**
    * Effect: Update train scales when zoom changes

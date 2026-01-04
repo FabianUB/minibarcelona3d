@@ -1,27 +1,29 @@
 /**
- * Hook for generating FGC vehicle positions
+ * Hook for fetching FGC vehicle positions
  *
- * Generates simulated FGC train positions based on schedule data.
- * Updates positions at regular intervals for smooth animation.
+ * Fetches pre-calculated FGC positions from the backend API.
+ * Falls back to client-side simulation if API is unavailable.
+ * Updates positions every 30 seconds to match backend polling.
  */
 
-import { useMemo } from 'react';
 import {
   generateAllFgcPositions,
   preloadFgcGeometries,
 } from '../../../lib/fgc/positionSimulator';
-import { FGC_SIMULATION_INTERVAL_MS } from '../../../config/fgcConfig';
 import {
-  useTransitPositions,
-  type UseTransitPositionsOptions,
-  type UseTransitPositionsResult,
-} from './useTransitPositions';
+  useSchedulePositions,
+  type UseSchedulePositionsOptions,
+  type UseSchedulePositionsResult,
+} from './useSchedulePositions';
 
-export type UseFgcPositionsOptions = UseTransitPositionsOptions;
-export type UseFgcPositionsResult = UseTransitPositionsResult;
+export type UseFgcPositionsOptions = Omit<UseSchedulePositionsOptions, 'network' | 'simulationFallback' | 'preloadGeometries'>;
+export type UseFgcPositionsResult = UseSchedulePositionsResult;
 
 /**
- * Hook to generate simulated FGC vehicle positions
+ * Hook to fetch FGC vehicle positions from API
+ *
+ * Uses pre-calculated schedule-based positions from the backend.
+ * Falls back to client-side simulation if API fails.
  *
  * @param options - Configuration options
  * @returns Position data and status
@@ -32,12 +34,10 @@ export type UseFgcPositionsResult = UseTransitPositionsResult;
 export function useFgcPositions(
   options: UseFgcPositionsOptions = {}
 ): UseFgcPositionsResult {
-  const config = useMemo(() => ({
-    name: 'FGC',
-    defaultIntervalMs: FGC_SIMULATION_INTERVAL_MS,
+  return useSchedulePositions({
+    ...options,
+    network: 'fgc',
+    simulationFallback: generateAllFgcPositions,
     preloadGeometries: preloadFgcGeometries,
-    generatePositions: generateAllFgcPositions,
-  }), []);
-
-  return useTransitPositions(config, options);
+  });
 }

@@ -1,6 +1,6 @@
 {
-  "selectedLineId": null,
+  "highContrastMode": false,
   "highlightMode": "none",
-  "isHighContrast": false,
-  "isLegendOpen": false
+  "selectedLine": null,
+  "showLegend": true
 }

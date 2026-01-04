@@ -48,7 +48,9 @@ export interface VehiclePosition {
   vehicleKey: string;           // Unique ID: "metro-L1-0-5" or "bus-H6-042"
   networkType: TransportType;   // 'metro' | 'bus' | 'rodalies'
   lineCode: string;             // "L1", "H6", "R1"
+  routeLongName?: string;       // "Pg. Marítim / Ernest Lluch" (full route name)
   routeId?: string;             // Full route identifier if available
+  tripId?: string;              // GTFS trip_id for fetching stop details
 
   // Position (always present - calculated or estimated)
   latitude: number;

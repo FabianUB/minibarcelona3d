@@ -3,13 +3,13 @@
   "id": "R2",
   "properties": {
     "id": "R2",
-    "name": "El Prat de Llobregat - Barcelona-Sant Andreu",
+    "name": "Barcelona-Sant Andreu                   -El Prat de Llobregat",
     "short_code": "R2",
     "brand_color": "26A741",
     "default_pattern": "solid-r2",
     "high_contrast_pattern": "hatched-r2",
     "order": 1,
-    "last_verified_at": "2025-10-21T19:17:00Z"
+    "last_verified_at": "2026-01-04T20:11:16Z"
   },
   "geometry": {
     "type": "LineString",
