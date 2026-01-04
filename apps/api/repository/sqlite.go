@@ -988,6 +988,7 @@ type preCalcPosition struct {
 	VehicleKey       string   `json:"vehicleKey"`
 	RouteID          string   `json:"routeId"`
 	RouteShortName   string   `json:"routeShortName"`
+	RouteLongName    string   `json:"routeLongName,omitempty"`
 	RouteColor       string   `json:"routeColor"`
 	TripID           string   `json:"tripId"`
 	DirectionID      int      `json:"direction"`
@@ -1096,6 +1097,7 @@ func (r *SQLiteScheduleRepository) GetSchedulePositionsByNetwork(ctx context.Con
 				NetworkType:    displayNetwork,
 				RouteID:        p.RouteID,
 				RouteShortName: p.RouteShortName,
+				RouteLongName:  p.RouteLongName,
 				RouteColor:     p.RouteColor,
 				TripID:         p.TripID,
 				DirectionID:    p.DirectionID,

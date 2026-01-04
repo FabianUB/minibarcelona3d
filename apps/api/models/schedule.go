@@ -13,12 +13,13 @@ type SchedulePosition struct {
 	VehicleKey string `json:"vehicleKey"` // "tram-T1-trip123" format
 
 	// Network context
-	NetworkType    string `json:"networkType"`         // "tram", "fgc", "bus"
-	RouteID        string `json:"routeId"`             // GTFS route_id
-	RouteShortName string `json:"routeShortName"`      // "T1", "L6", "H8"
-	RouteColor     string `json:"routeColor"`          // Hex color for the line
-	TripID         string `json:"tripId"`              // GTFS trip_id
-	DirectionID    int    `json:"direction"`           // 0 = outbound, 1 = inbound
+	NetworkType    string `json:"networkType"`              // "tram", "fgc", "bus"
+	RouteID        string `json:"routeId"`                  // GTFS route_id
+	RouteShortName string `json:"routeShortName"`           // "T1", "L6", "H8"
+	RouteLongName  string `json:"routeLongName,omitempty"`  // "Pg. Marítim / Ernest Lluch"
+	RouteColor     string `json:"routeColor"`               // Hex color for the line
+	TripID         string `json:"tripId"`                   // GTFS trip_id
+	DirectionID    int    `json:"direction"`                // 0 = outbound, 1 = inbound
 
 	// Position (estimated from schedule + stop geometry)
 	Latitude  float64  `json:"latitude"`
