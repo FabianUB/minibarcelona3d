@@ -1,27 +1,29 @@
 /**
- * Hook for generating TRAM vehicle positions
+ * Hook for fetching TRAM vehicle positions
  *
- * Generates simulated TRAM positions based on schedule data.
- * Updates positions at regular intervals for smooth animation.
+ * Fetches pre-calculated TRAM positions from the backend API.
+ * Falls back to client-side simulation if API is unavailable.
+ * Updates positions every 30 seconds to match backend polling.
  */
 
-import { useMemo } from 'react';
 import {
   generateAllTramPositions,
   preloadTramGeometries,
 } from '../../../lib/tram/positionSimulator';
-import { TRAM_SIMULATION_INTERVAL_MS } from '../../../config/tramConfig';
 import {
-  useTransitPositions,
-  type UseTransitPositionsOptions,
-  type UseTransitPositionsResult,
-} from './useTransitPositions';
+  useSchedulePositions,
+  type UseSchedulePositionsOptions,
+  type UseSchedulePositionsResult,
+} from './useSchedulePositions';
 
-export type UseTramPositionsOptions = UseTransitPositionsOptions;
-export type UseTramPositionsResult = UseTransitPositionsResult;
+export type UseTramPositionsOptions = Omit<UseSchedulePositionsOptions, 'network' | 'simulationFallback' | 'preloadGeometries'>;
+export type UseTramPositionsResult = UseSchedulePositionsResult;
 
 /**
- * Hook to generate simulated TRAM vehicle positions
+ * Hook to fetch TRAM vehicle positions from API
+ *
+ * Uses pre-calculated schedule-based positions from the backend.
+ * Falls back to client-side simulation if API fails.
  *
  * @param options - Configuration options
  * @returns Position data and status
@@ -32,12 +34,10 @@ export type UseTramPositionsResult = UseTransitPositionsResult;
 export function useTramPositions(
   options: UseTramPositionsOptions = {}
 ): UseTramPositionsResult {
-  const config = useMemo(() => ({
-    name: 'TRAM',
-    defaultIntervalMs: TRAM_SIMULATION_INTERVAL_MS,
+  return useSchedulePositions({
+    ...options,
+    network: 'tram',
+    simulationFallback: generateAllTramPositions,
     preloadGeometries: preloadTramGeometries,
-    generatePositions: generateAllTramPositions,
-  }), []);
-
-  return useTransitPositions(config, options);
+  });
 }

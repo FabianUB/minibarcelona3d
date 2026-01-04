@@ -3,13 +3,13 @@
   "id": "R4",
   "properties": {
     "id": "R4",
-    "name": "Terrassa Estació del Nord - Castellbisbal",
+    "name": "El Vendrell                             -Sabadell Sud",
     "short_code": "R4",
     "brand_color": "F7A30D",
     "default_pattern": "solid-r4",
     "high_contrast_pattern": "hatched-r4",
     "order": 6,
-    "last_verified_at": "2025-10-21T19:17:00Z"
+    "last_verified_at": "2026-01-04T20:11:16Z"
   },
   "geometry": {
     "type": "LineString",

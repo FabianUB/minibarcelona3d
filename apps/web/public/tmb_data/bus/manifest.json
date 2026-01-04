@@ -1,0 +1,836 @@
+{
+  "files": [
+    {
+      "type": "bus_route",
+      "path": "bus/routes/102.geojson",
+      "route_code": "102",
+      "route_id": "2.102.2876",
+      "name": "Pl. Eivissa / Cementiri de Collserola",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/104.geojson",
+      "route_code": "104",
+      "route_id": "2.104.2887",
+      "name": "Fabra i Puig / Cementiri de Collserola",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/107.geojson",
+      "route_code": "107",
+      "route_id": "2.107.2933",
+      "name": "Cementiri Montju\u00efc",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/109.geojson",
+      "route_code": "109",
+      "route_id": "2.109.2877",
+      "name": "Hospital Cl\u00ednic / Pol\u00edgon Zona Franca",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/111.geojson",
+      "route_code": "111",
+      "route_id": "2.111.2888",
+      "name": "Tibidabo",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/112.geojson",
+      "route_code": "112",
+      "route_id": "2.112.2925",
+      "name": "Sant Gen\u00eds",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/113.geojson",
+      "route_code": "113",
+      "route_id": "2.113.2916",
+      "name": "La Merc\u00e8",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/114.geojson",
+      "route_code": "114",
+      "route_id": "2.114.2942",
+      "name": "Gr\u00e0cia / Can Bar\u00f3",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/115.geojson",
+      "route_code": "115",
+      "route_id": "2.115.2917",
+      "name": "La Bordeta",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/117.geojson",
+      "route_code": "117",
+      "route_id": "2.117.2914",
+      "name": "Guinard\u00f3",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/118.geojson",
+      "route_code": "118",
+      "route_id": "2.118.2915",
+      "name": "Mas Guimbau",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/119.geojson",
+      "route_code": "119",
+      "route_id": "2.119.2931",
+      "name": "La Teixonera",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/120.geojson",
+      "route_code": "120",
+      "route_id": "2.120.2918",
+      "name": "Ciutat Vella",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/121.geojson",
+      "route_code": "121",
+      "route_id": "2.121.2932",
+      "name": "Poble Sec",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/122.geojson",
+      "route_code": "122",
+      "route_id": "2.122.2935",
+      "name": "Tur\u00f3 de la Peira",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/123.geojson",
+      "route_code": "123",
+      "route_id": "2.123.2936",
+      "name": "Bonanova Alta",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/124.geojson",
+      "route_code": "124",
+      "route_id": "2.124.2937",
+      "name": "Penitents",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/125.geojson",
+      "route_code": "125",
+      "route_id": "2.125.2938",
+      "name": "La Marina",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/126.geojson",
+      "route_code": "126",
+      "route_id": "2.126.2939",
+      "name": "Sant Andreu",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/127.geojson",
+      "route_code": "127",
+      "route_id": "2.127.3640",
+      "name": "Roquetes",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/128.geojson",
+      "route_code": "128",
+      "route_id": "2.128.2919",
+      "name": "El Rectoret",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/129.geojson",
+      "route_code": "129",
+      "route_id": "2.129.2968",
+      "name": "El Coll",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/13.geojson",
+      "route_code": "13",
+      "route_id": "2.13.2833",
+      "name": "Mercat Sant Antoni / Parc de Montju\u00efc",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/130.geojson",
+      "route_code": "130",
+      "route_id": "2.130.2969",
+      "name": "Can Caralleu",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/131.geojson",
+      "route_code": "131",
+      "route_id": "2.131.2970",
+      "name": "El Putxet",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/132.geojson",
+      "route_code": "132",
+      "route_id": "2.132.2979",
+      "name": "Torre Llobeta / Prosperitat",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/133.geojson",
+      "route_code": "133",
+      "route_id": "2.133.3843",
+      "name": "Trinitat Vella / Fabra i Puig",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/134.geojson",
+      "route_code": "134",
+      "route_id": "2.134.3292",
+      "name": "Roquetes / Fabra i Puig",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/136.geojson",
+      "route_code": "136",
+      "route_id": "2.136.3026",
+      "name": "Pg. Mar\u00edtim / Verneda",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/141.geojson",
+      "route_code": "141",
+      "route_id": "2.141.3333",
+      "name": "Esq. de l'Eixample",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/150.geojson",
+      "route_code": "150",
+      "route_id": "2.150.2993",
+      "name": "Pl. Espanya / Castell de Montju\u00efc",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/155.geojson",
+      "route_code": "155",
+      "route_id": "2.155.2922",
+      "name": "Can Cui\u00e0s / Santa Maria de Montcada",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/157.geojson",
+      "route_code": "157",
+      "route_id": "2.157.2880",
+      "name": "Collblanc / Sant Joan Desp\u00ed",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/175.geojson",
+      "route_code": "175",
+      "route_id": "2.175.3332",
+      "name": "Les Corts",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/180.geojson",
+      "route_code": "180",
+      "route_id": "2.180.3411",
+      "name": "Torre Bar\u00f3 Sud",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/182.geojson",
+      "route_code": "182",
+      "route_id": "2.182.3412",
+      "name": "Pl. Virrei Amat / Torre Bar\u00f3 ",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/183.geojson",
+      "route_code": "183",
+      "route_id": "2.183.3580",
+      "name": "Torre Bar\u00f3 / Ciutat Meridiana",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/185.geojson",
+      "route_code": "185",
+      "route_id": "2.185.2941",
+      "name": "<M> Canyelles / Vall d'Hebron",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/19.geojson",
+      "route_code": "19",
+      "route_id": "2.19.3081",
+      "name": "Pl. Catalunya / Sant Gen\u00eds",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/191.geojson",
+      "route_code": "191",
+      "route_id": "2.191.3091",
+      "name": "Pl. Congr\u00e9s / Can Bar\u00f3",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/192.geojson",
+      "route_code": "192",
+      "route_id": "2.192.3076",
+      "name": "Poblenou / Hospital de Sant Pau",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/196.geojson",
+      "route_code": "196",
+      "route_id": "2.196.2971",
+      "name": "Pl. Kennedy / Bellesguard",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/21.geojson",
+      "route_code": "21",
+      "route_id": "2.21.2973",
+      "name": "Paral\u00b7lel / El Prat",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/22.geojson",
+      "route_code": "22",
+      "route_id": "2.22.3082",
+      "name": "Pl. Catalunya / El Carmel",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/23.geojson",
+      "route_code": "23",
+      "route_id": "2.23.2898",
+      "name": "Pl. Espanya / Parc Log\u00edstic",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/24.geojson",
+      "route_code": "24",
+      "route_id": "2.24.2840",
+      "name": "Pl. Catalunya / El Carmel",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/27.geojson",
+      "route_code": "27",
+      "route_id": "2.27.2841",
+      "name": "Estaci\u00f3 de Sants / Roquetes",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/33.geojson",
+      "route_code": "33",
+      "route_id": "2.33.2846",
+      "name": "Zona Universit\u00e0ria / Verneda",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/34.geojson",
+      "route_code": "34",
+      "route_id": "2.34.2847",
+      "name": "Pg. Manuel Girona / Pl. Virrei Amat",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/39.geojson",
+      "route_code": "39",
+      "route_id": "2.39.3075",
+      "name": "Pl. Urquinaona / Pl. Catalana",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/46.geojson",
+      "route_code": "46",
+      "route_id": "2.46.2975",
+      "name": "Pl. Espanya / Aeroport BCN",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/47.geojson",
+      "route_code": "47",
+      "route_id": "2.47.3083",
+      "name": "Pg. Mar\u00edtim / Canyelles",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/52.geojson",
+      "route_code": "52",
+      "route_id": "2.52.3054",
+      "name": "Pl. Catalunya / Collblanc",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/54.geojson",
+      "route_code": "54",
+      "route_id": "2.54.3086",
+      "name": "Estaci\u00f3 del Nord / Cardenal Reig",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/55.geojson",
+      "route_code": "55",
+      "route_id": "2.55.3084",
+      "name": "Pl. Urquinaona / Parc de Montju\u00efc",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/59.geojson",
+      "route_code": "59",
+      "route_id": "2.59.2860",
+      "name": "Poblenou / Pl. Reina Maria Cristina",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/6.geojson",
+      "route_code": "6",
+      "route_id": "2.6.2899",
+      "name": "Pg. Manuel Girona / Poblenou",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/60.geojson",
+      "route_code": "60",
+      "route_id": "2.60.3085",
+      "name": "Bes\u00f2s Verneda / Vall d'Hebron",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/62.geojson",
+      "route_code": "62",
+      "route_id": "2.62.3431",
+      "name": "<M> Clot / Ciutat Meridiana",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/63.geojson",
+      "route_code": "63",
+      "route_id": "2.63.4060",
+      "name": "Pl.Catalunya / Sant Joan Desp\u00ed",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/65.geojson",
+      "route_code": "65",
+      "route_id": "2.65.2865",
+      "name": "Pl. Espanya / El Prat",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/67.geojson",
+      "route_code": "67",
+      "route_id": "2.67.2902",
+      "name": "Pl. Catalunya / Cornell\u00e0",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/68.geojson",
+      "route_code": "68",
+      "route_id": "2.68.2903",
+      "name": "Hospital Cl\u00ednic / Cornell\u00e0",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/7.geojson",
+      "route_code": "7",
+      "route_id": "2.7.2905",
+      "name": "F\u00f2rum / Zona Universit\u00e0ria",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/70.geojson",
+      "route_code": "70",
+      "route_id": "2.70.2882",
+      "name": "Rambla de Badal / Bonanova",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/76.geojson",
+      "route_code": "76",
+      "route_id": "2.76.2869",
+      "name": "Sant Gen\u00eds / Ciutat Meridiana",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/78.geojson",
+      "route_code": "78",
+      "route_id": "2.78.2870",
+      "name": "Estaci\u00f3 de Sants / Sant Joan Desp\u00ed",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/91.geojson",
+      "route_code": "91",
+      "route_id": "2.91.2871",
+      "name": "Manso / La Bordeta",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/94.geojson",
+      "route_code": "94",
+      "route_id": "2.94.2951",
+      "name": "Circular Cornell\u00e0 2",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/95.geojson",
+      "route_code": "95",
+      "route_id": "2.95.2872",
+      "name": "Circular Cornell\u00e0 1",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/96.geojson",
+      "route_code": "96",
+      "route_id": "2.96.2873",
+      "name": "<M> La Sagrera / Montcada i Reixac",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/97.geojson",
+      "route_code": "97",
+      "route_id": "2.97.2874",
+      "name": "Pg. Fabra i Puig / Vallbona",
+      "color": "#DA291C"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/983.geojson",
+      "route_code": "983",
+      "route_id": "2.983.4061",
+      "name": "Llan\u00e7adora Funicular",
+      "color": "#937500"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/D20.geojson",
+      "route_code": "D20",
+      "route_id": "2.220.2999",
+      "name": "Pg. Mar\u00edtim / Ernest Lluch",
+      "color": "#93107E"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/D40.geojson",
+      "route_code": "D40",
+      "route_id": "2.240.3025",
+      "name": "Pl. Espanya / Canyelles",
+      "color": "#93107E"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/D50.geojson",
+      "route_code": "D50",
+      "route_id": "2.250.3051",
+      "name": "Paral\u00b7lel / Ciutat Meridiana",
+      "color": "#93107E"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H10.geojson",
+      "route_code": "H10",
+      "route_id": "2.210.3078",
+      "name": "Pl. Sants / Ol\u00edmpic de Badalona",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H12.geojson",
+      "route_code": "H12",
+      "route_id": "2.212.2997",
+      "name": "Gornal / Bes\u00f2s Verneda",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H14.geojson",
+      "route_code": "H14",
+      "route_id": "2.214.3012",
+      "name": "Paral\u00b7lel / Sant Adri\u00e0",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H16.geojson",
+      "route_code": "H16",
+      "route_id": "2.216.3008",
+      "name": "Pg. Zona Franca / F\u00f2rum Campus Bes\u00f2s",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H2.geojson",
+      "route_code": "H2",
+      "route_id": "2.202.3068",
+      "name": "Av. Esplugues / Trinitat Nova",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H4.geojson",
+      "route_code": "H4",
+      "route_id": "2.204.3018",
+      "name": "Zona Universit\u00e0ria / Bon Pastor",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H6.geojson",
+      "route_code": "H6",
+      "route_id": "2.206.2995",
+      "name": "Zona Universit\u00e0ria / Onze de Setembre",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H8.geojson",
+      "route_code": "H8",
+      "route_id": "2.208.3476",
+      "name": "Ernest Lluch / Bon Pastor",
+      "color": "#003888"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V1.geojson",
+      "route_code": "V1",
+      "route_id": "2.201.3069",
+      "name": "Districte Gran Via l'Hospitalet / Av. Esplugues",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V11.geojson",
+      "route_code": "V11",
+      "route_id": "2.211.3019",
+      "name": "Estaci\u00f3 Mar\u00edtima (WTC) / Bonanova",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V13.geojson",
+      "route_code": "V13",
+      "route_id": "2.213.3883",
+      "name": "Pl. Catalunya / Av. Tibidabo",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V15.geojson",
+      "route_code": "V15",
+      "route_id": "2.215.3079",
+      "name": "Barceloneta / Av. Tibidabo",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V17.geojson",
+      "route_code": "V17",
+      "route_id": "2.217.3080",
+      "name": "Port Vell / Vall d'Hebron",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V19.geojson",
+      "route_code": "V19",
+      "route_id": "2.219.3070",
+      "name": "Barceloneta / Pl. Alfonso Com\u00edn",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V21.geojson",
+      "route_code": "V21",
+      "route_id": "2.221.2998",
+      "name": "Pg. Mar\u00edtim / Montbau",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V23.geojson",
+      "route_code": "V23",
+      "route_id": "2.223.3071",
+      "name": "Nova Ic\u00e0ria / Can Marcet",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V25.geojson",
+      "route_code": "V25",
+      "route_id": "2.225.3072",
+      "name": "Nova Ic\u00e0ria / Horta",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V27.geojson",
+      "route_code": "V27",
+      "route_id": "2.227.3013",
+      "name": "Pg. Mar\u00edtim / Canyelles",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V29.geojson",
+      "route_code": "V29",
+      "route_id": "2.229.3024",
+      "name": "Diagonal Mar / Roquetes",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V3.geojson",
+      "route_code": "V3",
+      "route_id": "2.203.3004",
+      "name": "Zona Franca / Can Caralleu",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V31.geojson",
+      "route_code": "V31",
+      "route_id": "2.231.3900",
+      "name": "F\u00f2rum / Trinitat Vella",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V33.geojson",
+      "route_code": "V33",
+      "route_id": "2.233.3053",
+      "name": "F\u00f2rum Campus Bes\u00f2s / Santa Coloma",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V5.geojson",
+      "route_code": "V5",
+      "route_id": "2.205.2988",
+      "name": "Mare de D\u00e9u de Port / Pedralbes",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V7.geojson",
+      "route_code": "V7",
+      "route_id": "2.207.2996",
+      "name": "Pl. Espanya / Sarri\u00e0",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V9.geojson",
+      "route_code": "V9",
+      "route_id": "2.209.3052",
+      "name": "Poble-sec / Sarri\u00e0",
+      "color": "#6AB023"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X1.geojson",
+      "route_code": "X1",
+      "route_id": "2.242.3497",
+      "name": "BCN Centre-F.Maci\u00e0 / BCN Centre-Gl\u00f2ries",
+      "color": "#010101"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X2.geojson",
+      "route_code": "X2",
+      "route_id": "2.244.3891",
+      "name": "Prat XPRES (Pl. Espanya - Av. Remolar)",
+      "color": "#010101"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X3.geojson",
+      "route_code": "X3",
+      "route_id": "2.245.3978",
+      "name": "Paral\u00b7lel - L'Hospitalet (Av. Carrilet)",
+      "color": "#010101"
+    }
+  ]
+}

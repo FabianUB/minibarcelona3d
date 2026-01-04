@@ -13,6 +13,7 @@ import (
 	"github.com/mini-rodalies-3d/poller/internal/db"
 	"github.com/mini-rodalies-3d/poller/internal/realtime/metro"
 	"github.com/mini-rodalies-3d/poller/internal/realtime/rodalies"
+	"github.com/mini-rodalies-3d/poller/internal/realtime/schedule"
 	"github.com/mini-rodalies-3d/poller/internal/static"
 )
 
@@ -30,16 +31,7 @@ func main() {
 	log.Printf("Config loaded: poll_interval=%v, retention=%v", cfg.PollInterval, cfg.RetentionDuration)
 
 	// ═══════════════════════════════════════════════════════
-	// PHASE 1: Static Data Refresh (startup)
-	// ═══════════════════════════════════════════════════════
-	log.Println("Checking static data freshness...")
-	if err := static.RefreshIfStale(cfg); err != nil {
-		log.Printf("Warning: static data refresh failed: %v", err)
-		// Continue anyway - use existing data if available
-	}
-
-	// ═══════════════════════════════════════════════════════
-	// PHASE 2: Initialize Database
+	// PHASE 1: Initialize Database (before static refresh)
 	// ═══════════════════════════════════════════════════════
 	database, err := db.Connect(cfg.DatabasePath)
 	if err != nil {
@@ -53,6 +45,15 @@ func main() {
 	log.Println("Database initialized")
 
 	// ═══════════════════════════════════════════════════════
+	// PHASE 2: Static Data Refresh (startup)
+	// ═══════════════════════════════════════════════════════
+	log.Println("Checking static data freshness...")
+	if err := static.RefreshIfStale(cfg, database); err != nil {
+		log.Printf("Warning: static data refresh failed: %v", err)
+		// Continue anyway - use existing data if available
+	}
+
+	// ═══════════════════════════════════════════════════════
 	// PHASE 3: Initialize Pollers
 	// ═══════════════════════════════════════════════════════
 	rodaliesPoller := rodalies.NewPoller(database, cfg)
@@ -64,6 +65,13 @@ func main() {
 		// Continue - Metro polling will be skipped if no static data
 	}
 
+	// Initialize schedule poller for TRAM, FGC, and Bus
+	schedulePoller, err := schedule.NewPoller(database, cfg)
+	if err != nil {
+		log.Printf("Warning: failed to create schedule poller: %v", err)
+		// Continue without schedule-based estimation
+	}
+
 	// ═══════════════════════════════════════════════════════
 	// PHASE 4: Start Polling Loops
 	// ═══════════════════════════════════════════════════════
@@ -72,7 +80,7 @@ func main() {
 
 	// Initial poll immediately
 	log.Println("Running initial poll...")
-	pollOnce(ctx, rodaliesPoller, metroPoller, database, cfg)
+	pollOnce(ctx, rodaliesPoller, metroPoller, schedulePoller, database, cfg)
 
 	// Real-time polling goroutine
 	go func() {
@@ -82,7 +90,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				pollOnce(ctx, rodaliesPoller, metroPoller, database, cfg)
+				pollOnce(ctx, rodaliesPoller, metroPoller, schedulePoller, database, cfg)
 			case <-ctx.Done():
 				log.Println("Polling loop stopped")
 				return
@@ -100,7 +108,7 @@ func main() {
 			select {
 			case <-ticker.C:
 				log.Println("Running daily static data freshness check...")
-				if err := static.RefreshIfStale(cfg); err != nil {
+				if err := static.RefreshIfStale(cfg, database); err != nil {
 					log.Printf("Weekly refresh failed: %v", err)
 				}
 			case <-ctx.Done():
@@ -127,7 +135,7 @@ func main() {
 	log.Println("Goodbye!")
 }
 
-func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller *metro.Poller, database *db.DB, cfg *config.Config) {
+func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller *metro.Poller, schedulePoller *schedule.Poller, database *db.DB, cfg *config.Config) {
 	// Poll Rodalies
 	if err := rodaliesPoller.Poll(ctx); err != nil {
 		log.Printf("Rodalies poll error: %v", err)
@@ -136,6 +144,13 @@ func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller 
 	// Poll Metro
 	if err := metroPoller.Poll(ctx); err != nil {
 		log.Printf("Metro poll error: %v", err)
+	}
+
+	// Poll Schedule-based (TRAM, FGC, Bus)
+	if schedulePoller != nil {
+		if err := schedulePoller.Poll(ctx); err != nil {
+			log.Printf("Schedule poll error: %v", err)
+		}
 	}
 
 	// Async cleanup - don't block polling, skip if already running

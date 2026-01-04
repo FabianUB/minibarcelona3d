@@ -70,6 +70,11 @@ export function TransitVehicleLayer3D({
   // Store current positions for lookup on click
   const positionsRef = useRef<VehiclePosition[]>([]);
 
+  // Hover state (using ref for performance - no re-renders on hover)
+  const hoveredVehicleRef = useRef<string | null>(null);
+  const lastMouseMoveTime = useRef<number>(0);
+  const MOUSE_MOVE_THROTTLE_MS = 100; // Throttle to max 10 FPS
+
   // Layer ID based on network type
   const layerId = `transit-${networkType}-layer-3d`;
 
@@ -200,17 +205,25 @@ export function TransitVehicleLayer3D({
         scene.add(fillLight);
 
         // Initialize mesh manager
-        // Vehicle sizes: Metro 25m, FGC 20m (similar to metro but smaller), TRAM 15m, Bus 12m
+        // Vehicle sizes: Metro 25m, FGC 20m (similar to metro but smaller), TRAM 30m, Bus 12m
         const vehicleSizes: Record<TransportType, number> = {
           metro: 25,
           fgc: 20,
-          tram: 15,
+          tram: 30,
           bus: 12,
           rodalies: 25, // Not used here but needed for type completeness
         };
+        // Model types for each network
+        const modelTypes: Record<TransportType, 'metro' | 'bus' | 'tram' | 'civia'> = {
+          metro: 'metro',
+          fgc: 'metro', // FGC uses metro model (similar trains)
+          tram: 'tram',
+          bus: 'bus',
+          rodalies: 'civia', // Not used here
+        };
         const meshManager = new TransitMeshManager(scene, {
           vehicleSizeMeters: vehicleSizes[networkType] ?? 15,
-          modelType: 'civia', // Use Civia as placeholder for all
+          modelType: modelTypes[networkType] ?? 'metro',
         });
         meshManagerRef.current = meshManager;
 
@@ -332,6 +345,25 @@ export function TransitVehicleLayer3D({
   }, [positions, sceneReady, modelLoaded, isDataReady, map, networkType]);
 
   /**
+   * Clean up hover state when hovered vehicle is no longer present
+   */
+  useEffect(() => {
+    const meshManager = meshManagerRef.current;
+    if (!meshManager) {
+      return;
+    }
+    const hoveredKey = hoveredVehicleRef.current;
+    if (!hoveredKey) {
+      return;
+    }
+    const stillPresent = positions.some((v) => v.vehicleKey === hoveredKey);
+    if (!stillPresent) {
+      hoveredVehicleRef.current = null;
+      meshManager.setHighlightedVehicle(undefined);
+    }
+  }, [positions]);
+
+  /**
    * Handle visibility changes
    */
   useEffect(() => {
@@ -395,6 +427,71 @@ export function TransitVehicleLayer3D({
   );
 
   /**
+   * Handle hover on vehicle (show outline + scale up)
+   */
+  const handlePointerMove = useCallback(
+    (event: MouseEvent) => {
+      if (!visible) return;
+
+      // Throttle mousemove to reduce performance impact
+      const now = Date.now();
+      if (now - lastMouseMoveTime.current < MOUSE_MOVE_THROTTLE_MS) {
+        return;
+      }
+      lastMouseMoveTime.current = now;
+
+      const canvas = map.getCanvas();
+      const rect = canvas.getBoundingClientRect();
+      const point = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+
+      const hit = resolveScreenHit(point, 4);
+      const vehicleKey = hit?.vehicleKey ?? null;
+
+      if (hoveredVehicleRef.current !== vehicleKey) {
+        // Hide outline from previous hovered vehicle
+        if (hoveredVehicleRef.current) {
+          meshManagerRef.current?.hideOutline(hoveredVehicleRef.current);
+        }
+
+        hoveredVehicleRef.current = vehicleKey;
+        meshManagerRef.current?.setHighlightedVehicle(vehicleKey ?? undefined);
+
+        // Show outline for newly hovered vehicle
+        if (vehicleKey) {
+          meshManagerRef.current?.showOutline(vehicleKey);
+        }
+
+        // Update cursor
+        canvas.style.cursor = vehicleKey ? 'pointer' : '';
+
+        // Trigger repaint to show outline
+        map.triggerRepaint();
+      }
+    },
+    [map, visible, resolveScreenHit]
+  );
+
+  /**
+   * Handle pointer leaving canvas (clear hover state)
+   */
+  const handlePointerLeave = useCallback(() => {
+    // Hide outline when leaving canvas
+    if (hoveredVehicleRef.current) {
+      meshManagerRef.current?.hideOutline(hoveredVehicleRef.current);
+    }
+
+    hoveredVehicleRef.current = null;
+    meshManagerRef.current?.setHighlightedVehicle(undefined);
+
+    // Reset cursor
+    map.getCanvas().style.cursor = '';
+    map.triggerRepaint();
+  }, [map]);
+
+  /**
    * Handle click on vehicle
    */
   const handlePointerClick = useCallback(
@@ -428,18 +525,22 @@ export function TransitVehicleLayer3D({
   );
 
   /**
-   * Attach click event listener
+   * Attach pointer event listeners
    */
   useEffect(() => {
     if (!map || !sceneReady) return;
 
     const canvas = map.getCanvas();
+    canvas.addEventListener('mousemove', handlePointerMove);
+    canvas.addEventListener('mouseleave', handlePointerLeave);
     canvas.addEventListener('click', handlePointerClick);
 
     return () => {
+      canvas.removeEventListener('mousemove', handlePointerMove);
+      canvas.removeEventListener('mouseleave', handlePointerLeave);
       canvas.removeEventListener('click', handlePointerClick);
     };
-  }, [map, sceneReady, handlePointerClick]);
+  }, [map, sceneReady, handlePointerMove, handlePointerLeave, handlePointerClick]);
 
   // This component renders nothing - all rendering is done via Mapbox custom layer
   return null;
