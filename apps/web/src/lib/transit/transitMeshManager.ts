@@ -240,9 +240,10 @@ export class TransitMeshManager {
   }
 
   /**
-   * Lerp animation duration in ms (how long to animate between position updates)
+   * Lerp animation duration in ms (matches 30s polling interval)
+   * Vehicles animate smoothly over the entire interval between position updates
    */
-  private static readonly LERP_DURATION_MS = 2000;
+  private static readonly LERP_DURATION_MS = 30000;
 
   /**
    * Determine which animation mode to use based on available data
