@@ -299,3 +299,361 @@ func (db *DB) GetRodaliesVehicleStopStates(ctx context.Context) (map[string]Vehi
 
 	return states, rows.Err()
 }
+
+// AdjacentStops contains the previous and next stop IDs for a given stop in a trip
+type AdjacentStops struct {
+	PreviousStopID *string
+	NextStopID     *string
+	StopSequence   int
+}
+
+// GetAdjacentStops looks up the previous and next stops for a given trip and stop
+// from the GTFS dimension tables
+func (db *DB) GetAdjacentStops(ctx context.Context, tripID, stopID string) (*AdjacentStops, error) {
+	// First, get the stop_sequence for the given stop
+	var stopSeq int
+	err := db.conn.QueryRowContext(ctx, `
+		SELECT stop_sequence FROM dim_stop_times
+		WHERE trip_id = ? AND stop_id = ?
+	`, tripID, stopID).Scan(&stopSeq)
+	if err != nil {
+		return nil, err // Returns sql.ErrNoRows if not found
+	}
+
+	result := &AdjacentStops{StopSequence: stopSeq}
+
+	// Get previous stop (stop_sequence - 1)
+	var prevStopID string
+	err = db.conn.QueryRowContext(ctx, `
+		SELECT stop_id FROM dim_stop_times
+		WHERE trip_id = ? AND stop_sequence = ?
+	`, tripID, stopSeq-1).Scan(&prevStopID)
+	if err == nil {
+		result.PreviousStopID = &prevStopID
+	}
+
+	// Get next stop (stop_sequence + 1)
+	var nextStopID string
+	err = db.conn.QueryRowContext(ctx, `
+		SELECT stop_id FROM dim_stop_times
+		WHERE trip_id = ? AND stop_sequence = ?
+	`, tripID, stopSeq+1).Scan(&nextStopID)
+	if err == nil {
+		result.NextStopID = &nextStopID
+	}
+
+	return result, nil
+}
+
+// GTFSStop represents a stop for dimension table insertion
+type GTFSStop struct {
+	StopID   string
+	StopCode string
+	StopName string
+	StopLat  float64
+	StopLon  float64
+}
+
+// GTFSTrip represents a trip for dimension table insertion
+type GTFSTrip struct {
+	TripID       string
+	RouteID      string
+	ServiceID    string
+	TripHeadsign string
+	DirectionID  int
+}
+
+// GTFSStopTime represents a stop time for dimension table insertion
+type GTFSStopTime struct {
+	TripID           string
+	StopID           string
+	StopSequence     int
+	ArrivalSeconds   int
+	DepartureSeconds int
+}
+
+// UpsertGTFSDimensionData populates GTFS dimension tables
+func (db *DB) UpsertGTFSDimensionData(ctx context.Context, network string, stops []GTFSStop, trips []GTFSTrip, stopTimes []GTFSStopTime) error {
+	tx, err := db.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Clear existing data for this network
+	if _, err := tx.ExecContext(ctx, "DELETE FROM dim_stop_times WHERE network = ?", network); err != nil {
+		return fmt.Errorf("failed to clear stop_times: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM dim_trips WHERE network = ?", network); err != nil {
+		return fmt.Errorf("failed to clear trips: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM dim_stops WHERE network = ?", network); err != nil {
+		return fmt.Errorf("failed to clear stops: %w", err)
+	}
+
+	// Insert stops
+	stopStmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO dim_stops (stop_id, network, stop_code, stop_name, stop_lat, stop_lon)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare stops statement: %w", err)
+	}
+	defer stopStmt.Close()
+
+	for _, s := range stops {
+		if _, err := stopStmt.ExecContext(ctx, s.StopID, network, s.StopCode, s.StopName, s.StopLat, s.StopLon); err != nil {
+			return fmt.Errorf("failed to insert stop %s: %w", s.StopID, err)
+		}
+	}
+
+	// Insert trips
+	tripStmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO dim_trips (trip_id, network, route_id, service_id, trip_headsign, direction_id)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare trips statement: %w", err)
+	}
+	defer tripStmt.Close()
+
+	for _, t := range trips {
+		if _, err := tripStmt.ExecContext(ctx, t.TripID, network, t.RouteID, t.ServiceID, t.TripHeadsign, t.DirectionID); err != nil {
+			return fmt.Errorf("failed to insert trip %s: %w", t.TripID, err)
+		}
+	}
+
+	// Insert stop times
+	stStmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO dim_stop_times (network, trip_id, stop_id, stop_sequence, arrival_seconds, departure_seconds)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare stop_times statement: %w", err)
+	}
+	defer stStmt.Close()
+
+	for _, st := range stopTimes {
+		if _, err := stStmt.ExecContext(ctx, network, st.TripID, st.StopID, st.StopSequence, st.ArrivalSeconds, st.DepartureSeconds); err != nil {
+			return fmt.Errorf("failed to insert stop_time for trip %s: %w", st.TripID, err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+// GTFSRoute represents a route for dimension table insertion
+type GTFSRoute struct {
+	RouteID        string
+	RouteShortName string
+	RouteLongName  string
+	RouteType      int
+	RouteColor     string
+	RouteTextColor string
+}
+
+// GTFSCalendar represents a service calendar for dimension table insertion
+type GTFSCalendar struct {
+	ServiceID string
+	Monday    bool
+	Tuesday   bool
+	Wednesday bool
+	Thursday  bool
+	Friday    bool
+	Saturday  bool
+	Sunday    bool
+	StartDate string
+	EndDate   string
+}
+
+// GTFSCalendarDate represents a service exception for dimension table insertion
+type GTFSCalendarDate struct {
+	ServiceID     string
+	Date          string
+	ExceptionType int
+}
+
+// UpsertGTFSRouteData populates the routes dimension table
+func (db *DB) UpsertGTFSRouteData(ctx context.Context, network string, routes []GTFSRoute) error {
+	tx, err := db.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Clear existing data for this network
+	if _, err := tx.ExecContext(ctx, "DELETE FROM dim_routes WHERE network = ?", network); err != nil {
+		return fmt.Errorf("failed to clear routes: %w", err)
+	}
+
+	// Insert routes
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO dim_routes (route_id, network, route_short_name, route_long_name, route_type, route_color, route_text_color)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare routes statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, r := range routes {
+		if _, err := stmt.ExecContext(ctx, r.RouteID, network, r.RouteShortName, r.RouteLongName, r.RouteType, r.RouteColor, r.RouteTextColor); err != nil {
+			return fmt.Errorf("failed to insert route %s: %w", r.RouteID, err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+// UpsertGTFSCalendarData populates the calendar dimension tables
+func (db *DB) UpsertGTFSCalendarData(ctx context.Context, network string, calendars []GTFSCalendar, calendarDates []GTFSCalendarDate) error {
+	tx, err := db.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Clear existing data for this network
+	if _, err := tx.ExecContext(ctx, "DELETE FROM dim_calendar_dates WHERE network = ?", network); err != nil {
+		return fmt.Errorf("failed to clear calendar_dates: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM dim_calendar WHERE network = ?", network); err != nil {
+		return fmt.Errorf("failed to clear calendar: %w", err)
+	}
+
+	// Insert calendars
+	calStmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO dim_calendar (service_id, network, monday, tuesday, wednesday, thursday, friday, saturday, sunday, start_date, end_date)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare calendar statement: %w", err)
+	}
+	defer calStmt.Close()
+
+	for _, c := range calendars {
+		if _, err := calStmt.ExecContext(ctx, c.ServiceID, network,
+			boolToInt(c.Monday), boolToInt(c.Tuesday), boolToInt(c.Wednesday),
+			boolToInt(c.Thursday), boolToInt(c.Friday), boolToInt(c.Saturday), boolToInt(c.Sunday),
+			c.StartDate, c.EndDate); err != nil {
+			return fmt.Errorf("failed to insert calendar %s: %w", c.ServiceID, err)
+		}
+	}
+
+	// Insert calendar dates
+	cdStmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO dim_calendar_dates (network, service_id, date, exception_type)
+		VALUES (?, ?, ?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare calendar_dates statement: %w", err)
+	}
+	defer cdStmt.Close()
+
+	for _, cd := range calendarDates {
+		if _, err := cdStmt.ExecContext(ctx, network, cd.ServiceID, cd.Date, cd.ExceptionType); err != nil {
+			return fmt.Errorf("failed to insert calendar_date %s/%s: %w", cd.ServiceID, cd.Date, err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// SchedulePosition represents a schedule-estimated position for database insertion
+type SchedulePosition struct {
+	VehicleKey         string
+	NetworkType        string
+	RouteID            string
+	RouteShortName     string
+	RouteColor         string
+	TripID             string
+	DirectionID        int
+	Latitude           float64
+	Longitude          float64
+	Bearing            *float64
+	PreviousStopID     *string
+	NextStopID         *string
+	PreviousStopName   *string
+	NextStopName       *string
+	Status             string
+	ProgressFraction   float64
+	ScheduledArrival   *string
+	ScheduledDeparture *string
+	Source             string
+	Confidence         string
+	EstimatedAt        time.Time
+}
+
+// UpsertSchedulePositions inserts or updates schedule-estimated positions
+func (db *DB) UpsertSchedulePositions(ctx context.Context, snapshotID string, polledAt time.Time, positions []SchedulePosition) error {
+	tx, err := db.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	polledAtStr := polledAt.UTC().Format(time.RFC3339)
+
+	// Prepare upsert statement
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO rt_schedule_vehicle_current (
+			vehicle_key, snapshot_id, network_type, route_id, route_short_name,
+			route_color, trip_id, direction_id, latitude, longitude,
+			bearing, previous_stop_id, next_stop_id, previous_stop_name, next_stop_name,
+			status, progress_fraction, scheduled_arrival, scheduled_departure,
+			source, confidence, estimated_at_utc, polled_at_utc, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+		ON CONFLICT (vehicle_key) DO UPDATE SET
+			snapshot_id = excluded.snapshot_id,
+			network_type = excluded.network_type,
+			route_id = excluded.route_id,
+			route_short_name = excluded.route_short_name,
+			route_color = excluded.route_color,
+			trip_id = excluded.trip_id,
+			direction_id = excluded.direction_id,
+			latitude = excluded.latitude,
+			longitude = excluded.longitude,
+			bearing = excluded.bearing,
+			previous_stop_id = excluded.previous_stop_id,
+			next_stop_id = excluded.next_stop_id,
+			previous_stop_name = excluded.previous_stop_name,
+			next_stop_name = excluded.next_stop_name,
+			status = excluded.status,
+			progress_fraction = excluded.progress_fraction,
+			scheduled_arrival = excluded.scheduled_arrival,
+			scheduled_departure = excluded.scheduled_departure,
+			source = excluded.source,
+			confidence = excluded.confidence,
+			estimated_at_utc = excluded.estimated_at_utc,
+			polled_at_utc = excluded.polled_at_utc,
+			updated_at = datetime('now')
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, p := range positions {
+		estimatedAtStr := p.EstimatedAt.UTC().Format(time.RFC3339)
+
+		_, err := stmt.ExecContext(ctx,
+			p.VehicleKey, snapshotID, p.NetworkType, p.RouteID, p.RouteShortName,
+			p.RouteColor, p.TripID, p.DirectionID, p.Latitude, p.Longitude,
+			p.Bearing, p.PreviousStopID, p.NextStopID, p.PreviousStopName, p.NextStopName,
+			p.Status, p.ProgressFraction, p.ScheduledArrival, p.ScheduledDeparture,
+			p.Source, p.Confidence, estimatedAtStr, polledAtStr,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to upsert schedule position %s: %w", p.VehicleKey, err)
+		}
+	}
+
+	return tx.Commit()
+}

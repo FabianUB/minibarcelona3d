@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -498,11 +499,104 @@ func (r *SQLiteTrainRepository) fetchPositionsForSnapshot(
 	return positions, nil
 }
 
-// GetTripDetails returns trip details with stop times
+// GetTripDetails returns trip details with stop times from GTFS dimension tables
 func (r *SQLiteTrainRepository) GetTripDetails(ctx context.Context, tripID string) (*models.TripDetails, error) {
-	// Since we're using SQLite without the full GTFS dimension tables for now,
-	// return an error indicating trip details aren't available
-	return nil, errors.New("trip details not available with SQLite backend")
+	if tripID == "" {
+		return nil, errors.New("trip_id cannot be empty")
+	}
+
+	// First, get the trip info from dim_trips
+	tripQuery := `
+		SELECT trip_id, route_id
+		FROM dim_trips
+		WHERE trip_id = ?
+	`
+
+	var details models.TripDetails
+	err := r.db.QueryRowContext(ctx, tripQuery, tripID).Scan(
+		&details.TripID,
+		&details.RouteID,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("trip not found: %s", tripID)
+		}
+		return nil, fmt.Errorf("failed to query trip: %w", err)
+	}
+
+	// Now get all stop times for this trip, joined with stop info
+	stopTimesQuery := `
+		SELECT
+			st.stop_id,
+			st.stop_sequence,
+			s.stop_name,
+			st.arrival_seconds,
+			st.departure_seconds
+		FROM dim_stop_times st
+		LEFT JOIN dim_stops s ON st.stop_id = s.stop_id AND st.network = s.network
+		WHERE st.trip_id = ?
+		ORDER BY st.stop_sequence
+	`
+
+	rows, err := r.db.QueryContext(ctx, stopTimesQuery, tripID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query stop times: %w", err)
+	}
+	defer rows.Close()
+
+	var stopTimes []models.StopTime
+	for rows.Next() {
+		var st models.StopTime
+		var arrivalSeconds, departureSeconds sql.NullInt64
+		var stopName sql.NullString
+
+		err := rows.Scan(
+			&st.StopID,
+			&st.StopSequence,
+			&stopName,
+			&arrivalSeconds,
+			&departureSeconds,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan stop time row: %w", err)
+		}
+
+		if stopName.Valid {
+			st.StopName = &stopName.String
+		}
+
+		// Convert seconds since midnight to HH:MM:SS format
+		if arrivalSeconds.Valid {
+			timeStr := secondsToTimeString(int(arrivalSeconds.Int64))
+			st.ScheduledArrival = &timeStr
+		}
+		if departureSeconds.Valid {
+			timeStr := secondsToTimeString(int(departureSeconds.Int64))
+			st.ScheduledDeparture = &timeStr
+		}
+
+		stopTimes = append(stopTimes, st)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating stop time rows: %w", err)
+	}
+
+	details.StopTimes = stopTimes
+
+	// Set UpdatedAt to current time (static GTFS data doesn't have an update timestamp)
+	now := time.Now()
+	details.UpdatedAt = &now
+
+	return &details, nil
+}
+
+// secondsToTimeString converts seconds since midnight to HH:MM:SS format
+func secondsToTimeString(seconds int) string {
+	hours := seconds / 3600
+	minutes := (seconds % 3600) / 60
+	secs := seconds % 60
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, secs)
 }
 
 // SQLiteMetroRepository handles database operations for Metro using SQLite
@@ -865,4 +959,183 @@ func (r *SQLiteMetroRepository) scanMetroPositions(rows *sql.Rows) ([]models.Met
 	}
 
 	return positions, nil
+}
+
+// SQLiteScheduleRepository handles database operations for schedule-estimated positions
+type SQLiteScheduleRepository struct {
+	db *sql.DB
+}
+
+// NewSQLiteScheduleRepository creates a new SQLiteScheduleRepository
+func NewSQLiteScheduleRepository(db *sql.DB) *SQLiteScheduleRepository {
+	return &SQLiteScheduleRepository{db: db}
+}
+
+// Barcelona timezone for schedule lookups
+var barcelonaTZ *time.Location
+
+func init() {
+	var err error
+	barcelonaTZ, err = time.LoadLocation("Europe/Madrid")
+	if err != nil {
+		// Fallback to UTC+1 if timezone data not available
+		barcelonaTZ = time.FixedZone("CET", 3600)
+	}
+}
+
+// preCalcPosition represents a position from the pre-calculated JSON
+type preCalcPosition struct {
+	VehicleKey       string   `json:"vehicleKey"`
+	RouteID          string   `json:"routeId"`
+	RouteShortName   string   `json:"routeShortName"`
+	RouteColor       string   `json:"routeColor"`
+	TripID           string   `json:"tripId"`
+	DirectionID      int      `json:"direction"`
+	Latitude         float64  `json:"latitude"`
+	Longitude        float64  `json:"longitude"`
+	Bearing          *float64 `json:"bearing,omitempty"`
+	PrevStopID       string   `json:"prevStopId,omitempty"`
+	NextStopID       string   `json:"nextStopId,omitempty"`
+	PrevStopName     string   `json:"prevStopName,omitempty"`
+	NextStopName     string   `json:"nextStopName,omitempty"`
+	ProgressFraction float64  `json:"progressFraction"`
+	ScheduledArrival string   `json:"scheduledArrival,omitempty"`
+}
+
+// GetAllSchedulePositions returns all current schedule-estimated positions from pre-calculated data
+func (r *SQLiteScheduleRepository) GetAllSchedulePositions(ctx context.Context) ([]models.SchedulePosition, time.Time, error) {
+	return r.GetSchedulePositionsByNetwork(ctx, "")
+}
+
+// getDayType returns the day type for a given weekday
+func getDayType(weekday time.Weekday) string {
+	switch weekday {
+	case time.Sunday:
+		return "sunday"
+	case time.Monday, time.Tuesday, time.Wednesday, time.Thursday:
+		return "weekday"
+	case time.Friday:
+		return "friday"
+	case time.Saturday:
+		return "saturday"
+	default:
+		return "weekday"
+	}
+}
+
+// GetSchedulePositionsByNetwork returns schedule-estimated positions filtered by network type
+// Reads from pre_schedule_positions table using current Barcelona time and day type
+func (r *SQLiteScheduleRepository) GetSchedulePositionsByNetwork(ctx context.Context, networkType string) ([]models.SchedulePosition, time.Time, error) {
+	// Get current time in Barcelona timezone
+	now := time.Now().In(barcelonaTZ)
+	dayType := getDayType(now.Weekday())
+	secondsSinceMidnight := now.Hour()*3600 + now.Minute()*60 + now.Second()
+	timeSlot := secondsSinceMidnight / 30 // 30-second intervals
+
+	// Build query based on network filter
+	var query string
+	var args []interface{}
+
+	if networkType != "" {
+		// Map display network type to database network values
+		networks := []string{networkType}
+		if networkType == "tram" {
+			networks = []string{"tram_tbs", "tram_tbx"}
+		}
+
+		placeholders := "?"
+		args = []interface{}{dayType, timeSlot, networks[0]}
+		for i := 1; i < len(networks); i++ {
+			placeholders += ", ?"
+			args = append(args, networks[i])
+		}
+
+		query = fmt.Sprintf(`
+			SELECT network, positions_json
+			FROM pre_schedule_positions
+			WHERE day_type = ? AND time_slot = ? AND network IN (%s)
+		`, placeholders)
+	} else {
+		query = `
+			SELECT network, positions_json
+			FROM pre_schedule_positions
+			WHERE day_type = ? AND time_slot = ?
+		`
+		args = []interface{}{dayType, timeSlot}
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, time.Time{}, fmt.Errorf("failed to query pre-calculated positions: %w", err)
+	}
+	defer rows.Close()
+
+	var allPositions []models.SchedulePosition
+
+	for rows.Next() {
+		var network, positionsJSON string
+		if err := rows.Scan(&network, &positionsJSON); err != nil {
+			return nil, time.Time{}, fmt.Errorf("failed to scan pre-calc row: %w", err)
+		}
+
+		// Parse JSON positions
+		var preCalcPositions []preCalcPosition
+		if err := json.Unmarshal([]byte(positionsJSON), &preCalcPositions); err != nil {
+			return nil, time.Time{}, fmt.Errorf("failed to parse positions JSON: %w", err)
+		}
+
+		// Convert to model positions
+		displayNetwork := network
+		if network == "tram_tbs" || network == "tram_tbx" {
+			displayNetwork = "tram"
+		}
+
+		for _, p := range preCalcPositions {
+			pos := models.SchedulePosition{
+				VehicleKey:     p.VehicleKey,
+				NetworkType:    displayNetwork,
+				RouteID:        p.RouteID,
+				RouteShortName: p.RouteShortName,
+				RouteColor:     p.RouteColor,
+				TripID:         p.TripID,
+				DirectionID:    p.DirectionID,
+				Latitude:       p.Latitude,
+				Longitude:      p.Longitude,
+				Bearing:        p.Bearing,
+				Status:         "IN_TRANSIT_TO",
+				Source:         "schedule",
+				Confidence:     "low",
+				EstimatedAtUTC: now.UTC(),
+				PolledAtUTC:    now.UTC(),
+			}
+
+			if p.PrevStopID != "" {
+				pos.PreviousStopID = &p.PrevStopID
+			}
+			if p.NextStopID != "" {
+				pos.NextStopID = &p.NextStopID
+			}
+			if p.PrevStopName != "" {
+				pos.PreviousStopName = &p.PrevStopName
+			}
+			if p.NextStopName != "" {
+				pos.NextStopName = &p.NextStopName
+			}
+			if p.ProgressFraction > 0 {
+				pf := p.ProgressFraction
+				pos.ProgressFraction = &pf
+			}
+			if p.ScheduledArrival != "" {
+				pos.ScheduledArrival = &p.ScheduledArrival
+			}
+
+			allPositions = append(allPositions, pos)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, time.Time{}, fmt.Errorf("error iterating pre-calc rows: %w", err)
+	}
+
+	return allPositions, now.UTC(), nil
 }

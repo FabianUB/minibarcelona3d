@@ -47,6 +47,10 @@ func main() {
 	metroRepo := repository.NewSQLiteMetroRepository(sqliteDB.GetDB())
 	metroHandler := handlers.NewMetroHandler(metroRepo)
 
+	// Create Schedule repository and handler (for TRAM, FGC, Bus)
+	scheduleRepo := repository.NewSQLiteScheduleRepository(sqliteDB.GetDB())
+	scheduleHandler := handlers.NewScheduleHandler(scheduleRepo)
+
 	// Setup router
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -106,6 +110,9 @@ func main() {
 	r.Get("/api/metro/positions", metroHandler.GetAllMetroPositions)
 	r.Get("/api/metro/lines/{lineCode}", metroHandler.GetMetroByLine)
 
+	// Schedule-based transit API routes (TRAM, FGC, Bus)
+	r.Get("/api/transit/schedule", scheduleHandler.GetAllSchedulePositions)
+
 	// Static file serving (if configured)
 	staticDir := os.Getenv("STATIC_DIR")
 	if staticDir != "" {
@@ -128,6 +135,8 @@ func main() {
 	log.Println("Metro endpoints:")
 	log.Println("  GET /api/metro/positions")
 	log.Println("  GET /api/metro/lines/{lineCode}")
+	log.Println("Schedule-based endpoints (TRAM, FGC, Bus):")
+	log.Println("  GET /api/transit/schedule")
 	log.Println("Health:")
 	log.Println("  GET /health (with database check)")
 

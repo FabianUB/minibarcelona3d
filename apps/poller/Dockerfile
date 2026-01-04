@@ -13,29 +13,34 @@ RUN go mod download
 # Copy source code
 COPY . .
 
-# Build with CGO enabled for SQLite
+# Build all binaries with CGO enabled for SQLite
 RUN CGO_ENABLED=1 GOOS=linux go build -o poller ./cmd/poller
+RUN CGO_ENABLED=1 GOOS=linux go build -o import-gtfs ./cmd/import-gtfs
+RUN CGO_ENABLED=1 GOOS=linux go build -o precalc-positions ./cmd/precalc-positions
 
 # Runtime stage
 FROM alpine:3.19
 
-# Install runtime dependencies
-RUN apk add --no-cache sqlite ca-certificates tzdata
+# Install runtime dependencies (wget for downloading GTFS)
+RUN apk add --no-cache sqlite ca-certificates tzdata wget
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binaries from builder
 COPY --from=builder /app/poller .
+COPY --from=builder /app/import-gtfs .
+COPY --from=builder /app/precalc-positions .
 
-# Copy schema file for reference (DB init handled separately)
+# Copy schema file and scripts
 COPY schema.sql /app/
+COPY scripts/init-db.sh /app/
 
 # Create data directory
-RUN mkdir -p /data /data/cache
+RUN mkdir -p /data /data/gtfs
 
 # Run as non-root user
 RUN adduser -D -H appuser
-RUN chown -R appuser:appuser /data
+RUN chown -R appuser:appuser /data /app
 USER appuser
 
 CMD ["./poller"]
