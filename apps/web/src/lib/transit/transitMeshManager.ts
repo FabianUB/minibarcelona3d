@@ -372,9 +372,13 @@ export class TransitMeshManager {
     // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
-    // Apply line color to the model
+    // Parse line color (used for outlines and stored in mesh data)
     const lineColor = new THREE.Color(vehicle.lineColor);
-    this.applyLineColor(trainModel, lineColor);
+
+    // Apply line color to the model (skip for metro - uses original model appearance)
+    if (vehicle.networkType !== 'metro') {
+      this.applyLineColor(trainModel, lineColor);
+    }
 
     // Add to scene
     this.scene.add(mesh);
@@ -436,6 +440,7 @@ export class TransitMeshManager {
 
   /**
    * Apply line color to the train model materials
+   * Only applies to bus/tram/fgc - metro keeps its original appearance
    */
   private applyLineColor(model: THREE.Object3D, color: THREE.Color): void {
     model.traverse((child) => {
