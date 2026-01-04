@@ -32,6 +32,7 @@ type Position struct {
 	VehicleKey       string   `json:"vehicleKey"`
 	RouteID          string   `json:"routeId"`
 	RouteShortName   string   `json:"routeShortName"`
+	RouteLongName    string   `json:"routeLongName,omitempty"`
 	RouteColor       string   `json:"routeColor"`
 	TripID           string   `json:"tripId"`
 	DirectionID      int      `json:"direction"`
@@ -69,6 +70,7 @@ type StopTime struct {
 // RouteInfo contains route metadata
 type RouteInfo struct {
 	RouteShortName string
+	RouteLongName  string
 	RouteColor     string
 }
 
@@ -215,7 +217,7 @@ func findRepresentativeDates(ctx context.Context, database *db.DB, network strin
 }
 
 func loadRouteInfo(ctx context.Context, database *db.DB) (map[string]RouteInfo, error) {
-	query := `SELECT route_id, route_short_name, COALESCE(route_color, '') FROM dim_routes`
+	query := `SELECT route_id, route_short_name, COALESCE(route_long_name, ''), COALESCE(route_color, '') FROM dim_routes`
 
 	rows, err := database.Conn().QueryContext(ctx, query)
 	if err != nil {
@@ -225,11 +227,11 @@ func loadRouteInfo(ctx context.Context, database *db.DB) (map[string]RouteInfo, 
 
 	routes := make(map[string]RouteInfo)
 	for rows.Next() {
-		var routeID, shortName, color string
-		if err := rows.Scan(&routeID, &shortName, &color); err != nil {
+		var routeID, shortName, longName, color string
+		if err := rows.Scan(&routeID, &shortName, &longName, &color); err != nil {
 			return nil, err
 		}
-		routes[routeID] = RouteInfo{RouteShortName: shortName, RouteColor: color}
+		routes[routeID] = RouteInfo{RouteShortName: shortName, RouteLongName: longName, RouteColor: color}
 	}
 
 	return routes, rows.Err()
@@ -464,6 +466,7 @@ func calculatePositionAtTime(trip TripInfo, stopTimes []StopTime, currentSeconds
 		VehicleKey:       fmt.Sprintf("%s-%s", displayNetwork, trip.TripID),
 		RouteID:          trip.RouteID,
 		RouteShortName:   route.RouteShortName,
+		RouteLongName:    route.RouteLongName,
 		RouteColor:       route.RouteColor,
 		TripID:           trip.TripID,
 		DirectionID:      trip.DirectionID,
