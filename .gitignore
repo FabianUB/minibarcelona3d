@@ -24,6 +24,14 @@ tmp/
 *.log
 coverage.out
 
+# Go compiled binaries
+apps/api/api-server
+apps/poller/calculate-positions
+apps/poller/export-schedules
+apps/poller/import-gtfs
+apps/poller/precalc-positions
+apps/poller/poller
+
 # Go build cache
 **/go.sum~        # backup files
 **/.DS_Store
