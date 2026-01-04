@@ -2,12 +2,14 @@ package gtfs
 
 // Data represents all parsed GTFS data
 type Data struct {
-	Routes   []Route
-	Stops    []Stop
-	Trips    []Trip
-	Shapes   map[string][]ShapePoint // keyed by shape_id
-	StopTimes []StopTime
-	Agency   []Agency
+	Routes        []Route
+	Stops         []Stop
+	Trips         []Trip
+	Shapes        map[string][]ShapePoint // keyed by shape_id
+	StopTimes     []StopTime
+	Agency        []Agency
+	Calendars     []Calendar
+	CalendarDates []CalendarDate
 }
 
 // Route represents a route from routes.txt
@@ -65,4 +67,25 @@ type Agency struct {
 	AgencyID   string
 	AgencyName string
 	AgencyURL  string
+}
+
+// Calendar represents a service pattern from calendar.txt
+type Calendar struct {
+	ServiceID string
+	Monday    bool
+	Tuesday   bool
+	Wednesday bool
+	Thursday  bool
+	Friday    bool
+	Saturday  bool
+	Sunday    bool
+	StartDate string // YYYYMMDD format
+	EndDate   string // YYYYMMDD format
+}
+
+// CalendarDate represents a service exception from calendar_dates.txt
+type CalendarDate struct {
+	ServiceID     string
+	Date          string // YYYYMMDD format
+	ExceptionType int    // 1=service added, 2=service removed
 }

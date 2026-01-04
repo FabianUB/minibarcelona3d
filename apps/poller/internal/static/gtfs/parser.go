@@ -89,8 +89,28 @@ func Parse(zipPath string) (*Data, error) {
 		}
 	}
 
-	log.Printf("GTFS parsed: %d routes, %d stops, %d trips, %d shapes",
-		len(data.Routes), len(data.Stops), len(data.Trips), len(data.Shapes))
+	// Parse calendar.txt
+	if f, ok := files["calendar.txt"]; ok {
+		calendars, err := parseCalendar(f)
+		if err != nil {
+			log.Printf("Warning: failed to parse calendar.txt: %v", err)
+		} else {
+			data.Calendars = calendars
+		}
+	}
+
+	// Parse calendar_dates.txt
+	if f, ok := files["calendar_dates.txt"]; ok {
+		calendarDates, err := parseCalendarDates(f)
+		if err != nil {
+			log.Printf("Warning: failed to parse calendar_dates.txt: %v", err)
+		} else {
+			data.CalendarDates = calendarDates
+		}
+	}
+
+	log.Printf("GTFS parsed: %d routes, %d stops, %d trips, %d shapes, %d calendars, %d calendar_dates",
+		len(data.Routes), len(data.Stops), len(data.Trips), len(data.Shapes), len(data.Calendars), len(data.CalendarDates))
 
 	return data, nil
 }
@@ -341,6 +361,85 @@ func parseAgencies(f *zip.File) ([]Agency, error) {
 	}
 
 	return agencies, nil
+}
+
+func parseCalendar(f *zip.File) ([]Calendar, error) {
+	rc, err := f.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	reader := csv.NewReader(rc)
+	header, err := reader.Read()
+	if err != nil {
+		return nil, err
+	}
+
+	idx := makeIndex(header)
+	var calendars []Calendar
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			continue
+		}
+
+		calendars = append(calendars, Calendar{
+			ServiceID: getField(record, idx, "service_id"),
+			Monday:    getField(record, idx, "monday") == "1",
+			Tuesday:   getField(record, idx, "tuesday") == "1",
+			Wednesday: getField(record, idx, "wednesday") == "1",
+			Thursday:  getField(record, idx, "thursday") == "1",
+			Friday:    getField(record, idx, "friday") == "1",
+			Saturday:  getField(record, idx, "saturday") == "1",
+			Sunday:    getField(record, idx, "sunday") == "1",
+			StartDate: getField(record, idx, "start_date"),
+			EndDate:   getField(record, idx, "end_date"),
+		})
+	}
+
+	return calendars, nil
+}
+
+func parseCalendarDates(f *zip.File) ([]CalendarDate, error) {
+	rc, err := f.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	reader := csv.NewReader(rc)
+	header, err := reader.Read()
+	if err != nil {
+		return nil, err
+	}
+
+	idx := makeIndex(header)
+	var calendarDates []CalendarDate
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			continue
+		}
+
+		exceptionType, _ := strconv.Atoi(getField(record, idx, "exception_type"))
+
+		calendarDates = append(calendarDates, CalendarDate{
+			ServiceID:     getField(record, idx, "service_id"),
+			Date:          getField(record, idx, "date"),
+			ExceptionType: exceptionType,
+		})
+	}
+
+	return calendarDates, nil
 }
 
 func makeIndex(header []string) map[string]int {
