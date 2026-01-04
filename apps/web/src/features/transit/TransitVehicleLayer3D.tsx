@@ -205,11 +205,11 @@ export function TransitVehicleLayer3D({
         scene.add(fillLight);
 
         // Initialize mesh manager
-        // Vehicle sizes: Metro 25m, FGC 20m (similar to metro but smaller), TRAM 30m, Bus 12m
+        // Vehicle sizes in meters (visual scale, not actual vehicle length)
         const vehicleSizes: Record<TransportType, number> = {
-          metro: 25,
-          fgc: 20,
-          tram: 30,
+          metro: 15, // Smaller to reduce overlap on busy lines
+          fgc: 15,
+          tram: 25,
           bus: 12,
           rodalies: 25, // Not used here but needed for type completeness
         };
