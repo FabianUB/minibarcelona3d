@@ -1,7 +1,43 @@
 [
   {
+    "id": "C9",
+    "name": "Cercedilla                              -Cotos",
+    "short_code": "C9",
+    "brand_color": "888888",
+    "default_pattern": "solid-c9",
+    "high_contrast_pattern": "hatched-c9",
+    "order": 0
+  },
+  {
+    "id": "C3",
+    "name": "Marrón                                  -Orejo",
+    "short_code": "C3",
+    "brand_color": "888888",
+    "default_pattern": "solid-c3",
+    "high_contrast_pattern": "hatched-c3",
+    "order": 0
+  },
+  {
+    "id": "C1",
+    "name": "-",
+    "short_code": "C1",
+    "brand_color": "888888",
+    "default_pattern": "solid-c1",
+    "high_contrast_pattern": "hatched-c1",
+    "order": 0
+  },
+  {
+    "id": "C2",
+    "name": "-",
+    "short_code": "C2",
+    "brand_color": "888888",
+    "default_pattern": "solid-c2",
+    "high_contrast_pattern": "hatched-c2",
+    "order": 0
+  },
+  {
     "id": "R1",
-    "name": "Molins de Rei - Maçanet-Massanes",
+    "name": "-",
     "short_code": "R1",
     "brand_color": "7DBCEC",
     "default_pattern": "solid-r1",
@@ -9,8 +45,125 @@
     "order": 0
   },
   {
+    "id": "C4",
+    "name": "-",
+    "short_code": "C4",
+    "brand_color": "888888",
+    "default_pattern": "solid-c4",
+    "high_contrast_pattern": "hatched-c4",
+    "order": 0
+  },
+  {
+    "id": "C4A",
+    "name": "Carranza                                -Bilbao La Concordia",
+    "short_code": "C4A",
+    "brand_color": "888888",
+    "default_pattern": "solid-c4a",
+    "high_contrast_pattern": "hatched-c4a",
+    "order": 0
+  },
+  {
+    "id": "C4B",
+    "name": "Parla                                   -Colmenar Viejo",
+    "short_code": "C4B",
+    "brand_color": "888888",
+    "default_pattern": "solid-c4b",
+    "high_contrast_pattern": "hatched-c4b",
+    "order": 0
+  },
+  {
+    "id": "C5",
+    "name": "-",
+    "short_code": "C5",
+    "brand_color": "888888",
+    "default_pattern": "solid-c5",
+    "high_contrast_pattern": "hatched-c5",
+    "order": 0
+  },
+  {
+    "id": "C6",
+    "name": "Castello de la Plana                    -Valencia Nord",
+    "short_code": "C6",
+    "brand_color": "888888",
+    "default_pattern": "solid-c6",
+    "high_contrast_pattern": "hatched-c6",
+    "order": 0
+  },
+  {
+    "id": "C7",
+    "name": "-",
+    "short_code": "C7",
+    "brand_color": "888888",
+    "default_pattern": "solid-c7",
+    "high_contrast_pattern": "hatched-c7",
+    "order": 0
+  },
+  {
+    "id": "T1",
+    "name": "Ardila                                  -Ntra. Sra. de los Remedios",
+    "short_code": "T1",
+    "brand_color": "888888",
+    "default_pattern": "solid-t1",
+    "high_contrast_pattern": "hatched-t1",
+    "order": 0
+  },
+  {
+    "id": "C8A",
+    "name": "Chamartín - Clara Campoamor             -El Escorial",
+    "short_code": "C8A",
+    "brand_color": "888888",
+    "default_pattern": "solid-c8a",
+    "high_contrast_pattern": "hatched-c8a",
+    "order": 0
+  },
+  {
+    "id": "C8B",
+    "name": "Cercedilla                              -Chamartín - Clara Campoamor",
+    "short_code": "C8B",
+    "brand_color": "888888",
+    "default_pattern": "solid-c8b",
+    "high_contrast_pattern": "hatched-c8b",
+    "order": 0
+  },
+  {
+    "id": "C1A",
+    "name": "Universidad                             -Las Aletas",
+    "short_code": "C1A",
+    "brand_color": "888888",
+    "default_pattern": "solid-c1a",
+    "high_contrast_pattern": "hatched-c1a",
+    "order": 0
+  },
+  {
+    "id": "C10",
+    "name": "Nuevos Ministerios                      -Pinar de las Rozas",
+    "short_code": "C10",
+    "brand_color": "888888",
+    "default_pattern": "solid-c10",
+    "high_contrast_pattern": "hatched-c10",
+    "order": 0
+  },
+  {
+    "id": "C8",
+    "name": "-",
+    "short_code": "C8",
+    "brand_color": "888888",
+    "default_pattern": "solid-c8",
+    "high_contrast_pattern": "hatched-c8",
+    "order": 0
+  },
+  {
+    "id": "RT1",
+    "name": "Tarragona                               -La Plana-Picamoixons",
+    "short_code": "RT1",
+    "brand_color": "888888",
+    "default_pattern": "solid-rt1",
+    "high_contrast_pattern": "hatched-rt1",
+    "order": 0
+  },
+  {
     "id": "R2",
-    "name": "El Prat de Llobregat - Barcelona-Sant Andreu",
+    "name": "Barcelona-Sant Andreu                   -El Prat de Llobregat",
     "short_code": "R2",
     "brand_color": "26A741",
     "default_pattern": "solid-r2",
@@ -19,7 +172,7 @@
   },
   {
     "id": "R2N",
-    "name": "Aeroport - Maçanet-Massanes",
+    "name": "Maçanet-Massanes                        -Aeroport",
     "short_code": "R2N",
     "brand_color": "D0DF00",
     "default_pattern": "solid-r2n",
@@ -28,7 +181,7 @@
   },
   {
     "id": "R2S",
-    "name": "Sant Vicenc de Calders - Barcelona-Estació de França",
+    "name": "Barcelona-Estació de França             -Sant Vicenc de Calders",
     "short_code": "R2S",
     "brand_color": "146520",
     "default_pattern": "solid-r2s",
@@ -37,7 +190,7 @@
   },
   {
     "id": "R3",
-    "name": "Barcelona-Fabra i Puig - Granollers-Canovelles",
+    "name": "Astillero                               -Orejo",
     "short_code": "R3",
     "brand_color": "EB4128",
     "default_pattern": "solid-r3",
@@ -46,7 +199,7 @@
   },
   {
     "id": "R4",
-    "name": "Terrassa Estació del Nord - Castellbisbal",
+    "name": "El Vendrell                             -Sabadell Sud",
     "short_code": "R4",
     "brand_color": "F7A30D",
     "default_pattern": "solid-r4",
@@ -54,17 +207,8 @@
     "order": 6
   },
   {
-    "id": "R7",
-    "name": "Barcelona-Fabra i Puig - Cerdanyola-Universitat",
-    "short_code": "R7",
-    "brand_color": "B57CBB",
-    "default_pattern": "solid-r7",
-    "high_contrast_pattern": "hatched-r7",
-    "order": 7
-  },
-  {
     "id": "R8",
-    "name": "Castellbisbal - Cerdanyola-Universitat",
+    "name": "-",
     "short_code": "R8",
     "brand_color": "88016A",
     "default_pattern": "solid-r8",
@@ -72,44 +216,8 @@
     "order": 8
   },
   {
-    "id": "RG1",
-    "name": "Maçanet-Massanes - Figueres",
-    "short_code": "RG1",
-    "brand_color": "409EF5",
-    "default_pattern": "solid-rg1",
-    "high_contrast_pattern": "hatched-rg1",
-    "order": 9
-  },
-  {
-    "id": "RL3",
-    "name": "Lleida - Cervera",
-    "short_code": "RL3",
-    "brand_color": "B6AE33",
-    "default_pattern": "solid-rl3",
-    "high_contrast_pattern": "hatched-rl3",
-    "order": 10
-  },
-  {
-    "id": "RL4",
-    "name": "Terrassa Estació del Nord - Lleida",
-    "short_code": "RL4",
-    "brand_color": "F7A30D",
-    "default_pattern": "solid-rl4",
-    "high_contrast_pattern": "hatched-rl4",
-    "order": 11
-  },
-  {
-    "id": "RT2",
-    "name": "Salou-Port Aventura - Tarragona",
-    "short_code": "RT2",
-    "brand_color": "F965DE",
-    "default_pattern": "solid-rt2",
-    "high_contrast_pattern": "hatched-rt2",
-    "order": 12
-  },
-  {
     "id": "R11",
-    "name": "Barcelona-Sant Andreu - Girona",
+    "name": "Girona                                  -Barcelona-Sant Andreu",
     "short_code": "R11",
     "brand_color": "0069AA",
     "default_pattern": "solid-r11",
@@ -118,7 +226,7 @@
   },
   {
     "id": "R14",
-    "name": "La Plana-Picamoixons - Tarragona",
+    "name": "Cunit                                   -Lleida",
     "short_code": "R14",
     "brand_color": "6C60A8",
     "default_pattern": "solid-r14",
@@ -127,7 +235,7 @@
   },
   {
     "id": "R15",
-    "name": "Riba-roja d'Ebre - Caspe",
+    "name": "Torredembarra                           -Reus",
     "short_code": "R15",
     "brand_color": "978571",
     "default_pattern": "solid-r15",
@@ -136,7 +244,7 @@
   },
   {
     "id": "R16",
-    "name": "Tortosa - Barcelona-Estació de França",
+    "name": "Torredembarra                           -Tarragona",
     "short_code": "R16",
     "brand_color": "B52B46",
     "default_pattern": "solid-r16",
@@ -145,7 +253,7 @@
   },
   {
     "id": "R17",
-    "name": "Salou-Port Aventura - Barcelona-Estació de França",
+    "name": "Barcelona-Estació de França             -Salou-Port Aventura",
     "short_code": "R17",
     "brand_color": "F3B12E",
     "default_pattern": "solid-r17",

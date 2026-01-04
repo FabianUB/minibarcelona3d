@@ -1,7 +1,43 @@
 [
   {
+    "line_id": "C9",
+    "label": "C9 - Cercedilla                              -Cotos",
+    "theme_tokens": {
+      "standard": "solid-c9",
+      "high_contrast": "hatched-c9"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C3",
+    "label": "C3 - Marrón                                  -Orejo",
+    "theme_tokens": {
+      "standard": "solid-c3",
+      "high_contrast": "hatched-c3"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C1",
+    "label": "C1 - -",
+    "theme_tokens": {
+      "standard": "solid-c1",
+      "high_contrast": "hatched-c1"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C2",
+    "label": "C2 - -",
+    "theme_tokens": {
+      "standard": "solid-c2",
+      "high_contrast": "hatched-c2"
+    },
+    "is_highlighted": false
+  },
+  {
     "line_id": "R1",
-    "label": "R1 - Molins de Rei - Maçanet-Massanes",
+    "label": "R1 - -",
     "theme_tokens": {
       "standard": "solid-r1",
       "high_contrast": "hatched-r1"
@@ -9,8 +45,125 @@
     "is_highlighted": false
   },
   {
+    "line_id": "C4",
+    "label": "C4 - -",
+    "theme_tokens": {
+      "standard": "solid-c4",
+      "high_contrast": "hatched-c4"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C4A",
+    "label": "C4A - Carranza                                -Bilbao La Concordia",
+    "theme_tokens": {
+      "standard": "solid-c4a",
+      "high_contrast": "hatched-c4a"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C4B",
+    "label": "C4B - Parla                                   -Colmenar Viejo",
+    "theme_tokens": {
+      "standard": "solid-c4b",
+      "high_contrast": "hatched-c4b"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C5",
+    "label": "C5 - -",
+    "theme_tokens": {
+      "standard": "solid-c5",
+      "high_contrast": "hatched-c5"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C6",
+    "label": "C6 - Castello de la Plana                    -Valencia Nord",
+    "theme_tokens": {
+      "standard": "solid-c6",
+      "high_contrast": "hatched-c6"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C7",
+    "label": "C7 - -",
+    "theme_tokens": {
+      "standard": "solid-c7",
+      "high_contrast": "hatched-c7"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "T1",
+    "label": "T1 - Ardila                                  -Ntra. Sra. de los Remedios",
+    "theme_tokens": {
+      "standard": "solid-t1",
+      "high_contrast": "hatched-t1"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C8A",
+    "label": "C8A - Chamartín - Clara Campoamor             -El Escorial",
+    "theme_tokens": {
+      "standard": "solid-c8a",
+      "high_contrast": "hatched-c8a"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C8B",
+    "label": "C8B - Cercedilla                              -Chamartín - Clara Campoamor",
+    "theme_tokens": {
+      "standard": "solid-c8b",
+      "high_contrast": "hatched-c8b"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C1A",
+    "label": "C1A - Universidad                             -Las Aletas",
+    "theme_tokens": {
+      "standard": "solid-c1a",
+      "high_contrast": "hatched-c1a"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C10",
+    "label": "C10 - Nuevos Ministerios                      -Pinar de las Rozas",
+    "theme_tokens": {
+      "standard": "solid-c10",
+      "high_contrast": "hatched-c10"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C8",
+    "label": "C8 - -",
+    "theme_tokens": {
+      "standard": "solid-c8",
+      "high_contrast": "hatched-c8"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "RT1",
+    "label": "RT1 - Tarragona                               -La Plana-Picamoixons",
+    "theme_tokens": {
+      "standard": "solid-rt1",
+      "high_contrast": "hatched-rt1"
+    },
+    "is_highlighted": false
+  },
+  {
     "line_id": "R2",
-    "label": "R2 - El Prat de Llobregat - Barcelona-Sant Andreu",
+    "label": "R2 - Barcelona-Sant Andreu                   -El Prat de Llobregat",
     "theme_tokens": {
       "standard": "solid-r2",
       "high_contrast": "hatched-r2"
@@ -19,7 +172,7 @@
   },
   {
     "line_id": "R2N",
-    "label": "R2N - Aeroport - Maçanet-Massanes",
+    "label": "R2N - Maçanet-Massanes                        -Aeroport",
     "theme_tokens": {
       "standard": "solid-r2n",
       "high_contrast": "hatched-r2n"
@@ -28,7 +181,7 @@
   },
   {
     "line_id": "R2S",
-    "label": "R2S - Sant Vicenc de Calders - Barcelona-Estació de França",
+    "label": "R2S - Barcelona-Estació de França             -Sant Vicenc de Calders",
     "theme_tokens": {
       "standard": "solid-r2s",
       "high_contrast": "hatched-r2s"
@@ -37,7 +190,7 @@
   },
   {
     "line_id": "R3",
-    "label": "R3 - Barcelona-Fabra i Puig - Granollers-Canovelles",
+    "label": "R3 - Astillero                               -Orejo",
     "theme_tokens": {
       "standard": "solid-r3",
       "high_contrast": "hatched-r3"
@@ -46,7 +199,7 @@
   },
   {
     "line_id": "R4",
-    "label": "R4 - Terrassa Estació del Nord - Castellbisbal",
+    "label": "R4 - El Vendrell                             -Sabadell Sud",
     "theme_tokens": {
       "standard": "solid-r4",
       "high_contrast": "hatched-r4"
@@ -54,17 +207,8 @@
     "is_highlighted": false
   },
   {
-    "line_id": "R7",
-    "label": "R7 - Barcelona-Fabra i Puig - Cerdanyola-Universitat",
-    "theme_tokens": {
-      "standard": "solid-r7",
-      "high_contrast": "hatched-r7"
-    },
-    "is_highlighted": false
-  },
-  {
     "line_id": "R8",
-    "label": "R8 - Castellbisbal - Cerdanyola-Universitat",
+    "label": "R8 - -",
     "theme_tokens": {
       "standard": "solid-r8",
       "high_contrast": "hatched-r8"
@@ -72,44 +216,8 @@
     "is_highlighted": false
   },
   {
-    "line_id": "RG1",
-    "label": "RG1 - Maçanet-Massanes - Figueres",
-    "theme_tokens": {
-      "standard": "solid-rg1",
-      "high_contrast": "hatched-rg1"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "RL3",
-    "label": "RL3 - Lleida - Cervera",
-    "theme_tokens": {
-      "standard": "solid-rl3",
-      "high_contrast": "hatched-rl3"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "RL4",
-    "label": "RL4 - Terrassa Estació del Nord - Lleida",
-    "theme_tokens": {
-      "standard": "solid-rl4",
-      "high_contrast": "hatched-rl4"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "RT2",
-    "label": "RT2 - Salou-Port Aventura - Tarragona",
-    "theme_tokens": {
-      "standard": "solid-rt2",
-      "high_contrast": "hatched-rt2"
-    },
-    "is_highlighted": false
-  },
-  {
     "line_id": "R11",
-    "label": "R11 - Barcelona-Sant Andreu - Girona",
+    "label": "R11 - Girona                                  -Barcelona-Sant Andreu",
     "theme_tokens": {
       "standard": "solid-r11",
       "high_contrast": "hatched-r11"
@@ -118,7 +226,7 @@
   },
   {
     "line_id": "R14",
-    "label": "R14 - La Plana-Picamoixons - Tarragona",
+    "label": "R14 - Cunit                                   -Lleida",
     "theme_tokens": {
       "standard": "solid-r14",
       "high_contrast": "hatched-r14"
@@ -127,7 +235,7 @@
   },
   {
     "line_id": "R15",
-    "label": "R15 - Riba-roja d'Ebre - Caspe",
+    "label": "R15 - Torredembarra                           -Reus",
     "theme_tokens": {
       "standard": "solid-r15",
       "high_contrast": "hatched-r15"
@@ -136,7 +244,7 @@
   },
   {
     "line_id": "R16",
-    "label": "R16 - Tortosa - Barcelona-Estació de França",
+    "label": "R16 - Torredembarra                           -Tarragona",
     "theme_tokens": {
       "standard": "solid-r16",
       "high_contrast": "hatched-r16"
@@ -145,7 +253,7 @@
   },
   {
     "line_id": "R17",
-    "label": "R17 - Salou-Port Aventura - Barcelona-Estació de França",
+    "label": "R17 - Barcelona-Estació de França             -Salou-Port Aventura",
     "theme_tokens": {
       "standard": "solid-r17",
       "high_contrast": "hatched-r17"

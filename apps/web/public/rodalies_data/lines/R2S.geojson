@@ -3,13 +3,13 @@
   "id": "R2S",
   "properties": {
     "id": "R2S",
-    "name": "Sant Vicenc de Calders - Barcelona-Estació de França",
+    "name": "Barcelona-Estació de França             -Sant Vicenc de Calders",
     "short_code": "R2S",
     "brand_color": "146520",
     "default_pattern": "solid-r2s",
     "high_contrast_pattern": "hatched-r2s",
     "order": 3,
-    "last_verified_at": "2025-10-21T19:17:00Z"
+    "last_verified_at": "2026-01-04T20:11:16Z"
   },
   "geometry": {
     "type": "LineString",

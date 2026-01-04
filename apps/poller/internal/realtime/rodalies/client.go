@@ -112,23 +112,53 @@ func (p *Poller) Poll(ctx context.Context) error {
 			}
 		}
 
-		// Derive previous stop from vehicle's last known state
-		if prev, ok := prevStates[pos.VehicleKey]; ok {
-			// If previous state was STOPPED_AT, that stop becomes the previous stop
-			if prev.Status != nil && *prev.Status == "STOPPED_AT" && prev.CurrentStopID != nil {
-				// Only set as previous if we're now at a different stop or moving to a new stop
-				currentStop := pos.CurrentStopID
-				nextStop := pos.NextStopID
-				if (currentStop != nil && *currentStop != *prev.CurrentStopID) ||
-					(nextStop != nil && *nextStop != *prev.CurrentStopID) ||
-					(pos.Status != "STOPPED_AT") {
-					dbPos.PreviousStopID = prev.CurrentStopID
-				}
+		// Derive previous stop from GTFS schedule (dimension tables)
+		// This is more reliable than tracking vehicle state transitions
+		if pos.TripID != nil {
+			var stopIDForLookup *string
+			if pos.CurrentStopID != nil {
+				stopIDForLookup = pos.CurrentStopID
+			} else if pos.NextStopID != nil {
+				stopIDForLookup = pos.NextStopID
 			}
 
-			// Preserve existing previous_stop_id if we didn't compute a new one
-			if dbPos.PreviousStopID == nil && prev.PreviousStopID != nil {
-				dbPos.PreviousStopID = prev.PreviousStopID
+			if stopIDForLookup != nil {
+				adjacent, err := p.db.GetAdjacentStops(ctx, *pos.TripID, *stopIDForLookup)
+				if err == nil {
+					// Set stop sequence
+					dbPos.NextStopSequence = &adjacent.StopSequence
+
+					if pos.Status == "STOPPED_AT" {
+						// Currently at a stop: previous is sequence-1, next is sequence+1
+						dbPos.PreviousStopID = adjacent.PreviousStopID
+						dbPos.NextStopID = adjacent.NextStopID
+					} else {
+						// Moving to next stop: previous is sequence-1
+						dbPos.PreviousStopID = adjacent.PreviousStopID
+					}
+				}
+			}
+		}
+
+		// Fallback: derive previous stop from vehicle's last known state
+		if dbPos.PreviousStopID == nil {
+			if prev, ok := prevStates[pos.VehicleKey]; ok {
+				// If previous state was STOPPED_AT, that stop becomes the previous stop
+				if prev.Status != nil && *prev.Status == "STOPPED_AT" && prev.CurrentStopID != nil {
+					// Only set as previous if we're now at a different stop or moving to a new stop
+					currentStop := pos.CurrentStopID
+					nextStop := pos.NextStopID
+					if (currentStop != nil && *currentStop != *prev.CurrentStopID) ||
+						(nextStop != nil && *nextStop != *prev.CurrentStopID) ||
+						(pos.Status != "STOPPED_AT") {
+						dbPos.PreviousStopID = prev.CurrentStopID
+					}
+				}
+
+				// Preserve existing previous_stop_id if we didn't compute a new one
+				if dbPos.PreviousStopID == nil && prev.PreviousStopID != nil {
+					dbPos.PreviousStopID = prev.PreviousStopID
+				}
 			}
 		}
 

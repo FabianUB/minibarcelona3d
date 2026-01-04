@@ -3,13 +3,13 @@
   "id": "R15",
   "properties": {
     "id": "R15",
-    "name": "Riba-roja d'Ebre - Caspe",
+    "name": "Torredembarra                           -Reus",
     "short_code": "R15",
     "brand_color": "978571",
     "default_pattern": "solid-r15",
     "high_contrast_pattern": "hatched-r15",
     "order": 15,
-    "last_verified_at": "2025-10-21T19:17:00Z"
+    "last_verified_at": "2026-01-04T20:11:16Z"
   },
   "geometry": {
     "type": "LineString",

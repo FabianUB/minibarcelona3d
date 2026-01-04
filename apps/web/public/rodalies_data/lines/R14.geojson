@@ -3,13 +3,13 @@
   "id": "R14",
   "properties": {
     "id": "R14",
-    "name": "La Plana-Picamoixons - Tarragona",
+    "name": "Cunit                                   -Lleida",
     "short_code": "R14",
     "brand_color": "6C60A8",
     "default_pattern": "solid-r14",
     "high_contrast_pattern": "hatched-r14",
     "order": 14,
-    "last_verified_at": "2025-10-21T19:17:00Z"
+    "last_verified_at": "2026-01-04T20:11:16Z"
   },
   "geometry": {
     "type": "LineString",

@@ -3,13 +3,13 @@
   "id": "R2N",
   "properties": {
     "id": "R2N",
-    "name": "Aeroport - Maçanet-Massanes",
+    "name": "Maçanet-Massanes                        -Aeroport",
     "short_code": "R2N",
     "brand_color": "D0DF00",
     "default_pattern": "solid-r2n",
     "high_contrast_pattern": "hatched-r2n",
     "order": 2,
-    "last_verified_at": "2025-10-21T19:17:00Z"
+    "last_verified_at": "2026-01-04T20:11:16Z"
   },
   "geometry": {
     "type": "LineString",

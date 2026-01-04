@@ -1,13 +1,16 @@
 package static
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/mini-rodalies-3d/poller/internal/config"
+	"github.com/mini-rodalies-3d/poller/internal/db"
 	"github.com/mini-rodalies-3d/poller/internal/static/gtfs"
 	rodaliesgen "github.com/mini-rodalies-3d/poller/internal/static/rodalies"
 	tmbgen "github.com/mini-rodalies-3d/poller/internal/static/tmb"
@@ -20,7 +23,8 @@ type Manifest struct {
 }
 
 // RefreshIfStale checks manifest files and refreshes data if older than threshold
-func RefreshIfStale(cfg *config.Config) error {
+// If database is provided, dimension tables will also be populated
+func RefreshIfStale(cfg *config.Config, database *db.DB) error {
 	rodaliesManifest := filepath.Join(cfg.WebPublicDir, "rodalies_data", "manifest.json")
 	tmbManifest := filepath.Join(cfg.WebPublicDir, "tmb_data", "manifest.json")
 
@@ -37,22 +41,20 @@ func RefreshIfStale(cfg *config.Config) error {
 		return err
 	}
 
-	// Refresh Rodalies data - DISABLED
-	// The Renfe GTFS contains all Spanish Cercanías, not just Catalunya's Rodalies.
-	// The generator needs filtering to only include R* lines before re-enabling.
+	// Refresh Rodalies data
 	if rodaliesStale {
-		log.Println("Rodalies static refresh disabled - using existing data")
-		// if err := refreshRodalies(cfg); err != nil {
-		// 	log.Printf("Failed to refresh Rodalies data: %v", err)
-		// } else {
-		// 	log.Println("Rodalies static data refreshed successfully")
-		// }
+		log.Println("Refreshing Rodalies static data...")
+		if err := refreshRodalies(cfg, database); err != nil {
+			log.Printf("Failed to refresh Rodalies data: %v", err)
+		} else {
+			log.Println("Rodalies static data refreshed successfully")
+		}
 	}
 
 	// Refresh TMB data
 	if tmbStale {
 		log.Println("Refreshing TMB static data...")
-		if err := refreshTMB(cfg); err != nil {
+		if err := refreshTMB(cfg, database); err != nil {
 			log.Printf("Failed to refresh TMB data: %v", err)
 		} else {
 			log.Println("TMB static data refreshed successfully")
@@ -85,7 +87,7 @@ func isStaleOrMissing(manifestPath string, maxAgeDays int) bool {
 	return age > maxAge
 }
 
-func refreshRodalies(cfg *config.Config) error {
+func refreshRodalies(cfg *config.Config, database *db.DB) error {
 	// Download GTFS zip
 	zipPath := filepath.Join(cfg.CacheDir, "renfe_gtfs.zip")
 	if err := gtfs.Download(cfg.RenfeGTFSURL, zipPath); err != nil {
@@ -100,10 +102,25 @@ func refreshRodalies(cfg *config.Config) error {
 
 	// Generate GeoJSON files
 	outputDir := filepath.Join(cfg.WebPublicDir, "rodalies_data")
-	return rodaliesgen.Generate(data, outputDir)
+	if err := rodaliesgen.Generate(data, outputDir); err != nil {
+		return err
+	}
+
+	// Populate dimension tables if database is provided
+	if database != nil {
+		if err := populateDimensionTables(database, "rodalies", data); err != nil {
+			log.Printf("Warning: failed to populate Rodalies dimension tables: %v", err)
+			// Don't fail the whole refresh if dimension tables fail
+		} else {
+			log.Printf("Rodalies dimension tables populated: %d stops, %d trips, %d stop_times",
+				len(data.Stops), len(data.Trips), len(data.StopTimes))
+		}
+	}
+
+	return nil
 }
 
-func refreshTMB(cfg *config.Config) error {
+func refreshTMB(cfg *config.Config, database *db.DB) error {
 	// Check if TMB credentials are configured
 	if cfg.TMBAppID == "" || cfg.TMBAppKey == "" {
 		log.Println("TMB API credentials not configured, skipping TMB refresh")
@@ -129,5 +146,152 @@ func refreshTMB(cfg *config.Config) error {
 
 	// Generate GeoJSON files
 	outputDir := filepath.Join(cfg.WebPublicDir, "tmb_data")
-	return tmbgen.Generate(data, outputDir)
+	if err := tmbgen.Generate(data, outputDir); err != nil {
+		return err
+	}
+
+	// Populate dimension tables if database is provided
+	if database != nil {
+		if err := populateDimensionTables(database, "tmb", data); err != nil {
+			log.Printf("Warning: failed to populate TMB dimension tables: %v", err)
+		} else {
+			log.Printf("TMB dimension tables populated: %d stops, %d trips, %d stop_times",
+				len(data.Stops), len(data.Trips), len(data.StopTimes))
+		}
+	}
+
+	return nil
+}
+
+// populateDimensionTables converts GTFS data to dimension table format and inserts into database
+func populateDimensionTables(database *db.DB, network string, data *gtfs.Data) error {
+	ctx := context.Background()
+
+	// Convert stops
+	stops := make([]db.GTFSStop, 0, len(data.Stops))
+	for _, s := range data.Stops {
+		stops = append(stops, db.GTFSStop{
+			StopID:   s.StopID,
+			StopCode: s.StopCode,
+			StopName: s.StopName,
+			StopLat:  s.StopLat,
+			StopLon:  s.StopLon,
+		})
+	}
+
+	// Convert trips
+	trips := make([]db.GTFSTrip, 0, len(data.Trips))
+	for _, t := range data.Trips {
+		trips = append(trips, db.GTFSTrip{
+			TripID:       t.TripID,
+			RouteID:      t.RouteID,
+			ServiceID:    t.ServiceID,
+			TripHeadsign: t.TripHeadsign,
+			DirectionID:  t.DirectionID,
+		})
+	}
+
+	// Convert stop times
+	stopTimes := make([]db.GTFSStopTime, 0, len(data.StopTimes))
+	for _, st := range data.StopTimes {
+		arrivalSecs := parseTimeToSeconds(st.ArrivalTime)
+		departureSecs := parseTimeToSeconds(st.DepartureTime)
+		stopTimes = append(stopTimes, db.GTFSStopTime{
+			TripID:           st.TripID,
+			StopID:           st.StopID,
+			StopSequence:     st.StopSequence,
+			ArrivalSeconds:   arrivalSecs,
+			DepartureSeconds: departureSecs,
+		})
+	}
+
+	// Upsert core dimension data (stops, trips, stop_times)
+	if err := database.UpsertGTFSDimensionData(ctx, network, stops, trips, stopTimes); err != nil {
+		return err
+	}
+
+	// Convert and upsert routes
+	routes := make([]db.GTFSRoute, 0, len(data.Routes))
+	for _, r := range data.Routes {
+		routes = append(routes, db.GTFSRoute{
+			RouteID:        r.RouteID,
+			RouteShortName: r.RouteShortName,
+			RouteLongName:  r.RouteLongName,
+			RouteType:      r.RouteType,
+			RouteColor:     r.RouteColor,
+			RouteTextColor: r.RouteTextColor,
+		})
+	}
+	if err := database.UpsertGTFSRouteData(ctx, network, routes); err != nil {
+		log.Printf("Warning: failed to populate routes for %s: %v", network, err)
+	} else {
+		log.Printf("%s routes populated: %d routes", network, len(routes))
+	}
+
+	// Convert and upsert calendar data
+	calendars := make([]db.GTFSCalendar, 0, len(data.Calendars))
+	for _, c := range data.Calendars {
+		calendars = append(calendars, db.GTFSCalendar{
+			ServiceID: c.ServiceID,
+			Monday:    c.Monday,
+			Tuesday:   c.Tuesday,
+			Wednesday: c.Wednesday,
+			Thursday:  c.Thursday,
+			Friday:    c.Friday,
+			Saturday:  c.Saturday,
+			Sunday:    c.Sunday,
+			StartDate: c.StartDate,
+			EndDate:   c.EndDate,
+		})
+	}
+
+	calendarDates := make([]db.GTFSCalendarDate, 0, len(data.CalendarDates))
+	for _, cd := range data.CalendarDates {
+		calendarDates = append(calendarDates, db.GTFSCalendarDate{
+			ServiceID:     cd.ServiceID,
+			Date:          cd.Date,
+			ExceptionType: cd.ExceptionType,
+		})
+	}
+
+	if err := database.UpsertGTFSCalendarData(ctx, network, calendars, calendarDates); err != nil {
+		log.Printf("Warning: failed to populate calendar for %s: %v", network, err)
+	} else {
+		log.Printf("%s calendar populated: %d calendars, %d calendar_dates", network, len(calendars), len(calendarDates))
+	}
+
+	return nil
+}
+
+// parseTimeToSeconds converts GTFS time format (HH:MM:SS) to seconds since midnight
+func parseTimeToSeconds(timeStr string) int {
+	if timeStr == "" {
+		return 0
+	}
+	parts := strings.Split(timeStr, ":")
+	if len(parts) < 2 {
+		return 0
+	}
+	var hours, minutes, seconds int
+	if len(parts) >= 1 {
+		_, _ = strings.NewReader(parts[0]).Read(make([]byte, 0))
+		hours = parseIntSafe(parts[0])
+	}
+	if len(parts) >= 2 {
+		minutes = parseIntSafe(parts[1])
+	}
+	if len(parts) >= 3 {
+		seconds = parseIntSafe(parts[2])
+	}
+	return hours*3600 + minutes*60 + seconds
+}
+
+func parseIntSafe(s string) int {
+	var result int
+	for _, c := range s {
+		if c >= '0' && c <= '9' {
+			result = result*10 + int(c-'0')
+		}
+	}
+	return result
 }

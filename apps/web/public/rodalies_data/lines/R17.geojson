@@ -3,13 +3,13 @@
   "id": "R17",
   "properties": {
     "id": "R17",
-    "name": "Salou-Port Aventura - Barcelona-Estació de França",
+    "name": "Barcelona-Estació de França             -Salou-Port Aventura",
     "short_code": "R17",
     "brand_color": "F3B12E",
     "default_pattern": "solid-r17",
     "high_contrast_pattern": "hatched-r17",
     "order": 17,
-    "last_verified_at": "2025-10-21T19:17:00Z"
+    "last_verified_at": "2026-01-04T20:11:16Z"
   },
   "geometry": {
     "type": "LineString",
