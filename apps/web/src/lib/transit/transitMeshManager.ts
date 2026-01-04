@@ -373,7 +373,9 @@ export class TransitMeshManager {
     this.applyBearing(mesh, vehicle.bearing);
 
     // Parse line color (used for outlines and stored in mesh data)
-    const lineColor = new THREE.Color(vehicle.lineColor);
+    // Ensure color has # prefix for THREE.Color
+    const colorHex = vehicle.lineColor.startsWith('#') ? vehicle.lineColor : `#${vehicle.lineColor}`;
+    const lineColor = new THREE.Color(colorHex);
 
     // Apply line color to the model (skip for metro - uses original model appearance)
     if (vehicle.networkType !== 'metro') {
