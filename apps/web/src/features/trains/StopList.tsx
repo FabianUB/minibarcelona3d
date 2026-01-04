@@ -64,6 +64,8 @@ export function StopList({
 
   const formatTime = (timeString: string | null): string | null => {
     if (!timeString) return null;
+    // "00:00:00" means no time specified in GTFS for intermediate stops
+    if (timeString === '00:00:00' || timeString === '00:00') return null;
 
     const parts = timeString.split(':');
     if (parts.length < 2) return timeString;

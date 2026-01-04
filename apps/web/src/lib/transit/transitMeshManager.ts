@@ -15,12 +15,15 @@
 import * as THREE from 'three';
 import type { VehiclePosition, TransportType, TravelDirection } from '../../types/transit';
 import type { PreprocessedRailwayLine } from '../trains/geometry';
-import { sampleRailwayPosition } from '../trains/geometry';
+import { sampleRailwayPosition, snapTrainToRailway } from '../trains/geometry';
 import { getCachedModel, loadTrainModel } from '../trains/modelLoader';
 import { ScaleManager } from '../trains/scaleManager';
 import { getModelPosition, getModelScale, getLngLatFromModelPosition } from '../map/coordinates';
 import { getPreprocessedMetroLine } from '../metro/positionSimulator';
 import { getPreprocessedBusRoute } from '../bus/positionSimulator';
+import { getPreprocessedFgcLine } from '../fgc/positionSimulator';
+import { getPreprocessedTramLine } from '../tram/positionSimulator';
+import { createOutlineMesh } from '../trains/outlineManager';
 
 /**
  * Screen-space candidate for click/hover detection
@@ -43,11 +46,22 @@ interface TransitMeshData {
   networkType: TransportType;
   direction: TravelDirection;
 
-  // Continuous motion parameters
+  // Animation mode: 'continuous' uses speed/distance, 'lerp' uses position interpolation
+  animationMode: 'continuous' | 'lerp';
+
+  // Continuous motion parameters (used when animationMode='continuous')
   referenceDistance: number;    // Distance along line at referenceTime
   referenceTime: number;        // When this position was established
   speedMetersPerSecond: number; // Vehicle speed
   lineTotalLength: number;      // For wrapping around
+
+  // Lerp animation parameters (used when animationMode='lerp')
+  targetPosition: [number, number];
+  targetBearing: number;
+  lerpStartPosition: [number, number];
+  lerpStartBearing: number;
+  lerpStartTime: number;
+  lerpDuration: number;  // ms
 
   // Current state
   currentPosition: [number, number];
@@ -58,6 +72,9 @@ interface TransitMeshData {
   screenSpaceScale: number;
   lineColor: THREE.Color;
   opacity: number;
+
+  // Outline for hover effect
+  outlineMesh?: THREE.Group;
 }
 
 /**
@@ -66,15 +83,15 @@ interface TransitMeshData {
 export interface TransitMeshManagerConfig {
   /** Vehicle size in meters (default: 25 for metro/trains) */
   vehicleSizeMeters?: number;
-  /** Model type to use ('civia' default for metro) */
-  modelType?: '447' | '470' | 'civia';
+  /** Model type to use */
+  modelType?: 'metro' | 'bus' | 'tram' | 'civia';
   /** Z offset factor for elevation (default: 0.5) */
   zOffsetFactor?: number;
 }
 
 const DEFAULT_CONFIG: Required<TransitMeshManagerConfig> = {
   vehicleSizeMeters: 25,
-  modelType: 'civia',
+  modelType: 'metro',
   zOffsetFactor: 0.5,
 };
 
@@ -91,6 +108,7 @@ export class TransitMeshManager {
   private scaleManager: ScaleManager;
   private modelLoaded = false;
   private currentZoom = 12;
+  private highlightedVehicleKey: string | null = null;
 
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
@@ -139,12 +157,18 @@ export class TransitMeshManager {
    * Get preprocessed geometry for a vehicle
    */
   private getGeometry(networkType: TransportType, lineCode: string): PreprocessedRailwayLine | null {
-    if (networkType === 'metro') {
-      return getPreprocessedMetroLine(lineCode);
-    } else if (networkType === 'bus') {
-      return getPreprocessedBusRoute(lineCode);
+    switch (networkType) {
+      case 'metro':
+        return getPreprocessedMetroLine(lineCode);
+      case 'bus':
+        return getPreprocessedBusRoute(lineCode);
+      case 'fgc':
+        return getPreprocessedFgcLine(lineCode);
+      case 'tram':
+        return getPreprocessedTramLine(lineCode);
+      default:
+        return null;
     }
-    return null;
   }
 
   /**
@@ -216,11 +240,31 @@ export class TransitMeshManager {
   }
 
   /**
+   * Lerp animation duration in ms (matches 30s polling interval)
+   * Vehicles animate smoothly over the entire interval between position updates
+   */
+  private static readonly LERP_DURATION_MS = 30000;
+
+  /**
+   * Determine which animation mode to use based on available data
+   */
+  private getAnimationMode(vehicle: VehiclePosition): 'continuous' | 'lerp' {
+    // Use continuous mode if we have valid motion parameters
+    // distanceAlongLine > 0 required because some APIs return 0 as "not provided"
+    const hasMotionParams =
+      vehicle.speedMetersPerSecond > 0 &&
+      vehicle.lineTotalLength > 0 &&
+      vehicle.distanceAlongLine > 0;
+
+    return hasMotionParams ? 'continuous' : 'lerp';
+  }
+
+  /**
    * Update vehicle meshes from position data.
    *
-   * Key behavior: Never allows backward movement.
-   * If an update would place the vehicle behind its current animated position,
-   * we keep the current position and continue forward from there.
+   * Supports two animation modes:
+   * - continuous: Uses speed/distance for smooth motion (requires line geometry)
+   * - lerp: Simple position interpolation (for schedule-based positions)
    */
   updateVehicles(vehicles: VehiclePosition[]): void {
     if (!this.modelLoaded) {
@@ -241,36 +285,46 @@ export class TransitMeshManager {
       activeKeys.add(vehicle.vehicleKey);
 
       const existingMesh = this.meshes.get(vehicle.vehicleKey);
+      const animationMode = this.getAnimationMode(vehicle);
 
       if (existingMesh) {
-        // Convert new position to raw animation distance
-        const newRawDistance = this.toRawAnimationDistance(
-          vehicle.distanceAlongLine,
-          vehicle.direction,
-          vehicle.lineTotalLength
-        );
+        if (animationMode === 'continuous') {
+          // Continuous motion mode - use speed and distance
+          const newRawDistance = this.toRawAnimationDistance(
+            vehicle.distanceAlongLine,
+            vehicle.direction,
+            vehicle.lineTotalLength
+          );
 
-        // Calculate current animated raw distance
-        const currentRawDistance = this.getCurrentRawDistance(existingMesh, now);
+          const currentRawDistance = this.getCurrentRawDistance(existingMesh, now);
 
-        // Check if this update would move the vehicle backward
-        if (this.wouldMoveBackward(currentRawDistance, newRawDistance, existingMesh.lineTotalLength)) {
-          // Keep current position - don't go backward
-          // Update reference to current animated position
-          existingMesh.referenceDistance = currentRawDistance;
-          existingMesh.referenceTime = now;
+          if (this.wouldMoveBackward(currentRawDistance, newRawDistance, existingMesh.lineTotalLength)) {
+            existingMesh.referenceDistance = currentRawDistance;
+            existingMesh.referenceTime = now;
+          } else {
+            existingMesh.referenceDistance = newRawDistance;
+            existingMesh.referenceTime = vehicle.estimatedAt;
+          }
+
+          existingMesh.speedMetersPerSecond = vehicle.speedMetersPerSecond;
+          existingMesh.lineTotalLength = vehicle.lineTotalLength;
+          existingMesh.animationMode = 'continuous';
         } else {
-          // Update normally - vehicle is moving forward (or very small correction)
-          existingMesh.referenceDistance = newRawDistance;
-          existingMesh.referenceTime = vehicle.estimatedAt;
-        }
+          // Lerp mode - interpolate between current and target position
+          // Save current position as lerp start
+          existingMesh.lerpStartPosition = [...existingMesh.currentPosition] as [number, number];
+          existingMesh.lerpStartBearing = existingMesh.currentBearing;
+          existingMesh.lerpStartTime = now;
+          existingMesh.lerpDuration = TransitMeshManager.LERP_DURATION_MS;
 
-        // Always update speed and length (they might have changed)
-        existingMesh.speedMetersPerSecond = vehicle.speedMetersPerSecond;
-        existingMesh.lineTotalLength = vehicle.lineTotalLength;
+          // Set new target position
+          existingMesh.targetPosition = [vehicle.longitude, vehicle.latitude];
+          existingMesh.targetBearing = vehicle.bearing;
+          existingMesh.animationMode = 'lerp';
+        }
       } else {
         // Create new mesh
-        this.createMesh(vehicle);
+        this.createMesh(vehicle, animationMode);
         newMeshes++;
       }
     }
@@ -286,7 +340,7 @@ export class TransitMeshManager {
   /**
    * Create a new mesh for a vehicle
    */
-  private createMesh(vehicle: VehiclePosition): void {
+  private createMesh(vehicle: VehiclePosition, animationMode: 'continuous' | 'lerp'): void {
     const gltf = getCachedModel(this.config.modelType);
     if (!gltf) {
       console.warn(`[TransitMeshManager] Model ${this.config.modelType} not in cache, cannot create mesh`);
@@ -319,9 +373,15 @@ export class TransitMeshManager {
     // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
-    // Apply line color to the model
-    const lineColor = new THREE.Color(vehicle.lineColor);
-    this.applyLineColor(trainModel, lineColor);
+    // Parse line color (used for outlines and stored in mesh data)
+    // Ensure color has # prefix for THREE.Color
+    const colorHex = vehicle.lineColor.startsWith('#') ? vehicle.lineColor : `#${vehicle.lineColor}`;
+    const lineColor = new THREE.Color(colorHex);
+
+    // Apply line color to the model (skip for metro - uses original model appearance)
+    if (vehicle.networkType !== 'metro') {
+      this.applyLineColor(trainModel, lineColor);
+    }
 
     // Add to scene
     this.scene.add(mesh);
@@ -333,7 +393,10 @@ export class TransitMeshManager {
       vehicle.lineTotalLength
     );
 
-    // Store mesh data with continuous motion parameters
+    const now = Date.now();
+    const currentPos: [number, number] = [vehicle.longitude, vehicle.latitude];
+
+    // Store mesh data with appropriate animation parameters
     this.meshes.set(vehicle.vehicleKey, {
       mesh,
       vehicleKey: vehicle.vehicleKey,
@@ -341,14 +404,25 @@ export class TransitMeshManager {
       networkType: vehicle.networkType,
       direction: vehicle.direction,
 
-      // Continuous motion parameters (using raw distance for consistent forward movement)
+      // Animation mode
+      animationMode,
+
+      // Continuous motion parameters
       referenceDistance: rawDistance,
       referenceTime: vehicle.estimatedAt,
       speedMetersPerSecond: vehicle.speedMetersPerSecond,
       lineTotalLength: vehicle.lineTotalLength,
 
+      // Lerp animation parameters (initialize to current position)
+      targetPosition: currentPos,
+      targetBearing: vehicle.bearing,
+      lerpStartPosition: currentPos,
+      lerpStartBearing: vehicle.bearing,
+      lerpStartTime: now,
+      lerpDuration: TransitMeshManager.LERP_DURATION_MS,
+
       // Current state
-      currentPosition: [vehicle.longitude, vehicle.latitude],
+      currentPosition: currentPos,
       currentBearing: vehicle.bearing,
 
       // Visual
@@ -369,6 +443,7 @@ export class TransitMeshManager {
 
   /**
    * Apply line color to the train model materials
+   * Only applies to bus/tram/fgc - metro keeps its original appearance
    */
   private applyLineColor(model: THREE.Object3D, color: THREE.Color): void {
     model.traverse((child) => {
@@ -405,6 +480,11 @@ export class TransitMeshManager {
       if (!activeKeys.has(key)) {
         this.scene.remove(data.mesh);
         toRemove.push(key);
+
+        // Clear highlighted key if this vehicle is removed
+        if (this.highlightedVehicleKey === key) {
+          this.highlightedVehicleKey = null;
+        }
       }
     }
 
@@ -416,62 +496,132 @@ export class TransitMeshManager {
   /**
    * Animate mesh positions (call every frame)
    *
-   * Calculates position continuously based on elapsed time.
-   * No interpolation needed - positions are exact for current time.
+   * Supports two modes:
+   * - continuous: Calculates position based on speed and elapsed time
+   * - lerp: Interpolates between start and target position
    */
   animatePositions(): void {
     const now = Date.now();
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
 
     for (const [, data] of this.meshes) {
-      // Calculate current distance based on elapsed time
-      const elapsedSeconds = (now - data.referenceTime) / 1000;
-      const distanceTraveled = elapsedSeconds * data.speedMetersPerSecond;
-
-      // Calculate current distance along line (with wrapping)
-      let currentDistance = (data.referenceDistance + distanceTraveled) % data.lineTotalLength;
-
-      // For reverse direction, mirror the distance
-      if (data.direction === 1) {
-        currentDistance = data.lineTotalLength - currentDistance;
-        if (currentDistance < 0) {
-          currentDistance += data.lineTotalLength;
-        }
-      }
-
-      // Get line geometry to sample position
-      const geometry = this.getGeometry(data.networkType, data.lineCode);
-
-      if (geometry) {
-        // Sample position and bearing from geometry
-        const { position, bearing } = sampleRailwayPosition(geometry, currentDistance);
-
-        // Adjust bearing for reverse direction
-        const finalBearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
-
-        // Update position
-        const pos = getModelPosition(position[0], position[1], 0);
-        data.mesh.position.set(
-          pos.x,
-          pos.y,
-          pos.z + this.config.zOffsetFactor * data.baseScale
-        );
-
-        // Update bearing
-        this.applyBearing(data.mesh, finalBearing);
-
-        // Update current state
-        data.currentPosition = position;
-        data.currentBearing = finalBearing;
+      if (data.animationMode === 'continuous') {
+        // Continuous motion mode - calculate position from speed and time
+        this.animateContinuous(data, now);
+      } else {
+        // Lerp mode - interpolate between positions
+        this.animateLerp(data, now);
       }
 
       // Apply zoom-responsive scale if changed
       if (data.screenSpaceScale !== zoomScale) {
         data.screenSpaceScale = zoomScale;
         const finalScale = data.baseScale * zoomScale;
-        data.mesh.scale.setScalar(finalScale);
+
+        // Maintain highlight scale if this vehicle is highlighted
+        const isHighlighted = this.highlightedVehicleKey === data.vehicleKey;
+        const scaleToApply = isHighlighted ? finalScale * 1.12 : finalScale;
+        data.mesh.scale.setScalar(scaleToApply);
       }
     }
+  }
+
+  /**
+   * Animate using continuous motion (speed-based)
+   */
+  private animateContinuous(data: TransitMeshData, now: number): void {
+    // Calculate current distance based on elapsed time
+    const elapsedSeconds = (now - data.referenceTime) / 1000;
+    const distanceTraveled = elapsedSeconds * data.speedMetersPerSecond;
+
+    // Calculate current distance along line (with wrapping)
+    let currentDistance = (data.referenceDistance + distanceTraveled) % data.lineTotalLength;
+
+    // For reverse direction, mirror the distance
+    if (data.direction === 1) {
+      currentDistance = data.lineTotalLength - currentDistance;
+      if (currentDistance < 0) {
+        currentDistance += data.lineTotalLength;
+      }
+    }
+
+    // Get line geometry to sample position
+    const geometry = this.getGeometry(data.networkType, data.lineCode);
+
+    if (geometry) {
+      // Sample position and bearing from geometry
+      const { position, bearing } = sampleRailwayPosition(geometry, currentDistance);
+
+      // Adjust bearing for reverse direction
+      const finalBearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+
+      // Update position
+      const pos = getModelPosition(position[0], position[1], 0);
+      data.mesh.position.set(
+        pos.x,
+        pos.y,
+        pos.z + this.config.zOffsetFactor * data.baseScale
+      );
+
+      // Update bearing
+      this.applyBearing(data.mesh, finalBearing);
+
+      // Update current state
+      data.currentPosition = position;
+      data.currentBearing = finalBearing;
+    }
+  }
+
+  /**
+   * Animate using lerp interpolation (position-based)
+   *
+   * For bus routes, snaps the interpolated position to the route geometry
+   * to ensure vehicles follow their designated routes instead of straight lines.
+   */
+  private animateLerp(data: TransitMeshData, now: number): void {
+    const elapsed = now - data.lerpStartTime;
+    const t = Math.min(elapsed / data.lerpDuration, 1);
+
+    // Smooth easing function (ease-out cubic)
+    const eased = 1 - Math.pow(1 - t, 3);
+
+    // Interpolate position (raw GPS interpolation)
+    let lng = data.lerpStartPosition[0] + (data.targetPosition[0] - data.lerpStartPosition[0]) * eased;
+    let lat = data.lerpStartPosition[1] + (data.targetPosition[1] - data.lerpStartPosition[1]) * eased;
+
+    // Interpolate bearing (handle wrap-around)
+    let bearingDiff = data.targetBearing - data.lerpStartBearing;
+    if (bearingDiff > 180) bearingDiff -= 360;
+    if (bearingDiff < -180) bearingDiff += 360;
+    let bearing = data.lerpStartBearing + bearingDiff * eased;
+
+    // Try to snap position to route geometry (for bus routes)
+    // This ensures vehicles follow their routes instead of moving in straight lines
+    const geometry = this.getGeometry(data.networkType, data.lineCode);
+    if (geometry) {
+      const snapResult = snapTrainToRailway([lng, lat], geometry, 500); // 500m max snap distance
+      if (snapResult) {
+        lng = snapResult.position[0];
+        lat = snapResult.position[1];
+        // Use snapped bearing for smoother rotation along the route
+        bearing = data.direction === 1 ? (snapResult.bearing + 180) % 360 : snapResult.bearing;
+      }
+    }
+
+    // Update position
+    const pos = getModelPosition(lng, lat, 0);
+    data.mesh.position.set(
+      pos.x,
+      pos.y,
+      pos.z + this.config.zOffsetFactor * data.baseScale
+    );
+
+    // Update bearing
+    this.applyBearing(data.mesh, bearing);
+
+    // Update current state
+    data.currentPosition = [lng, lat];
+    data.currentBearing = bearing;
   }
 
   /**
@@ -566,6 +716,88 @@ export class TransitMeshManager {
    */
   getVehicleData(vehicleKey: string): TransitMeshData | null {
     return this.meshes.get(vehicleKey) ?? null;
+  }
+
+  /**
+   * Set highlighted vehicle (12% scale increase on hover)
+   */
+  setHighlightedVehicle(vehicleKey?: string): void {
+    const nextKey = vehicleKey ?? null;
+    if (this.highlightedVehicleKey === nextKey) {
+      return;
+    }
+
+    // Restore previous highlighted vehicle to normal scale
+    if (this.highlightedVehicleKey) {
+      const prev = this.meshes.get(this.highlightedVehicleKey);
+      if (prev) {
+        const normalScale = prev.baseScale * prev.screenSpaceScale;
+        prev.mesh.scale.setScalar(normalScale);
+      }
+    }
+
+    this.highlightedVehicleKey = nextKey;
+
+    // Apply highlight scale to new vehicle
+    if (nextKey) {
+      const next = this.meshes.get(nextKey);
+      if (next) {
+        const normalScale = next.baseScale * next.screenSpaceScale;
+        const highlightScale = normalScale * 1.12;
+        next.mesh.scale.setScalar(highlightScale);
+      }
+    }
+  }
+
+  /**
+   * Show hover outline for a vehicle
+   * Creates outline mesh lazily on first hover
+   */
+  showOutline(vehicleKey: string): void {
+    const meshData = this.meshes.get(vehicleKey);
+    if (!meshData) return;
+
+    // Lazy creation: create outline on first hover
+    if (!meshData.outlineMesh) {
+      // Find the model child (the rotated child inside the parent Group)
+      let modelChild: THREE.Object3D | null = null;
+      meshData.mesh.traverse((child) => {
+        if (child !== meshData.mesh && child instanceof THREE.Group && !modelChild) {
+          modelChild = child;
+        }
+      });
+
+      // Compute zoom-responsive outline scale factor
+      const zoom = this.currentZoom;
+      const scaleFactor = zoom < 15 ? 1.08 : 1.04;
+
+      // Create outline mesh from the model with zoom-adjusted scale
+      const targetMesh = modelChild ?? meshData.mesh;
+      const outlineMesh = createOutlineMesh(
+        targetMesh as THREE.Group,
+        meshData.lineColor,
+        scaleFactor
+      );
+      targetMesh.add(outlineMesh);
+
+      // Store for future use
+      meshData.outlineMesh = outlineMesh;
+    }
+
+    // Show outline
+    if (meshData.outlineMesh) {
+      meshData.outlineMesh.visible = true;
+    }
+  }
+
+  /**
+   * Hide hover outline for a vehicle
+   */
+  hideOutline(vehicleKey: string): void {
+    const meshData = this.meshes.get(vehicleKey);
+    if (!meshData || !meshData.outlineMesh) return;
+
+    meshData.outlineMesh.visible = false;
   }
 
   /**

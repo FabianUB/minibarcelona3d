@@ -190,3 +190,13 @@ export function clearFgcSimulatorCache(): void {
   preprocessedLineCache.clear();
   allFgcLinesPromise = null;
 }
+
+/**
+ * Get a preprocessed FGC line geometry by line code
+ * Returns null if not yet loaded
+ */
+export function getPreprocessedFgcLine(
+  lineCode: string
+): PreprocessedRailwayLine | null {
+  return preprocessedLineCache.get(lineCode.toUpperCase()) ?? null;
+}

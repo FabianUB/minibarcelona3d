@@ -3,10 +3,10 @@
  * Maps Rodalies lines to 3D train models based on rolling stock composition
  *
  * Source: Rodalies de Catalunya fleet information
- * Models: 447.glb, 470.glb, Civia (Rodalies).glb
+ * Models: 447.glb, 470.glb, Civia (Rodalies).glb, Metro.glb, Bus.glb, TRAM.glb
  */
 
-export type TrainModelType = '447' | '470' | 'civia';
+export type TrainModelType = '447' | '470' | 'civia' | 'metro' | 'bus' | 'tram';
 
 export interface TrainModelConfig {
   modelPath: string;
@@ -28,6 +28,18 @@ export const TRAIN_MODELS: Record<TrainModelType, TrainModelConfig> = {
   'civia': {
     modelPath: '/models/Civia_Rodalies.glb',
     description: 'Civia Series (463/464/465, 450/451)',
+  },
+  'metro': {
+    modelPath: '/models/Metro.glb',
+    description: 'Barcelona Metro (TMB)',
+  },
+  'bus': {
+    modelPath: '/models/Bus.glb',
+    description: 'Barcelona Bus (TMB)',
+  },
+  'tram': {
+    modelPath: '/models/TRAM.glb',
+    description: 'Barcelona Tram (Trambaix/Trambesòs)',
   },
 };
 

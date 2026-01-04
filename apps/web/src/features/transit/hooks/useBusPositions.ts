@@ -1,27 +1,29 @@
 /**
- * Hook for generating Bus vehicle positions
+ * Hook for fetching Bus vehicle positions
  *
- * Generates simulated Bus positions based on schedule data.
- * Updates positions at regular intervals for smooth animation.
+ * Fetches pre-calculated Bus positions from the backend API.
+ * Falls back to client-side simulation if API is unavailable.
+ * Updates positions every 30 seconds to match backend polling.
  */
 
-import { useMemo } from 'react';
 import {
   generateAllBusPositions,
   preloadBusGeometries,
 } from '../../../lib/bus/positionSimulator';
-import { BUS_SIMULATION_INTERVAL_MS } from '../../../config/busConfig';
 import {
-  useTransitPositions,
-  type UseTransitPositionsOptions,
-  type UseTransitPositionsResult,
-} from './useTransitPositions';
+  useSchedulePositions,
+  type UseSchedulePositionsOptions,
+  type UseSchedulePositionsResult,
+} from './useSchedulePositions';
 
-export type UseBusPositionsOptions = UseTransitPositionsOptions;
-export type UseBusPositionsResult = UseTransitPositionsResult;
+export type UseBusPositionsOptions = Omit<UseSchedulePositionsOptions, 'network' | 'simulationFallback' | 'preloadGeometries'>;
+export type UseBusPositionsResult = UseSchedulePositionsResult;
 
 /**
- * Hook to generate simulated Bus vehicle positions
+ * Hook to fetch Bus vehicle positions from API
+ *
+ * Uses pre-calculated schedule-based positions from the backend.
+ * Falls back to client-side simulation if API fails.
  *
  * @param options - Configuration options
  * @returns Position data and status
@@ -32,12 +34,10 @@ export type UseBusPositionsResult = UseTransitPositionsResult;
 export function useBusPositions(
   options: UseBusPositionsOptions = {}
 ): UseBusPositionsResult {
-  const config = useMemo(() => ({
-    name: 'Bus',
-    defaultIntervalMs: BUS_SIMULATION_INTERVAL_MS,
+  return useSchedulePositions({
+    ...options,
+    network: 'bus',
+    simulationFallback: generateAllBusPositions,
     preloadGeometries: preloadBusGeometries,
-    generatePositions: generateAllBusPositions,
-  }), []);
-
-  return useTransitPositions(config, options);
+  });
 }
