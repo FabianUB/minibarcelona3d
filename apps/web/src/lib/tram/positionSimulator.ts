@@ -190,3 +190,13 @@ export function clearTramSimulatorCache(): void {
   preprocessedLineCache.clear();
   allTramLinesPromise = null;
 }
+
+/**
+ * Get a preprocessed TRAM line geometry by line code
+ * Returns null if not yet loaded
+ */
+export function getPreprocessedTramLine(
+  lineCode: string
+): PreprocessedRailwayLine | null {
+  return preprocessedLineCache.get(lineCode.toUpperCase()) ?? null;
+}
