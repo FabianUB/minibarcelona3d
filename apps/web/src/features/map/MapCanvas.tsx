@@ -821,6 +821,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="metro"
           visible={transportFilters.metro}
           modelScale={modelSizes.metro}
+          highlightedLineIds={networkHighlights.metro.selectedLineIds}
+          isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
         />
       ) : null}
       {/* Bus route lines (below stops) */}
@@ -849,6 +851,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="bus"
           visible={transportFilters.bus}
           modelScale={modelSizes.bus}
+          highlightedLineIds={networkHighlights.bus.selectedLineIds}
+          isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
         />
       ) : null}
       {/* TRAM line geometries */}
@@ -872,6 +876,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="tram"
           visible={transportFilters.tram}
           modelScale={modelSizes.tram}
+          highlightedLineIds={networkHighlights.tram.selectedLineIds}
+          isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
         />
       ) : null}
       {/* FGC line geometries */}
@@ -895,6 +901,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="fgc"
           visible={transportFilters.fgc}
           modelScale={modelSizes.fgc}
+          highlightedLineIds={networkHighlights.fgc.selectedLineIds}
+          isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
         />
       ) : null}
       {/* Rodalies station markers layer */}
@@ -916,6 +924,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           onLoadingChange={setIsTrainDataLoading}
           onTrainsChange={setTrainPositions}
           visible={transportFilters.rodalies}
+          highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
+          isolateMode={networkHighlights.rodalies.highlightMode === 'isolate'}
         />
       ) : null}
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}

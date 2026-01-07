@@ -646,6 +646,33 @@ export class TransitMeshManager {
   }
 
   /**
+   * Set opacity for multiple vehicles based on line selection
+   * Used for highlight/isolate mode to show only selected lines
+   *
+   * @param opacities - Map of vehicleKey to opacity (0.0 - 1.0)
+   */
+  setVehicleOpacities(opacities: Map<string, number>): void {
+    opacities.forEach((opacity, vehicleKey) => {
+      const data = this.meshes.get(vehicleKey);
+      if (!data) return;
+
+      data.opacity = opacity;
+      data.mesh.traverse((obj) => {
+        if ((obj as THREE.Mesh).isMesh) {
+          const mesh = obj as THREE.Mesh;
+          if (mesh.material) {
+            const mat = mesh.material as THREE.MeshStandardMaterial;
+            if (mat.opacity !== undefined) {
+              mat.opacity = opacity;
+              mat.transparent = opacity < 1;
+            }
+          }
+        }
+      });
+    });
+  }
+
+  /**
    * Get number of active meshes
    */
   getMeshCount(): number {

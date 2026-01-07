@@ -31,7 +31,7 @@ import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
-import { useMapActions, useMapHighlightSelectors } from '../../state/map';
+import { useMapActions } from '../../state/map';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
 import { trainDebug } from '../../lib/trains/debugLogger';
@@ -82,6 +82,19 @@ export interface TrainLayer3DProps {
    * When false, trains are hidden and API polling is paused for performance
    */
   visible?: boolean;
+
+  /**
+   * Highlighted line IDs for filtering trains
+   * When lines are selected, only trains on those lines are fully visible
+   */
+  highlightedLineIds?: string[];
+
+  /**
+   * Whether isolate mode is active (hide non-highlighted vs dim them)
+   * - false: dim non-highlighted trains to 25% opacity (highlight mode)
+   * - true: hide non-highlighted trains completely (isolate mode)
+   */
+  isolateMode?: boolean;
 }
 
 export interface RaycastDebugInfo {
@@ -137,10 +150,19 @@ const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
  * Task: T046 - Create model instances based on route mapping
  * Task: T047 - Apply bearing-based rotation
  */
-export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, onTrainsChange, onMeshPositionGetterReady, visible = true }: TrainLayer3DProps) {
+export function TrainLayer3D({
+  map,
+  beforeId,
+  onRaycastResult,
+  onLoadingChange,
+  onTrainsChange,
+  onMeshPositionGetterReady,
+  visible = true,
+  highlightedLineIds = [],
+  isolateMode = false,
+}: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
-  const { highlightMode, highlightedLineIds, isLineHighlighted } = useMapHighlightSelectors();
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -223,7 +245,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
    */
   const getTrainOpacity = useCallback((train: TrainPosition): number => {
     // If no lines are highlighted, show all trains at full opacity
-    if (highlightMode === 'none' || highlightedLineIds.length === 0) {
+    if (highlightedLineIds.length === 0) {
       return 1.0;
     }
 
@@ -235,16 +257,16 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
     }
 
     // Check if this train's line is highlighted
-    const isHighlighted = isLineHighlighted(lineCode);
+    const isHighlighted = highlightedLineIds.includes(lineCode);
 
     if (isHighlighted) {
       return 1.0; // Full opacity for selected lines
-    } else if (highlightMode === 'highlight') {
-      return 0.25; // 25% opacity for non-selected lines in highlight mode
-    } else {
+    } else if (isolateMode) {
       return 0.0; // Invisible for non-selected lines in isolate mode
+    } else {
+      return 0.25; // 25% opacity for non-selected lines in highlight mode
     }
-  }, [highlightMode, highlightedLineIds, isLineHighlighted]);
+  }, [highlightedLineIds, isolateMode]);
 
   /**
    * Memoized train opacities map
@@ -252,7 +274,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
    * Performance: Avoids recalculating opacities on every render
    */
   const trainOpacities = useMemo(() => {
-    if (highlightMode === 'none') {
+    if (highlightedLineIds.length === 0) {
       return null; // No opacity map needed when no highlighting
     }
     const opacities = new Map<string, number>();
@@ -260,7 +282,7 @@ export function TrainLayer3D({ map, beforeId, onRaycastResult, onLoadingChange, 
       opacities.set(train.vehicleKey, getTrainOpacity(train));
     });
     return opacities;
-  }, [trains, highlightMode, getTrainOpacity]);
+  }, [trains, highlightedLineIds, getTrainOpacity]);
 
   /**
    * Fetches latest train positions from the API
