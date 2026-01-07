@@ -183,6 +183,16 @@ export async function loadMapUiState(
           selectedStationId: null,
           stationLoadError: null,
           transportFilters: { rodalies: true, metro: false, bus: false, tram: false, fgc: false },
+          networkHighlights: {
+            rodalies: { highlightMode: 'none', selectedLineIds: [] },
+            metro: { highlightMode: 'none', selectedLineIds: [] },
+            bus: { highlightMode: 'none', selectedLineIds: [] },
+            tram: { highlightMode: 'none', selectedLineIds: [] },
+            fgc: { highlightMode: 'none', selectedLineIds: [] },
+          },
+          modelSizes: { rodalies: 1.0, metro: 1.0, bus: 1.0, tram: 1.0, fgc: 1.0 },
+          activeControlTab: 'rodalies',
+          controlPanelMode: 'controls',
         };
       }
       const url = resolveManifestAssetUrl(path);
@@ -324,6 +334,16 @@ function normaliseMapUiState(
       tram: candidate?.transportFilters?.tram ?? false,
       fgc: candidate?.transportFilters?.fgc ?? false,
     },
+    networkHighlights: {
+      rodalies: { highlightMode: 'none', selectedLineIds: [] },
+      metro: { highlightMode: 'none', selectedLineIds: [] },
+      bus: { highlightMode: 'none', selectedLineIds: [] },
+      tram: { highlightMode: 'none', selectedLineIds: [] },
+      fgc: { highlightMode: 'none', selectedLineIds: [] },
+    },
+    modelSizes: { rodalies: 1.0, metro: 1.0, bus: 1.0, tram: 1.0, fgc: 1.0 },
+    activeControlTab: 'rodalies',
+    controlPanelMode: 'controls',
   };
 }
 
