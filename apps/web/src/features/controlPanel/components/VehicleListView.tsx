@@ -5,7 +5,7 @@
  * Shows active vehicles for the selected network tab.
  */
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { METRO_LINE_CONFIG } from '@/config/metroConfig';
 import { TRAM_LINE_CONFIG } from '@/config/tramConfig';
 import { FGC_LINE_CONFIG } from '@/config/fgcConfig';
 import { getBusRouteConfig } from '@/config/busConfig';
+import { loadRodaliesLines, loadStationList } from '@/lib/rodalies/dataLoader';
 import { NETWORK_TABS } from '../types';
 
 interface VehicleListViewProps {
@@ -31,7 +32,14 @@ interface VehicleListViewProps {
   className?: string;
 }
 
-function getLineColor(lineCode: string): string {
+function getLineColor(
+  lineCode: string,
+  rodaliesColors: Map<string, string>
+): string {
+  // Check Rodalies colors first (loaded from JSON)
+  const rodaliesColor = rodaliesColors.get(lineCode);
+  if (rodaliesColor) return rodaliesColor;
+
   // Check Metro config
   const metroConfig = METRO_LINE_CONFIG[lineCode];
   if (metroConfig) return metroConfig.color;
@@ -66,58 +74,124 @@ export function VehicleListView({
   const parentRef = useRef<HTMLDivElement>(null);
   const networkTab = NETWORK_TABS.find((t) => t.type === network);
 
-  // Get vehicles for current network
+  // Load Rodalies line colors
+  const [rodaliesColors, setRodaliesColors] = useState<Map<string, string>>(
+    () => new Map()
+  );
+
+  // Load Rodalies station names (for looking up nextStopId -> station name)
+  const [stationNames, setStationNames] = useState<Map<string, string>>(
+    () => new Map()
+  );
+
+  useEffect(() => {
+    // Load line colors
+    loadRodaliesLines()
+      .then((lines) => {
+        const colorMap = new Map<string, string>();
+        lines.forEach((line) => {
+          colorMap.set(line.short_code, `#${line.brand_color}`);
+        });
+        setRodaliesColors(colorMap);
+      })
+      .catch((err) => {
+        console.error('Failed to load Rodalies line colors:', err);
+      });
+
+    // Load station names for Rodalies
+    loadStationList()
+      .then((stations) => {
+        const nameMap = new Map<string, string>();
+        stations.forEach((station) => {
+          nameMap.set(station.id, station.name);
+        });
+        setStationNames(nameMap);
+      })
+      .catch((err) => {
+        console.error('Failed to load station names:', err);
+      });
+  }, []);
+
+  // Get vehicles for current network, sorted alphabetically by line code
   const vehicles = useMemo(() => {
+    let vehicleList: {
+      id: string;
+      lineCode: string;
+      destination: string;
+      arrivalMinutes: number | null;
+      lat: number | null;
+      lng: number | null;
+    }[] = [];
+
     switch (network) {
       case 'rodalies':
-        return rodaliesTrains.map((t) => ({
-          key: t.vehicleKey,
-          lineCode: t.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A',
-          status: t.status,
-          nextStop: t.nextStopId || '-',
+        vehicleList = rodaliesTrains.map((t) => ({
+          id: t.vehicleKey,
+          lineCode:
+            t.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A',
+          destination: t.nextStopId
+            ? stationNames.get(t.nextStopId) || t.nextStopId
+            : '-',
+          arrivalMinutes: null, // Rodalies API doesn't provide arrival time
           lat: t.latitude,
           lng: t.longitude,
         }));
+        break;
       case 'metro':
-        return metroPositions.map((v) => ({
-          key: v.vehicleKey,
+        vehicleList = metroPositions.map((v) => ({
+          id: v.vehicleKey,
           lineCode: v.lineCode,
-          status: v.status,
-          nextStop: v.nextStopName || '-',
+          destination: v.nextStopName || '-',
+          arrivalMinutes: v.arrivalMinutes ?? null,
           lat: v.latitude,
           lng: v.longitude,
         }));
+        break;
       case 'bus':
-        return busPositions.map((v) => ({
-          key: v.vehicleKey,
+        vehicleList = busPositions.map((v) => ({
+          id: v.vehicleKey,
           lineCode: v.lineCode,
-          status: v.status,
-          nextStop: v.nextStopName || '-',
+          destination: v.nextStopName || '-',
+          arrivalMinutes: v.arrivalMinutes ?? null,
           lat: v.latitude,
           lng: v.longitude,
         }));
+        break;
       case 'tram':
-        return tramPositions.map((v) => ({
-          key: v.vehicleKey,
+        vehicleList = tramPositions.map((v) => ({
+          id: v.vehicleKey,
           lineCode: v.lineCode,
-          status: v.status,
-          nextStop: v.nextStopName || '-',
+          destination: v.nextStopName || '-',
+          arrivalMinutes: v.arrivalMinutes ?? null,
           lat: v.latitude,
           lng: v.longitude,
         }));
+        break;
       case 'fgc':
-        return fgcPositions.map((v) => ({
-          key: v.vehicleKey,
+        vehicleList = fgcPositions.map((v) => ({
+          id: v.vehicleKey,
           lineCode: v.lineCode,
-          status: v.status,
-          nextStop: v.nextStopName || '-',
+          destination: v.nextStopName || '-',
+          arrivalMinutes: v.arrivalMinutes ?? null,
           lat: v.latitude,
           lng: v.longitude,
         }));
-      default:
-        return [];
+        break;
     }
-  }, [network, rodaliesTrains, metroPositions, busPositions, tramPositions, fgcPositions]);
+
+    // Sort alphabetically by line code (with numeric awareness)
+    return vehicleList.sort((a, b) =>
+      a.lineCode.localeCompare(b.lineCode, 'en', { numeric: true })
+    );
+  }, [
+    network,
+    rodaliesTrains,
+    metroPositions,
+    busPositions,
+    tramPositions,
+    fgcPositions,
+    stationNames,
+  ]);
 
   const virtualizer = useVirtualizer({
     count: vehicles.length,
@@ -193,21 +267,35 @@ export function VehicleListView({
                 }}
               >
                 <button
-                  onClick={() => vehicle.lat && vehicle.lng && onVehicleClick?.(vehicle.lat, vehicle.lng)}
+                  onClick={() =>
+                    vehicle.lat &&
+                    vehicle.lng &&
+                    onVehicleClick?.(vehicle.lat, vehicle.lng)
+                  }
                   className="w-full h-full px-3 py-2 flex items-center gap-3 text-left hover:bg-muted/50 transition-colors border-b"
                 >
                   <span
                     className="w-10 h-6 flex items-center justify-center rounded text-xs font-bold text-white shrink-0"
-                    style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
+                    style={{
+                      backgroundColor: getLineColor(
+                        vehicle.lineCode,
+                        rodaliesColors
+                      ),
+                    }}
                   >
                     {vehicle.lineCode}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">
-                      {vehicle.nextStop}
+                    <div className="text-xs text-muted-foreground truncate">
+                      {vehicle.id}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {vehicle.status || 'In service'}
+                    <div className="text-sm font-medium truncate flex items-center gap-1">
+                      <span>→ {vehicle.destination}</span>
+                      {vehicle.arrivalMinutes !== null && (
+                        <span className="text-xs text-muted-foreground">
+                          ({vehicle.arrivalMinutes} min)
+                        </span>
+                      )}
                     </div>
                   </div>
                 </button>

@@ -926,6 +926,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           visible={transportFilters.rodalies}
           highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
           isolateMode={networkHighlights.rodalies.highlightMode === 'isolate'}
+          modelScale={modelSizes.rodalies}
         />
       ) : null}
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}

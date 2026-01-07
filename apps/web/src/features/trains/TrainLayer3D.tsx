@@ -95,6 +95,12 @@ export interface TrainLayer3DProps {
    * - true: hide non-highlighted trains completely (isolate mode)
    */
   isolateMode?: boolean;
+
+  /**
+   * User-controlled model scale multiplier (from control panel slider)
+   * Range: 0.5 to 2.0, default 1.0
+   */
+  modelScale?: number;
 }
 
 export interface RaycastDebugInfo {
@@ -160,6 +166,7 @@ export function TrainLayer3D({
   visible = true,
   highlightedLineIds = [],
   isolateMode = false,
+  modelScale = 1.0,
 }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
@@ -1561,6 +1568,15 @@ export function TrainLayer3D({
       map.off('zoom', handleZoomChange);
     };
   }, [map]);
+
+  /**
+   * Effect: Update user-controlled model scale
+   */
+  useEffect(() => {
+    if (meshManagerRef.current) {
+      meshManagerRef.current.setUserScale(modelScale);
+    }
+  }, [modelScale]);
 
   /**
    * Effect: Handle pointer hover/click using screen-space distance
