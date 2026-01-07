@@ -122,7 +122,30 @@ export interface LegendEntry {
 
 export type MapHighlightMode = 'none' | 'highlight' | 'isolate';
 
-export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo' | 'stationInfo' | 'transportFilter' | 'transitInfo';
+export type ActivePanel = 'none' | 'legend' | 'settings' | 'trainInfo' | 'stationInfo' | 'transportFilter' | 'transitInfo' | 'controlPanel';
+
+/**
+ * Control panel mode - switches between controls and vehicle list views
+ */
+export type ControlPanelMode = 'controls' | 'vehicles';
+
+/**
+ * Per-network highlight state for line selection
+ */
+export interface NetworkHighlightState {
+  highlightMode: MapHighlightMode;
+  selectedLineIds: string[];
+}
+
+/**
+ * Highlight state for all networks
+ */
+export type NetworkHighlightMap = Record<TransportType, NetworkHighlightState>;
+
+/**
+ * Per-network 3D model scale (0.5 to 2.0, where 1.0 = 100%)
+ */
+export type ModelSizeMap = Record<TransportType, number>;
 
 /**
  * Transport types that can be filtered on/off
@@ -150,6 +173,11 @@ export interface MapUIState {
   selectedStationId: string | null; // Currently selected station
   stationLoadError: string | null; // Error message from station data load failure
   transportFilters: TransportFilterState; // Visibility filters for transport types
+  // Control panel state
+  networkHighlights: NetworkHighlightMap; // Per-network highlight/isolate state
+  modelSizes: ModelSizeMap; // Per-network 3D model scale
+  activeControlTab: TransportType; // Currently selected tab in control panel
+  controlPanelMode: ControlPanelMode; // Control vs vehicle list mode
 }
 
 export interface ManifestLineEntry {

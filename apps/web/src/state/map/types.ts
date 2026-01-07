@@ -2,6 +2,7 @@ import type { Map as MapboxMap } from 'mapbox-gl';
 
 import type {
   ActivePanel,
+  ControlPanelMode,
   MapHighlightMode,
   MapUIState,
   MapViewport,
@@ -36,6 +37,15 @@ export interface MapActions {
   setStationLoadError(message: string | null): void;
   setTransportFilter(type: TransportType, visible: boolean): void;
   toggleTransportFilter(type: TransportType): void;
+  // Control panel actions
+  setNetworkHighlight(network: TransportType, lineId: string, mode: MapHighlightMode): void;
+  toggleNetworkLine(network: TransportType, lineId: string): void;
+  clearNetworkHighlight(network: TransportType): void;
+  setModelSize(network: TransportType, size: number): void;
+  setExclusiveNetwork(network: TransportType): void;
+  toggleNetworkMulti(network: TransportType): void;
+  setActiveControlTab(network: TransportType): void;
+  setControlPanelMode(mode: ControlPanelMode): void;
 }
 
 export interface MapHighlightSelectors {

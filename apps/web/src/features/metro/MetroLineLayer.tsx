@@ -236,7 +236,7 @@ export function MetroLineLayer({
         18, 10,
       ]);
     }
-  }, [map, visible, highlightedLines, isolateMode]);
+  }, [map, visible, highlightedLines, isolateMode, geoJSON, styleReady]);
 
   return null;
 }

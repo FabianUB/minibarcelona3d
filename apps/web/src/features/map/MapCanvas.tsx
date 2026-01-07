@@ -15,7 +15,7 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 // import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
-import { VehicleListButton } from '../trains/VehicleListButton';
+import { ControlPanel } from '../controlPanel';
 import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
@@ -23,7 +23,7 @@ import { MetroLineLayer, MetroStationLayer } from '../metro';
 import { BusLineLayer, BusStopLayer } from '../bus';
 import { TramLineLayer, TramStopLayer } from '../tram';
 import { FGCLineLayer, FGCStationLayer } from '../fgc';
-import { TransportFilterButton } from '../filter';
+// TransportFilterButton replaced by ControlPanel
 import { TransitVehicleLayer3D } from '../transit';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
@@ -106,17 +106,8 @@ export function MapCanvas() {
   const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
   const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
-  const [getMeshPosition, setGetMeshPosition] = useState<((vehicleKey: string) => [number, number] | null) | null>(null);
   const [debugToolsEnabled, setDebugToolsEnabled] = useState(
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
-  );
-
-  // Memoize callbacks for TrainLayer3D to prevent infinite re-render loops
-  const handleMeshPositionGetterReady = useCallback(
-    (getter: (vehicleKey: string) => [number, number] | null) => {
-      setGetMeshPosition(() => getter);
-    },
-    []
   );
 
   const mapActions = useMapActions();
@@ -126,7 +117,8 @@ export function MapCanvas() {
     setViewport,
     selectStation,
   } = mapActions;
-  const { highlightMode, highlightedLineId, highlightedLineIds } = useMapHighlightSelectors();
+  // Note: useMapHighlightSelectors still needed for backwards compatibility with other components
+  useMapHighlightSelectors();
   const { ui, mapInstance, isMapLoaded } = useMapState();
   const {
     effectiveViewport,
@@ -135,7 +127,7 @@ export function MapCanvas() {
   } = useDefaultViewport();
 
   const isHighContrast = ui.isHighContrast;
-  const { transportFilters } = ui;
+  const { transportFilters, networkHighlights, modelSizes } = ui;
 
   // Keep a ref to current transportFilters for use in closures
   const transportFiltersRef = useRef(transportFilters);
@@ -631,11 +623,17 @@ export function MapCanvas() {
       return;
     }
 
+    // Use networkHighlights.rodalies for the new control panel system
+    const rodaliesHighlight = networkHighlights.rodalies;
+    const effectiveHighlightMode = rodaliesHighlight.selectedLineIds.length > 0
+      ? rodaliesHighlight.highlightMode
+      : 'none';
+
     // Get dynamic paint properties based on current highlight state
     const paintProperties = getLinePaintProperties({
-      highlightMode,
-      highlightedLineId,
-      highlightedLineIds,
+      highlightMode: effectiveHighlightMode,
+      highlightedLineId: rodaliesHighlight.selectedLineIds[0] || null,
+      highlightedLineIds: rodaliesHighlight.selectedLineIds,
       isHighContrast,
     });
 
@@ -645,7 +643,7 @@ export function MapCanvas() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.setPaintProperty(RODALIES_LINE_LAYER_ID, property as any, value);
     });
-  }, [highlightMode, highlightedLineId, highlightedLineIds, isHighContrast]);
+  }, [networkHighlights.rodalies, isHighContrast]);
 
   // Control Rodalies line layer visibility based on transport filter
   useEffect(() => {
@@ -799,7 +797,12 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {isTrainDataLoading && mapInstance && isMapLoaded ? <TrainLoadingSkeleton /> : null}
       {/* Metro line geometries (below stations) */}
       {mapInstance && isMapLoaded ? (
-        <MetroLineLayer map={mapInstance} visible={transportFilters.metro} />
+        <MetroLineLayer
+          map={mapInstance}
+          visible={transportFilters.metro}
+          highlightedLines={networkHighlights.metro.selectedLineIds}
+          isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
+        />
       ) : null}
       {/* Metro station markers */}
       {mapInstance && isMapLoaded ? (
@@ -817,11 +820,17 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           map={mapInstance}
           networkType="metro"
           visible={transportFilters.metro}
+          modelScale={modelSizes.metro}
         />
       ) : null}
       {/* Bus route lines (below stops) */}
       {mapInstance && isMapLoaded ? (
-        <BusLineLayer map={mapInstance} visible={transportFilters.bus} />
+        <BusLineLayer
+          map={mapInstance}
+          visible={transportFilters.bus}
+          highlightedRoutes={networkHighlights.bus.selectedLineIds}
+          isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
+        />
       ) : null}
       {/* Bus stop markers */}
       {mapInstance && isMapLoaded ? (
@@ -839,6 +848,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           map={mapInstance}
           networkType="bus"
           visible={transportFilters.bus}
+          modelScale={modelSizes.bus}
         />
       ) : null}
       {/* TRAM line geometries */}
@@ -861,6 +871,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           map={mapInstance}
           networkType="tram"
           visible={transportFilters.tram}
+          modelScale={modelSizes.tram}
         />
       ) : null}
       {/* FGC line geometries */}
@@ -883,14 +894,15 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           map={mapInstance}
           networkType="fgc"
           visible={transportFilters.fgc}
+          modelScale={modelSizes.fgc}
         />
       ) : null}
       {/* Rodalies station markers layer */}
       {mapInstance && isMapLoaded ? (
         <StationLayer
           map={mapInstance}
-          highlightedLineIds={highlightedLineIds}
-          highlightMode={highlightMode}
+          highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
+          highlightMode={networkHighlights.rodalies.highlightMode}
           onStationClick={selectStation}
           visible={transportFilters.rodalies}
         />
@@ -903,16 +915,13 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           onRaycastResult={debugToolsEnabled ? setRaycastDebugInfo : undefined}
           onLoadingChange={setIsTrainDataLoading}
           onTrainsChange={setTrainPositions}
-          onMeshPositionGetterReady={handleMeshPositionGetterReady}
           visible={transportFilters.rodalies}
         />
       ) : null}
-      {/* Vehicle List Button - shows trains, metros, and buses in a tabbed interface */}
+      {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
       {mapInstance && isMapLoaded ? (
-        <VehicleListButton trains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
+        <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} />
       ) : null}
-      {/* Transport Filter Button */}
-      <TransportFilterButton />
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
           <button

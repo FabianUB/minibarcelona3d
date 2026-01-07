@@ -1,8 +1,7 @@
 import './App.css';
 
 import { MapCanvas } from './features/map';
-import { LegendPanel } from './features/legend';
-import { SettingsMenu } from './features/settings';
+// LegendPanel and SettingsMenu are now integrated into ControlPanel
 import { TrainInfoPanel } from './features/trains/TrainInfoPanel';
 import { StationInfoPanelContainer } from './features/stations/StationInfoPanelContainer';
 import { TransitInfoPanel } from './features/transit';
@@ -17,8 +16,7 @@ function App() {
         <TransitStateProvider>
           <div className="app-shell" data-testid="app-shell">
             <MapCanvas />
-            <LegendPanel />
-            <SettingsMenu />
+            {/* LegendPanel and SettingsMenu removed - now in ControlPanel */}
             <TrainInfoPanel />
             <TransitInfoPanel />
             <StationInfoPanelContainer />

@@ -34,6 +34,8 @@ export interface TransitVehicleLayer3DProps {
   beforeId?: string;
   /** Callback when loading state changes */
   onLoadingChange?: (isLoading: boolean) => void;
+  /** Model scale multiplier (0.5 to 2.0, default 1.0) */
+  modelScale?: number;
 }
 
 /**
@@ -47,6 +49,7 @@ export function TransitVehicleLayer3D({
   visible = true,
   beforeId,
   onLoadingChange,
+  modelScale = 1.0,
 }: TransitVehicleLayer3DProps) {
   const [sceneReady, setSceneReady] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -221,8 +224,11 @@ export function TransitVehicleLayer3D({
           bus: 'bus',
           rodalies: 'civia', // Not used here
         };
+        // Apply modelScale to the base vehicle size
+        const baseSize = vehicleSizes[networkType] ?? 15;
+        const scaledSize = baseSize * modelScale;
         const meshManager = new TransitMeshManager(scene, {
-          vehicleSizeMeters: vehicleSizes[networkType] ?? 15,
+          vehicleSizeMeters: scaledSize,
           modelType: modelTypes[networkType] ?? 'metro',
         });
         meshManagerRef.current = meshManager;
@@ -293,7 +299,7 @@ export function TransitVehicleLayer3D({
         console.log(`TransitVehicleLayer3D [${networkType}]: Layer removed`);
       },
     }),
-    [layerId, map, networkType]
+    [layerId, map, networkType, modelScale]
   );
 
   /**

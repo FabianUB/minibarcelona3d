@@ -157,7 +157,7 @@ export function FGCLineLayer({
 
     map.setPaintProperty(LINE_LAYER_ID, 'line-opacity', visible ? 0.9 : 0);
     map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', visible ? 0.8 : 0);
-  }, [map, visible]);
+  }, [map, visible, geoJSON, styleReady]);
 
   return null;
 }

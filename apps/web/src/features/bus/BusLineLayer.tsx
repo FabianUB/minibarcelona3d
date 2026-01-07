@@ -237,7 +237,7 @@ export function BusLineLayer({
         18, 6,
       ]);
     }
-  }, [map, visible, highlightedRoutes, isolateMode]);
+  }, [map, visible, highlightedRoutes, isolateMode, geoJSON, styleReady]);
 
   return null;
 }
