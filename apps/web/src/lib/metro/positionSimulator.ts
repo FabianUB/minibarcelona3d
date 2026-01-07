@@ -152,15 +152,26 @@ function findClosestDistanceOnLine(
 }
 
 /**
+ * Station info result including distance to next station
+ */
+interface StationInfoResult {
+  previousStopId: string | null;
+  nextStopId: string | null;
+  previousStopName: string | null;
+  nextStopName: string | null;
+  distanceToNextStop: number | null;
+}
+
+/**
  * Find previous and next station for a given distance along the line
  */
 function findStationsBetween(
   distance: number,
   stations: StationWithDistance[],
   direction: TravelDirection
-): { previousStopId: string | null; nextStopId: string | null; previousStopName: string | null; nextStopName: string | null } {
+): StationInfoResult {
   if (stations.length === 0) {
-    return { previousStopId: null, nextStopId: null, previousStopName: null, nextStopName: null };
+    return { previousStopId: null, nextStopId: null, previousStopName: null, nextStopName: null, distanceToNextStop: null };
   }
 
   // For direction 0 (outbound): increasing distance
@@ -198,11 +209,30 @@ function findStationsBetween(
     }
   }
 
+  // Calculate distance to next stop
+  let distanceToNextStop: number | null = null;
+  if (nextStation) {
+    if (direction === 0) {
+      distanceToNextStop = nextStation.distance - distance;
+      // Handle wrap-around
+      if (distanceToNextStop < 0) {
+        distanceToNextStop = null;
+      }
+    } else {
+      distanceToNextStop = distance - nextStation.distance;
+      // Handle wrap-around
+      if (distanceToNextStop < 0) {
+        distanceToNextStop = null;
+      }
+    }
+  }
+
   return {
     previousStopId: prevStation?.id ?? null,
     nextStopId: nextStation?.id ?? null,
     previousStopName: prevStation?.name ?? null,
     nextStopName: nextStation?.name ?? null,
+    distanceToNextStop,
   };
 }
 
@@ -324,6 +354,13 @@ export async function generateLinePositions(
       // Find previous and next stations
       const stationInfo = findStationsBetween(finalDistance, orderedStations, direction);
 
+      // Calculate arrival time in minutes
+      let arrivalMinutes: number | undefined;
+      if (stationInfo.distanceToNextStop !== null && speedMetersPerSecond > 0) {
+        const arrivalSeconds = stationInfo.distanceToNextStop / speedMetersPerSecond;
+        arrivalMinutes = Math.ceil(arrivalSeconds / 60);
+      }
+
       vehicles.push({
         vehicleKey: `metro-${lineCode}-${direction}-${i}`,
         networkType: 'metro',
@@ -345,6 +382,7 @@ export async function generateLinePositions(
         distanceAlongLine: finalDistance,
         speedMetersPerSecond,
         lineTotalLength: railway.totalLength,
+        arrivalMinutes,
         lineColor,
       });
     }
