@@ -207,6 +207,15 @@
     "order": 6
   },
   {
+    "id": "R7",
+    "name": "Barcelona-Fabra i Puig - Cerdanyola-Universitat",
+    "short_code": "R7",
+    "brand_color": "B57CBB",
+    "default_pattern": "solid-r7",
+    "high_contrast_pattern": "hatched-r7",
+    "order": 7
+  },
+  {
     "id": "R8",
     "name": "-",
     "short_code": "R8",
@@ -214,6 +223,42 @@
     "default_pattern": "solid-r8",
     "high_contrast_pattern": "hatched-r8",
     "order": 8
+  },
+  {
+    "id": "RG1",
+    "name": "Maçanet-Massanes - Figueres",
+    "short_code": "RG1",
+    "brand_color": "409EF5",
+    "default_pattern": "solid-rg1",
+    "high_contrast_pattern": "hatched-rg1",
+    "order": 9
+  },
+  {
+    "id": "RL3",
+    "name": "Lleida - Cervera",
+    "short_code": "RL3",
+    "brand_color": "B6AE33",
+    "default_pattern": "solid-rl3",
+    "high_contrast_pattern": "hatched-rl3",
+    "order": 10
+  },
+  {
+    "id": "RL4",
+    "name": "Terrassa Estació del Nord - Lleida",
+    "short_code": "RL4",
+    "brand_color": "F7A30D",
+    "default_pattern": "solid-rl4",
+    "high_contrast_pattern": "hatched-rl4",
+    "order": 11
+  },
+  {
+    "id": "RT2",
+    "name": "Salou-Port Aventura - Tarragona",
+    "short_code": "RT2",
+    "brand_color": "F965DE",
+    "default_pattern": "solid-rt2",
+    "high_contrast_pattern": "hatched-rt2",
+    "order": 12
   },
   {
     "id": "R11",
