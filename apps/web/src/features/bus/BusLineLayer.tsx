@@ -207,28 +207,17 @@ export function BusLineLayer({
     map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', casingOpacity);
 
     // Adjust line width for highlighted routes
+    // Note: zoom expressions must be at top level, so we use case inside interpolate stops
     if (hasHighlight) {
+      const isHighlighted: mapboxgl.Expression = ['in', ['get', 'line_code'], ['literal', highlightedRoutes]];
       const widthExpression: mapboxgl.Expression = [
-        'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
-        [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 2,
-          13, 3,
-          15, 5,
-          18, 10,
-        ],
-        [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 1,
-          13, 2,
-          15, 3,
-          18, 6,
-        ],
+        'interpolate',
+        ['exponential', 1.5],
+        ['zoom'],
+        10, ['case', isHighlighted, 2, 1],
+        13, ['case', isHighlighted, 3, 2],
+        15, ['case', isHighlighted, 5, 3],
+        18, ['case', isHighlighted, 10, 6],
       ];
       map.setPaintProperty(LINE_LAYER_ID, 'line-width', widthExpression);
     } else {
