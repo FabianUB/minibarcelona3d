@@ -190,9 +190,20 @@ export function TransitVehicleLayer3D({
   }, [isDataLoading, modelLoaded, onLoadingChange]);
 
   // Update transit state with data source status
+  // Bus/Tram/FGC are always schedule-based (no real-time GPS data available)
+  // Metro is realtime only if iMetro API works (not simulation fallback)
   useEffect(() => {
     if (!isDataReady) return;
-    const source: DataSourceType = isSimulationFallback ? 'schedule' : 'realtime';
+
+    let source: DataSourceType;
+    if (networkType === 'metro') {
+      // Metro can be realtime (iMetro API) or schedule (simulation fallback)
+      source = isSimulationFallback ? 'schedule' : 'realtime';
+    } else {
+      // Bus, Tram, FGC are always schedule-based
+      source = 'schedule';
+    }
+
     setDataSource(networkType, source);
   }, [isDataReady, isSimulationFallback, networkType, setDataSource]);
 
