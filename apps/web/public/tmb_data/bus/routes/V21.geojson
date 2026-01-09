@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.221.2998",
-        "line_code": "V21",
-        "name": "Pg. Mar\u00edtim / Montbau",
-        "color": "#6AB023",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.195915,
@@ -1593,8 +1583,17 @@
             2.141478,
             41.433041
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#6AB023",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "V21",
+        "route_name": "Pg. Marítim / Montbau"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

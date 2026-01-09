@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.211.3019",
-        "line_code": "V11",
-        "name": "Estaci\u00f3 Mar\u00edtima (WTC) / Bonanova",
-        "color": "#6AB023",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.179771,
@@ -893,8 +883,17 @@
             2.132707,
             41.404205
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#6AB023",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "V11",
+        "route_name": "Estació Marítima (WTC) / Bonanova"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

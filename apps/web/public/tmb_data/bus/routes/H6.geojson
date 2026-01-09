@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.206.2995",
-        "line_code": "H6",
-        "name": "Zona Universit\u00e0ria / Onze de Setembre",
-        "color": "#003888",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.194859,
@@ -1801,8 +1791,17 @@
             2.110928,
             41.384563
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#003888",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "H6",
+        "route_name": "Zona Universitària / Onze de Setembre"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

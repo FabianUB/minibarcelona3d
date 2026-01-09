@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.231.3900",
-        "line_code": "V31",
-        "name": "F\u00f2rum / Trinitat Vella",
-        "color": "#6AB023",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.218572,
@@ -1641,8 +1631,17 @@
             2.189681,
             41.448105
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#6AB023",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "V31",
+        "route_name": "Fòrum / Trinitat Vella"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.210.3078",
-        "line_code": "H10",
-        "name": "Pl. Sants / Ol\u00edmpic de Badalona",
-        "color": "#003888",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.234138,
@@ -985,8 +975,17 @@
             2.135587,
             41.375527
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#003888",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "H10",
+        "route_name": "Pl. Sants / Olímpic de Badalona"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

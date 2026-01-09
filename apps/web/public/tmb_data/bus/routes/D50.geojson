@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.250.3051",
-        "line_code": "D50",
-        "name": "Paral\u00b7lel / Ciutat Meridiana",
-        "color": "#93107E",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.176286,
@@ -2245,8 +2235,17 @@
             2.166121,
             41.376456
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#93107E",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "D50",
+        "route_name": "Paral·lel / Ciutat Meridiana"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

@@ -1,10 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.182434,
@@ -1918,15 +1915,16 @@
             2.205194,
             41.423678
           ]
-        ]
+        ],
+        "type": "LineString"
       },
       "properties": {
-        "route_id": "1.4.1",
-        "line_code": "L4",
-        "name": "La Pau - Trinitat Nova",
         "color": "#F7A30E",
-        "text_color": "#000000"
-      }
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "line_code": "L4"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

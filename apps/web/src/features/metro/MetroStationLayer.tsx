@@ -126,8 +126,19 @@ export function MetroStationLayer({
           ],
           'text-anchor': 'top',
           'text-offset': [0, 0.8],
-          'text-allow-overlap': false,
-          'text-optional': true,
+          // Allow overlap at high zoom so all station names are visible
+          'text-allow-overlap': [
+            'step',
+            ['zoom'],
+            false,
+            17, true,
+          ],
+          'text-optional': [
+            'step',
+            ['zoom'],
+            true,
+            17, false,
+          ],
         },
         paint: {
           'text-color': '#1a1a1a',

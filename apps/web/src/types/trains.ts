@@ -74,6 +74,7 @@ export interface TrainPosition {
   routeId: string | null;
   status: VehicleStatus;
   polledAtUtc: string;
+  predictedArrivalUtc?: string | null;
 }
 
 /**

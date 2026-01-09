@@ -34,6 +34,7 @@ export function MetroLineLayer({
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
 
   // Load Metro line geometries
@@ -130,12 +131,16 @@ export function MetroLineLayer({
         },
       });
 
+      // Signal that layers are ready for visibility updates
+      setLayersReady(true);
+
     } catch {
       // Layer addition failed - source may have been removed
     }
 
     // Cleanup on unmount
     return () => {
+      setLayersReady(false);
       if (!map.isStyleLoaded()) return;
 
       try {
@@ -157,7 +162,7 @@ export function MetroLineLayer({
 
   // Update visibility and highlighting
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !layersReady) return;
     if (!map.getLayer(LINE_LAYER_ID) || !map.getLayer(LINE_CASING_LAYER_ID)) return;
 
     const hasHighlight = highlightedLines.length > 0;
@@ -236,7 +241,7 @@ export function MetroLineLayer({
         18, 10,
       ]);
     }
-  }, [map, visible, highlightedLines, isolateMode, geoJSON, styleReady]);
+  }, [map, visible, highlightedLines, isolateMode, layersReady]);
 
   return null;
 }

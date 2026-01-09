@@ -28,6 +28,7 @@ export function FGCLineLayer({
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
 
   // Load FGC line geometries
@@ -96,7 +97,7 @@ export function FGCLineLayer({
             15, 8,
             18, 14,
           ],
-          'line-opacity': visible ? 0.8 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
 
@@ -120,9 +121,12 @@ export function FGCLineLayer({
             15, 5,
             18, 10,
           ],
-          'line-opacity': visible ? 0.9 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
+
+      // Signal that layers are ready for visibility updates
+      setLayersReady(true);
 
     } catch {
       // Layer addition failed
@@ -130,6 +134,7 @@ export function FGCLineLayer({
 
     // Cleanup on unmount
     return () => {
+      setLayersReady(false);
       if (!map.isStyleLoaded()) return;
 
       try {
@@ -152,12 +157,12 @@ export function FGCLineLayer({
 
   // Update visibility
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !layersReady) return;
     if (!map.getLayer(LINE_LAYER_ID) || !map.getLayer(LINE_CASING_LAYER_ID)) return;
 
     map.setPaintProperty(LINE_LAYER_ID, 'line-opacity', visible ? 0.9 : 0);
     map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', visible ? 0.8 : 0);
-  }, [map, visible, geoJSON, styleReady]);
+  }, [map, visible, layersReady]);
 
   return null;
 }

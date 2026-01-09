@@ -1,10 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.111621,
@@ -2678,15 +2675,16 @@
             2.071152,
             41.288295
           ]
-        ]
+        ],
+        "type": "LineString"
       },
       "properties": {
-        "route_id": "1.91.1",
-        "line_code": "L9S",
-        "name": "Aeroport T1 - Zona Universitària",
         "color": "#FB712B",
-        "text_color": "#FFFFFF"
-      }
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "line_code": "L9S"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }
