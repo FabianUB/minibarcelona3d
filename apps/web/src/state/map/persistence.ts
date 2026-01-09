@@ -25,6 +25,7 @@ export interface MapPreferences {
   modelSizes?: ModelSizeMap;
   networkHighlights?: NetworkHighlightMap;
   activeControlTab?: TransportType;
+  showStations?: boolean;
   // Future preferences can be added here
   [key: string]: unknown;
 }

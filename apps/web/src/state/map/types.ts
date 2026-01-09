@@ -46,6 +46,8 @@ export interface MapActions {
   toggleNetworkMulti(network: TransportType): void;
   setActiveControlTab(network: TransportType): void;
   setControlPanelMode(mode: ControlPanelMode): void;
+  toggleShowStations(): void;
+  setShowStations(show: boolean): void;
 }
 
 export interface MapHighlightSelectors {

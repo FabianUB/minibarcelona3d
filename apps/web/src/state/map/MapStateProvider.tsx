@@ -78,7 +78,9 @@ type MapAction =
   | { type: 'set-exclusive-network'; payload: TransportType }
   | { type: 'toggle-network-multi'; payload: TransportType }
   | { type: 'set-active-control-tab'; payload: TransportType }
-  | { type: 'set-control-panel-mode'; payload: ControlPanelMode };
+  | { type: 'set-control-panel-mode'; payload: ControlPanelMode }
+  | { type: 'toggle-show-stations' }
+  | { type: 'set-show-stations'; payload: boolean };
 
 /**
  * Create initial UI state with preferences loaded from localStorage
@@ -135,6 +137,7 @@ function createInitialUiState(): MapUIState {
     selectedStationId: null,
     stationLoadError: null,
     transportFilters,
+    showStations: getPreference('showStations', true), // Show stations by default
     // Control panel state
     networkHighlights,
     modelSizes,
@@ -401,6 +404,22 @@ function mapReducer(state: MapState, action: MapAction): MapState {
           controlPanelMode: action.payload,
         },
       };
+    case 'toggle-show-stations':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showStations: !state.ui.showStations,
+        },
+      };
+    case 'set-show-stations':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showStations: action.payload,
+        },
+      };
     default:
       return state;
   }
@@ -426,6 +445,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         modelSizes: state.ui.modelSizes,
         networkHighlights: state.ui.networkHighlights,
         activeControlTab: state.ui.activeControlTab,
+        showStations: state.ui.showStations,
       });
     }, 500);
 
@@ -434,7 +454,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab, state.ui.showStations]);
 
   const actions = useMemo<MapActions>(
     () => ({
@@ -528,6 +548,12 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       setControlPanelMode(mode) {
         dispatch({ type: 'set-control-panel-mode', payload: mode });
+      },
+      toggleShowStations() {
+        dispatch({ type: 'toggle-show-stations' });
+      },
+      setShowStations(show) {
+        dispatch({ type: 'set-show-stations', payload: show });
       },
     }),
     [dispatch],
