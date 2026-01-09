@@ -35,6 +35,9 @@ interface BusRouteListProps {
   className?: string;
 }
 
+// Long press duration in ms
+const LONG_PRESS_DURATION = 500;
+
 /**
  * Get the prefix group for a route code
  */
@@ -57,6 +60,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
 
   const networkHighlight = ui.networkHighlights.bus;
   const hasSelection = networkHighlight.selectedLineIds.length > 0;
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Load bus routes from manifest
   useEffect(() => {
@@ -113,19 +117,36 @@ export function BusRouteList({ className }: BusRouteListProps) {
     overscan: 10,
   });
 
-  const handleRouteClick = useCallback(
+  const handleMouseDown = useCallback(
     (routeCode: string) => {
-      toggleNetworkLine('bus', routeCode);
-    },
-    [toggleNetworkLine]
-  );
-
-  const handleRouteLongPress = useCallback(
-    (routeCode: string) => {
-      setNetworkHighlight('bus', routeCode, 'isolate');
+      const timer = setTimeout(() => {
+        // Long press - isolate this route
+        setNetworkHighlight('bus', routeCode, 'isolate');
+        setLongPressTimer(null);
+      }, LONG_PRESS_DURATION);
+      setLongPressTimer(timer);
     },
     [setNetworkHighlight]
   );
+
+  const handleMouseUp = useCallback(
+    (routeCode: string) => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        setLongPressTimer(null);
+        // Short click - toggle highlight
+        toggleNetworkLine('bus', routeCode);
+      }
+    },
+    [longPressTimer, toggleNetworkLine]
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
 
   const handleClear = useCallback(() => {
     clearNetworkHighlight('bus');
@@ -252,14 +273,19 @@ export function BusRouteList({ className }: BusRouteListProps) {
                 }}
               >
                 <button
-                  onClick={() => handleRouteClick(route.route_code)}
-                  onDoubleClick={() => handleRouteLongPress(route.route_code)}
+                  onMouseDown={() => handleMouseDown(route.route_code)}
+                  onMouseUp={() => handleMouseUp(route.route_code)}
+                  onMouseLeave={handleMouseLeave}
+                  onTouchStart={() => handleMouseDown(route.route_code)}
+                  onTouchEnd={() => handleMouseUp(route.route_code)}
+                  onTouchCancel={handleMouseLeave}
                   className={cn(
                     'w-full h-full px-3 flex items-center gap-2 text-left',
                     'hover:bg-muted/50 transition-colors',
                     highlighted && 'bg-yellow-50 dark:bg-yellow-950',
                     dimmed && 'opacity-20'
                   )}
+                  title="Click to highlight, hold to isolate"
                 >
                   <span
                     className="w-8 h-6 flex items-center justify-center rounded text-xs font-semibold text-white"
