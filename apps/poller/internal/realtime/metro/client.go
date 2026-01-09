@@ -21,6 +21,10 @@ const (
 	iMetroAPIURL           = "https://api.tmb.cat/v1/imetro/estacions"
 	defaultSegmentTimeSecs = 120 // assumed travel time between adjacent stops
 	averageSpeedMPS        = 8.33 // ~30 km/h
+	// maxArrivalSeconds filters out trains that are too far away.
+	// Only trains arriving within this time are considered "active" on the network.
+	// 300 seconds (5 minutes) is roughly the time for a train to traverse 2-3 stations.
+	maxArrivalSeconds = 300
 )
 
 // Poller handles real-time polling of Metro iMetro API
@@ -183,8 +187,26 @@ func (p *Poller) Poll(ctx context.Context) error {
 		return nil
 	}
 
+	// Filter arrivals to only include trains that are close (within maxArrivalSeconds).
+	// This prevents counting trains that are far away but predicted to arrive eventually.
+	// Without this filter, the API returns ~900+ arrivals for all future trains,
+	// but we only want to show trains currently on the network (~138).
+	filteredArrivals := make([]TrainArrival, 0, len(arrivals))
+	for _, a := range arrivals {
+		if a.SecondsToNext <= maxArrivalSeconds {
+			filteredArrivals = append(filteredArrivals, a)
+		}
+	}
+
+	log.Printf("Metro: filtered %d arrivals to %d (within %ds)", len(arrivals), len(filteredArrivals), maxArrivalSeconds)
+
+	if len(filteredArrivals) == 0 {
+		log.Println("Metro: no arrivals within threshold")
+		return nil
+	}
+
 	// Group arrivals by train
-	trainGroups := p.groupArrivalsByTrain(arrivals)
+	trainGroups := p.groupArrivalsByTrain(filteredArrivals)
 
 	// Estimate positions
 	var positions []EstimatedPosition
