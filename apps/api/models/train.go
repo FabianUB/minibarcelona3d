@@ -97,13 +97,14 @@ func (t *Train) Validate() error {
 // Subset of Train for frequent position updates (Phase B)
 // Used in /api/trains/positions endpoint that polls every 15-30s
 type TrainPosition struct {
-	VehicleKey  string    `json:"vehicleKey"`
-	Latitude    *float64  `json:"latitude"`
-	Longitude   *float64  `json:"longitude"`
-	NextStopID  *string   `json:"nextStopId,omitempty"`
-	RouteID     *string   `json:"routeId,omitempty"`
-	Status      *string   `json:"status,omitempty"`
-	PolledAtUTC time.Time `json:"polledAtUtc"`
+	VehicleKey          string     `json:"vehicleKey"`
+	Latitude            *float64   `json:"latitude"`
+	Longitude           *float64   `json:"longitude"`
+	NextStopID          *string    `json:"nextStopId,omitempty"`
+	RouteID             *string    `json:"routeId,omitempty"`
+	Status              *string    `json:"status,omitempty"`
+	PolledAtUTC         time.Time  `json:"polledAtUtc"`
+	PredictedArrivalUTC *time.Time `json:"predictedArrivalUtc,omitempty"`
 }
 
 func (t *Train) ToTrainPosition() TrainPosition {
@@ -112,13 +113,14 @@ func (t *Train) ToTrainPosition() TrainPosition {
 		status = &t.Status
 	}
 	return TrainPosition{
-		VehicleKey:  t.VehicleKey,
-		Latitude:    t.Latitude,
-		Longitude:   t.Longitude,
-		NextStopID:  t.NextStopID,
-		RouteID:     t.RouteID,
-		Status:      status,
-		PolledAtUTC: t.PolledAtUTC,
+		VehicleKey:          t.VehicleKey,
+		Latitude:            t.Latitude,
+		Longitude:           t.Longitude,
+		NextStopID:          t.NextStopID,
+		RouteID:             t.RouteID,
+		Status:              status,
+		PolledAtUTC:         t.PolledAtUTC,
+		PredictedArrivalUTC: t.PredictedArrivalUTC,
 	}
 }
 

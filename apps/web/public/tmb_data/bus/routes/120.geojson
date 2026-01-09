@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.120.2918",
-        "line_code": "120",
-        "name": "Ciutat Vella",
-        "color": "#DA291C",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.160513,
@@ -989,8 +979,17 @@
             2.180944,
             41.389617
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#DA291C",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "120",
+        "route_name": "Ciutat Vella"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

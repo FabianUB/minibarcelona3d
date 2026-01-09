@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.132.2979",
-        "line_code": "132",
-        "name": "Torre Llobeta / Prosperitat",
-        "color": "#DA291C",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.182764,
@@ -689,8 +679,17 @@
             2.174315,
             41.429172
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#DA291C",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "132",
+        "route_name": "Torre Llobeta / Prosperitat"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

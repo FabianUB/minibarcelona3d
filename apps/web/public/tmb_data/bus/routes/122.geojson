@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.122.2935",
-        "line_code": "122",
-        "name": "Tur\u00f3 de la Peira",
-        "color": "#DA291C",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.17028,
@@ -1177,8 +1167,17 @@
             2.170225,
             41.432816
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#DA291C",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "122",
+        "route_name": "Turó de la Peira"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

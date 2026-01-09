@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.155.2922",
-        "line_code": "155",
-        "name": "Can Cui\u00e0s / Santa Maria de Montcada",
-        "color": "#DA291C",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.171461,
@@ -3089,8 +3079,17 @@
             2.166996,
             41.480898
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#DA291C",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "155",
+        "route_name": "Can Cuiàs / Santa Maria de Montcada"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

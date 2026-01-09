@@ -1,10 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.133095,
@@ -746,15 +743,16 @@
             2.118468,
             41.376049
           ]
-        ]
+        ],
+        "type": "LineString"
       },
       "properties": {
-        "route_id": "1.101.1",
-        "line_code": "L10S",
-        "name": "ZAL | Riu Vell - Collblanc",
         "color": "#00A6D6",
-        "text_color": "#FFFFFF"
-      }
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "line_code": "L10S"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

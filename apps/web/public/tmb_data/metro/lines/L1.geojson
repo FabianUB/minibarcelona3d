@@ -1,10 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.218435,
@@ -2230,15 +2227,16 @@
             2.107242,
             41.344677
           ]
-        ]
+        ],
+        "type": "LineString"
       },
       "properties": {
-        "route_id": "1.1.1",
-        "line_code": "L1",
-        "name": "Hospital de Bellvitge - Fondo",
         "color": "#CE1126",
-        "text_color": "#FFFFFF"
-      }
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "line_code": "L1"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

@@ -34,6 +34,7 @@ export function BusLineLayer({
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
 
   // Load Bus route geometries
@@ -102,7 +103,7 @@ export function BusLineLayer({
             15, 5,
             18, 10,
           ],
-          'line-opacity': visible ? 0.6 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
 
@@ -126,9 +127,12 @@ export function BusLineLayer({
             15, 3,
             18, 6,
           ],
-          'line-opacity': visible ? 0.7 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
+
+      // Signal that layers are ready for visibility updates
+      setLayersReady(true);
 
     } catch {
       // Layer addition failed - source may have been removed
@@ -136,6 +140,7 @@ export function BusLineLayer({
 
     // Cleanup on unmount
     return () => {
+      setLayersReady(false);
       if (!map.isStyleLoaded()) return;
 
       try {
@@ -158,7 +163,7 @@ export function BusLineLayer({
 
   // Update visibility and highlighting
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !layersReady) return;
     if (!map.getLayer(LINE_LAYER_ID) || !map.getLayer(LINE_CASING_LAYER_ID)) return;
 
     const hasHighlight = highlightedRoutes.length > 0;
@@ -237,7 +242,7 @@ export function BusLineLayer({
         18, 6,
       ]);
     }
-  }, [map, visible, highlightedRoutes, isolateMode, geoJSON, styleReady]);
+  }, [map, visible, highlightedRoutes, isolateMode, layersReady]);
 
   return null;
 }

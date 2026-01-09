@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.62.3431",
-        "line_code": "62",
-        "name": "<M> Clot / Ciutat Meridiana",
-        "color": "#DA291C",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.186477,
@@ -2993,8 +2983,17 @@
             2.176766,
             41.45955
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#DA291C",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "62",
+        "route_name": "\u003cM\u003e Clot / Ciutat Meridiana"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

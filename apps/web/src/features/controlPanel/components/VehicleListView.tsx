@@ -125,17 +125,28 @@ export function VehicleListView({
 
     switch (network) {
       case 'rodalies':
-        vehicleList = rodaliesTrains.map((t) => ({
-          id: t.vehicleKey,
-          lineCode:
-            t.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A',
-          destination: t.nextStopId
-            ? stationNames.get(t.nextStopId) || t.nextStopId
-            : '-',
-          arrivalMinutes: null, // Rodalies API doesn't provide arrival time
-          lat: t.latitude,
-          lng: t.longitude,
-        }));
+        vehicleList = rodaliesTrains.map((t) => {
+          let arrivalMinutes: number | null = null;
+          if (t.predictedArrivalUtc) {
+            const arrivalTime = new Date(t.predictedArrivalUtc).getTime();
+            const now = Date.now();
+            const diffMs = arrivalTime - now;
+            if (diffMs > 0) {
+              arrivalMinutes = Math.ceil(diffMs / 60000);
+            }
+          }
+          return {
+            id: t.vehicleKey,
+            lineCode:
+              t.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A',
+            destination: t.nextStopId
+              ? stationNames.get(t.nextStopId) || t.nextStopId
+              : '-',
+            arrivalMinutes,
+            lat: t.latitude,
+            lng: t.longitude,
+          };
+        });
         break;
       case 'metro':
         vehicleList = metroPositions.map((v) => ({

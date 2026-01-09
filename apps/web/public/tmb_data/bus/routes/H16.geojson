@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.216.3008",
-        "line_code": "H16",
-        "name": "Pg. Zona Franca / F\u00f2rum Campus Bes\u00f2s",
-        "color": "#003888",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.220236,
@@ -1749,8 +1739,17 @@
             2.141161,
             41.353234
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#003888",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "H16",
+        "route_name": "Pg. Zona Franca / Fòrum Campus Besòs"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

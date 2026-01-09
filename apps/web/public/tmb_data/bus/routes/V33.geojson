@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.233.3053",
-        "line_code": "V33",
-        "name": "F\u00f2rum Campus Bes\u00f2s / Santa Coloma",
-        "color": "#6AB023",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.220936,
@@ -1397,8 +1387,17 @@
             2.214936,
             41.447653
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#6AB023",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "V33",
+        "route_name": "Fòrum Campus Besòs / Santa Coloma"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

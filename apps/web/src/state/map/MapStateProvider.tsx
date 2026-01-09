@@ -99,6 +99,12 @@ function createInitialUiState(): MapUIState {
     ...(savedModelSizes && typeof savedModelSizes === 'object' ? savedModelSizes : {}),
   };
 
+  // Load active control tab from preferences
+  const savedActiveTab = prefs.activeControlTab;
+  const validTabs: TransportType[] = ['rodalies', 'metro', 'fgc', 'tram', 'bus'];
+  const activeControlTab: TransportType =
+    savedActiveTab && validTabs.includes(savedActiveTab) ? savedActiveTab : 'rodalies';
+
   return {
     selectedLineId: null,
     selectedLineIds: [],
@@ -112,7 +118,7 @@ function createInitialUiState(): MapUIState {
     // Control panel state
     networkHighlights: DEFAULT_NETWORK_HIGHLIGHTS,
     modelSizes,
-    activeControlTab: 'rodalies', // Default to Rodalies tab
+    activeControlTab,
     controlPanelMode: 'controls', // Default to controls mode
   };
 }
@@ -391,8 +397,9 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       isLegendOpen: state.ui.isLegendOpen,
       transportFilters: state.ui.transportFilters,
       modelSizes: state.ui.modelSizes,
+      activeControlTab: state.ui.activeControlTab,
     });
-  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.activeControlTab]);
 
   const actions = useMemo<MapActions>(
     () => ({

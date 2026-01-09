@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.245.3978",
-        "line_code": "X3",
-        "name": "Paral\u00b7lel - L'Hospitalet (Av. Carrilet)",
-        "color": "#010101",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.103282,
@@ -2385,8 +2375,17 @@
             2.166569,
             41.37612
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#010101",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "X3",
+        "route_name": "Paral·lel - L'Hospitalet (Av. Carrilet)"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }
