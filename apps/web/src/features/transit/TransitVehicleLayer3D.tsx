@@ -84,6 +84,14 @@ export function TransitVehicleLayer3D({
   const lastMouseMoveTime = useRef<number>(0);
   const MOUSE_MOVE_THROTTLE_MS = 100; // Throttle to max 10 FPS
 
+  // Reusable matrix instances for render loop (avoid allocations per frame)
+  const matrixRef = useRef({
+    mapboxMatrix: new THREE.Matrix4(),
+    modelTransform: new THREE.Matrix4(),
+    resultMatrix: new THREE.Matrix4(),
+    scaleVector: new THREE.Vector3(1, -1, 1),
+  });
+
   // Layer ID based on network type
   const layerId = `transit-${networkType}-layer-3d`;
 
@@ -333,15 +341,17 @@ export function TransitVehicleLayer3D({
           meshManagerRef.current.animatePositions();
         }
 
-        // Sync camera with Mapbox
-        const mapboxMatrix = new THREE.Matrix4().fromArray(matrix);
-        const modelTransform = new THREE.Matrix4()
+        // Reuse matrix instances for performance (avoid allocations per frame)
+        const matrices = matrixRef.current;
+        matrices.mapboxMatrix.fromArray(matrix);
+        matrices.modelTransform
+          .identity()
           .makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z ?? 0)
-          .scale(new THREE.Vector3(1, -1, 1));
+          .scale(matrices.scaleVector);
 
-        cameraRef.current.projectionMatrix.copy(
-          mapboxMatrix.clone().multiply(modelTransform)
-        );
+        // Use resultMatrix to avoid clone() allocation
+        matrices.resultMatrix.copy(matrices.mapboxMatrix).multiply(matrices.modelTransform);
+        cameraRef.current.projectionMatrix.copy(matrices.resultMatrix);
 
         // Render
         rendererRef.current.resetState();

@@ -246,6 +246,14 @@ export function TrainLayer3D({
     renderCount: 0,
   });
 
+  // Reusable matrix instances for render loop (avoid allocations per frame)
+  const matrixRef = useRef({
+    mapboxMatrix: new THREE.Matrix4(),
+    modelTransform: new THREE.Matrix4(),
+    resultMatrix: new THREE.Matrix4(),
+    scaleVector: new THREE.Vector3(1, -1, 1),
+  });
+
   /**
    * Helper function to get train opacity based on line selection
    * Task: T089 - Filter trains by selected line IDs
@@ -1025,12 +1033,17 @@ export function TrainLayer3D({
         meshManagerRef.current.applyParkingVisuals();
       }
 
-      const mapboxMatrix = new THREE.Matrix4().fromArray(matrix);
-      const modelTransform = new THREE.Matrix4()
+      // Reuse matrix instances for performance (avoid allocations per frame)
+      const matrices = matrixRef.current;
+      matrices.mapboxMatrix.fromArray(matrix);
+      matrices.modelTransform
+        .identity()
         .makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z ?? 0)
-        .scale(new THREE.Vector3(1, -1, 1));
+        .scale(matrices.scaleVector);
 
-      renderCamera.projectionMatrix.copy(mapboxMatrix.clone().multiply(modelTransform));
+      // Use resultMatrix to avoid clone() allocation
+      matrices.resultMatrix.copy(matrices.mapboxMatrix).multiply(matrices.modelTransform);
+      renderCamera.projectionMatrix.copy(matrices.resultMatrix);
       if ('projectionMatrixInverse' in renderCamera) {
         (renderCamera as THREE.Camera & { projectionMatrixInverse: THREE.Matrix4 }).projectionMatrixInverse
           .copy(renderCamera.projectionMatrix)
