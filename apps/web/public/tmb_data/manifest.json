@@ -1,2087 +1,1382 @@
 {
   "network": "tmb",
-  "generated_at": "2025-12-29T18:18:02.316890+00:00",
+  "generated_at": "2026-01-07T22:00:00Z",
   "files": [
     {
-      "type": "bus_route",
-      "path": "bus/routes/102.geojson",
-      "route_code": "102",
-      "route_id": "2.102.2876",
-      "name": "Pl. Eivissa / Cementiri de Collserola",
-      "color": "#DA291C"
+      "type": "metro_stations",
+      "path": "metro/stations.geojson"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/104.geojson",
-      "route_code": "104",
-      "route_id": "2.104.2887",
-      "name": "Fabra i Puig / Cementiri de Collserola",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/FM.geojson",
+      "line_code": "FM"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/107.geojson",
-      "route_code": "107",
-      "route_id": "2.107.2933",
-      "name": "Cementiri Montju\u00efc",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L1.geojson",
+      "line_code": "L1"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/109.geojson",
-      "route_code": "109",
-      "route_id": "2.109.2877",
-      "name": "Hospital Cl\u00ednic / Pol\u00edgon Zona Franca",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L10N.geojson",
+      "line_code": "L10N"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/111.geojson",
-      "route_code": "111",
-      "route_id": "2.111.2888",
-      "name": "Tibidabo",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L10S.geojson",
+      "line_code": "L10S"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/112.geojson",
-      "route_code": "112",
-      "route_id": "2.112.2925",
-      "name": "Sant Gen\u00eds",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L11.geojson",
+      "line_code": "L11"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/113.geojson",
-      "route_code": "113",
-      "route_id": "2.113.2916",
-      "name": "La Merc\u00e8",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L2.geojson",
+      "line_code": "L2"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/114.geojson",
-      "route_code": "114",
-      "route_id": "2.114.2942",
-      "name": "Gr\u00e0cia / Can Bar\u00f3",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L3.geojson",
+      "line_code": "L3"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/115.geojson",
-      "route_code": "115",
-      "route_id": "2.115.2917",
-      "name": "La Bordeta",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L4.geojson",
+      "line_code": "L4"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/117.geojson",
-      "route_code": "117",
-      "route_id": "2.117.2914",
-      "name": "Guinard\u00f3",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L5.geojson",
+      "line_code": "L5"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/118.geojson",
-      "route_code": "118",
-      "route_id": "2.118.2915",
-      "name": "Mas Guimbau",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L9N.geojson",
+      "line_code": "L9N"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/119.geojson",
-      "route_code": "119",
-      "route_id": "2.119.2931",
-      "name": "La Teixonera",
-      "color": "#DA291C"
+      "type": "metro_line",
+      "path": "metro/lines/L9S.geojson",
+      "line_code": "L9S"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/120.geojson",
-      "route_code": "120",
-      "route_id": "2.120.2918",
-      "name": "Ciutat Vella",
-      "color": "#DA291C"
+      "type": "tram_stations",
+      "path": "tram/stations.geojson"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/121.geojson",
-      "route_code": "121",
-      "route_id": "2.121.2932",
-      "name": "Poble Sec",
-      "color": "#DA291C"
+      "type": "tram_line",
+      "path": "tram/lines/T1.geojson",
+      "line_code": "T1"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/122.geojson",
-      "route_code": "122",
-      "route_id": "2.122.2935",
-      "name": "Tur\u00f3 de la Peira",
-      "color": "#DA291C"
+      "type": "tram_line",
+      "path": "tram/lines/T2.geojson",
+      "line_code": "T2"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/123.geojson",
-      "route_code": "123",
-      "route_id": "2.123.2936",
-      "name": "Bonanova Alta",
-      "color": "#DA291C"
+      "type": "tram_line",
+      "path": "tram/lines/T3.geojson",
+      "line_code": "T3"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/124.geojson",
-      "route_code": "124",
-      "route_id": "2.124.2937",
-      "name": "Penitents",
-      "color": "#DA291C"
+      "type": "tram_line",
+      "path": "tram/lines/T4.geojson",
+      "line_code": "T4"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/125.geojson",
-      "route_code": "125",
-      "route_id": "2.125.2938",
-      "name": "La Marina",
-      "color": "#DA291C"
+      "type": "tram_line",
+      "path": "tram/lines/T5.geojson",
+      "line_code": "T5"
     },
     {
-      "type": "bus_route",
-      "path": "bus/routes/126.geojson",
-      "route_code": "126",
-      "route_id": "2.126.2939",
-      "name": "Sant Andreu",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/127.geojson",
-      "route_code": "127",
-      "route_id": "2.127.3640",
-      "name": "Roquetes",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/128.geojson",
-      "route_code": "128",
-      "route_id": "2.128.2919",
-      "name": "El Rectoret",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/129.geojson",
-      "route_code": "129",
-      "route_id": "2.129.2968",
-      "name": "El Coll",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/13.geojson",
-      "route_code": "13",
-      "route_id": "2.13.2833",
-      "name": "Mercat Sant Antoni / Parc de Montju\u00efc",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/130.geojson",
-      "route_code": "130",
-      "route_id": "2.130.2969",
-      "name": "Can Caralleu",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/131.geojson",
-      "route_code": "131",
-      "route_id": "2.131.2970",
-      "name": "El Putxet",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/132.geojson",
-      "route_code": "132",
-      "route_id": "2.132.2979",
-      "name": "Torre Llobeta / Prosperitat",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/133.geojson",
-      "route_code": "133",
-      "route_id": "2.133.3843",
-      "name": "Trinitat Vella / Fabra i Puig",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/134.geojson",
-      "route_code": "134",
-      "route_id": "2.134.3292",
-      "name": "Roquetes / Fabra i Puig",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/136.geojson",
-      "route_code": "136",
-      "route_id": "2.136.3026",
-      "name": "Pg. Mar\u00edtim / Verneda",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/141.geojson",
-      "route_code": "141",
-      "route_id": "2.141.3333",
-      "name": "Esq. de l'Eixample",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/150.geojson",
-      "route_code": "150",
-      "route_id": "2.150.2993",
-      "name": "Pl. Espanya / Castell de Montju\u00efc",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/155.geojson",
-      "route_code": "155",
-      "route_id": "2.155.2922",
-      "name": "Can Cui\u00e0s / Santa Maria de Montcada",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/157.geojson",
-      "route_code": "157",
-      "route_id": "2.157.2880",
-      "name": "Collblanc / Sant Joan Desp\u00ed",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/175.geojson",
-      "route_code": "175",
-      "route_id": "2.175.3332",
-      "name": "Les Corts",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/180.geojson",
-      "route_code": "180",
-      "route_id": "2.180.3411",
-      "name": "Torre Bar\u00f3 Sud",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/182.geojson",
-      "route_code": "182",
-      "route_id": "2.182.3412",
-      "name": "Pl. Virrei Amat / Torre Bar\u00f3 ",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/183.geojson",
-      "route_code": "183",
-      "route_id": "2.183.3580",
-      "name": "Torre Bar\u00f3 / Ciutat Meridiana",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/185.geojson",
-      "route_code": "185",
-      "route_id": "2.185.2941",
-      "name": "<M> Canyelles / Vall d'Hebron",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/19.geojson",
-      "route_code": "19",
-      "route_id": "2.19.3081",
-      "name": "Pl. Catalunya / Sant Gen\u00eds",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/191.geojson",
-      "route_code": "191",
-      "route_id": "2.191.3091",
-      "name": "Pl. Congr\u00e9s / Can Bar\u00f3",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/192.geojson",
-      "route_code": "192",
-      "route_id": "2.192.3076",
-      "name": "Poblenou / Hospital de Sant Pau",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/196.geojson",
-      "route_code": "196",
-      "route_id": "2.196.2971",
-      "name": "Pl. Kennedy / Bellesguard",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/21.geojson",
-      "route_code": "21",
-      "route_id": "2.21.2973",
-      "name": "Paral\u00b7lel / El Prat",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/22.geojson",
-      "route_code": "22",
-      "route_id": "2.22.3082",
-      "name": "Pl. Catalunya / El Carmel",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/23.geojson",
-      "route_code": "23",
-      "route_id": "2.23.2898",
-      "name": "Pl. Espanya / Parc Log\u00edstic",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/24.geojson",
-      "route_code": "24",
-      "route_id": "2.24.2840",
-      "name": "Pl. Catalunya / El Carmel",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/27.geojson",
-      "route_code": "27",
-      "route_id": "2.27.2841",
-      "name": "Estaci\u00f3 de Sants / Roquetes",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/33.geojson",
-      "route_code": "33",
-      "route_id": "2.33.2846",
-      "name": "Zona Universit\u00e0ria / Verneda",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/34.geojson",
-      "route_code": "34",
-      "route_id": "2.34.2847",
-      "name": "Pg. Manuel Girona / Pl. Virrei Amat",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/39.geojson",
-      "route_code": "39",
-      "route_id": "2.39.3075",
-      "name": "Pl. Urquinaona / Pl. Catalana",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/46.geojson",
-      "route_code": "46",
-      "route_id": "2.46.2975",
-      "name": "Pl. Espanya / Aeroport BCN",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/47.geojson",
-      "route_code": "47",
-      "route_id": "2.47.3083",
-      "name": "Pg. Mar\u00edtim / Canyelles",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/52.geojson",
-      "route_code": "52",
-      "route_id": "2.52.3054",
-      "name": "Pl. Catalunya / Collblanc",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/54.geojson",
-      "route_code": "54",
-      "route_id": "2.54.3086",
-      "name": "Estaci\u00f3 del Nord / Cardenal Reig",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/55.geojson",
-      "route_code": "55",
-      "route_id": "2.55.3084",
-      "name": "Pl. Urquinaona / Parc de Montju\u00efc",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/59.geojson",
-      "route_code": "59",
-      "route_id": "2.59.2860",
-      "name": "Poblenou / Pl. Reina Maria Cristina",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/6.geojson",
-      "route_code": "6",
-      "route_id": "2.6.2899",
-      "name": "Pg. Manuel Girona / Poblenou",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/60.geojson",
-      "route_code": "60",
-      "route_id": "2.60.3085",
-      "name": "Bes\u00f2s Verneda / Vall d'Hebron",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/62.geojson",
-      "route_code": "62",
-      "route_id": "2.62.3431",
-      "name": "<M> Clot / Ciutat Meridiana",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/63.geojson",
-      "route_code": "63",
-      "route_id": "2.63.4060",
-      "name": "Pl.Catalunya / Sant Joan Desp\u00ed",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/65.geojson",
-      "route_code": "65",
-      "route_id": "2.65.2865",
-      "name": "Pl. Espanya / El Prat",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/67.geojson",
-      "route_code": "67",
-      "route_id": "2.67.2902",
-      "name": "Pl. Catalunya / Cornell\u00e0",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/68.geojson",
-      "route_code": "68",
-      "route_id": "2.68.2903",
-      "name": "Hospital Cl\u00ednic / Cornell\u00e0",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/7.geojson",
-      "route_code": "7",
-      "route_id": "2.7.2905",
-      "name": "F\u00f2rum / Zona Universit\u00e0ria",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/70.geojson",
-      "route_code": "70",
-      "route_id": "2.70.2882",
-      "name": "Rambla de Badal / Bonanova",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/76.geojson",
-      "route_code": "76",
-      "route_id": "2.76.2869",
-      "name": "Sant Gen\u00eds / Ciutat Meridiana",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/78.geojson",
-      "route_code": "78",
-      "route_id": "2.78.2870",
-      "name": "Estaci\u00f3 de Sants / Sant Joan Desp\u00ed",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/86.geojson",
-      "route_code": "86",
-      "route_id": "128",
-      "name": "Horta/El Carmel",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/87.geojson",
-      "route_code": "87",
-      "route_id": "129",
-      "name": "Horta-Gr\u00e0cia",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/88.geojson",
-      "route_code": "88",
-      "route_id": "361",
-      "name": "Metro Paral\u00b7lel-Metro ZAL | Riu Vell",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/89.geojson",
-      "route_code": "89",
-      "route_id": "485",
-      "name": "Metro Paral\u00b7lel-ZAL Prat/Terminal BEST",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/91.geojson",
-      "route_code": "91",
-      "route_id": "2.91.2871",
-      "name": "Manso / La Bordeta",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/94.geojson",
-      "route_code": "94",
-      "route_id": "2.94.2951",
-      "name": "Circular Cornell\u00e0 2",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/95.geojson",
-      "route_code": "95",
-      "route_id": "2.95.2872",
-      "name": "Circular Cornell\u00e0 1",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/96.geojson",
-      "route_code": "96",
-      "route_id": "2.96.2873",
-      "name": "<M> La Sagrera / Montcada i Reixac",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/97.geojson",
-      "route_code": "97",
-      "route_id": "2.97.2874",
-      "name": "Pg. Fabra i Puig / Vallbona",
-      "color": "#DA291C"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/983.geojson",
-      "route_code": "983",
-      "route_id": "2.983.4061",
-      "name": "Llan\u00e7adora Funicular",
-      "color": "#937500"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/A1.geojson",
-      "route_code": "A1",
-      "route_id": "130",
-      "name": "Aerob\u00fas Barcelona-Aeroport T1",
-      "color": "#9fd6f6"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/A2.geojson",
-      "route_code": "A2",
-      "route_id": "269",
-      "name": "Aerob\u00fas Barcelona-Aeroport T2",
-      "color": "#9fd6f6"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B12.geojson",
-      "route_code": "B12",
-      "route_id": "305",
-      "name": "H. Can Ruti-Montcada R.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B14.geojson",
-      "route_code": "B14",
-      "route_id": "132",
-      "name": "Sta. Coloma G.-St. Adri\u00e0 B.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B15.geojson",
-      "route_code": "B15",
-      "route_id": "307",
-      "name": "Les Oliveres-Montigal\u00e0",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B18.geojson",
-      "route_code": "B18",
-      "route_id": "310",
-      "name": "Sta. Coloma G.-Montcada R.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B2.geojson",
-      "route_code": "B2",
-      "route_id": "325",
-      "name": "Manres\u00e0-H. Esperit Sant",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B20.geojson",
-      "route_code": "B20",
-      "route_id": "313",
-      "name": "Sta. Coloma G.-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B21.geojson",
-      "route_code": "B21",
-      "route_id": "139",
-      "name": "St. Adri\u00e0 B.-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B23.geojson",
-      "route_code": "B23",
-      "route_id": "141",
-      "name": "Badalona-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B24.geojson",
-      "route_code": "B24",
-      "route_id": "142",
-      "name": "Badalona-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B25.geojson",
-      "route_code": "B25",
-      "route_id": "143",
-      "name": "Badalona-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B29.geojson",
-      "route_code": "B29",
-      "route_id": "146",
-      "name": "Badalona-Tiana",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B3.geojson",
-      "route_code": "B3",
-      "route_id": "326",
-      "name": "Llefi\u00e0-Pomar/Les Guixeres",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B34.geojson",
-      "route_code": "B34",
-      "route_id": "299",
-      "name": "Tiana-Montgat",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B35.geojson",
-      "route_code": "B35",
-      "route_id": "300",
-      "name": "Montgat-Tiana",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B4.geojson",
-      "route_code": "B4",
-      "route_id": "327",
-      "name": "Montigal\u00e0-Mas Ram",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B5.geojson",
-      "route_code": "B5",
-      "route_id": "328",
-      "name": "Est. Rodalies-H. Esperit Sant",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B7.geojson",
-      "route_code": "B7",
-      "route_id": "329",
-      "name": "Bufal\u00e0-Est. St. Adri\u00e0",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B8.geojson",
-      "route_code": "B8",
-      "route_id": "297",
-      "name": "Bonavista",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B80.geojson",
-      "route_code": "B80",
-      "route_id": "301",
-      "name": "Riera Alta-Can Franquesa",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B81.geojson",
-      "route_code": "B81",
-      "route_id": "302",
-      "name": "H. Esperit Sant-Can Franquesa",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/B82.geojson",
-      "route_code": "B82",
-      "route_id": "303",
-      "name": "R. Torribera-CS El Carme",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/CF1.geojson",
-      "route_code": "CF1",
-      "route_id": "156",
-      "name": "Can Roca-El Poal",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/CF2.geojson",
-      "route_code": "CF2",
-      "route_id": "479",
-      "name": "Les Botigues S.-Vista Alegre",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/CS1.geojson",
-      "route_code": "CS1",
-      "route_id": "501",
-      "name": "Estaci\u00f3/Nucli",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/CS2.geojson",
-      "route_code": "CS2",
-      "route_id": "502",
-      "name": "Nucli urb\u00e0-Can Santeugini",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/CS3.geojson",
-      "route_code": "CS3",
-      "route_id": "503",
-      "name": "Nucli-Comte de Sert-Can Costa-Nucli",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/CS4.geojson",
-      "route_code": "CS4",
-      "route_id": "504",
-      "name": "Nucli urb\u00e0 - El Canyet / Santa Teresita",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/D20.geojson",
-      "route_code": "D20",
-      "route_id": "2.220.2999",
-      "name": "Pg. Mar\u00edtim / Ernest Lluch",
-      "color": "#93107E"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/D40.geojson",
-      "route_code": "D40",
-      "route_id": "2.240.3025",
-      "name": "Pl. Espanya / Canyelles",
-      "color": "#93107E"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/D50.geojson",
-      "route_code": "D50",
-      "route_id": "2.250.3051",
-      "name": "Paral\u00b7lel / Ciutat Meridiana",
-      "color": "#93107E"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/EP1.geojson",
-      "route_code": "EP1",
-      "route_id": "157",
-      "name": "La Miranda-H. St. Joan D\u00e9u",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/EP2.geojson",
-      "route_code": "EP2",
-      "route_id": "158",
-      "name": "Ajuntament-La Miranda",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/ESC.geojson",
-      "route_code": "ESC",
-      "route_id": "450",
-      "name": "FGC St. Vicen\u00e7-Instituts",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/GA1.geojson",
-      "route_code": "GA1",
-      "route_id": "163",
-      "name": "La Sentiu-Gav\u00e0 Mar",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/GA2.geojson",
-      "route_code": "GA2",
-      "route_id": "488",
-      "name": "Ca n'Espin\u00f3s  - Gav\u00e0 Mar",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H10.geojson",
-      "route_code": "H10",
-      "route_id": "2.210.3078",
-      "name": "Pl. Sants / Ol\u00edmpic de Badalona",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H12.geojson",
-      "route_code": "H12",
-      "route_id": "2.212.2997",
-      "name": "Gornal / Bes\u00f2s Verneda",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H14.geojson",
-      "route_code": "H14",
-      "route_id": "2.214.3012",
-      "name": "Paral\u00b7lel / Sant Adri\u00e0",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H16.geojson",
-      "route_code": "H16",
-      "route_id": "2.216.3008",
-      "name": "Pg. Zona Franca / F\u00f2rum Campus Bes\u00f2s",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H2.geojson",
-      "route_code": "H2",
-      "route_id": "2.202.3068",
-      "name": "Av. Esplugues / Trinitat Nova",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H4.geojson",
-      "route_code": "H4",
-      "route_id": "2.204.3018",
-      "name": "Zona Universit\u00e0ria / Bon Pastor",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H6.geojson",
-      "route_code": "H6",
-      "route_id": "2.206.2995",
-      "name": "Zona Universit\u00e0ria / Onze de Setembre",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/H8.geojson",
-      "route_code": "H8",
-      "route_id": "2.208.3476",
-      "name": "Ernest Lluch / Bon Pastor",
-      "color": "#003888"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/JM.geojson",
-      "route_code": "JM",
-      "route_id": "164",
-      "name": "St. Just D.-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/JT.geojson",
-      "route_code": "JT",
-      "route_id": "165",
-      "name": "Esplugues L.-St. Just D.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L16.geojson",
-      "route_code": "L16",
-      "route_id": "173",
-      "name": "L'Hospitalet L.-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L20.geojson",
-      "route_code": "L20",
-      "route_id": "492",
-      "name": "St. Joan D.-El Prat L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L21.geojson",
-      "route_code": "L21",
-      "route_id": "493",
-      "name": "L'Hospitalet L.-St. Feliu L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L46.geojson",
-      "route_code": "L46",
-      "route_id": "177",
-      "name": "Cornell\u00e0 L.-St. Just D.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L52.geojson",
-      "route_code": "L52",
-      "route_id": "181",
-      "name": "L'Hospitalet L.-St. Feliu L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L70.geojson",
-      "route_code": "L70",
-      "route_id": "194",
-      "name": "Barcelona-St. Boi L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L72.geojson",
-      "route_code": "L72",
-      "route_id": "195",
-      "name": "Barcelona-St. Boi L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L74.geojson",
-      "route_code": "L74",
-      "route_id": "196",
-      "name": "St. Boi L.-Cornell\u00e0 L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L76.geojson",
-      "route_code": "L76",
-      "route_id": "198",
-      "name": "St. Boi L.-Torrelles L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L77.geojson",
-      "route_code": "L77",
-      "route_id": "199",
-      "name": "St. Feliu L.-Gav\u00e0 Mar",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L78.geojson",
-      "route_code": "L78",
-      "route_id": "200",
-      "name": "St. Boi L.-El Prat L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L80.geojson",
-      "route_code": "L80",
-      "route_id": "202",
-      "name": "Barcelona-Gav\u00e0",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L82.geojson",
-      "route_code": "L82",
-      "route_id": "204",
-      "name": "L'Hospitalet L.-Gav\u00e0",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L85.geojson",
-      "route_code": "L85",
-      "route_id": "206",
-      "name": "L'Hospitalet L.-Gav\u00e0",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L86.geojson",
-      "route_code": "L86",
-      "route_id": "207",
-      "name": "Barcelona-Viladecans",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L88.geojson",
-      "route_code": "L88",
-      "route_id": "209",
-      "name": "Viladecans-St. Climent L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L94.geojson",
-      "route_code": "L94",
-      "route_id": "210",
-      "name": "Barcelona-Castelldefels",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L95.geojson",
-      "route_code": "L95",
-      "route_id": "211",
-      "name": "Barcelona-Castelldefels",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L96.geojson",
-      "route_code": "L96",
-      "route_id": "212",
-      "name": "Castelldefels-St. Boi L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L97.geojson",
-      "route_code": "L97",
-      "route_id": "213",
-      "name": "Barcelona-Castelldefels",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/L99.geojson",
-      "route_code": "L99",
-      "route_id": "268",
-      "name": "Castelldefels-Aeroport T1",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/LH1.geojson",
-      "route_code": "LH1",
-      "route_id": "214",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/LH2.geojson",
-      "route_code": "LH2",
-      "route_id": "215",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M1.geojson",
-      "route_code": "M1",
-      "route_id": "431",
-      "name": "Metro Pep Ventura-Metro Fondo",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M12.geojson",
-      "route_code": "M12",
-      "route_id": "417",
-      "name": "Barcelona-Cornell\u00e0 L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M14.geojson",
-      "route_code": "M14",
-      "route_id": "418",
-      "name": "L'Hospitalet L.-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M19.geojson",
-      "route_code": "M19",
-      "route_id": "408",
-      "name": "Badalona-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M26.geojson",
-      "route_code": "M26",
-      "route_id": "413",
-      "name": "Badalona-St. Adri\u00e0 B.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M27.geojson",
-      "route_code": "M27",
-      "route_id": "403",
-      "name": "Sta. Coloma G.-Badalona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M28.geojson",
-      "route_code": "M28",
-      "route_id": "404",
-      "name": "Badalona-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M30.geojson",
-      "route_code": "M30",
-      "route_id": "415",
-      "name": "Sta. Coloma G.-Montgat",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M5.geojson",
-      "route_code": "M5",
-      "route_id": "419",
-      "name": "Castelldefels-Cornell\u00e0 L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M6.geojson",
-      "route_code": "M6",
-      "route_id": "432",
-      "name": "H. Can Ruti-Est. Rodalies",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/M75.geojson",
-      "route_code": "M75",
-      "route_id": "476",
-      "name": "Cornell\u00e0 L.-St. Boi L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/MB1.geojson",
-      "route_code": "MB1",
-      "route_id": "387",
-      "name": "Can Graner",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/MB2.geojson",
-      "route_code": "MB2",
-      "route_id": "388",
-      "name": "Riera Bonet",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/MB3.geojson",
-      "route_code": "MB3",
-      "route_id": "389",
-      "name": "Molins R.-FGC La Floresta",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N0.geojson",
-      "route_code": "N0",
-      "route_id": "216",
-      "name": "Circular ext.-Circular int.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N1.geojson",
-      "route_code": "N1",
-      "route_id": "217",
-      "name": "Mercabarna-Trinitat Nova",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N11.geojson",
-      "route_code": "N11",
-      "route_id": "218",
-      "name": "Barcelona-Badalona",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N12.geojson",
-      "route_code": "N12",
-      "route_id": "219",
-      "name": "Barcelona-St. Feliu L.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N13.geojson",
-      "route_code": "N13",
-      "route_id": "220",
-      "name": "Barcelona-St. Boi L.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N14.geojson",
-      "route_code": "N14",
-      "route_id": "221",
-      "name": "Barcelona-Castelldefels",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N15.geojson",
-      "route_code": "N15",
-      "route_id": "222",
-      "name": "Barcelona-St. Joan D.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N16.geojson",
-      "route_code": "N16",
-      "route_id": "223",
-      "name": "Barcelona-Castelldefels",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N17.geojson",
-      "route_code": "N17",
-      "route_id": "224",
-      "name": "Barcelona-Aeroport T1",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N18.geojson",
-      "route_code": "N18",
-      "route_id": "394",
-      "name": "Barcelona-Aeroport T1\u00b7T2",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N19.geojson",
-      "route_code": "N19",
-      "route_id": "471",
-      "name": "Castelldefels-El Prat L.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N2.geojson",
-      "route_code": "N2",
-      "route_id": "225",
-      "name": "L'Hospitalet L.-Badalona",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N20.geojson",
-      "route_code": "N20",
-      "route_id": "483",
-      "name": "Barcelona-St. Boi L.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N23.geojson",
-      "route_code": "N23",
-      "route_id": "496",
-      "name": "Estaci\u00f3 de Sants-Montcada R.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N24.geojson",
-      "route_code": "N24",
-      "route_id": "497",
-      "name": "La Barceloneta-Les Roquetes",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N28.geojson",
-      "route_code": "N28",
-      "route_id": "395",
-      "name": "F\u00f2rum-L'Hospitalet L.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N3.geojson",
-      "route_code": "N3",
-      "route_id": "226",
-      "name": "Collblanc-Ciutat Meridiana",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N4.geojson",
-      "route_code": "N4",
-      "route_id": "227",
-      "name": "Estaci\u00f3 Mar\u00edtima-El Carmel",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N5.geojson",
-      "route_code": "N5",
-      "route_id": "228",
-      "name": "Pl. Catalunya-El Carmel",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N6.geojson",
-      "route_code": "N6",
-      "route_id": "229",
-      "name": "Sta. Coloma G.-Canyelles",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N7.geojson",
-      "route_code": "N7",
-      "route_id": "230",
-      "name": "Pedralbes-F\u00f2rum",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N8.geojson",
-      "route_code": "N8",
-      "route_id": "231",
-      "name": "Can Caralleu-Sta. Coloma G.",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/N9.geojson",
-      "route_code": "N9",
-      "route_id": "232",
-      "name": "Barcelona-Tiana",
-      "color": "#0062a1"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PA1.geojson",
-      "route_code": "PA1",
-      "route_id": "435",
-      "name": "Circular int.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PA2.geojson",
-      "route_code": "PA2",
-      "route_id": "507",
-      "name": "Circular ext.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PF1.geojson",
-      "route_code": "PF1",
-      "route_id": "489",
-      "name": "Pallej\u00e0-Corbera L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PF2.geojson",
-      "route_code": "PF2",
-      "route_id": "490",
-      "name": "Fontpineda",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PR1.geojson",
-      "route_code": "PR1",
-      "route_id": "234",
-      "name": "Aeroport T1-Aeroport T2",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PR2.geojson",
-      "route_code": "PR2",
-      "route_id": "235",
-      "name": "Est. Rodalies-Sant Cosme",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PR3.geojson",
-      "route_code": "PR3",
-      "route_id": "236",
-      "name": "Est. Rodalies-Platja",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PR4.geojson",
-      "route_code": "PR4",
-      "route_id": "237",
-      "name": "El Prat de Llobregat (Estaci\u00f3 Rodalies - ZAL Prat)",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/PR5.geojson",
-      "route_code": "PR5",
-      "route_id": "495",
-      "name": "Les Moreres-Platja",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SB1.geojson",
-      "route_code": "SB1",
-      "route_id": "248",
-      "name": "Camps Blancs-FGC Mol\u00ed Nou",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SB2.geojson",
-      "route_code": "SB2",
-      "route_id": "249",
-      "name": "FGC St. Boi-Camps Blancs",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SB3.geojson",
-      "route_code": "SB3",
-      "route_id": "250",
-      "name": "Tanatori-Marianao",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SF1.geojson",
-      "route_code": "SF1",
-      "route_id": "251",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SF2.geojson",
-      "route_code": "SF2",
-      "route_id": "252",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SF3.geojson",
-      "route_code": "SF3",
-      "route_id": "349",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SV1.geojson",
-      "route_code": "SV1",
-      "route_id": "446",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SV2.geojson",
-      "route_code": "SV2",
-      "route_id": "447",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SV3.geojson",
-      "route_code": "SV3",
-      "route_id": "448",
-      "name": "Circular",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/SV4.geojson",
-      "route_code": "SV4",
-      "route_id": "449",
-      "name": "FGC St. Vicen\u00e7/Sant Roc",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V1.geojson",
-      "route_code": "V1",
-      "route_id": "2.201.3069",
-      "name": "Districte Gran Via l'Hospitalet / Av. Esplugues",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V11.geojson",
-      "route_code": "V11",
-      "route_id": "2.211.3019",
-      "name": "Estaci\u00f3 Mar\u00edtima (WTC) / Bonanova",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V13.geojson",
-      "route_code": "V13",
-      "route_id": "2.213.3883",
-      "name": "Pl. Catalunya / Av. Tibidabo",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V15.geojson",
-      "route_code": "V15",
-      "route_id": "2.215.3079",
-      "name": "Barceloneta / Av. Tibidabo",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V17.geojson",
-      "route_code": "V17",
-      "route_id": "2.217.3080",
-      "name": "Port Vell / Vall d'Hebron",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V19.geojson",
-      "route_code": "V19",
-      "route_id": "2.219.3070",
-      "name": "Barceloneta / Pl. Alfonso Com\u00edn",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V21.geojson",
-      "route_code": "V21",
-      "route_id": "2.221.2998",
-      "name": "Pg. Mar\u00edtim / Montbau",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V23.geojson",
-      "route_code": "V23",
-      "route_id": "2.223.3071",
-      "name": "Nova Ic\u00e0ria / Can Marcet",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V25.geojson",
-      "route_code": "V25",
-      "route_id": "2.225.3072",
-      "name": "Nova Ic\u00e0ria / Horta",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V27.geojson",
-      "route_code": "V27",
-      "route_id": "2.227.3013",
-      "name": "Pg. Mar\u00edtim / Canyelles",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V29.geojson",
-      "route_code": "V29",
-      "route_id": "2.229.3024",
-      "name": "Diagonal Mar / Roquetes",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V3.geojson",
-      "route_code": "V3",
-      "route_id": "2.203.3004",
-      "name": "Zona Franca / Can Caralleu",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V31.geojson",
-      "route_code": "V31",
-      "route_id": "2.231.3900",
-      "name": "F\u00f2rum / Trinitat Vella",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V33.geojson",
-      "route_code": "V33",
-      "route_id": "2.233.3053",
-      "name": "F\u00f2rum Campus Bes\u00f2s / Santa Coloma",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V5.geojson",
-      "route_code": "V5",
-      "route_id": "2.205.2988",
-      "name": "Mare de D\u00e9u de Port / Pedralbes",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V7.geojson",
-      "route_code": "V7",
-      "route_id": "2.207.2996",
-      "name": "Pl. Espanya / Sarri\u00e0",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/V9.geojson",
-      "route_code": "V9",
-      "route_id": "2.209.3052",
-      "name": "Poble-sec / Sarri\u00e0",
-      "color": "#6AB023"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/VB1.geojson",
-      "route_code": "VB1",
-      "route_id": "264",
-      "name": "Est. Rodalies-Can Guardiola",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/VB2.geojson",
-      "route_code": "VB2",
-      "route_id": "265",
-      "name": "Est. Rodalies-Can Palmer",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X1.geojson",
-      "route_code": "X1",
-      "route_id": "2.242.3497",
-      "name": "BCN Centre-F.Maci\u00e0 / BCN Centre-Gl\u00f2ries",
-      "color": "#010101"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X2.geojson",
-      "route_code": "X2",
-      "route_id": "2.244.3891",
-      "name": "Prat XPRES (Pl. Espanya - Av. Remolar)",
-      "color": "#010101"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X3.geojson",
-      "route_code": "X3",
-      "route_id": "2.245.3978",
-      "name": "Paral\u00b7lel - L'Hospitalet (Av. Carrilet)",
-      "color": "#010101"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X30.geojson",
-      "route_code": "X30",
-      "route_id": "430",
-      "name": "St. Just D.-Barcelona",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X43.geojson",
-      "route_code": "X43",
-      "route_id": "427",
-      "name": "Barcelona-St. Joan D.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X70.geojson",
-      "route_code": "X70",
-      "route_id": "424",
-      "name": "Barcelona-St. Boi L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X79.geojson",
-      "route_code": "X79",
-      "route_id": "425",
-      "name": "Barcelona-St. Boi L.",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X80.geojson",
-      "route_code": "X80",
-      "route_id": "472",
-      "name": "Barcelona-Gav\u00e0",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X83.geojson",
-      "route_code": "X83",
-      "route_id": "486",
-      "name": "Barcelona-Gav\u00e0",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X84.geojson",
-      "route_code": "X84",
-      "route_id": "487",
-      "name": "Barcelona-Viladecans",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X86.geojson",
-      "route_code": "X86",
-      "route_id": "423",
-      "name": "Barcelona-Viladecans",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X95.geojson",
-      "route_code": "X95",
-      "route_id": "405",
-      "name": "Barcelona-Castelldefels",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_route",
-      "path": "bus/routes/X97.geojson",
-      "route_code": "X97",
-      "route_id": "420",
-      "name": "Barcelona-Castelldefels",
-      "color": "#ffaa00"
-    },
-    {
-      "type": "bus_stops",
-      "path": "bus/stops.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "L6",
-      "path": "fgc/lines/L6.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "L7",
-      "path": "fgc/lines/L7.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "L8",
-      "path": "fgc/lines/L8.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "L12",
-      "path": "fgc/lines/L12.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "S1",
-      "path": "fgc/lines/S1.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "S2",
-      "path": "fgc/lines/S2.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "S3",
-      "path": "fgc/lines/S3.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "S4",
-      "path": "fgc/lines/S4.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "S8",
-      "path": "fgc/lines/S8.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "S9",
-      "path": "fgc/lines/S9.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "R5",
-      "path": "fgc/lines/R5.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "R6",
-      "path": "fgc/lines/R6.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "R50",
-      "path": "fgc/lines/R50.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "R60",
-      "path": "fgc/lines/R60.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "FV",
-      "path": "fgc/lines/FV.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "MM",
-      "path": "fgc/lines/MM.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "R53",
-      "path": "fgc/lines/R53.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "R63",
-      "path": "fgc/lines/R63.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "RL1",
-      "path": "fgc/lines/RL1.geojson"
-    },
-    {
-      "type": "fgc_line",
-      "line_code": "RL2",
-      "path": "fgc/lines/RL2.geojson"
+      "type": "tram_line",
+      "path": "tram/lines/T6.geojson",
+      "line_code": "T6"
     },
     {
       "type": "fgc_stations",
       "path": "fgc/stations.geojson"
     },
     {
-      "type": "metro_line",
-      "line_code": "L1",
-      "path": "metro/lines/L1.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/FV.geojson",
+      "line_code": "FV"
     },
     {
-      "type": "metro_line",
-      "line_code": "L2",
-      "path": "metro/lines/L2.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/L12.geojson",
+      "line_code": "L12"
     },
     {
-      "type": "metro_line",
-      "line_code": "L3",
-      "path": "metro/lines/L3.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/L6.geojson",
+      "line_code": "L6"
     },
     {
-      "type": "metro_line",
-      "line_code": "L4",
-      "path": "metro/lines/L4.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/L7.geojson",
+      "line_code": "L7"
     },
     {
-      "type": "metro_line",
-      "line_code": "L5",
-      "path": "metro/lines/L5.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/L8.geojson",
+      "line_code": "L8"
     },
     {
-      "type": "metro_line",
-      "line_code": "L9N",
-      "path": "metro/lines/L9N.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/MM.geojson",
+      "line_code": "MM"
     },
     {
-      "type": "metro_line",
-      "line_code": "L9S",
-      "path": "metro/lines/L9S.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/R5.geojson",
+      "line_code": "R5"
     },
     {
-      "type": "metro_line",
-      "line_code": "L10N",
-      "path": "metro/lines/L10N.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/R50.geojson",
+      "line_code": "R50"
     },
     {
-      "type": "metro_line",
-      "line_code": "L10S",
-      "path": "metro/lines/L10S.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/R53.geojson",
+      "line_code": "R53"
     },
     {
-      "type": "metro_line",
-      "line_code": "L11",
-      "path": "metro/lines/L11.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/R6.geojson",
+      "line_code": "R6"
     },
     {
-      "type": "metro_line",
-      "line_code": "FM",
-      "path": "metro/lines/FM.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/R60.geojson",
+      "line_code": "R60"
     },
     {
-      "type": "metro_stations",
-      "path": "metro/stations.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/R63.geojson",
+      "line_code": "R63"
     },
     {
-      "type": "tram_line",
-      "line_code": "T1",
-      "path": "tram/lines/T1.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/RL1.geojson",
+      "line_code": "RL1"
     },
     {
-      "type": "tram_line",
-      "line_code": "T2",
-      "path": "tram/lines/T2.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/RL2.geojson",
+      "line_code": "RL2"
     },
     {
-      "type": "tram_line",
-      "line_code": "T3",
-      "path": "tram/lines/T3.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/S1.geojson",
+      "line_code": "S1"
     },
     {
-      "type": "tram_line",
-      "line_code": "T4",
-      "path": "tram/lines/T4.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/S2.geojson",
+      "line_code": "S2"
     },
     {
-      "type": "tram_line",
-      "line_code": "T5",
-      "path": "tram/lines/T5.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/S3.geojson",
+      "line_code": "S3"
     },
     {
-      "type": "tram_line",
-      "line_code": "T6",
-      "path": "tram/lines/T6.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/S4.geojson",
+      "line_code": "S4"
     },
     {
-      "type": "tram_stations",
-      "path": "tram/stations.geojson"
+      "type": "fgc_line",
+      "path": "fgc/lines/S8.geojson",
+      "line_code": "S8"
+    },
+    {
+      "type": "fgc_line",
+      "path": "fgc/lines/S9.geojson",
+      "line_code": "S9"
+    },
+    {
+      "type": "bus_stops",
+      "path": "bus/stops.geojson"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/102.geojson",
+      "route_code": "102"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/104.geojson",
+      "route_code": "104"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/107.geojson",
+      "route_code": "107"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/109.geojson",
+      "route_code": "109"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/111.geojson",
+      "route_code": "111"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/112.geojson",
+      "route_code": "112"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/113.geojson",
+      "route_code": "113"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/114.geojson",
+      "route_code": "114"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/115.geojson",
+      "route_code": "115"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/117.geojson",
+      "route_code": "117"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/118.geojson",
+      "route_code": "118"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/119.geojson",
+      "route_code": "119"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/120.geojson",
+      "route_code": "120"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/121.geojson",
+      "route_code": "121"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/122.geojson",
+      "route_code": "122"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/123.geojson",
+      "route_code": "123"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/124.geojson",
+      "route_code": "124"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/125.geojson",
+      "route_code": "125"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/126.geojson",
+      "route_code": "126"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/127.geojson",
+      "route_code": "127"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/128.geojson",
+      "route_code": "128"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/129.geojson",
+      "route_code": "129"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/13.geojson",
+      "route_code": "13"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/130.geojson",
+      "route_code": "130"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/131.geojson",
+      "route_code": "131"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/132.geojson",
+      "route_code": "132"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/133.geojson",
+      "route_code": "133"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/134.geojson",
+      "route_code": "134"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/136.geojson",
+      "route_code": "136"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/141.geojson",
+      "route_code": "141"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/150.geojson",
+      "route_code": "150"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/155.geojson",
+      "route_code": "155"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/157.geojson",
+      "route_code": "157"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/175.geojson",
+      "route_code": "175"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/180.geojson",
+      "route_code": "180"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/182.geojson",
+      "route_code": "182"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/183.geojson",
+      "route_code": "183"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/185.geojson",
+      "route_code": "185"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/19.geojson",
+      "route_code": "19"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/191.geojson",
+      "route_code": "191"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/192.geojson",
+      "route_code": "192"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/196.geojson",
+      "route_code": "196"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/21.geojson",
+      "route_code": "21"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/22.geojson",
+      "route_code": "22"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/23.geojson",
+      "route_code": "23"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/24.geojson",
+      "route_code": "24"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/27.geojson",
+      "route_code": "27"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/33.geojson",
+      "route_code": "33"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/34.geojson",
+      "route_code": "34"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/39.geojson",
+      "route_code": "39"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/46.geojson",
+      "route_code": "46"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/47.geojson",
+      "route_code": "47"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/52.geojson",
+      "route_code": "52"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/54.geojson",
+      "route_code": "54"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/55.geojson",
+      "route_code": "55"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/59.geojson",
+      "route_code": "59"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/6.geojson",
+      "route_code": "6"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/60.geojson",
+      "route_code": "60"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/62.geojson",
+      "route_code": "62"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/63.geojson",
+      "route_code": "63"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/65.geojson",
+      "route_code": "65"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/67.geojson",
+      "route_code": "67"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/68.geojson",
+      "route_code": "68"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/7.geojson",
+      "route_code": "7"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/70.geojson",
+      "route_code": "70"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/76.geojson",
+      "route_code": "76"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/78.geojson",
+      "route_code": "78"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/86.geojson",
+      "route_code": "86"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/87.geojson",
+      "route_code": "87"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/88.geojson",
+      "route_code": "88"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/89.geojson",
+      "route_code": "89"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/91.geojson",
+      "route_code": "91"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/94.geojson",
+      "route_code": "94"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/95.geojson",
+      "route_code": "95"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/96.geojson",
+      "route_code": "96"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/97.geojson",
+      "route_code": "97"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/983.geojson",
+      "route_code": "983"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/A1.geojson",
+      "route_code": "A1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/A2.geojson",
+      "route_code": "A2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B12.geojson",
+      "route_code": "B12"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B14.geojson",
+      "route_code": "B14"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B15.geojson",
+      "route_code": "B15"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B18.geojson",
+      "route_code": "B18"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B2.geojson",
+      "route_code": "B2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B20.geojson",
+      "route_code": "B20"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B21.geojson",
+      "route_code": "B21"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B23.geojson",
+      "route_code": "B23"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B24.geojson",
+      "route_code": "B24"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B25.geojson",
+      "route_code": "B25"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B29.geojson",
+      "route_code": "B29"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B3.geojson",
+      "route_code": "B3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B34.geojson",
+      "route_code": "B34"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B35.geojson",
+      "route_code": "B35"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B4.geojson",
+      "route_code": "B4"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B5.geojson",
+      "route_code": "B5"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B7.geojson",
+      "route_code": "B7"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B8.geojson",
+      "route_code": "B8"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B80.geojson",
+      "route_code": "B80"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B81.geojson",
+      "route_code": "B81"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/B82.geojson",
+      "route_code": "B82"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/CF1.geojson",
+      "route_code": "CF1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/CF2.geojson",
+      "route_code": "CF2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/CS1.geojson",
+      "route_code": "CS1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/CS2.geojson",
+      "route_code": "CS2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/CS3.geojson",
+      "route_code": "CS3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/CS4.geojson",
+      "route_code": "CS4"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/D20.geojson",
+      "route_code": "D20"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/D40.geojson",
+      "route_code": "D40"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/D50.geojson",
+      "route_code": "D50"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/EP1.geojson",
+      "route_code": "EP1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/EP2.geojson",
+      "route_code": "EP2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/ESC.geojson",
+      "route_code": "ESC"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/GA1.geojson",
+      "route_code": "GA1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/GA2.geojson",
+      "route_code": "GA2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H10.geojson",
+      "route_code": "H10"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H12.geojson",
+      "route_code": "H12"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H14.geojson",
+      "route_code": "H14"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H16.geojson",
+      "route_code": "H16"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H2.geojson",
+      "route_code": "H2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H4.geojson",
+      "route_code": "H4"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H6.geojson",
+      "route_code": "H6"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/H8.geojson",
+      "route_code": "H8"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/JM.geojson",
+      "route_code": "JM"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/JT.geojson",
+      "route_code": "JT"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L16.geojson",
+      "route_code": "L16"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L20.geojson",
+      "route_code": "L20"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L21.geojson",
+      "route_code": "L21"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L46.geojson",
+      "route_code": "L46"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L52.geojson",
+      "route_code": "L52"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L70.geojson",
+      "route_code": "L70"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L72.geojson",
+      "route_code": "L72"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L74.geojson",
+      "route_code": "L74"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L76.geojson",
+      "route_code": "L76"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L77.geojson",
+      "route_code": "L77"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L78.geojson",
+      "route_code": "L78"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L80.geojson",
+      "route_code": "L80"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L82.geojson",
+      "route_code": "L82"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L85.geojson",
+      "route_code": "L85"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L86.geojson",
+      "route_code": "L86"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L88.geojson",
+      "route_code": "L88"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L94.geojson",
+      "route_code": "L94"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L95.geojson",
+      "route_code": "L95"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L96.geojson",
+      "route_code": "L96"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L97.geojson",
+      "route_code": "L97"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/L99.geojson",
+      "route_code": "L99"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/LH1.geojson",
+      "route_code": "LH1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/LH2.geojson",
+      "route_code": "LH2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M1.geojson",
+      "route_code": "M1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M12.geojson",
+      "route_code": "M12"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M14.geojson",
+      "route_code": "M14"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M19.geojson",
+      "route_code": "M19"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M26.geojson",
+      "route_code": "M26"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M27.geojson",
+      "route_code": "M27"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M28.geojson",
+      "route_code": "M28"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M30.geojson",
+      "route_code": "M30"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M5.geojson",
+      "route_code": "M5"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M6.geojson",
+      "route_code": "M6"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/M75.geojson",
+      "route_code": "M75"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/MB1.geojson",
+      "route_code": "MB1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/MB2.geojson",
+      "route_code": "MB2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/MB3.geojson",
+      "route_code": "MB3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N0.geojson",
+      "route_code": "N0"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N1.geojson",
+      "route_code": "N1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N11.geojson",
+      "route_code": "N11"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N12.geojson",
+      "route_code": "N12"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N13.geojson",
+      "route_code": "N13"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N14.geojson",
+      "route_code": "N14"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N15.geojson",
+      "route_code": "N15"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N16.geojson",
+      "route_code": "N16"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N17.geojson",
+      "route_code": "N17"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N18.geojson",
+      "route_code": "N18"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N19.geojson",
+      "route_code": "N19"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N2.geojson",
+      "route_code": "N2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N20.geojson",
+      "route_code": "N20"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N23.geojson",
+      "route_code": "N23"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N24.geojson",
+      "route_code": "N24"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N28.geojson",
+      "route_code": "N28"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N3.geojson",
+      "route_code": "N3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N4.geojson",
+      "route_code": "N4"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N5.geojson",
+      "route_code": "N5"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N6.geojson",
+      "route_code": "N6"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N7.geojson",
+      "route_code": "N7"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N8.geojson",
+      "route_code": "N8"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/N9.geojson",
+      "route_code": "N9"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PA1.geojson",
+      "route_code": "PA1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PA2.geojson",
+      "route_code": "PA2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PF1.geojson",
+      "route_code": "PF1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PF2.geojson",
+      "route_code": "PF2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PR1.geojson",
+      "route_code": "PR1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PR2.geojson",
+      "route_code": "PR2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PR3.geojson",
+      "route_code": "PR3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PR4.geojson",
+      "route_code": "PR4"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/PR5.geojson",
+      "route_code": "PR5"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SB1.geojson",
+      "route_code": "SB1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SB2.geojson",
+      "route_code": "SB2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SB3.geojson",
+      "route_code": "SB3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SF1.geojson",
+      "route_code": "SF1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SF2.geojson",
+      "route_code": "SF2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SF3.geojson",
+      "route_code": "SF3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SV1.geojson",
+      "route_code": "SV1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SV2.geojson",
+      "route_code": "SV2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SV3.geojson",
+      "route_code": "SV3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/SV4.geojson",
+      "route_code": "SV4"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V1.geojson",
+      "route_code": "V1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V11.geojson",
+      "route_code": "V11"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V13.geojson",
+      "route_code": "V13"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V15.geojson",
+      "route_code": "V15"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V17.geojson",
+      "route_code": "V17"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V19.geojson",
+      "route_code": "V19"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V21.geojson",
+      "route_code": "V21"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V23.geojson",
+      "route_code": "V23"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V25.geojson",
+      "route_code": "V25"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V27.geojson",
+      "route_code": "V27"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V29.geojson",
+      "route_code": "V29"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V3.geojson",
+      "route_code": "V3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V31.geojson",
+      "route_code": "V31"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V33.geojson",
+      "route_code": "V33"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V5.geojson",
+      "route_code": "V5"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V7.geojson",
+      "route_code": "V7"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/V9.geojson",
+      "route_code": "V9"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/VB1.geojson",
+      "route_code": "VB1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/VB2.geojson",
+      "route_code": "VB2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X1.geojson",
+      "route_code": "X1"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X2.geojson",
+      "route_code": "X2"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X3.geojson",
+      "route_code": "X3"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X30.geojson",
+      "route_code": "X30"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X43.geojson",
+      "route_code": "X43"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X70.geojson",
+      "route_code": "X70"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X79.geojson",
+      "route_code": "X79"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X80.geojson",
+      "route_code": "X80"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X83.geojson",
+      "route_code": "X83"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X84.geojson",
+      "route_code": "X84"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X86.geojson",
+      "route_code": "X86"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X95.geojson",
+      "route_code": "X95"
+    },
+    {
+      "type": "bus_route",
+      "path": "bus/routes/X97.geojson",
+      "route_code": "X97"
     }
   ]
 }

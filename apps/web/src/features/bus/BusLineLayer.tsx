@@ -34,6 +34,7 @@ export function BusLineLayer({
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
 
   // Load Bus route geometries
@@ -102,7 +103,7 @@ export function BusLineLayer({
             15, 5,
             18, 10,
           ],
-          'line-opacity': visible ? 0.6 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
 
@@ -126,9 +127,12 @@ export function BusLineLayer({
             15, 3,
             18, 6,
           ],
-          'line-opacity': visible ? 0.7 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
+
+      // Signal that layers are ready for visibility updates
+      setLayersReady(true);
 
     } catch {
       // Layer addition failed - source may have been removed
@@ -136,6 +140,7 @@ export function BusLineLayer({
 
     // Cleanup on unmount
     return () => {
+      setLayersReady(false);
       if (!map.isStyleLoaded()) return;
 
       try {
@@ -158,7 +163,7 @@ export function BusLineLayer({
 
   // Update visibility and highlighting
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !layersReady) return;
     if (!map.getLayer(LINE_LAYER_ID) || !map.getLayer(LINE_CASING_LAYER_ID)) return;
 
     const hasHighlight = highlightedRoutes.length > 0;
@@ -172,15 +177,16 @@ export function BusLineLayer({
       casingOpacity = 0;
     } else if (hasHighlight && isolateMode) {
       // In isolate mode, dim non-highlighted routes
+      // Bus routes use 'route_code' property (e.g., 'H10', 'V15')
       lineOpacity = [
         'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
+        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
         0.85,
         0.15,
       ];
       casingOpacity = [
         'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
+        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
         0.6,
         0.1,
       ];
@@ -188,7 +194,7 @@ export function BusLineLayer({
       // In highlight mode, all routes visible but highlighted are brighter
       lineOpacity = [
         'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
+        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
         0.9,
         0.5,
       ];
@@ -202,28 +208,17 @@ export function BusLineLayer({
     map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', casingOpacity);
 
     // Adjust line width for highlighted routes
+    // Note: zoom expressions must be at top level, so we use case inside interpolate stops
     if (hasHighlight) {
+      const isHighlighted: mapboxgl.Expression = ['in', ['get', 'route_code'], ['literal', highlightedRoutes]];
       const widthExpression: mapboxgl.Expression = [
-        'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
-        [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 2,
-          13, 3,
-          15, 5,
-          18, 10,
-        ],
-        [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 1,
-          13, 2,
-          15, 3,
-          18, 6,
-        ],
+        'interpolate',
+        ['exponential', 1.5],
+        ['zoom'],
+        10, ['case', isHighlighted, 2, 1],
+        13, ['case', isHighlighted, 3, 2],
+        15, ['case', isHighlighted, 5, 3],
+        18, ['case', isHighlighted, 10, 6],
       ];
       map.setPaintProperty(LINE_LAYER_ID, 'line-width', widthExpression);
     } else {
@@ -237,7 +232,7 @@ export function BusLineLayer({
         18, 6,
       ]);
     }
-  }, [map, visible, highlightedRoutes, isolateMode]);
+  }, [map, visible, highlightedRoutes, isolateMode, layersReady]);
 
   return null;
 }

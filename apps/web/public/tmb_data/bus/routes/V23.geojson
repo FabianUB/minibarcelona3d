@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.223.3071",
-        "line_code": "V23",
-        "name": "Nova Ic\u00e0ria / Can Marcet",
-        "color": "#6AB023",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.148175,
@@ -1865,8 +1855,17 @@
             2.201187,
             41.39429
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#6AB023",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "V23",
+        "route_name": "Nova Icària / Can Marcet"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

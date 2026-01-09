@@ -13,9 +13,12 @@ import type {
   MapState,
 } from './types';
 import type {
+  ControlPanelMode,
   MapHighlightMode,
   MapUIState,
   MapViewport,
+  ModelSizeMap,
+  NetworkHighlightMap,
   TransportFilterState,
   TransportType,
 } from '../../types/rodalies';
@@ -27,6 +30,22 @@ const DEFAULT_TRANSPORT_FILTERS: TransportFilterState = {
   bus: false,
   tram: false,
   fgc: false,
+};
+
+const DEFAULT_NETWORK_HIGHLIGHTS: NetworkHighlightMap = {
+  rodalies: { highlightMode: 'none', selectedLineIds: [] },
+  metro: { highlightMode: 'none', selectedLineIds: [] },
+  fgc: { highlightMode: 'none', selectedLineIds: [] },
+  tram: { highlightMode: 'none', selectedLineIds: [] },
+  bus: { highlightMode: 'none', selectedLineIds: [] },
+};
+
+const DEFAULT_MODEL_SIZES: ModelSizeMap = {
+  rodalies: 1.0,
+  metro: 1.0,
+  fgc: 1.0,
+  tram: 1.0,
+  bus: 1.0,
 };
 
 type MapAction =
@@ -50,7 +69,16 @@ type MapAction =
   | { type: 'select-station'; payload: string | null }
   | { type: 'set-station-load-error'; payload: string | null }
   | { type: 'set-transport-filter'; payload: { transportType: TransportType; visible: boolean } }
-  | { type: 'toggle-transport-filter'; payload: TransportType };
+  | { type: 'toggle-transport-filter'; payload: TransportType }
+  // Control panel actions
+  | { type: 'set-network-highlight'; payload: { network: TransportType; lineId: string; mode: MapHighlightMode } }
+  | { type: 'toggle-network-line'; payload: { network: TransportType; lineId: string } }
+  | { type: 'clear-network-highlight'; payload: TransportType }
+  | { type: 'set-model-size'; payload: { network: TransportType; size: number } }
+  | { type: 'set-exclusive-network'; payload: TransportType }
+  | { type: 'toggle-network-multi'; payload: TransportType }
+  | { type: 'set-active-control-tab'; payload: TransportType }
+  | { type: 'set-control-panel-mode'; payload: ControlPanelMode };
 
 /**
  * Create initial UI state with preferences loaded from localStorage
@@ -64,6 +92,39 @@ function createInitialUiState(): MapUIState {
     ...(savedFilters && typeof savedFilters === 'object' ? savedFilters : {}),
   };
 
+  // Load model sizes from preferences, merging with defaults
+  const savedModelSizes = prefs.modelSizes;
+  const modelSizes: ModelSizeMap = {
+    ...DEFAULT_MODEL_SIZES,
+    ...(savedModelSizes && typeof savedModelSizes === 'object' ? savedModelSizes : {}),
+  };
+
+  // Load active control tab from preferences
+  const savedActiveTab = prefs.activeControlTab;
+  const validTabs: TransportType[] = ['rodalies', 'metro', 'fgc', 'tram', 'bus'];
+  const activeControlTab: TransportType =
+    savedActiveTab && validTabs.includes(savedActiveTab) ? savedActiveTab : 'rodalies';
+
+  // Load network highlights from preferences, merging with defaults
+  const savedNetworkHighlights = prefs.networkHighlights;
+  const networkHighlights: NetworkHighlightMap = {
+    ...DEFAULT_NETWORK_HIGHLIGHTS,
+  };
+  // Carefully merge saved highlights to avoid invalid state
+  if (savedNetworkHighlights && typeof savedNetworkHighlights === 'object') {
+    for (const network of validTabs) {
+      const saved = savedNetworkHighlights[network];
+      if (saved && typeof saved === 'object') {
+        const savedMode = saved.highlightMode;
+        const savedLineIds = saved.selectedLineIds;
+        networkHighlights[network] = {
+          highlightMode: (savedMode === 'highlight' || savedMode === 'isolate') ? savedMode : 'none',
+          selectedLineIds: Array.isArray(savedLineIds) ? savedLineIds.filter((id): id is string => typeof id === 'string') : [],
+        };
+      }
+    }
+  }
+
   return {
     selectedLineId: null,
     selectedLineIds: [],
@@ -74,6 +135,11 @@ function createInitialUiState(): MapUIState {
     selectedStationId: null,
     stationLoadError: null,
     transportFilters,
+    // Control panel state
+    networkHighlights,
+    modelSizes,
+    activeControlTab,
+    controlPanelMode: 'controls', // Default to controls mode
   };
 }
 
@@ -200,6 +266,141 @@ function mapReducer(state: MapState, action: MapAction): MapState {
           },
         },
       };
+    // Control panel actions
+    case 'set-network-highlight': {
+      const { network, lineId, mode } = action.payload;
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          networkHighlights: {
+            ...state.ui.networkHighlights,
+            [network]: {
+              highlightMode: mode,
+              selectedLineIds: [lineId],
+            },
+          },
+        },
+      };
+    }
+    case 'toggle-network-line': {
+      const { network, lineId } = action.payload;
+      const currentState = state.ui.networkHighlights[network];
+      const isSelected = currentState.selectedLineIds.includes(lineId);
+
+      if (isSelected) {
+        // Remove line from selection
+        const nextLineIds = currentState.selectedLineIds.filter(id => id !== lineId);
+        return {
+          ...state,
+          ui: {
+            ...state.ui,
+            networkHighlights: {
+              ...state.ui.networkHighlights,
+              [network]: {
+                highlightMode: nextLineIds.length > 0 ? currentState.highlightMode : 'none',
+                selectedLineIds: nextLineIds,
+              },
+            },
+          },
+        };
+      } else {
+        // Add line to selection
+        return {
+          ...state,
+          ui: {
+            ...state.ui,
+            networkHighlights: {
+              ...state.ui.networkHighlights,
+              [network]: {
+                highlightMode: currentState.highlightMode === 'none' ? 'highlight' : currentState.highlightMode,
+                selectedLineIds: [...currentState.selectedLineIds, lineId],
+              },
+            },
+          },
+        };
+      }
+    }
+    case 'clear-network-highlight': {
+      const network = action.payload;
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          networkHighlights: {
+            ...state.ui.networkHighlights,
+            [network]: {
+              highlightMode: 'none',
+              selectedLineIds: [],
+            },
+          },
+        },
+      };
+    }
+    case 'set-model-size': {
+      const { network, size } = action.payload;
+      // Clamp size between 0.5 and 2.0
+      const clampedSize = Math.max(0.5, Math.min(2.0, size));
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          modelSizes: {
+            ...state.ui.modelSizes,
+            [network]: clampedSize,
+          },
+        },
+      };
+    }
+    case 'set-exclusive-network': {
+      // Enable only this network, disable all others
+      const network = action.payload;
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          transportFilters: {
+            rodalies: network === 'rodalies',
+            metro: network === 'metro',
+            bus: network === 'bus',
+            tram: network === 'tram',
+            fgc: network === 'fgc',
+          },
+          activeControlTab: network,
+        },
+      };
+    }
+    case 'toggle-network-multi': {
+      // Toggle this network without affecting others or changing active tab
+      const network = action.payload;
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          transportFilters: {
+            ...state.ui.transportFilters,
+            [network]: !state.ui.transportFilters[network],
+          },
+          // Note: DO NOT change activeControlTab - multi-select should only toggle visibility
+        },
+      };
+    }
+    case 'set-active-control-tab':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          activeControlTab: action.payload,
+        },
+      };
+    case 'set-control-panel-mode':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          controlPanelMode: action.payload,
+        },
+      };
     default:
       return state;
   }
@@ -215,8 +416,11 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       isHighContrast: state.ui.isHighContrast,
       isLegendOpen: state.ui.isLegendOpen,
       transportFilters: state.ui.transportFilters,
+      modelSizes: state.ui.modelSizes,
+      networkHighlights: state.ui.networkHighlights,
+      activeControlTab: state.ui.activeControlTab,
     });
-  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab]);
 
   const actions = useMemo<MapActions>(
     () => ({
@@ -285,6 +489,31 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       toggleTransportFilter(transportType) {
         dispatch({ type: 'toggle-transport-filter', payload: transportType });
+      },
+      // Control panel actions
+      setNetworkHighlight(network, lineId, mode) {
+        dispatch({ type: 'set-network-highlight', payload: { network, lineId, mode } });
+      },
+      toggleNetworkLine(network, lineId) {
+        dispatch({ type: 'toggle-network-line', payload: { network, lineId } });
+      },
+      clearNetworkHighlight(network) {
+        dispatch({ type: 'clear-network-highlight', payload: network });
+      },
+      setModelSize(network, size) {
+        dispatch({ type: 'set-model-size', payload: { network, size } });
+      },
+      setExclusiveNetwork(network) {
+        dispatch({ type: 'set-exclusive-network', payload: network });
+      },
+      toggleNetworkMulti(network) {
+        dispatch({ type: 'toggle-network-multi', payload: network });
+      },
+      setActiveControlTab(network) {
+        dispatch({ type: 'set-active-control-tab', payload: network });
+      },
+      setControlPanelMode(mode) {
+        dispatch({ type: 'set-control-panel-mode', payload: mode });
       },
     }),
     [dispatch],

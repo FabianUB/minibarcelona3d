@@ -190,6 +190,26 @@ export class TrainMeshManager {
   private readonly MAX_TRAIN_SPEED_MS = 55.6 * 1.5; // ~83 m/s or ~300 km/h
 
   private highlightedVehicleKey: string | null = null;
+
+  // User-controlled model scale (from control panel slider)
+  private userScale: number = 1.0;
+
+  /**
+   * Set user-controlled model scale multiplier
+   * @param scale - Scale multiplier (0.5 to 2.0, default 1.0)
+   */
+  setUserScale(scale: number): void {
+    const clampedScale = Math.max(0.5, Math.min(2.0, scale));
+    if (this.userScale !== clampedScale) {
+      this.userScale = clampedScale;
+      // Force scale recalculation on all meshes
+      this.trainMeshes.forEach((meshData) => {
+        meshData.lastZoomBucket = -1; // Invalidate cache
+      });
+      this.applyZoomResponsiveScale();
+    }
+  }
+
   /**
    * Deterministic variation per train to reduce visual overlaps
    */
@@ -977,7 +997,7 @@ export class TrainMeshManager {
     // Feature 003: Apply initial scale to parent group (not trainModel)
     const scaleVariation = this.getScaleVariation(train.vehicleKey);
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
-    const initialScale = baseScale * scaleVariation * zoomScale;
+    const initialScale = baseScale * scaleVariation * zoomScale * this.userScale;
     mesh.scale.set(initialScale, initialScale, initialScale);
 
     // T047: Apply rotation based on bearing to next station
@@ -1654,7 +1674,7 @@ export class TrainMeshManager {
       const prev = this.trainMeshes.get(this.highlightedVehicleKey);
       if (prev) {
         const scaleVariation = this.getScaleVariation(prev.vehicleKey);
-        const normalScale = prev.baseScale * scaleVariation * prev.screenSpaceScale;
+        const normalScale = prev.baseScale * scaleVariation * prev.screenSpaceScale * this.userScale;
         prev.mesh.scale.setScalar(normalScale);
       }
     }
@@ -1665,7 +1685,7 @@ export class TrainMeshManager {
       const next = this.trainMeshes.get(nextKey);
       if (next) {
         const scaleVariation = this.getScaleVariation(next.vehicleKey);
-        const normalScale = next.baseScale * scaleVariation * next.screenSpaceScale;
+        const normalScale = next.baseScale * scaleVariation * next.screenSpaceScale * this.userScale;
         const highlightScale = normalScale * 1.12;
         next.mesh.scale.setScalar(highlightScale);
       }
@@ -1857,7 +1877,7 @@ export class TrainMeshManager {
     this.trainMeshes.forEach((meshData) => {
       if (meshData.lastZoomBucket !== quantizedZoom) {
         const scaleVariation = this.getScaleVariation(meshData.vehicleKey);
-        const finalScale = meshData.baseScale * scaleVariation * zoomScale;
+        const finalScale = meshData.baseScale * scaleVariation * zoomScale * this.userScale;
 
         const isHighlighted = this.highlightedVehicleKey === meshData.vehicleKey;
         const scaleToApply = isHighlighted ? finalScale * 1.12 : finalScale;

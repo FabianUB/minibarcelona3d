@@ -15,6 +15,10 @@ import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 export interface TramLineLayerProps {
   map: MapboxMap;
   visible?: boolean;
+  /** Optional: highlight specific line codes (e.g., ['T1', 'T2']) */
+  highlightedLines?: string[];
+  /** Optional: isolate mode dims non-highlighted lines */
+  isolateMode?: boolean;
 }
 
 const SOURCE_ID = 'tram-lines-source';
@@ -24,10 +28,13 @@ const LINE_CASING_LAYER_ID = 'tram-lines-casing';
 export function TramLineLayer({
   map,
   visible = true,
+  highlightedLines = [],
+  isolateMode = false,
 }: TramLineLayerProps) {
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
 
   // Load TRAM line geometries
@@ -96,7 +103,7 @@ export function TramLineLayer({
             15, 8,
             18, 14,
           ],
-          'line-opacity': visible ? 0.8 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
 
@@ -120,9 +127,12 @@ export function TramLineLayer({
             15, 5,
             18, 10,
           ],
-          'line-opacity': visible ? 0.9 : 0,
+          'line-opacity': 0, // Start hidden, visibility effect sets correct value
         },
       });
+
+      // Signal that layers are ready for visibility updates
+      setLayersReady(true);
 
     } catch {
       // Layer addition failed
@@ -130,6 +140,7 @@ export function TramLineLayer({
 
     // Cleanup on unmount
     return () => {
+      setLayersReady(false);
       if (!map.isStyleLoaded()) return;
 
       try {
@@ -150,14 +161,76 @@ export function TramLineLayer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, geoJSON, isLoading, error, styleReady]);
 
-  // Update visibility
+  // Update visibility and highlighting
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !layersReady) return;
     if (!map.getLayer(LINE_LAYER_ID) || !map.getLayer(LINE_CASING_LAYER_ID)) return;
 
-    map.setPaintProperty(LINE_LAYER_ID, 'line-opacity', visible ? 0.9 : 0);
-    map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', visible ? 0.8 : 0);
-  }, [map, visible]);
+    const hasHighlight = highlightedLines.length > 0;
+
+    // Build opacity expression based on highlight state
+    let lineOpacity: mapboxgl.Expression | number;
+    let casingOpacity: mapboxgl.Expression | number;
+
+    if (!visible) {
+      lineOpacity = 0;
+      casingOpacity = 0;
+    } else if (hasHighlight && isolateMode) {
+      // In isolate mode, dim non-highlighted lines
+      lineOpacity = [
+        'case',
+        ['in', ['get', 'line_code'], ['literal', highlightedLines]],
+        0.95,
+        0.2,
+      ];
+      casingOpacity = [
+        'case',
+        ['in', ['get', 'line_code'], ['literal', highlightedLines]],
+        0.8,
+        0.1,
+      ];
+    } else if (hasHighlight) {
+      // In highlight mode, all lines visible but highlighted are brighter
+      lineOpacity = [
+        'case',
+        ['in', ['get', 'line_code'], ['literal', highlightedLines]],
+        1.0,
+        0.7,
+      ];
+      casingOpacity = 0.8;
+    } else {
+      lineOpacity = 0.9;
+      casingOpacity = 0.8;
+    }
+
+    map.setPaintProperty(LINE_LAYER_ID, 'line-opacity', lineOpacity);
+    map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', casingOpacity);
+
+    // Adjust line width for highlighted lines
+    if (hasHighlight) {
+      const isHighlighted: mapboxgl.Expression = ['in', ['get', 'line_code'], ['literal', highlightedLines]];
+      const widthExpression: mapboxgl.Expression = [
+        'interpolate',
+        ['exponential', 1.5],
+        ['zoom'],
+        10, ['case', isHighlighted, 3, 2],
+        13, ['case', isHighlighted, 5, 3],
+        15, ['case', isHighlighted, 7, 5],
+        18, ['case', isHighlighted, 14, 10],
+      ];
+      map.setPaintProperty(LINE_LAYER_ID, 'line-width', widthExpression);
+    } else {
+      map.setPaintProperty(LINE_LAYER_ID, 'line-width', [
+        'interpolate',
+        ['exponential', 1.5],
+        ['zoom'],
+        10, 2,
+        13, 3,
+        15, 5,
+        18, 10,
+      ]);
+    }
+  }, [map, visible, highlightedLines, isolateMode, layersReady]);
 
   return null;
 }

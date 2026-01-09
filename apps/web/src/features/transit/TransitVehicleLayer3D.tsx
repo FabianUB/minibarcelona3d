@@ -34,6 +34,12 @@ export interface TransitVehicleLayer3DProps {
   beforeId?: string;
   /** Callback when loading state changes */
   onLoadingChange?: (isLoading: boolean) => void;
+  /** Model scale multiplier (0.5 to 2.0, default 1.0) */
+  modelScale?: number;
+  /** Highlighted line IDs for filtering vehicles */
+  highlightedLineIds?: string[];
+  /** Whether isolate mode is active (hide non-highlighted vs dim them) */
+  isolateMode?: boolean;
 }
 
 /**
@@ -47,6 +53,9 @@ export function TransitVehicleLayer3D({
   visible = true,
   beforeId,
   onLoadingChange,
+  modelScale = 1.0,
+  highlightedLineIds = [],
+  isolateMode = false,
 }: TransitVehicleLayer3DProps) {
   const [sceneReady, setSceneReady] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -137,6 +146,32 @@ export function TransitVehicleLayer3D({
     return false;
   }, [networkType, metroLoading, busLoading, tramLoading, fgcLoading]);
 
+  /**
+   * Calculate vehicle opacities based on line selection
+   * - No selection: All vehicles at 100% opacity
+   * - Highlight mode: Selected lines at 100%, others at 25%
+   * - Isolate mode: Selected lines at 100%, others at 0% (invisible)
+   */
+  const vehicleOpacities = useMemo(() => {
+    // No filtering if no lines are selected
+    if (highlightedLineIds.length === 0) {
+      return null;
+    }
+
+    const opacities = new Map<string, number>();
+    positions.forEach((vehicle) => {
+      const isHighlighted = highlightedLineIds.includes(vehicle.lineCode);
+      if (isHighlighted) {
+        opacities.set(vehicle.vehicleKey, 1.0);
+      } else if (isolateMode) {
+        opacities.set(vehicle.vehicleKey, 0.0); // Invisible in isolate mode
+      } else {
+        opacities.set(vehicle.vehicleKey, 0.25); // Dimmed in highlight mode
+      }
+    });
+    return opacities;
+  }, [positions, highlightedLineIds, isolateMode]);
+
   // Notify parent of loading state
   useEffect(() => {
     onLoadingChange?.(isDataLoading || !modelLoaded);
@@ -221,8 +256,11 @@ export function TransitVehicleLayer3D({
           bus: 'bus',
           rodalies: 'civia', // Not used here
         };
+        // Apply modelScale to the base vehicle size
+        const baseSize = vehicleSizes[networkType] ?? 15;
+        const scaledSize = baseSize * modelScale;
         const meshManager = new TransitMeshManager(scene, {
-          vehicleSizeMeters: vehicleSizes[networkType] ?? 15,
+          vehicleSizeMeters: scaledSize,
           modelType: modelTypes[networkType] ?? 'metro',
         });
         meshManagerRef.current = meshManager;
@@ -293,7 +331,7 @@ export function TransitVehicleLayer3D({
         console.log(`TransitVehicleLayer3D [${networkType}]: Layer removed`);
       },
     }),
-    [layerId, map, networkType]
+    [layerId, map, networkType, modelScale]
   );
 
   /**
@@ -337,12 +375,17 @@ export function TransitVehicleLayer3D({
     console.log(`TransitVehicleLayer3D [${networkType}]: Updating ${positions.length} vehicles`);
     meshManagerRef.current.updateVehicles(positions);
 
+    // Apply vehicle opacities based on line selection (highlight/isolate mode)
+    if (vehicleOpacities) {
+      meshManagerRef.current.setVehicleOpacities(vehicleOpacities);
+    }
+
     // Store positions for click lookup
     positionsRef.current = positions;
 
     // Trigger map repaint
     map.triggerRepaint();
-  }, [positions, sceneReady, modelLoaded, isDataReady, map, networkType]);
+  }, [positions, sceneReady, modelLoaded, isDataReady, map, networkType, vehicleOpacities]);
 
   /**
    * Clean up hover state when hovered vehicle is no longer present

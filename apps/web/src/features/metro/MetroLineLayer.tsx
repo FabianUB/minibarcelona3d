@@ -34,6 +34,7 @@ export function MetroLineLayer({
   const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
 
   // Load Metro line geometries
@@ -130,12 +131,16 @@ export function MetroLineLayer({
         },
       });
 
+      // Signal that layers are ready for visibility updates
+      setLayersReady(true);
+
     } catch {
       // Layer addition failed - source may have been removed
     }
 
     // Cleanup on unmount
     return () => {
+      setLayersReady(false);
       if (!map.isStyleLoaded()) return;
 
       try {
@@ -157,7 +162,7 @@ export function MetroLineLayer({
 
   // Update visibility and highlighting
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !layersReady) return;
     if (!map.getLayer(LINE_LAYER_ID) || !map.getLayer(LINE_CASING_LAYER_ID)) return;
 
     const hasHighlight = highlightedLines.length > 0;
@@ -201,28 +206,17 @@ export function MetroLineLayer({
     map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', casingOpacity);
 
     // Adjust line width for highlighted lines
+    // Note: zoom expressions must be at top level, so we use case inside interpolate stops
     if (hasHighlight) {
+      const isHighlighted: mapboxgl.Expression = ['in', ['get', 'line_code'], ['literal', highlightedLines]];
       const widthExpression: mapboxgl.Expression = [
-        'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedLines]],
-        [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 3,
-          13, 5,
-          15, 7,
-          18, 14,
-        ],
-        [
-          'interpolate',
-          ['exponential', 1.5],
-          ['zoom'],
-          10, 2,
-          13, 3,
-          15, 5,
-          18, 10,
-        ],
+        'interpolate',
+        ['exponential', 1.5],
+        ['zoom'],
+        10, ['case', isHighlighted, 3, 2],
+        13, ['case', isHighlighted, 5, 3],
+        15, ['case', isHighlighted, 7, 5],
+        18, ['case', isHighlighted, 14, 10],
       ];
       map.setPaintProperty(LINE_LAYER_ID, 'line-width', widthExpression);
     } else {
@@ -236,7 +230,7 @@ export function MetroLineLayer({
         18, 10,
       ]);
     }
-  }, [map, visible, highlightedLines, isolateMode]);
+  }, [map, visible, highlightedLines, isolateMode, layersReady]);
 
   return null;
 }

@@ -1,17 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "properties": {
-        "route_id": "2.202.3068",
-        "line_code": "H2",
-        "name": "Av. Esplugues / Trinitat Nova",
-        "color": "#003888",
-        "text_color": "#FFFFFF"
-      },
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.104848,
@@ -2293,8 +2283,17 @@
             2.187568,
             41.451497
           ]
-        ]
-      }
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "color": "#003888",
+        "last_verified_at": "2026-01-07T08:24:50Z",
+        "route_code": "H2",
+        "route_name": "Av. Esplugues / Trinitat Nova"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

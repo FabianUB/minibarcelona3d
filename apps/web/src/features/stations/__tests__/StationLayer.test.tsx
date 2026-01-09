@@ -195,6 +195,12 @@ describe('StationLayer', () => {
       hasImage: vi.fn(() => false),
       addImage: vi.fn(),
       removeImage: vi.fn(),
+      setFilter: vi.fn((layerId: string, filter: unknown) => {
+        const layer = mockLayers.get(layerId);
+        if (layer) {
+          layer.filter = filter;
+        }
+      }),
     } as unknown as MapboxMap;
   });
 
@@ -480,11 +486,17 @@ describe('StationLayer', () => {
         />
       );
 
-      // Should set opacity to 0.3 (dimmed)
+      // In isolate mode, non-highlighted stations are filtered out (not dimmed)
+      // The remaining visible stations have full opacity
       expect(mockMap.setPaintProperty).toHaveBeenCalledWith(
         'rodalies-stations-circles',
         'circle-opacity',
-        0.3
+        1
+      );
+      // Filter should be applied to only show stations on highlighted lines
+      expect(mockMap.setFilter).toHaveBeenCalledWith(
+        'rodalies-stations-circles',
+        ['any', ['in', 'R1', ['get', 'lines']]]
       );
     });
 
