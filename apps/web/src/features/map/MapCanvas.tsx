@@ -127,7 +127,7 @@ export function MapCanvas() {
   } = useDefaultViewport();
 
   const isHighContrast = ui.isHighContrast;
-  const { transportFilters, networkHighlights, modelSizes, showStations } = ui;
+  const { transportFilters, networkHighlights, modelSizes, showStations, showOnlyTopBusLines } = ui;
 
   // Keep a ref to current transportFilters for use in closures
   const transportFiltersRef = useRef(transportFilters);
@@ -834,6 +834,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           visible={transportFilters.bus}
           highlightedRoutes={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
+          filterTopLinesOnly={showOnlyTopBusLines}
         />
       ) : null}
       {/* Bus stop markers */}

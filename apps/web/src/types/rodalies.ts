@@ -174,6 +174,7 @@ export interface MapUIState {
   stationLoadError: string | null; // Error message from station data load failure
   transportFilters: TransportFilterState; // Visibility filters for transport types
   showStations: boolean; // Show/hide station markers and names
+  showOnlyTopBusLines: boolean; // Show only top 10 most used bus lines (default: true)
   // Control panel state
   networkHighlights: NetworkHighlightMap; // Per-network highlight/isolate state
   modelSizes: ModelSizeMap; // Per-network 3D model scale

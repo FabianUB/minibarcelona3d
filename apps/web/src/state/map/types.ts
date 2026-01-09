@@ -48,6 +48,8 @@ export interface MapActions {
   setControlPanelMode(mode: ControlPanelMode): void;
   toggleShowStations(): void;
   setShowStations(show: boolean): void;
+  toggleShowOnlyTopBusLines(): void;
+  setShowOnlyTopBusLines(show: boolean): void;
 }
 
 export interface MapHighlightSelectors {

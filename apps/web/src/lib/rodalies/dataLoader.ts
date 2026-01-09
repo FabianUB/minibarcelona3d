@@ -194,6 +194,7 @@ export async function loadMapUiState(
           activeControlTab: 'rodalies',
           controlPanelMode: 'controls',
           showStations: true,
+          showOnlyTopBusLines: true,
         };
       }
       const url = resolveManifestAssetUrl(path);
@@ -346,6 +347,7 @@ function normaliseMapUiState(
     activeControlTab: 'rodalies',
     controlPanelMode: 'controls',
     showStations: candidate?.showStations ?? true,
+    showOnlyTopBusLines: candidate?.showOnlyTopBusLines ?? true,
   };
 }
 

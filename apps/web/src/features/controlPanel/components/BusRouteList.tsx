@@ -9,9 +9,11 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useMapState, useMapActions } from '@/state/map';
 import { BUS_ROUTE_GROUPS, type BusRoutePrefix } from '../types';
+import { TOP_BUS_LINES } from '@/config/busConfig';
 
 interface BusRoute {
   route_code: string;
@@ -51,7 +53,7 @@ function getRoutePrefix(routeCode: string): BusRoutePrefix | 'other' {
 
 export function BusRouteList({ className }: BusRouteListProps) {
   const { ui } = useMapState();
-  const { setNetworkHighlight, toggleNetworkLine, clearNetworkHighlight } = useMapActions();
+  const { setNetworkHighlight, toggleNetworkLine, clearNetworkHighlight, toggleShowOnlyTopBusLines } = useMapActions();
   const [routes, setRoutes] = useState<BusRoute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,16 +100,26 @@ export function BusRouteList({ className }: BusRouteListProps) {
       });
   }, []);
 
-  // Filter routes based on search query
+  // Filter routes based on top lines toggle and search query
   const filteredRoutes = useMemo(() => {
-    if (!searchQuery.trim()) return routes;
-    const query = searchQuery.toLowerCase();
-    return routes.filter(
-      (r) =>
-        r.route_code.toLowerCase().includes(query) ||
-        r.name.toLowerCase().includes(query)
-    );
-  }, [routes, searchQuery]);
+    // First filter by top lines if enabled
+    let result = routes;
+    if (ui.showOnlyTopBusLines) {
+      result = result.filter((r) => TOP_BUS_LINES.includes(r.route_code as typeof TOP_BUS_LINES[number]));
+    }
+
+    // Then filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (r) =>
+          r.route_code.toLowerCase().includes(query) ||
+          r.name.toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  }, [routes, searchQuery, ui.showOnlyTopBusLines]);
 
   // Virtual list setup
   const virtualizer = useVirtualizer({
@@ -194,6 +206,21 @@ export function BusRouteList({ className }: BusRouteListProps) {
 
   return (
     <div className={cn('space-y-3', className)}>
+      {/* Top bus lines filter toggle */}
+      <div className="flex items-center justify-between py-1">
+        <label
+          htmlFor="top-bus-toggle"
+          className="text-sm cursor-pointer select-none"
+        >
+          Show only top {TOP_BUS_LINES.length} lines
+        </label>
+        <Switch
+          id="top-bus-toggle"
+          checked={ui.showOnlyTopBusLines}
+          onCheckedChange={toggleShowOnlyTopBusLines}
+        />
+      </div>
+
       {/* Search */}
       <Input
         type="search"

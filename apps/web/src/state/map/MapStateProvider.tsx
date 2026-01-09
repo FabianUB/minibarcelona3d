@@ -80,7 +80,9 @@ type MapAction =
   | { type: 'set-active-control-tab'; payload: TransportType }
   | { type: 'set-control-panel-mode'; payload: ControlPanelMode }
   | { type: 'toggle-show-stations' }
-  | { type: 'set-show-stations'; payload: boolean };
+  | { type: 'set-show-stations'; payload: boolean }
+  | { type: 'toggle-show-only-top-bus-lines' }
+  | { type: 'set-show-only-top-bus-lines'; payload: boolean };
 
 /**
  * Create initial UI state with preferences loaded from localStorage
@@ -138,6 +140,7 @@ function createInitialUiState(): MapUIState {
     stationLoadError: null,
     transportFilters,
     showStations: getPreference('showStations', true), // Show stations by default
+    showOnlyTopBusLines: getPreference('showOnlyTopBusLines', true), // Show only top 10 bus lines by default
     // Control panel state
     networkHighlights,
     modelSizes,
@@ -420,6 +423,22 @@ function mapReducer(state: MapState, action: MapAction): MapState {
           showStations: action.payload,
         },
       };
+    case 'toggle-show-only-top-bus-lines':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showOnlyTopBusLines: !state.ui.showOnlyTopBusLines,
+        },
+      };
+    case 'set-show-only-top-bus-lines':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showOnlyTopBusLines: action.payload,
+        },
+      };
     default:
       return state;
   }
@@ -446,6 +465,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         networkHighlights: state.ui.networkHighlights,
         activeControlTab: state.ui.activeControlTab,
         showStations: state.ui.showStations,
+        showOnlyTopBusLines: state.ui.showOnlyTopBusLines,
       });
     }, 500);
 
@@ -454,7 +474,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab, state.ui.showStations]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab, state.ui.showStations, state.ui.showOnlyTopBusLines]);
 
   const actions = useMemo<MapActions>(
     () => ({
@@ -554,6 +574,12 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       setShowStations(show) {
         dispatch({ type: 'set-show-stations', payload: show });
+      },
+      toggleShowOnlyTopBusLines() {
+        dispatch({ type: 'toggle-show-only-top-bus-lines' });
+      },
+      setShowOnlyTopBusLines(show) {
+        dispatch({ type: 'set-show-only-top-bus-lines', payload: show });
       },
     }),
     [dispatch],

@@ -26,6 +26,7 @@ export interface MapPreferences {
   networkHighlights?: NetworkHighlightMap;
   activeControlTab?: TransportType;
   showStations?: boolean;
+  showOnlyTopBusLines?: boolean;
   // Future preferences can be added here
   [key: string]: unknown;
 }

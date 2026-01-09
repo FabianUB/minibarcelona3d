@@ -6,11 +6,12 @@
  * Each route is colored according to its TMB color.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadAllBusRoutes } from '../../lib/metro/dataLoader';
 import type { MetroLineCollection } from '../../types/metro';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
+import { isTopBusLine } from '../../config/busConfig';
 
 export interface BusLineLayerProps {
   map: MapboxMap;
@@ -19,6 +20,8 @@ export interface BusLineLayerProps {
   highlightedRoutes?: string[];
   /** Optional: isolate mode dims non-highlighted routes */
   isolateMode?: boolean;
+  /** Optional: only show top 10 most used bus lines */
+  filterTopLinesOnly?: boolean;
 }
 
 const SOURCE_ID = 'bus-routes-source';
@@ -30,12 +33,32 @@ export function BusLineLayer({
   visible = true,
   highlightedRoutes = [],
   isolateMode = false,
+  filterTopLinesOnly = false,
 }: BusLineLayerProps) {
-  const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
+  const [rawGeoJSON, setRawGeoJSON] = useState<MetroLineCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
+
+  // Filter GeoJSON to only include top bus lines when enabled
+  const geoJSON = useMemo(() => {
+    if (!rawGeoJSON) return null;
+    if (!filterTopLinesOnly) return rawGeoJSON;
+
+    // Filter features to only include top bus lines
+    // Bus routes have 'route_code' property in the actual data
+    const filteredFeatures = rawGeoJSON.features.filter((feature) => {
+      const props = feature.properties as { route_code?: string } | null;
+      const routeCode = props?.route_code;
+      return routeCode && isTopBusLine(routeCode);
+    });
+
+    return {
+      ...rawGeoJSON,
+      features: filteredFeatures,
+    };
+  }, [rawGeoJSON, filterTopLinesOnly]);
 
   // Load Bus route geometries
   useEffect(() => {
@@ -47,7 +70,7 @@ export function BusLineLayer({
         setError(null);
         const data = await loadAllBusRoutes();
         if (!cancelled) {
-          setGeoJSON(data);
+          setRawGeoJSON(data);
           setIsLoading(false);
         }
       } catch (err) {
