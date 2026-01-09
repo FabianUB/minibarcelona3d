@@ -9,11 +9,13 @@ import { List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useMapActions } from '@/state/map';
+import { useTransitState } from '@/state/transit';
 import type { TransportType } from '@/types/rodalies';
 import { NetworkLineGrid } from './NetworkLineGrid';
 import { BusRouteList } from './BusRouteList';
 import { ModelSizeSlider } from './ModelSizeSlider';
 import { SettingsSection } from './SettingsSection';
+import { DataSourceBadge } from './DataSourceBadge';
 import { NETWORK_TABS } from '../types';
 
 interface NetworkTabContentProps {
@@ -30,8 +32,10 @@ const NETWORK_LABELS: Record<TransportType, string> = {
 
 export function NetworkTabContent({ network }: NetworkTabContentProps) {
   const { setControlPanelMode } = useMapActions();
+  const { dataSourceStatus } = useTransitState();
   const networkTab = NETWORK_TABS.find((t) => t.type === network);
   const networkLabel = NETWORK_LABELS[network];
+  const dataSource = dataSourceStatus[network];
 
   return (
     <div className="space-y-3">
@@ -40,6 +44,7 @@ export function NetworkTabContent({ network }: NetworkTabContentProps) {
         <div className="flex items-center gap-2">
           <span className="text-lg">{networkTab?.icon}</span>
           <span className="font-semibold text-sm">{networkLabel}</span>
+          <DataSourceBadge source={dataSource} />
         </div>
         <Button
           variant="ghost"

@@ -32,6 +32,7 @@ import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/t
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
 import { useMapActions } from '../../state/map';
+import { useTransitActions } from '../../state/transit';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
 import { trainDebug } from '../../lib/trains/debugLogger';
@@ -170,6 +171,7 @@ export function TrainLayer3D({
 }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
+  const { setDataSource } = useTransitActions();
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -1221,6 +1223,16 @@ export function TrainLayer3D({
   useEffect(() => {
     onLoadingChange?.(isLoading && trains.length === 0);
   }, [isLoading, trains.length, onLoadingChange]);
+
+  /**
+   * Effect: Update transit state with Rodalies data source
+   * Rodalies always uses real-time API data (no simulation fallback)
+   */
+  useEffect(() => {
+    if (trains.length > 0 && !error) {
+      setDataSource('rodalies', 'realtime');
+    }
+  }, [trains.length, error, setDataSource]);
 
   /**
    * Effect: Notify parent of train data changes

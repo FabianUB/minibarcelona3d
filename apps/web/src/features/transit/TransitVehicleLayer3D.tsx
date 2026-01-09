@@ -20,7 +20,7 @@ import { useBusPositions } from './hooks/useBusPositions';
 import { useTramPositions } from './hooks/useTramPositions';
 import { useFgcPositions } from './hooks/useFgcPositions';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
-import { useTransitActions } from '../../state/transit';
+import { useTransitActions, type DataSourceType } from '../../state/transit';
 import { useMapActions } from '../../state/map';
 
 export interface TransitVehicleLayer3DProps {
@@ -66,7 +66,7 @@ export function TransitVehicleLayer3D({
   visibleRef.current = visible;
 
   // State actions
-  const { selectVehicle } = useTransitActions();
+  const { selectVehicle, setDataSource } = useTransitActions();
   const { setActivePanel } = useMapActions();
 
   // Three.js references
@@ -92,6 +92,7 @@ export function TransitVehicleLayer3D({
     positions: metroPositions,
     isReady: metroReady,
     isLoading: metroLoading,
+    isSimulationFallback: metroSimulation,
   } = useMetroPositions({
     enabled: networkType === 'metro' && visible,
   });
@@ -100,6 +101,7 @@ export function TransitVehicleLayer3D({
     positions: busPositions,
     isReady: busReady,
     isLoading: busLoading,
+    isSimulationFallback: busSimulation,
   } = useBusPositions({
     enabled: networkType === 'bus' && visible,
   });
@@ -108,6 +110,7 @@ export function TransitVehicleLayer3D({
     positions: tramPositions,
     isReady: tramReady,
     isLoading: tramLoading,
+    isSimulationFallback: tramSimulation,
   } = useTramPositions({
     enabled: networkType === 'tram' && visible,
   });
@@ -116,6 +119,7 @@ export function TransitVehicleLayer3D({
     positions: fgcPositions,
     isReady: fgcReady,
     isLoading: fgcLoading,
+    isSimulationFallback: fgcSimulation,
   } = useFgcPositions({
     enabled: networkType === 'fgc' && visible,
   });
@@ -145,6 +149,14 @@ export function TransitVehicleLayer3D({
     if (networkType === 'fgc') return fgcLoading;
     return false;
   }, [networkType, metroLoading, busLoading, tramLoading, fgcLoading]);
+
+  const isSimulationFallback = useMemo(() => {
+    if (networkType === 'metro') return metroSimulation;
+    if (networkType === 'bus') return busSimulation;
+    if (networkType === 'tram') return tramSimulation;
+    if (networkType === 'fgc') return fgcSimulation;
+    return false;
+  }, [networkType, metroSimulation, busSimulation, tramSimulation, fgcSimulation]);
 
   /**
    * Calculate vehicle opacities based on line selection
@@ -176,6 +188,13 @@ export function TransitVehicleLayer3D({
   useEffect(() => {
     onLoadingChange?.(isDataLoading || !modelLoaded);
   }, [isDataLoading, modelLoaded, onLoadingChange]);
+
+  // Update transit state with data source status
+  useEffect(() => {
+    if (!isDataReady) return;
+    const source: DataSourceType = isSimulationFallback ? 'schedule' : 'realtime';
+    setDataSource(networkType, source);
+  }, [isDataReady, isSimulationFallback, networkType, setDataSource]);
 
   /**
    * Mapbox Custom Layer Implementation
