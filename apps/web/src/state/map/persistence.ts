@@ -11,7 +11,7 @@
  * - Type-safe: validates loaded data structure
  */
 
-import type { ModelSizeMap, TransportFilterState, TransportType } from '../../types/rodalies';
+import type { ModelSizeMap, NetworkHighlightMap, TransportFilterState, TransportType } from '../../types/rodalies';
 
 const STORAGE_KEY = 'rodalies-map-preferences';
 
@@ -23,6 +23,7 @@ export interface MapPreferences {
   isLegendOpen?: boolean;
   transportFilters?: TransportFilterState;
   modelSizes?: ModelSizeMap;
+  networkHighlights?: NetworkHighlightMap;
   activeControlTab?: TransportType;
   // Future preferences can be added here
   [key: string]: unknown;

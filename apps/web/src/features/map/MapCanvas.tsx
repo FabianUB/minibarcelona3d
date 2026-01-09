@@ -809,6 +809,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
         <MetroStationLayer
           map={mapInstance}
           visible={transportFilters.metro}
+          highlightedLines={networkHighlights.metro.selectedLineIds}
+          isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
           onStationClick={(stationId, stationName) => {
             console.log('Metro station clicked:', stationId, stationName);
           }}
@@ -839,6 +841,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
         <BusStopLayer
           map={mapInstance}
           visible={transportFilters.bus}
+          highlightedRoutes={networkHighlights.bus.selectedLineIds}
+          isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
           onStopClick={(stopId, stopName) => {
             console.log('Bus stop clicked:', stopId, stopName);
           }}
@@ -857,13 +861,20 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       ) : null}
       {/* TRAM line geometries */}
       {mapInstance && isMapLoaded ? (
-        <TramLineLayer map={mapInstance} visible={transportFilters.tram} />
+        <TramLineLayer
+          map={mapInstance}
+          visible={transportFilters.tram}
+          highlightedLines={networkHighlights.tram.selectedLineIds}
+          isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
+        />
       ) : null}
       {/* TRAM stop markers */}
       {mapInstance && isMapLoaded ? (
         <TramStopLayer
           map={mapInstance}
           visible={transportFilters.tram}
+          highlightedLines={networkHighlights.tram.selectedLineIds}
+          isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
           onStopClick={(stopId, stopName) => {
             console.log('TRAM stop clicked:', stopId, stopName);
           }}
@@ -882,13 +893,20 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       ) : null}
       {/* FGC line geometries */}
       {mapInstance && isMapLoaded ? (
-        <FGCLineLayer map={mapInstance} visible={transportFilters.fgc} />
+        <FGCLineLayer
+          map={mapInstance}
+          visible={transportFilters.fgc}
+          highlightedLines={networkHighlights.fgc.selectedLineIds}
+          isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
+        />
       ) : null}
       {/* FGC station markers */}
       {mapInstance && isMapLoaded ? (
         <FGCStationLayer
           map={mapInstance}
           visible={transportFilters.fgc}
+          highlightedLines={networkHighlights.fgc.selectedLineIds}
+          isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
           onStationClick={(stationId, stationName) => {
             console.log('FGC station clicked:', stationId, stationName);
           }}
