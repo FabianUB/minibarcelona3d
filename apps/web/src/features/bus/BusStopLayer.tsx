@@ -15,6 +15,10 @@ import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 export interface BusStopLayerProps {
   map: MapboxMap;
   visible?: boolean;
+  /** Routes to highlight/isolate (e.g., ['H10', 'V15']) */
+  highlightedRoutes?: string[];
+  /** When true, only show stops on highlighted routes */
+  isolateMode?: boolean;
   onStopClick?: (stopId: string, stopName: string) => void;
 }
 
@@ -25,6 +29,8 @@ const LABEL_LAYER_ID = 'bus-stops-labels';
 export function BusStopLayer({
   map,
   visible = true,
+  highlightedRoutes = [],
+  isolateMode = false,
   onStopClick,
 }: BusStopLayerProps) {
   const [geoJSON, setGeoJSON] = useState<MetroStationCollection | null>(null);
@@ -171,23 +177,65 @@ export function BusStopLayer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, geoJSON, isLoading, error, styleReady]);
 
-  // Update visibility when prop changes
+  // Update visibility and filtering when props change
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
+    // Skip isStyleLoaded check - if layers exist, we can update them
+    if (!map.getLayer(CIRCLE_LAYER_ID) || !map.getLayer(LABEL_LAYER_ID)) return;
 
+    const hasHighlight = highlightedRoutes.length > 0;
+
+    // Build filter for isolate mode
+    // Stop data has "lines" array property - check if any highlighted route is in it
+    let filter: mapboxgl.FilterSpecification | null = null;
+    if (isolateMode && hasHighlight) {
+      // Create filter: show stop if ANY of its lines match ANY highlighted route
+      const routeFilters = highlightedRoutes.map((routeCode) => [
+        'in',
+        routeCode,
+        ['get', 'lines'],
+      ]);
+      filter = ['any', ...routeFilters] as mapboxgl.FilterSpecification;
+    }
+
+    // Apply filter to both layers
+    map.setFilter(CIRCLE_LAYER_ID, filter);
+    map.setFilter(LABEL_LAYER_ID, filter);
+
+    // Build opacity based on highlight state
+    // Bus stops use slightly lower base opacity (0.8) to reduce visual clutter
+    let circleOpacity: mapboxgl.Expression | number;
+    let strokeOpacity: mapboxgl.Expression | number;
+    let textOpacity: mapboxgl.Expression | number;
+
+    if (!visible) {
+      circleOpacity = 0;
+      strokeOpacity = 0;
+      textOpacity = 0;
+    } else if (hasHighlight && !isolateMode) {
+      // Highlight mode: dim stops that don't serve highlighted routes
+      const isHighlighted: mapboxgl.Expression = [
+        'any',
+        ...highlightedRoutes.map((routeCode) => ['in', routeCode, ['get', 'lines']]),
+      ];
+      circleOpacity = ['case', isHighlighted, 0.8, 0.3];
+      strokeOpacity = ['case', isHighlighted, 0.8, 0.3];
+      textOpacity = ['step', ['zoom'], 0, 15, ['case', isHighlighted, 0.9, 0.3]];
+    } else {
+      circleOpacity = 0.8;
+      strokeOpacity = 0.8;
+      textOpacity = ['step', ['zoom'], 0, 15, 0.9];
+    }
+
+    // Update visibility
     if (map.getLayer(CIRCLE_LAYER_ID)) {
-      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', visible ? 0.8 : 0);
-      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', visible ? 0.8 : 0);
+      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', circleOpacity);
+      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', strokeOpacity);
     }
     if (map.getLayer(LABEL_LAYER_ID)) {
-      map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', [
-        'step',
-        ['zoom'],
-        0,
-        15, visible ? 0.9 : 0,
-      ]);
+      map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', textOpacity);
     }
-  }, [map, visible]);
+  }, [map, visible, highlightedRoutes, isolateMode]);
 
   // Click handler
   const handleClick = useCallback(
@@ -232,7 +280,7 @@ export function BusStopLayer({
       map.off('mouseenter', CIRCLE_LAYER_ID, handleMouseEnter);
       map.off('mouseleave', CIRCLE_LAYER_ID, handleMouseLeave);
     };
-  }, [map, handleClick, onStopClick, geoJSON]);
+  }, [map, handleClick, onStopClick]);
 
   return null;
 }

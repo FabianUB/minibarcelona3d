@@ -182,6 +182,22 @@ describe('rodalies dataLoader', () => {
         tram: false,
         fgc: false,
       },
+      networkHighlights: {
+        rodalies: { highlightMode: 'none', selectedLineIds: [] },
+        metro: { highlightMode: 'none', selectedLineIds: [] },
+        fgc: { highlightMode: 'none', selectedLineIds: [] },
+        tram: { highlightMode: 'none', selectedLineIds: [] },
+        bus: { highlightMode: 'none', selectedLineIds: [] },
+      },
+      modelSizes: {
+        rodalies: 1,
+        metro: 1,
+        fgc: 1,
+        tram: 1,
+        bus: 1,
+      },
+      activeControlTab: 'rodalies',
+      controlPanelMode: 'controls',
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
 });
@@ -220,6 +236,22 @@ it('normalises remote Map UI state defaults and invalid highlight modes', async 
         tram: false,
         fgc: false,
       },
+      networkHighlights: {
+        rodalies: { highlightMode: 'none', selectedLineIds: [] },
+        metro: { highlightMode: 'none', selectedLineIds: [] },
+        fgc: { highlightMode: 'none', selectedLineIds: [] },
+        tram: { highlightMode: 'none', selectedLineIds: [] },
+        bus: { highlightMode: 'none', selectedLineIds: [] },
+      },
+      modelSizes: {
+        rodalies: 1,
+        metro: 1,
+        fgc: 1,
+        tram: 1,
+        bus: 1,
+      },
+      activeControlTab: 'rodalies',
+      controlPanelMode: 'controls',
     });
 });
 

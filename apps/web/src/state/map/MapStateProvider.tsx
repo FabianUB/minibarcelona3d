@@ -105,6 +105,26 @@ function createInitialUiState(): MapUIState {
   const activeControlTab: TransportType =
     savedActiveTab && validTabs.includes(savedActiveTab) ? savedActiveTab : 'rodalies';
 
+  // Load network highlights from preferences, merging with defaults
+  const savedNetworkHighlights = prefs.networkHighlights;
+  const networkHighlights: NetworkHighlightMap = {
+    ...DEFAULT_NETWORK_HIGHLIGHTS,
+  };
+  // Carefully merge saved highlights to avoid invalid state
+  if (savedNetworkHighlights && typeof savedNetworkHighlights === 'object') {
+    for (const network of validTabs) {
+      const saved = savedNetworkHighlights[network];
+      if (saved && typeof saved === 'object') {
+        const savedMode = saved.highlightMode;
+        const savedLineIds = saved.selectedLineIds;
+        networkHighlights[network] = {
+          highlightMode: (savedMode === 'highlight' || savedMode === 'isolate') ? savedMode : 'none',
+          selectedLineIds: Array.isArray(savedLineIds) ? savedLineIds.filter((id): id is string => typeof id === 'string') : [],
+        };
+      }
+    }
+  }
+
   return {
     selectedLineId: null,
     selectedLineIds: [],
@@ -116,7 +136,7 @@ function createInitialUiState(): MapUIState {
     stationLoadError: null,
     transportFilters,
     // Control panel state
-    networkHighlights: DEFAULT_NETWORK_HIGHLIGHTS,
+    networkHighlights,
     modelSizes,
     activeControlTab,
     controlPanelMode: 'controls', // Default to controls mode
@@ -351,7 +371,7 @@ function mapReducer(state: MapState, action: MapAction): MapState {
       };
     }
     case 'toggle-network-multi': {
-      // Toggle this network without affecting others
+      // Toggle this network without affecting others or changing active tab
       const network = action.payload;
       return {
         ...state,
@@ -361,7 +381,7 @@ function mapReducer(state: MapState, action: MapAction): MapState {
             ...state.ui.transportFilters,
             [network]: !state.ui.transportFilters[network],
           },
-          activeControlTab: network,
+          // Note: DO NOT change activeControlTab - multi-select should only toggle visibility
         },
       };
     }
@@ -397,9 +417,10 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       isLegendOpen: state.ui.isLegendOpen,
       transportFilters: state.ui.transportFilters,
       modelSizes: state.ui.modelSizes,
+      networkHighlights: state.ui.networkHighlights,
       activeControlTab: state.ui.activeControlTab,
     });
-  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.activeControlTab]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab]);
 
   const actions = useMemo<MapActions>(
     () => ({

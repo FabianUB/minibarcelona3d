@@ -177,15 +177,16 @@ export function BusLineLayer({
       casingOpacity = 0;
     } else if (hasHighlight && isolateMode) {
       // In isolate mode, dim non-highlighted routes
+      // Bus routes use 'route_code' property (e.g., 'H10', 'V15')
       lineOpacity = [
         'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
+        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
         0.85,
         0.15,
       ];
       casingOpacity = [
         'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
+        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
         0.6,
         0.1,
       ];
@@ -193,7 +194,7 @@ export function BusLineLayer({
       // In highlight mode, all routes visible but highlighted are brighter
       lineOpacity = [
         'case',
-        ['in', ['get', 'line_code'], ['literal', highlightedRoutes]],
+        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
         0.9,
         0.5,
       ];
@@ -209,7 +210,7 @@ export function BusLineLayer({
     // Adjust line width for highlighted routes
     // Note: zoom expressions must be at top level, so we use case inside interpolate stops
     if (hasHighlight) {
-      const isHighlighted: mapboxgl.Expression = ['in', ['get', 'line_code'], ['literal', highlightedRoutes]];
+      const isHighlighted: mapboxgl.Expression = ['in', ['get', 'route_code'], ['literal', highlightedRoutes]];
       const widthExpression: mapboxgl.Expression = [
         'interpolate',
         ['exponential', 1.5],

@@ -373,15 +373,10 @@ export class TransitMeshManager {
     // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
-    // Parse line color (used for outlines and stored in mesh data)
-    // Ensure color has # prefix for THREE.Color
+    // Parse line color (used for outlines, stored in mesh data but NOT applied to model)
+    // All transit models use their base model appearance without per-route color overrides
     const colorHex = vehicle.lineColor.startsWith('#') ? vehicle.lineColor : `#${vehicle.lineColor}`;
     const lineColor = new THREE.Color(colorHex);
-
-    // Apply line color to the model (skip for metro - uses original model appearance)
-    if (vehicle.networkType !== 'metro') {
-      this.applyLineColor(trainModel, lineColor);
-    }
 
     // Add to scene
     this.scene.add(mesh);
@@ -439,35 +434,6 @@ export class TransitMeshManager {
   private applyBearing(mesh: THREE.Group, bearing: number): void {
     const bearingRad = (bearing * Math.PI) / 180;
     mesh.rotation.z = -bearingRad + this.MODEL_FORWARD_OFFSET;
-  }
-
-  /**
-   * Apply line color to the train model materials
-   * Only applies to bus/tram/fgc - metro keeps its original appearance
-   */
-  private applyLineColor(model: THREE.Object3D, color: THREE.Color): void {
-    model.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        const materials = Array.isArray(mesh.material)
-          ? mesh.material
-          : [mesh.material];
-
-        for (const material of materials) {
-          if (material && 'color' in material) {
-            const clonedMaterial = material.clone();
-            (clonedMaterial as THREE.MeshStandardMaterial).color = color;
-            if ('metalness' in clonedMaterial) {
-              (clonedMaterial as THREE.MeshStandardMaterial).metalness = 0.3;
-            }
-            if ('roughness' in clonedMaterial) {
-              (clonedMaterial as THREE.MeshStandardMaterial).roughness = 0.6;
-            }
-            mesh.material = clonedMaterial;
-          }
-        }
-      }
-    });
   }
 
   /**

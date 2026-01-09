@@ -150,35 +150,64 @@ export function StationLayer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, geoJSON, isLoading, error, styleReady]);
 
-  // Update visibility when prop changes
+  // Update visibility and filtering when props change
   useEffect(() => {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map) return;
+    // Skip isStyleLoaded check - if layers exist, we can update them
+    if (!map.getLayer(CIRCLE_LAYER_ID) || !map.getLayer(LABEL_LAYER_ID)) return;
 
+    const hasHighlight = highlightedLineIds.length > 0;
+
+    // Build filter for isolate mode
+    // Station data has "lines" array property - check if any highlighted line is in it
+    let filter: mapboxgl.FilterSpecification | null = null;
+    if (highlightMode === 'isolate' && hasHighlight) {
+      // Create filter: show station if ANY of its lines match ANY highlighted line
+      const lineFilters = highlightedLineIds.map((lineId) => [
+        'in',
+        lineId,
+        ['get', 'lines'],
+      ]);
+      filter = ['any', ...lineFilters] as mapboxgl.FilterSpecification;
+    }
+
+    // Apply filter to both layers
+    map.setFilter(CIRCLE_LAYER_ID, filter);
+    map.setFilter(LABEL_LAYER_ID, filter);
+
+    // Build opacity based on highlight state
+    let circleOpacity: mapboxgl.Expression | number;
+    let strokeOpacity: mapboxgl.Expression | number;
+    let textOpacity: mapboxgl.Expression | number;
+
+    if (!visible) {
+      circleOpacity = 0;
+      strokeOpacity = 0;
+      textOpacity = 0;
+    } else if (highlightMode === 'highlight' && hasHighlight) {
+      // Highlight mode: dim stations that don't serve highlighted lines
+      const isHighlighted: mapboxgl.Expression = [
+        'any',
+        ...highlightedLineIds.map((lineId) => ['in', lineId, ['get', 'lines']]),
+      ];
+      circleOpacity = ['case', isHighlighted, 1.0, 0.4];
+      strokeOpacity = ['case', isHighlighted, 1.0, 0.4];
+      textOpacity = ['step', ['zoom'], 0, 14, ['case', isHighlighted, 1.0, 0.4]];
+    } else {
+      circleOpacity = 1;
+      strokeOpacity = 1;
+      textOpacity = ['step', ['zoom'], 0, 14, 1];
+    }
+
+    // Update visibility
     if (map.getLayer(CIRCLE_LAYER_ID)) {
-      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', visible ? 1 : 0);
-      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', visible ? 1 : 0);
+      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', circleOpacity);
+      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', strokeOpacity);
     }
     if (map.getLayer(LABEL_LAYER_ID)) {
-      map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', [
-        'step',
-        ['zoom'],
-        0,
-        14, visible ? 1 : 0,
-      ]);
+      map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', textOpacity);
     }
-  }, [map, visible]);
-
-  // Update styles when highlighting changes
-  useEffect(() => {
-    if (!map || !styleReady || !map.getLayer(CIRCLE_LAYER_ID)) return;
-
-    const isAnyLineHighlighted = highlightMode !== 'none' && highlightedLineIds.length > 0;
-    const isDimmed = highlightMode === 'isolate' && isAnyLineHighlighted;
-    const opacity = isDimmed ? 0.3 : 1.0;
-
-    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', visible ? opacity : 0);
-    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', visible ? opacity : 0);
-  }, [map, highlightedLineIds, highlightMode, visible, styleReady]);
+  }, [map, visible, highlightedLineIds, highlightMode]);
 
   // Click handler
   const handleClick = useCallback(
@@ -219,7 +248,7 @@ export function StationLayer({
       map.off('mouseenter', CIRCLE_LAYER_ID, handleMouseEnter);
       map.off('mouseleave', CIRCLE_LAYER_ID, handleMouseLeave);
     };
-  }, [map, handleClick, geoJSON, styleReady]);
+  }, [map, handleClick, styleReady]);
 
   return null;
 }
