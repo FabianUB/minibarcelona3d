@@ -8,6 +8,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { useMapState } from '@/state/map';
+import { useTransitState } from '@/state/transit';
 import type { TrainPosition } from '@/types/trains';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { useMetroPositions } from '../transit/hooks/useMetroPositions';
@@ -17,6 +18,7 @@ import { useFgcPositions } from '../transit/hooks/useFgcPositions';
 import { NetworkTabs } from './components/NetworkTabs';
 import { NetworkTabContent } from './components/NetworkTabContent';
 import { VehicleListView } from './components/VehicleListView';
+import { DataSourceBadge } from './components/DataSourceBadge';
 
 interface ControlPanelDesktopProps {
   rodaliesTrains?: TrainPosition[];
@@ -28,6 +30,7 @@ export function ControlPanelDesktop({
   map,
 }: ControlPanelDesktopProps) {
   const { ui } = useMapState();
+  const { dataSourceStatus } = useTransitState();
 
   // Get transit positions from hooks
   const { positions: metroPositions } = useMetroPositions({ enabled: true });
@@ -37,6 +40,7 @@ export function ControlPanelDesktop({
 
   const isControlMode = ui.controlPanelMode === 'controls';
   const activeNetwork = ui.activeControlTab;
+  const dataSource = dataSourceStatus[activeNetwork];
 
   const handleVehicleClick = (lat: number, lng: number) => {
     if (map) {
@@ -50,8 +54,13 @@ export function ControlPanelDesktop({
 
   return (
     <Card className="fixed top-4 left-4 w-80 shadow-xl z-10 max-h-[calc(100vh-2rem)] flex flex-col border-0 bg-background/95 backdrop-blur-sm">
+      {/* Data source indicator */}
+      <div className="px-4 pt-3 pb-1 shrink-0 flex justify-end">
+        <DataSourceBadge source={dataSource} />
+      </div>
+
       {/* Network Tabs */}
-      <div className="px-4 pt-4 pb-3 shrink-0">
+      <div className="px-4 pb-3 shrink-0">
         <NetworkTabs />
       </div>
 
