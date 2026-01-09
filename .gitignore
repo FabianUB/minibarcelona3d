@@ -39,11 +39,13 @@ apps/poller/poller
 **/.vscode
 **/.vscode-test
 
-# Air temporary builds
+# Air temporary builds (Go live reload tool)
 .air.toml~
 .air/
 tmp-air/
 tmp/
+**/tmp/
+apps/api/tmp/
 air.log
 
 # === Docker ===
