@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useEffect } from 'react';
+import { useMemo, useReducer, useEffect, useRef } from 'react';
 import type { PropsWithChildren } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 
@@ -410,16 +410,30 @@ export function MapStateProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(mapReducer, undefined, createInitialState);
 
   // Persist UI preferences to localStorage when they change
-  // Combined into single effect to reduce localStorage writes
+  // Debounced to avoid blocking renders during rapid interactions (e.g., slider changes)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    savePreferences({
-      isHighContrast: state.ui.isHighContrast,
-      isLegendOpen: state.ui.isLegendOpen,
-      transportFilters: state.ui.transportFilters,
-      modelSizes: state.ui.modelSizes,
-      networkHighlights: state.ui.networkHighlights,
-      activeControlTab: state.ui.activeControlTab,
-    });
+    // Clear any pending save to avoid stale writes
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    // Debounce by 500ms to batch rapid state changes
+    saveTimeoutRef.current = setTimeout(() => {
+      savePreferences({
+        isHighContrast: state.ui.isHighContrast,
+        isLegendOpen: state.ui.isLegendOpen,
+        transportFilters: state.ui.transportFilters,
+        modelSizes: state.ui.modelSizes,
+        networkHighlights: state.ui.networkHighlights,
+        activeControlTab: state.ui.activeControlTab,
+      });
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab]);
 
   const actions = useMemo<MapActions>(

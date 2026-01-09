@@ -230,6 +230,9 @@ export function TrainLayer3D({
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+
   // Performance monitoring (T054)
   const performanceRef = useRef({
     frameCount: 0,
@@ -342,8 +345,10 @@ export function TrainLayer3D({
 
   const fetchTrains = useCallback(async () => {
     try {
-      setIsLoading(true);
+      if (isMountedRef.current) setIsLoading(true);
       const response = await fetchTrainPositions();
+      // Bail out early if component unmounted during fetch
+      if (!isMountedRef.current) return;
       const previousPolledAtMs = pollTimestampsRef.current.current;
       const parsedPolledAt = Date.parse(response.polledAt);
       pollTimestampsRef.current.current = Number.isFinite(parsedPolledAt) ? parsedPolledAt : undefined;
@@ -490,11 +495,16 @@ export function TrainLayer3D({
       });
       lastPositionsRef.current = currentPositionsMap;
 
-      setTrains(validTrains);
-      setError(null);
-      setRetryCount(0);
-      setLastPollTime(Date.now()); // Update poll time for countdown display
+      if (isMountedRef.current) {
+        setTrains(validTrains);
+        setError(null);
+        setRetryCount(0);
+        setLastPollTime(Date.now()); // Update poll time for countdown display
+      }
     } catch (err) {
+      // Bail out if component unmounted
+      if (!isMountedRef.current) return;
+
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch train positions';
       setError(errorMessage);
@@ -508,15 +518,15 @@ export function TrainLayer3D({
       const maxRetries = 5;
 
       if (nextRetryCount <= maxRetries) {
-        if (isPollingPausedRef.current) {
-          // Do not schedule retries while polling is paused
-          setRetryCount(0);
+        if (isPollingPausedRef.current || !isMountedRef.current) {
+          // Do not schedule retries while polling is paused or component is unmounted
+          if (isMountedRef.current) setRetryCount(0);
           return;
         }
         const retryDelayMs = Math.min(2000 * Math.pow(2, currentRetryCount), 32000);
         console.log(`TrainLayer3D: Retrying in ${retryDelayMs / 1000}s (attempt ${nextRetryCount}/${maxRetries})`);
 
-        setRetryCount(nextRetryCount);
+        if (isMountedRef.current) setRetryCount(nextRetryCount);
 
         // Clear any existing retry timeout
         if (retryTimeoutRef.current) {
@@ -531,7 +541,7 @@ export function TrainLayer3D({
         console.error(`TrainLayer3D: Max retries (${maxRetries}) reached, giving up`);
       }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
     }
   }, [resolveTrainPosition]);
 
@@ -676,6 +686,14 @@ export function TrainLayer3D({
   const debugCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const debugEnabledRef = useRef(areDebugToolsEnabled);
   const debugRafIdRef = useRef<number | null>(null);
+
+  // Cleanup on unmount - set isMountedRef to false to prevent state updates
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     isPollingPausedRef.current = isPollingPaused;

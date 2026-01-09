@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**mini-rodalies-3d** is a 3D interactive map visualization for the Rodalies (Barcelona commuter rail) network. The project uses a monorepo structure with separate frontend (React + Mapbox GL) and backend (Go) applications.
+**MiniBarcelona3D** is a 3D interactive map visualization for the Barcelona public transport network. It displays real-time positions of Rodalies (commuter rail), Metro, Bus, Tram, and FGC trains/vehicles. The project uses a monorepo structure with separate frontend (React + Mapbox GL) and backend (Go) applications.
 
 ## Repository Structure
 
