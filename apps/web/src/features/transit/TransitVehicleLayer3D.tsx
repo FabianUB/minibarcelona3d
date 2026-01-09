@@ -316,6 +316,14 @@ export function TransitVehicleLayer3D({
         // Render
         rendererRef.current.resetState();
         rendererRef.current.render(sceneRef.current, cameraRef.current);
+
+        // Continuous repaint loop for smooth animation
+        // This ensures vehicles animate smoothly based on elapsed time
+        // Only trigger when visible and has meshes to avoid unnecessary GPU work
+        const meshCount = meshManagerRef.current?.getMeshCount() ?? 0;
+        if (visibleRef.current && meshCount > 0) {
+          map.triggerRepaint();
+        }
       },
 
       onRemove() {
