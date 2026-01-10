@@ -130,7 +130,7 @@ Create `GenericStopLayer.tsx` with configurable properties for station vs stop t
 
 ## 4. Consolidated API Retry Logic
 
-**Status:** Pending
+**Status:** ✅ Complete (ac89e23)
 **Impact:** Medium (~100 lines saved)
 **Effort:** Low (30 min)
 
@@ -164,7 +164,7 @@ export async function fetchWithRetry<T>(url: string, options?: RequestInit): Pro
 
 ## 5. Unified Config Helper Functions
 
-**Status:** Pending
+**Status:** ✅ Complete (ac89e23)
 **Impact:** Medium (~100 lines saved)
 **Effort:** Low (30 min)
 
@@ -240,8 +240,8 @@ const BusLayers = lazy(() => import('../bus'));
 
 ## 7. Remove Unused Dependencies
 
-**Status:** Pending
-**Impact:** Low (~8KB bundle savings)
+**Status:** ✅ Complete (ac89e23)
+**Impact:** Low (~14.6KB savings: 8KB JS + 6.6KB CSS)
 **Effort:** Low (10 min)
 
 ### Candidates
@@ -259,9 +259,9 @@ grep -r "tw-animate" apps/web/src/   # Check actual usage
 ## Implementation Order (Recommended)
 
 1. **Quick wins first:**
-   - [ ] Consolidated API retry logic (#4)
-   - [ ] Unified config helpers (#5)
-   - [ ] Remove unused dependencies (#7)
+   - [x] Consolidated API retry logic (#4) - ✅ Done in ac89e23
+   - [x] Unified config helpers (#5) - ✅ Done in ac89e23
+   - [x] Remove unused dependencies (#7) - ✅ Done in ac89e23
 
 2. **High-impact refactors:**
    - [ ] Position simulator unification (#1)
