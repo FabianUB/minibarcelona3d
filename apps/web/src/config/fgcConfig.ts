@@ -10,6 +10,7 @@
  */
 
 import type { LineConfig } from '../types/transit';
+import { createConfigHelpers } from './transitConfigHelpers';
 
 /**
  * FGC line configuration with schedule data
@@ -171,36 +172,17 @@ export const FGC_LINE_CONFIG: Record<string, LineConfig> = {
   },
 };
 
-/**
- * Get all configured FGC line codes
- */
-export function getFgcLineCodes(): string[] {
-  return Object.keys(FGC_LINE_CONFIG);
-}
+// Generate helper functions from factory
+const helpers = createConfigHelpers(FGC_LINE_CONFIG);
 
-/**
- * Get configuration for a specific FGC line
- */
-export function getFgcLineConfig(lineCode: string): LineConfig | undefined {
-  return FGC_LINE_CONFIG[lineCode];
-}
+/** Get all configured FGC line codes */
+export const getFgcLineCodes = helpers.getLineCodes;
 
-/**
- * Calculate estimated number of trains for a line based on length and headway
- */
-export function calculateFgcTrainsPerDirection(
-  lineLengthMeters: number,
-  lineCode: string
-): number {
-  const config = FGC_LINE_CONFIG[lineCode];
-  if (!config) return 0;
+/** Get configuration for a specific FGC line */
+export const getFgcLineConfig = helpers.getLineConfig;
 
-  const avgSpeedMs = (config.avgSpeedKmh * 1000) / 3600;
-  const tripTimeSeconds = lineLengthMeters / avgSpeedMs;
-  const trains = Math.ceil(tripTimeSeconds / config.headwaySeconds);
-
-  return Math.max(1, trains);
-}
+/** Calculate estimated number of trains for a line based on length and headway */
+export const calculateFgcTrainsPerDirection = helpers.calculateVehiclesPerDirection;
 
 /**
  * Simulation update interval in milliseconds
