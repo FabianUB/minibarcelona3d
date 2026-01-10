@@ -239,7 +239,8 @@ export function TrainLayer3D({
   const performanceRef = useRef({
     frameCount: 0,
     lastFrameTime: performance.now(),
-    frameTimes: [] as number[],
+    frameTimes: new Array<number>(60).fill(16.67), // Pre-allocated circular buffer
+    frameTimeIndex: 0, // Current position in circular buffer
     fps: 60,
     avgFrameTime: 16.67,
     lastLogTime: performance.now(),
@@ -1064,12 +1065,10 @@ export function TrainLayer3D({
 
       perf.renderCount++;
       perf.frameCount++;
-      perf.frameTimes.push(frameTime);
 
-      // Keep only last 60 frames for rolling average
-      if (perf.frameTimes.length > 60) {
-        perf.frameTimes.shift();
-      }
+      // Use circular buffer for O(1) frame time tracking (avoid O(n) shift)
+      perf.frameTimes[perf.frameTimeIndex] = frameTime;
+      perf.frameTimeIndex = (perf.frameTimeIndex + 1) % 60;
 
       // Calculate FPS and average frame time
       const timeSinceLastFrame = frameStartTime - perf.lastFrameTime;

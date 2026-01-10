@@ -10,6 +10,49 @@ import type { RodaliesLine } from '../../types/rodalies';
 export type LineColorMap = Map<string, THREE.Color>;
 
 /**
+ * Shared material cache for outline meshes
+ * Key: hex color string (e.g., "#ff0000")
+ * Value: Shared MeshBasicMaterial instance
+ *
+ * This cache prevents creating duplicate materials for the same color,
+ * significantly reducing memory usage when multiple trains have outlines.
+ */
+const outlineMaterialCache = new Map<string, THREE.MeshBasicMaterial>();
+
+/**
+ * Get or create a shared outline material for a given color
+ */
+function getOutlineMaterial(
+  color: THREE.Color,
+  opacity: number = 0.95
+): THREE.MeshBasicMaterial {
+  const colorHex = color.getHexString();
+  const cacheKey = `${colorHex}_${opacity}`;
+
+  let material = outlineMaterialCache.get(cacheKey);
+  if (!material) {
+    material = new THREE.MeshBasicMaterial({
+      color: color,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity,
+      depthTest: true,
+      depthWrite: false,
+    });
+    outlineMaterialCache.set(cacheKey, material);
+  }
+  return material;
+}
+
+/**
+ * Clear the outline material cache (call on cleanup)
+ */
+export function clearOutlineMaterialCache(): void {
+  outlineMaterialCache.forEach((material) => material.dispose());
+  outlineMaterialCache.clear();
+}
+
+/**
  * Build a map of railway line codes to their brand colors
  *
  * Creates a lookup table for quickly accessing line colors during hover interactions.
@@ -90,18 +133,12 @@ export function createOutlineMesh(
 ): THREE.Group {
   const outlineGroup = new THREE.Group();
 
+  // Use shared material from cache (one material per color/opacity combo)
+  const sharedMaterial = getOutlineMaterial(lineColor, opacity);
+
   trainMesh.traverse((child) => {
     if (child instanceof THREE.Mesh && child.geometry) {
-      const outlineMaterial = new THREE.MeshBasicMaterial({
-        color: lineColor,
-        side: THREE.BackSide,
-        transparent: true,
-        opacity,
-        depthTest: true,
-        depthWrite: false,
-      });
-
-      const outlineMesh = new THREE.Mesh(child.geometry, outlineMaterial);
+      const outlineMesh = new THREE.Mesh(child.geometry, sharedMaterial);
       outlineMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
       // Copy full transformation hierarchy from original mesh

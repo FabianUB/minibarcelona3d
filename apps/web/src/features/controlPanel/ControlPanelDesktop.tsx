@@ -32,17 +32,25 @@ export function ControlPanelDesktop({
   const { ui } = useMapState();
   const { dataSourceStatus } = useTransitState();
 
-  // Get transit positions from hooks
-  const { positions: metroPositions } = useMetroPositions({ enabled: true });
-  const { positions: busPositions } = useBusPositions({
-    enabled: true,
-    filterTopLinesOnly: ui.showOnlyTopBusLines,
-  });
-  const { positions: tramPositions } = useTramPositions({ enabled: true });
-  const { positions: fgcPositions } = useFgcPositions({ enabled: true });
-
   const isControlMode = ui.controlPanelMode === 'controls';
   const activeNetwork = ui.activeControlTab;
+  const isVehicleMode = !isControlMode;
+
+  // Only fetch positions when in vehicle list mode AND for the active network
+  // This prevents unnecessary API polling for inactive tabs
+  const { positions: metroPositions } = useMetroPositions({
+    enabled: isVehicleMode && activeNetwork === 'metro',
+  });
+  const { positions: busPositions } = useBusPositions({
+    enabled: isVehicleMode && activeNetwork === 'bus',
+    filterTopLinesOnly: ui.showOnlyTopBusLines,
+  });
+  const { positions: tramPositions } = useTramPositions({
+    enabled: isVehicleMode && activeNetwork === 'tram',
+  });
+  const { positions: fgcPositions } = useFgcPositions({
+    enabled: isVehicleMode && activeNetwork === 'fgc',
+  });
   const dataSource = dataSourceStatus[activeNetwork];
 
   const handleVehicleClick = (lat: number, lng: number) => {

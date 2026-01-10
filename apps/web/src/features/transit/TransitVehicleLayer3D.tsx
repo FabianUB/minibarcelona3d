@@ -77,6 +77,7 @@ export function TransitVehicleLayer3D({
   const cameraRef = useRef<THREE.Camera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const meshManagerRef = useRef<TransitMeshManager | null>(null);
+  const environmentRTRef = useRef<THREE.WebGLRenderTarget | null>(null);
   const layerAddedRef = useRef(false);
 
   // Store current positions for lookup on click
@@ -265,6 +266,7 @@ export function TransitVehicleLayer3D({
         const neutralEnvironment = new RoomEnvironment();
         const envRenderTarget = pmremGenerator.fromScene(neutralEnvironment, 0.04);
         neutralEnvironment.dispose();
+        environmentRTRef.current = envRenderTarget; // Store for cleanup
         scene.environment = envRenderTarget.texture;
         scene.background = null;
         pmremGenerator.dispose();
@@ -374,6 +376,10 @@ export function TransitVehicleLayer3D({
         if (meshManagerRef.current) {
           meshManagerRef.current.dispose();
           meshManagerRef.current = null;
+        }
+        if (environmentRTRef.current) {
+          environmentRTRef.current.dispose();
+          environmentRTRef.current = null;
         }
         sceneRef.current = null;
         cameraRef.current = null;
