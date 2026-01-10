@@ -42,44 +42,29 @@ All network simulators now:
 
 ## 2. Generic Mapbox Line Layer Component
 
-**Status:** Pending
-**Impact:** High (~800 lines saved)
-**Effort:** Medium (2-3 hours)
-
-### Problem
-
-Four similar line layer components:
-- `apps/web/src/features/metro/MetroLineLayer.tsx` (237 lines)
-- `apps/web/src/features/bus/BusLineLayer.tsx` (262 lines)
-- `apps/web/src/features/tram/TramLineLayer.tsx` (~237 lines)
-- `apps/web/src/features/fgc/FGCLineLayer.tsx` (~237 lines)
-
-### Duplicated Code
-- Data loading effect pattern
-- Mapbox source/layer creation (95% identical)
-- Visibility/highlighting effects (exact same logic)
-- Opacity/width expressions
+**Status:** ✅ Complete
+**Impact:** High (~700 lines saved)
+**Effort:** Low (~30 min)
 
 ### Solution
 
-Create `GenericLineLayer.tsx`:
+Created `apps/web/src/features/transit/GenericLineLayer.tsx` (310 lines) with:
+- Configurable source/layer IDs, line code property
+- Network-specific line widths and opacities
+- Shared data loading, visibility, and highlighting logic
+- Optional feature filtering (used by Bus for top lines)
 
-```typescript
-interface GenericLineLayerProps {
-  networkType: TransportType;
-  sourceId: string;
-  loadGeoJSON: () => Promise<GeoJSON.FeatureCollection>;
-  lineColorProperty: string; // e.g., 'line_color' or 'route_color'
-  lineCodeProperty: string;  // e.g., 'line_code' or 'route_code'
-  visible: boolean;
-  highlightedLineIds: string[];
-  isolateMode: boolean;
-}
+### Results
 
-export function GenericLineLayer(props: GenericLineLayerProps) {
-  // Unified implementation
-}
-```
+| File | Before | After | Saved |
+|------|--------|-------|-------|
+| `metro/MetroLineLayer.tsx` | 237 | 42 | 195 |
+| `bus/BusLineLayer.tsx` | 262 | 60 | 202 |
+| `tram/TramLineLayer.tsx` | 237 | 42 | 195 |
+| `fgc/FGCLineLayer.tsx` | 237 | 42 | 195 |
+| **Total** | **973** | **186 + 310 factory = 496** | **~477** |
+
+All network layers now delegate to GenericLineLayer with configuration presets.
 
 ---
 
@@ -248,7 +233,7 @@ grep -r "tw-animate" apps/web/src/   # Check actual usage
 
 2. **High-impact refactors:**
    - [x] Position simulator unification (#1) - ✅ Done
-   - [ ] Generic line layer (#2)
+   - [x] Generic line layer (#2) - ✅ Done
    - [ ] Generic station layer (#3)
 
 3. **Bundle optimization:**
