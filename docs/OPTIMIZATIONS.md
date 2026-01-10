@@ -6,54 +6,37 @@ This document tracks larger refactoring opportunities identified during the code
 
 ## 1. Position Simulator Unification
 
-**Status:** Pending
-**Impact:** High (~1,000 lines saved)
-**Effort:** Medium (2-3 hours)
+**Status:** ✅ Complete
+**Impact:** High (~600 lines unified, ~280 lines net savings)
+**Effort:** Medium (implemented in ~1 hour)
 
 ### Problem
 
-Four nearly identical position simulators exist:
-- `apps/web/src/lib/metro/positionSimulator.ts` (440 lines)
-- `apps/web/src/lib/bus/positionSimulator.ts` (413 lines)
-- `apps/web/src/lib/tram/positionSimulator.ts` (203 lines)
-- `apps/web/src/lib/fgc/positionSimulator.ts` (203 lines)
-
-~95% of the code is duplicated across these files.
-
-### Duplicated Functions
-- `findClosestDistanceOnLine()` / `findClosestDistanceOnRoute()`
-- `findStationsBetween()` / `findStopsBetween()`
-- Station/stop ordering with distance calculations
-- Main vehicle position generation loop
-- Preprocessing and caching infrastructure
-- Preload/clear functions
+Four nearly identical position simulators existed with ~95% duplicate code.
 
 ### Solution
 
-Create a generic `positionSimulatorFactory.ts`:
+Created `apps/web/src/lib/transit/positionSimulatorFactory.ts` (350 lines) with:
+- `findClosestDistanceOnLine()` - shared geometry projection
+- `findStopsBetween()` - shared stop ordering
+- `orderStopsByDistance()` - shared stop sorting
+- `generateLinePositions()` - unified position generation algorithm
+- `createPositionSimulator()` - factory function returning full API
 
-```typescript
-// apps/web/src/lib/transit/positionSimulatorFactory.ts
+### Results
 
-interface SimulatorConfig {
-  networkType: TransportType;
-  loadGeometry: (lineCode: string) => Promise<GeoJSON.FeatureCollection>;
-  loadStops: (lineCode: string) => Promise<Stop[]>;
-  getLineConfig: (lineCode: string) => LineConfig;
-  vehicleSizeMeters: number;
-}
+| File | Before | After | Saved |
+|------|--------|-------|-------|
+| `metro/positionSimulator.ts` | 481 | 179 | 302 |
+| `bus/positionSimulator.ts` | 413 | 203 | 210 |
+| `tram/positionSimulator.ts` | 203 | 140 | 63 |
+| `fgc/positionSimulator.ts` | 203 | 140 | 63 |
+| **Total** | **1,300** | **662 + 350 factory = 1,012** | **~288** |
 
-export function createPositionSimulator(config: SimulatorConfig) {
-  // Unified implementation with config-driven behavior
-}
-```
-
-Each network re-exports with its own config:
-```typescript
-// apps/web/src/lib/metro/positionSimulator.ts
-export const { generateAllPositions, preloadGeometries } =
-  createPositionSimulator(METRO_CONFIG);
-```
+All network simulators now:
+- Use the unified factory with network-specific configuration
+- Maintain full backward compatibility with existing exports
+- Support optional stop tracking (Metro, Bus have it; Tram, FGC don't)
 
 ---
 
@@ -264,7 +247,7 @@ grep -r "tw-animate" apps/web/src/   # Check actual usage
    - [x] Remove unused dependencies (#7) - ✅ Done in ac89e23
 
 2. **High-impact refactors:**
-   - [ ] Position simulator unification (#1)
+   - [x] Position simulator unification (#1) - ✅ Done
    - [ ] Generic line layer (#2)
    - [ ] Generic station layer (#3)
 
