@@ -28,6 +28,7 @@ import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
 import { loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
 import { buildLineColorMap } from '../../lib/trains/outlineManager';
 import { getModelOrigin } from '../../lib/map/coordinates';
+import { MapboxRaycaster, createRayDebugHelper } from '../../lib/map/MapboxRaycaster';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
@@ -218,6 +219,9 @@ export function TrainLayer3D({
   const pollTimestampsRef = useRef<{ current?: number; previous?: number; receivedAt?: number }>({});
 
   // Reference for Three.js Raycaster for click detection (T049)
+  const raycasterRef = useRef<MapboxRaycaster | null>(null);
+  const rayDebugLineRef = useRef<THREE.Line | null>(null);
+  const useRaycastingRef = useRef(true); // Toggle between raycasting and screen-space
 
   // Store polling interval reference for cleanup
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -673,6 +677,122 @@ export function TrainLayer3D({
     [map]
   );
 
+  /**
+   * Resolve hit using 3D raycasting (more accurate than screen-space)
+   * T049: Three.js Raycaster integration for pixel-perfect hit detection
+   */
+  const resolveRaycastHit = useCallback(
+    (point: { x: number; y: number }) => {
+      const raycaster = raycasterRef.current;
+      const meshManager = meshManagerRef.current;
+      const scene = sceneRef.current;
+
+      if (!raycaster || !meshManager || !scene) {
+        return null;
+      }
+
+      // Set up raycaster from screen point
+      raycaster.setFromMapboxClick(map, point);
+
+      // Get all train meshes for intersection testing
+      const allMeshData = meshManager.getAllMeshes();
+      const meshes = allMeshData.map((data) => data.mesh);
+
+      if (meshes.length === 0) {
+        return null;
+      }
+
+      // Perform raycast intersection
+      const hits = raycaster.intersectObjects(meshes, true);
+
+      const debugEnabled = debugEnabledRef.current;
+      if (debugEnabled) {
+        const debugInfo = raycaster.getLastDebugInfo();
+        console.log(`[resolveRaycastHit] Ray from camera:`, debugInfo?.cameraWorldPos);
+        console.log(`[resolveRaycastHit] Ray target:`, debugInfo?.targetWorldPos);
+        console.log(`[resolveRaycastHit] Tested ${meshes.length} meshes, ${hits.length} hits`);
+
+        // Add debug visualization to scene
+        if (debugInfo && scene) {
+          // Remove old debug line
+          if (rayDebugLineRef.current) {
+            scene.remove(rayDebugLineRef.current);
+            rayDebugLineRef.current.geometry.dispose();
+            (rayDebugLineRef.current.material as THREE.Material).dispose();
+          }
+
+          // Add new debug line
+          const debugLine = createRayDebugHelper(debugInfo, 1000);
+          scene.add(debugLine);
+          rayDebugLineRef.current = debugLine;
+
+          // Auto-remove after 2 seconds
+          setTimeout(() => {
+            if (rayDebugLineRef.current && scene) {
+              scene.remove(rayDebugLineRef.current);
+              rayDebugLineRef.current = null;
+            }
+          }, 2000);
+        }
+      }
+
+      if (hits.length === 0) {
+        return null;
+      }
+
+      // Find the vehicleKey from the hit object
+      // Traverse up the parent chain to find the root mesh with userData
+      const firstHit = hits[0];
+      let hitObject: THREE.Object3D | null = firstHit.object;
+      let vehicleKey: string | null = null;
+      let routeId: string | null = null;
+
+      while (hitObject) {
+        if (hitObject.userData?.vehicleKey) {
+          vehicleKey = hitObject.userData.vehicleKey;
+          routeId = hitObject.userData.routeId ?? null;
+          break;
+        }
+        hitObject = hitObject.parent;
+      }
+
+      // If not found in userData, match by mesh reference
+      if (!vehicleKey) {
+        for (const meshData of allMeshData) {
+          let current: THREE.Object3D | null = firstHit.object;
+          while (current) {
+            if (current === meshData.mesh) {
+              vehicleKey = meshData.vehicleKey;
+              routeId = meshData.routeId;
+              break;
+            }
+            current = current.parent;
+          }
+          if (vehicleKey) break;
+        }
+      }
+
+      if (!vehicleKey) {
+        if (debugEnabled) {
+          console.log(`[resolveRaycastHit] Hit object but couldn't identify vehicle`);
+        }
+        return null;
+      }
+
+      if (debugEnabled) {
+        console.log(`[resolveRaycastHit] Hit: ${vehicleKey} at distance ${firstHit.distance.toFixed(4)}`);
+      }
+
+      return {
+        vehicleKey,
+        routeId,
+        distance: firstHit.distance,
+        point: firstHit.point,
+      };
+    },
+    [map]
+  );
+
   const hoveredVehicleRef = useRef<string | null>(null);
   const lastMouseMoveTime = useRef<number>(0);
   const MOUSE_MOVE_THROTTLE_MS = 100; // Throttle to max 10 FPS
@@ -816,10 +936,10 @@ export function TrainLayer3D({
   }, [drawDebugOverlay]);
 
 /**
- * Screen-space helpers for hover/click
+ * Screen-space and raycast helpers for hover/click
  *
- * Projects train coordinates into screen space and does simple
- * distance checks to determine hover/click candidates.
+ * Uses 3D raycasting for accurate hit detection with fallback to
+ * screen-space projection for edge cases.
  */
   const handlePointerMove = useCallback(
     (event: MouseEvent) => {
@@ -837,8 +957,21 @@ export function TrainLayer3D({
         y: event.clientY - rect.top,
       };
 
-      const hit = resolveScreenHit(point, 6);
-      const vehicleKey = hit?.vehicleKey ?? null;
+      // Try raycasting first for hover if enabled
+      let vehicleKey: string | null = null;
+
+      if (useRaycastingRef.current) {
+        const raycastHit = resolveRaycastHit(point);
+        if (raycastHit) {
+          vehicleKey = raycastHit.vehicleKey;
+        }
+      }
+
+      // Fall back to screen-space with more generous padding for hover
+      if (!vehicleKey) {
+        const screenHit = resolveScreenHit(point, 6);
+        vehicleKey = screenHit?.vehicleKey ?? null;
+      }
 
       if (hoveredVehicleRef.current !== vehicleKey) {
         // Hide outline from previous hovered train
@@ -855,7 +988,7 @@ export function TrainLayer3D({
         }
       }
     },
-    [map, resolveScreenHit]
+    [map, resolveRaycastHit, resolveScreenHit]
   );
 
   const handlePointerLeave = useCallback(() => {
@@ -877,10 +1010,29 @@ export function TrainLayer3D({
         y: event.clientY - rect.top,
       };
 
-      const hit = resolveScreenHit(point, 4);
+      // Try raycasting first if enabled, fall back to screen-space
+      let hit: { vehicleKey: string; routeId: string | null; distance: number } | null = null;
+      let hitMethod = 'none';
+
+      if (useRaycastingRef.current) {
+        const raycastHit = resolveRaycastHit(point);
+        if (raycastHit) {
+          hit = raycastHit;
+          hitMethod = 'raycast';
+        }
+      }
+
+      // Fall back to screen-space if raycasting failed or is disabled
+      if (!hit) {
+        const screenHit = resolveScreenHit(point, 4);
+        if (screenHit) {
+          hit = screenHit;
+          hitMethod = 'screen-space';
+        }
+      }
 
       if (hit) {
-        console.log(`🎯 Train clicked: ${hit.vehicleKey} (route: ${hit.routeId})`);
+        console.log(`🎯 Train clicked (${hitMethod}): ${hit.vehicleKey} (route: ${hit.routeId})`);
         onRaycastResult?.({
           hit: true,
           vehicleKey: hit.vehicleKey,
@@ -904,7 +1056,7 @@ export function TrainLayer3D({
         });
       }
     },
-    [map, onRaycastResult, resolveScreenHit, selectTrain, setActivePanel]
+    [map, onRaycastResult, resolveRaycastHit, resolveScreenHit, selectTrain, setActivePanel]
   );
 
   /**
@@ -989,6 +1141,10 @@ export function TrainLayer3D({
 
       // Mark scene as ready for mesh manager initialization
       setSceneReady(true);
+
+      // T049: Initialize MapboxRaycaster for 3D click detection
+      raycasterRef.current = new MapboxRaycaster();
+      console.log('TrainLayer3D: MapboxRaycaster initialized');
 
       // T046, T047: Initialize train mesh manager with stations
       // Note: Manager creation deferred until stations are loaded
