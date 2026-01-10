@@ -9,6 +9,7 @@
  */
 
 import type { LineConfig } from '../types/transit';
+import { createConfigHelpers } from './transitConfigHelpers';
 
 /**
  * TRAM line configuration with schedule data
@@ -79,36 +80,17 @@ export const TRAM_LINE_CONFIG: Record<string, LineConfig> = {
   },
 };
 
-/**
- * Get all configured TRAM line codes
- */
-export function getTramLineCodes(): string[] {
-  return Object.keys(TRAM_LINE_CONFIG);
-}
+// Generate helper functions from factory
+const helpers = createConfigHelpers(TRAM_LINE_CONFIG);
 
-/**
- * Get configuration for a specific TRAM line
- */
-export function getTramLineConfig(lineCode: string): LineConfig | undefined {
-  return TRAM_LINE_CONFIG[lineCode];
-}
+/** Get all configured TRAM line codes */
+export const getTramLineCodes = helpers.getLineCodes;
 
-/**
- * Calculate estimated number of trams for a line based on length and headway
- */
-export function calculateTramsPerDirection(
-  lineLengthMeters: number,
-  lineCode: string
-): number {
-  const config = TRAM_LINE_CONFIG[lineCode];
-  if (!config) return 0;
+/** Get configuration for a specific TRAM line */
+export const getTramLineConfig = helpers.getLineConfig;
 
-  const avgSpeedMs = (config.avgSpeedKmh * 1000) / 3600;
-  const tripTimeSeconds = lineLengthMeters / avgSpeedMs;
-  const trams = Math.ceil(tripTimeSeconds / config.headwaySeconds);
-
-  return Math.max(1, trams);
-}
+/** Calculate estimated number of trams for a line based on length and headway */
+export const calculateTramsPerDirection = helpers.calculateVehiclesPerDirection;
 
 /**
  * Simulation update interval in milliseconds

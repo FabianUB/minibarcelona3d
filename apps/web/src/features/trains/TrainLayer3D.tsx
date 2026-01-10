@@ -32,6 +32,7 @@ import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/t
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
 import { useMapActions } from '../../state/map';
+import { useTransitActions } from '../../state/transit';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
 import { trainDebug } from '../../lib/trains/debugLogger';
@@ -170,6 +171,7 @@ export function TrainLayer3D({
 }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
+  const { setDataSource } = useTransitActions();
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -230,15 +232,27 @@ export function TrainLayer3D({
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+
   // Performance monitoring (T054)
   const performanceRef = useRef({
     frameCount: 0,
     lastFrameTime: performance.now(),
-    frameTimes: [] as number[],
+    frameTimes: new Array<number>(60).fill(16.67), // Pre-allocated circular buffer
+    frameTimeIndex: 0, // Current position in circular buffer
     fps: 60,
     avgFrameTime: 16.67,
     lastLogTime: performance.now(),
     renderCount: 0,
+  });
+
+  // Reusable matrix instances for render loop (avoid allocations per frame)
+  const matrixRef = useRef({
+    mapboxMatrix: new THREE.Matrix4(),
+    modelTransform: new THREE.Matrix4(),
+    resultMatrix: new THREE.Matrix4(),
+    scaleVector: new THREE.Vector3(1, -1, 1),
   });
 
   /**
@@ -342,8 +356,10 @@ export function TrainLayer3D({
 
   const fetchTrains = useCallback(async () => {
     try {
-      setIsLoading(true);
+      if (isMountedRef.current) setIsLoading(true);
       const response = await fetchTrainPositions();
+      // Bail out early if component unmounted during fetch
+      if (!isMountedRef.current) return;
       const previousPolledAtMs = pollTimestampsRef.current.current;
       const parsedPolledAt = Date.parse(response.polledAt);
       pollTimestampsRef.current.current = Number.isFinite(parsedPolledAt) ? parsedPolledAt : undefined;
@@ -490,11 +506,16 @@ export function TrainLayer3D({
       });
       lastPositionsRef.current = currentPositionsMap;
 
-      setTrains(validTrains);
-      setError(null);
-      setRetryCount(0);
-      setLastPollTime(Date.now()); // Update poll time for countdown display
+      if (isMountedRef.current) {
+        setTrains(validTrains);
+        setError(null);
+        setRetryCount(0);
+        setLastPollTime(Date.now()); // Update poll time for countdown display
+      }
     } catch (err) {
+      // Bail out if component unmounted
+      if (!isMountedRef.current) return;
+
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch train positions';
       setError(errorMessage);
@@ -508,15 +529,15 @@ export function TrainLayer3D({
       const maxRetries = 5;
 
       if (nextRetryCount <= maxRetries) {
-        if (isPollingPausedRef.current) {
-          // Do not schedule retries while polling is paused
-          setRetryCount(0);
+        if (isPollingPausedRef.current || !isMountedRef.current) {
+          // Do not schedule retries while polling is paused or component is unmounted
+          if (isMountedRef.current) setRetryCount(0);
           return;
         }
         const retryDelayMs = Math.min(2000 * Math.pow(2, currentRetryCount), 32000);
         console.log(`TrainLayer3D: Retrying in ${retryDelayMs / 1000}s (attempt ${nextRetryCount}/${maxRetries})`);
 
-        setRetryCount(nextRetryCount);
+        if (isMountedRef.current) setRetryCount(nextRetryCount);
 
         // Clear any existing retry timeout
         if (retryTimeoutRef.current) {
@@ -531,7 +552,7 @@ export function TrainLayer3D({
         console.error(`TrainLayer3D: Max retries (${maxRetries}) reached, giving up`);
       }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
     }
   }, [resolveTrainPosition]);
 
@@ -676,6 +697,14 @@ export function TrainLayer3D({
   const debugCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const debugEnabledRef = useRef(areDebugToolsEnabled);
   const debugRafIdRef = useRef<number | null>(null);
+
+  // Cleanup on unmount - set isMountedRef to false to prevent state updates
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     isPollingPausedRef.current = isPollingPaused;
@@ -1005,12 +1034,17 @@ export function TrainLayer3D({
         meshManagerRef.current.applyParkingVisuals();
       }
 
-      const mapboxMatrix = new THREE.Matrix4().fromArray(matrix);
-      const modelTransform = new THREE.Matrix4()
+      // Reuse matrix instances for performance (avoid allocations per frame)
+      const matrices = matrixRef.current;
+      matrices.mapboxMatrix.fromArray(matrix);
+      matrices.modelTransform
+        .identity()
         .makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z ?? 0)
-        .scale(new THREE.Vector3(1, -1, 1));
+        .scale(matrices.scaleVector);
 
-      renderCamera.projectionMatrix.copy(mapboxMatrix.clone().multiply(modelTransform));
+      // Use resultMatrix to avoid clone() allocation
+      matrices.resultMatrix.copy(matrices.mapboxMatrix).multiply(matrices.modelTransform);
+      renderCamera.projectionMatrix.copy(matrices.resultMatrix);
       if ('projectionMatrixInverse' in renderCamera) {
         (renderCamera as THREE.Camera & { projectionMatrixInverse: THREE.Matrix4 }).projectionMatrixInverse
           .copy(renderCamera.projectionMatrix)
@@ -1031,12 +1065,10 @@ export function TrainLayer3D({
 
       perf.renderCount++;
       perf.frameCount++;
-      perf.frameTimes.push(frameTime);
 
-      // Keep only last 60 frames for rolling average
-      if (perf.frameTimes.length > 60) {
-        perf.frameTimes.shift();
-      }
+      // Use circular buffer for O(1) frame time tracking (avoid O(n) shift)
+      perf.frameTimes[perf.frameTimeIndex] = frameTime;
+      perf.frameTimeIndex = (perf.frameTimeIndex + 1) % 60;
 
       // Calculate FPS and average frame time
       const timeSinceLastFrame = frameStartTime - perf.lastFrameTime;
@@ -1203,6 +1235,16 @@ export function TrainLayer3D({
   useEffect(() => {
     onLoadingChange?.(isLoading && trains.length === 0);
   }, [isLoading, trains.length, onLoadingChange]);
+
+  /**
+   * Effect: Update transit state with Rodalies data source
+   * Rodalies always uses real-time API data (no simulation fallback)
+   */
+  useEffect(() => {
+    if (trains.length > 0 && !error) {
+      setDataSource('rodalies', 'realtime');
+    }
+  }, [trains.length, error, setDataSource]);
 
   /**
    * Effect: Notify parent of train data changes

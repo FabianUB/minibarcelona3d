@@ -1,5 +1,5 @@
 /**
- * Performance tracking utilities for Rodalies map application
+ * Performance tracking utilities for MiniBarcelona3D map application
  *
  * Tracks key metrics:
  * - Initial render timing (time to interactive)
@@ -190,7 +190,11 @@ export function recordNavigationMetrics(): void {
 
   // Wait for page load to complete
   if (document.readyState !== 'complete') {
-    window.addEventListener('load', recordNavigationMetrics);
+    const handleLoad = () => {
+      window.removeEventListener('load', handleLoad);
+      recordNavigationMetrics();
+    };
+    window.addEventListener('load', handleLoad);
     return;
   }
 

@@ -3,14 +3,16 @@
  * Feature: 006-metro-bus-integration
  *
  * Renders Barcelona Bus route geometries as Mapbox GL layers.
- * Each route is colored according to its TMB color.
+ * Uses the unified GenericLineLayer component.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadAllBusRoutes } from '../../lib/metro/dataLoader';
 import type { MetroLineCollection } from '../../types/metro';
-import { useMapStyleReady } from '../../hooks/useMapStyleReady';
+import { isTopBusLine } from '../../config/busConfig';
+import { GenericLineLayer } from '../transit/GenericLineLayer';
+import { BUS_LINE_CONFIG } from '../transit/lineLayerConfig';
 
 export interface BusLineLayerProps {
   map: MapboxMap;
@@ -19,220 +21,40 @@ export interface BusLineLayerProps {
   highlightedRoutes?: string[];
   /** Optional: isolate mode dims non-highlighted routes */
   isolateMode?: boolean;
+  /** Optional: only show top 10 most used bus lines */
+  filterTopLinesOnly?: boolean;
 }
-
-const SOURCE_ID = 'bus-routes-source';
-const LINE_LAYER_ID = 'bus-routes';
-const LINE_CASING_LAYER_ID = 'bus-routes-casing';
 
 export function BusLineLayer({
   map,
   visible = true,
   highlightedRoutes = [],
   isolateMode = false,
+  filterTopLinesOnly = false,
 }: BusLineLayerProps) {
-  const [geoJSON, setGeoJSON] = useState<MetroLineCollection | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [layersReady, setLayersReady] = useState(false);
-  const styleReady = useMapStyleReady(map);
+  const loadData = useCallback(() => loadAllBusRoutes(), []);
 
-  // Load Bus route geometries
-  useEffect(() => {
-    let cancelled = false;
+  // Filter function for top bus lines
+  const filterFeatures = useMemo(() => {
+    if (!filterTopLinesOnly) return undefined;
 
-    async function loadData() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await loadAllBusRoutes();
-        if (!cancelled) {
-          setGeoJSON(data);
-          setIsLoading(false);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load Bus routes');
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Add source and layers when data is ready
-  useEffect(() => {
-    if (!map || !geoJSON || isLoading || error || !styleReady) return;
-
-    try {
-      // Check if source already exists
-      if (map.getSource(SOURCE_ID)) {
-        const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
-        source.setData(geoJSON);
-        return;
-      }
-
-      // Add source
-      map.addSource(SOURCE_ID, {
-        type: 'geojson',
-        data: geoJSON,
+    return (features: MetroLineCollection['features']) =>
+      features.filter((feature) => {
+        const props = feature.properties as { route_code?: string } | null;
+        const routeCode = props?.route_code;
+        return routeCode && isTopBusLine(routeCode);
       });
+  }, [filterTopLinesOnly]);
 
-      // Line casing (outer stroke for contrast)
-      map.addLayer({
-        id: LINE_CASING_LAYER_ID,
-        type: 'line',
-        source: SOURCE_ID,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': [
-            'interpolate',
-            ['exponential', 1.5],
-            ['zoom'],
-            10, 2,
-            13, 3,
-            15, 5,
-            18, 10,
-          ],
-          'line-opacity': 0, // Start hidden, visibility effect sets correct value
-        },
-      });
-
-      // Main line layer
-      map.addLayer({
-        id: LINE_LAYER_ID,
-        type: 'line',
-        source: SOURCE_ID,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': ['get', 'color'],
-          'line-width': [
-            'interpolate',
-            ['exponential', 1.5],
-            ['zoom'],
-            10, 1,
-            13, 2,
-            15, 3,
-            18, 6,
-          ],
-          'line-opacity': 0, // Start hidden, visibility effect sets correct value
-        },
-      });
-
-      // Signal that layers are ready for visibility updates
-      setLayersReady(true);
-
-    } catch {
-      // Layer addition failed - source may have been removed
-    }
-
-    // Cleanup on unmount
-    return () => {
-      setLayersReady(false);
-      if (!map.isStyleLoaded()) return;
-
-      try {
-        if (map.getLayer(LINE_LAYER_ID)) {
-          map.removeLayer(LINE_LAYER_ID);
-        }
-        if (map.getLayer(LINE_CASING_LAYER_ID)) {
-          map.removeLayer(LINE_CASING_LAYER_ID);
-        }
-        if (map.getSource(SOURCE_ID)) {
-          map.removeSource(SOURCE_ID);
-        }
-      } catch {
-        // Cleanup failed - map may have been removed
-      }
-    };
-  // Note: visible intentionally excluded - visibility handled by separate effect
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, geoJSON, isLoading, error, styleReady]);
-
-  // Update visibility and highlighting
-  useEffect(() => {
-    if (!map || !layersReady) return;
-    if (!map.getLayer(LINE_LAYER_ID) || !map.getLayer(LINE_CASING_LAYER_ID)) return;
-
-    const hasHighlight = highlightedRoutes.length > 0;
-
-    // Build opacity expression based on highlight state
-    let lineOpacity: mapboxgl.Expression | number;
-    let casingOpacity: mapboxgl.Expression | number;
-
-    if (!visible) {
-      lineOpacity = 0;
-      casingOpacity = 0;
-    } else if (hasHighlight && isolateMode) {
-      // In isolate mode, dim non-highlighted routes
-      // Bus routes use 'route_code' property (e.g., 'H10', 'V15')
-      lineOpacity = [
-        'case',
-        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
-        0.85,
-        0.15,
-      ];
-      casingOpacity = [
-        'case',
-        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
-        0.6,
-        0.1,
-      ];
-    } else if (hasHighlight) {
-      // In highlight mode, all routes visible but highlighted are brighter
-      lineOpacity = [
-        'case',
-        ['in', ['get', 'route_code'], ['literal', highlightedRoutes]],
-        0.9,
-        0.5,
-      ];
-      casingOpacity = 0.6;
-    } else {
-      lineOpacity = 0.7;
-      casingOpacity = 0.6;
-    }
-
-    map.setPaintProperty(LINE_LAYER_ID, 'line-opacity', lineOpacity);
-    map.setPaintProperty(LINE_CASING_LAYER_ID, 'line-opacity', casingOpacity);
-
-    // Adjust line width for highlighted routes
-    // Note: zoom expressions must be at top level, so we use case inside interpolate stops
-    if (hasHighlight) {
-      const isHighlighted: mapboxgl.Expression = ['in', ['get', 'route_code'], ['literal', highlightedRoutes]];
-      const widthExpression: mapboxgl.Expression = [
-        'interpolate',
-        ['exponential', 1.5],
-        ['zoom'],
-        10, ['case', isHighlighted, 2, 1],
-        13, ['case', isHighlighted, 3, 2],
-        15, ['case', isHighlighted, 5, 3],
-        18, ['case', isHighlighted, 10, 6],
-      ];
-      map.setPaintProperty(LINE_LAYER_ID, 'line-width', widthExpression);
-    } else {
-      map.setPaintProperty(LINE_LAYER_ID, 'line-width', [
-        'interpolate',
-        ['exponential', 1.5],
-        ['zoom'],
-        10, 1,
-        13, 2,
-        15, 3,
-        18, 6,
-      ]);
-    }
-  }, [map, visible, highlightedRoutes, isolateMode, layersReady]);
-
-  return null;
+  return (
+    <GenericLineLayer
+      map={map}
+      loadData={loadData}
+      config={BUS_LINE_CONFIG}
+      visible={visible}
+      highlightedLines={highlightedRoutes}
+      isolateMode={isolateMode}
+      filterFeatures={filterFeatures}
+    />
+  );
 }

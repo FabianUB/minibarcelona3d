@@ -8,6 +8,7 @@
  */
 
 import type { LineConfig } from '../types/transit';
+import { createConfigHelpers } from './transitConfigHelpers';
 
 /**
  * Metro line configuration with schedule data
@@ -128,46 +129,17 @@ export const METRO_LINE_CONFIG: Record<string, LineConfig> = {
   },
 };
 
-/**
- * Get all configured metro line codes
- */
-export function getMetroLineCodes(): string[] {
-  return Object.keys(METRO_LINE_CONFIG);
-}
+// Generate helper functions from factory
+const helpers = createConfigHelpers(METRO_LINE_CONFIG);
 
-/**
- * Get configuration for a specific metro line
- */
-export function getMetroLineConfig(lineCode: string): LineConfig | undefined {
-  return METRO_LINE_CONFIG[lineCode];
-}
+/** Get all configured metro line codes */
+export const getMetroLineCodes = helpers.getLineCodes;
 
-/**
- * Calculate estimated number of trains for a line based on length and headway
- *
- * @param lineLengthMeters - Total length of the line in meters
- * @param lineCode - The metro line code
- * @returns Number of trains per direction
- */
-export function calculateTrainsPerDirection(
-  lineLengthMeters: number,
-  lineCode: string
-): number {
-  const config = METRO_LINE_CONFIG[lineCode];
-  if (!config) return 0;
+/** Get configuration for a specific metro line */
+export const getMetroLineConfig = helpers.getLineConfig;
 
-  // Convert speed to m/s
-  const avgSpeedMs = (config.avgSpeedKmh * 1000) / 3600;
-
-  // Time to traverse full line
-  const tripTimeSeconds = lineLengthMeters / avgSpeedMs;
-
-  // Number of trains needed to maintain headway
-  const trains = Math.ceil(tripTimeSeconds / config.headwaySeconds);
-
-  // Minimum 1 train per direction
-  return Math.max(1, trains);
-}
+/** Calculate estimated number of trains for a line based on length and headway */
+export const calculateTrainsPerDirection = helpers.calculateVehiclesPerDirection;
 
 /**
  * Simulation update interval in milliseconds

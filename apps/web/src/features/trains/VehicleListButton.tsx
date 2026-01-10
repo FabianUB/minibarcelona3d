@@ -29,7 +29,10 @@ export function VehicleListButton({ trains, map, getMeshPosition }: VehicleListB
 
   // Get Metro, Bus, TRAM, and FGC positions from hooks
   const { positions: metroPositions } = useMetroPositions({ enabled: true });
-  const { positions: busPositions } = useBusPositions({ enabled: true });
+  const { positions: busPositions } = useBusPositions({
+    enabled: true,
+    filterTopLinesOnly: ui.showOnlyTopBusLines,
+  });
   const { positions: tramPositions } = useTramPositions({ enabled: true });
   const { positions: fgcPositions } = useFgcPositions({ enabled: true });
 

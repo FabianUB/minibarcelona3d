@@ -19,6 +19,7 @@ import { TRAM_LINE_CONFIG } from '@/config/tramConfig';
 import { FGC_LINE_CONFIG } from '@/config/fgcConfig';
 import { getBusRouteConfig } from '@/config/busConfig';
 import { loadRodaliesLines, loadStationList } from '@/lib/rodalies/dataLoader';
+import { formatVehicleDisplayId } from '@/lib/transit/vehicleDisplayId';
 import { NETWORK_TABS } from '../types';
 
 interface VehicleListViewProps {
@@ -116,6 +117,7 @@ export function VehicleListView({
   const vehicles = useMemo(() => {
     let vehicleList: {
       id: string;
+      displayId: string;
       lineCode: string;
       destination: string;
       arrivalMinutes: number | null;
@@ -135,10 +137,11 @@ export function VehicleListView({
               arrivalMinutes = Math.ceil(diffMs / 60000);
             }
           }
+          const lineCode = t.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A';
           return {
             id: t.vehicleKey,
-            lineCode:
-              t.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A',
+            displayId: t.vehicleKey, // Rodalies keys are already short
+            lineCode,
             destination: t.nextStopId
               ? stationNames.get(t.nextStopId) || t.nextStopId
               : '-',
@@ -151,6 +154,7 @@ export function VehicleListView({
       case 'metro':
         vehicleList = metroPositions.map((v) => ({
           id: v.vehicleKey,
+          displayId: formatVehicleDisplayId(v.vehicleKey, v.lineCode),
           lineCode: v.lineCode,
           destination: v.nextStopName || '-',
           arrivalMinutes: v.arrivalMinutes ?? null,
@@ -161,6 +165,7 @@ export function VehicleListView({
       case 'bus':
         vehicleList = busPositions.map((v) => ({
           id: v.vehicleKey,
+          displayId: formatVehicleDisplayId(v.vehicleKey, v.lineCode),
           lineCode: v.lineCode,
           destination: v.nextStopName || '-',
           arrivalMinutes: v.arrivalMinutes ?? null,
@@ -171,6 +176,7 @@ export function VehicleListView({
       case 'tram':
         vehicleList = tramPositions.map((v) => ({
           id: v.vehicleKey,
+          displayId: formatVehicleDisplayId(v.vehicleKey, v.lineCode),
           lineCode: v.lineCode,
           destination: v.nextStopName || '-',
           arrivalMinutes: v.arrivalMinutes ?? null,
@@ -181,6 +187,7 @@ export function VehicleListView({
       case 'fgc':
         vehicleList = fgcPositions.map((v) => ({
           id: v.vehicleKey,
+          displayId: formatVehicleDisplayId(v.vehicleKey, v.lineCode),
           lineCode: v.lineCode,
           destination: v.nextStopName || '-',
           arrivalMinutes: v.arrivalMinutes ?? null,
@@ -298,7 +305,7 @@ export function VehicleListView({
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-muted-foreground truncate">
-                      {vehicle.id}
+                      {vehicle.displayId}
                     </div>
                     <div className="text-sm font-medium truncate flex items-center gap-1">
                       <span>→ {vehicle.destination}</span>

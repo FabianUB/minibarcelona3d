@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useMapState } from '@/state/map';
+import { useTransitState } from '@/state/transit';
 import type { TrainPosition } from '@/types/trains';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { useMetroPositions } from '../transit/hooks/useMetroPositions';
@@ -24,6 +25,7 @@ import { NetworkTabs } from './components/NetworkTabs';
 import { NetworkTabContent } from './components/NetworkTabContent';
 import { VehicleListView } from './components/VehicleListView';
 import { PanelModeToggle } from './components/PanelModeToggle';
+import { DataSourceBadge } from './components/DataSourceBadge';
 
 interface ControlPanelMobileProps {
   rodaliesTrains?: TrainPosition[];
@@ -35,16 +37,29 @@ export function ControlPanelMobile({
   map,
 }: ControlPanelMobileProps) {
   const { ui } = useMapState();
+  const { dataSourceStatus } = useTransitState();
   const [isOpen, setIsOpen] = useState(false);
-
-  // Get transit positions from hooks
-  const { positions: metroPositions } = useMetroPositions({ enabled: true });
-  const { positions: busPositions } = useBusPositions({ enabled: true });
-  const { positions: tramPositions } = useTramPositions({ enabled: true });
-  const { positions: fgcPositions } = useFgcPositions({ enabled: true });
 
   const isControlMode = ui.controlPanelMode === 'controls';
   const activeNetwork = ui.activeControlTab;
+  const isVehicleMode = !isControlMode;
+
+  // Only fetch positions when in vehicle list mode AND for the active network
+  // This prevents unnecessary API polling for inactive tabs
+  const { positions: metroPositions } = useMetroPositions({
+    enabled: isVehicleMode && activeNetwork === 'metro',
+  });
+  const { positions: busPositions } = useBusPositions({
+    enabled: isVehicleMode && activeNetwork === 'bus',
+    filterTopLinesOnly: ui.showOnlyTopBusLines,
+  });
+  const { positions: tramPositions } = useTramPositions({
+    enabled: isVehicleMode && activeNetwork === 'tram',
+  });
+  const { positions: fgcPositions } = useFgcPositions({
+    enabled: isVehicleMode && activeNetwork === 'fgc',
+  });
+  const dataSource = dataSourceStatus[activeNetwork];
 
   const handleVehicleClick = (lat: number, lng: number) => {
     if (map) {
@@ -72,7 +87,10 @@ export function ControlPanelMobile({
       <SheetContent side="bottom" className="h-[70vh] flex flex-col">
         <SheetHeader className="pb-2 shrink-0">
           <SheetTitle className="flex items-center justify-between text-sm">
-            <span>{isControlMode ? 'Transit Control' : 'Vehicle List'}</span>
+            <div className="flex items-center gap-2">
+              <span>{isControlMode ? 'Transit Control' : 'Vehicle List'}</span>
+              <DataSourceBadge source={dataSource} />
+            </div>
             <PanelModeToggle />
           </SheetTitle>
         </SheetHeader>

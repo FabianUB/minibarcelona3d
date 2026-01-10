@@ -175,6 +175,8 @@ describe('rodalies dataLoader', () => {
       isLegendOpen: false,
       activePanel: 'none',
       stationLoadError: null,
+      showStations: true,
+      showOnlyTopBusLines: true,
       transportFilters: {
         rodalies: true,
         metro: false,
@@ -229,6 +231,8 @@ it('normalises remote Map UI state defaults and invalid highlight modes', async 
       isHighContrast: true,
       activePanel: 'none',
       stationLoadError: null,
+      showStations: true,
+      showOnlyTopBusLines: true,
       transportFilters: {
         rodalies: true,
         metro: false,

@@ -63,6 +63,15 @@ interface TransitMeshData {
   lerpStartTime: number;
   lerpDuration: number;  // ms
 
+  // Pre-computed snapped path for lerp mode (avoids per-frame snapping)
+  precomputedSnap?: {
+    startDistance: number;
+    endDistance: number;
+    startBearing: number;
+    endBearing: number;
+    hasValidSnap: boolean;
+  };
+
   // Current state
   currentPosition: [number, number];
   currentBearing: number;
@@ -75,6 +84,14 @@ interface TransitMeshData {
 
   // Outline for hover effect
   outlineMesh?: THREE.Group;
+
+  // Performance: Cached material references to avoid mesh traversal
+  cachedMaterials: THREE.Material[];
+
+  // LOD (Level of Detail) references
+  detailedModel?: THREE.Object3D; // The 3D model (hidden at low zoom)
+  lodSprite?: THREE.Sprite;       // Simple sprite (shown at low zoom)
+  isLowLOD: boolean;              // Current LOD state
 }
 
 /**
@@ -87,12 +104,15 @@ export interface TransitMeshManagerConfig {
   modelType?: 'metro' | 'bus' | 'tram' | 'civia';
   /** Z offset factor for elevation (default: 0.5) */
   zOffsetFactor?: number;
+  /** Zoom level below which to use simple LOD sprites (default: 13) */
+  lodThreshold?: number;
 }
 
 const DEFAULT_CONFIG: Required<TransitMeshManagerConfig> = {
   vehicleSizeMeters: 25,
   modelType: 'metro',
   zOffsetFactor: 0.5,
+  lodThreshold: 13,
 };
 
 /**
@@ -109,9 +129,13 @@ export class TransitMeshManager {
   private modelLoaded = false;
   private currentZoom = 12;
   private highlightedVehicleKey: string | null = null;
+  private currentLODState: 'high' | 'low' = 'high';
 
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
+
+  // Cached LOD sprite texture (shared across all sprites for efficiency)
+  private lodSpriteTexture: THREE.Texture | null = null;
 
   constructor(scene: THREE.Scene, config: TransitMeshManagerConfig = {}) {
     this.scene = scene;
@@ -121,6 +145,81 @@ export class TransitMeshManager {
       maxHeightPx: 50,
       targetHeightPx: 30,
     });
+  }
+
+  /**
+   * Create or get the shared LOD sprite texture
+   * Uses a simple colored circle for efficiency
+   */
+  private getLodSpriteTexture(): THREE.Texture {
+    if (this.lodSpriteTexture) {
+      return this.lodSpriteTexture;
+    }
+
+    // Create a simple circular sprite texture
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext('2d')!;
+
+    // Draw a filled circle with a white border
+    ctx.beginPath();
+    ctx.arc(16, 16, 14, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    this.lodSpriteTexture = new THREE.CanvasTexture(canvas);
+    return this.lodSpriteTexture;
+  }
+
+  /**
+   * Create a LOD sprite for a vehicle
+   */
+  private createLodSprite(lineColor: THREE.Color, baseScale: number): THREE.Sprite {
+    const material = new THREE.SpriteMaterial({
+      map: this.getLodSpriteTexture(),
+      color: lineColor,
+      transparent: true,
+      depthTest: true,
+      depthWrite: false,
+    });
+
+    const sprite = new THREE.Sprite(material);
+    // Scale sprite to approximate vehicle size
+    const spriteSize = baseScale * 0.5; // Smaller than 3D model
+    sprite.scale.set(spriteSize, spriteSize, 1);
+    sprite.visible = false; // Start hidden (high LOD by default)
+
+    return sprite;
+  }
+
+  /**
+   * Update LOD state based on current zoom
+   * Called during animation to toggle between detailed and simple representations
+   */
+  private updateLODState(): void {
+    const shouldBeLowLOD = this.currentZoom < this.config.lodThreshold;
+    const newState = shouldBeLowLOD ? 'low' : 'high';
+
+    if (newState === this.currentLODState) {
+      return; // No change needed
+    }
+
+    this.currentLODState = newState;
+
+    // Toggle visibility for all meshes
+    for (const data of this.meshes.values()) {
+      if (data.detailedModel && data.lodSprite) {
+        data.detailedModel.visible = !shouldBeLowLOD;
+        data.lodSprite.visible = shouldBeLowLOD;
+        data.isLowLOD = shouldBeLowLOD;
+      }
+    }
+
+    console.log(`[TransitMeshManager] LOD switched to ${newState} (zoom: ${this.currentZoom.toFixed(1)})`);
   }
 
   /**
@@ -321,6 +420,26 @@ export class TransitMeshManager {
           existingMesh.targetPosition = [vehicle.longitude, vehicle.latitude];
           existingMesh.targetBearing = vehicle.bearing;
           existingMesh.animationMode = 'lerp';
+
+          // Pre-compute snapped path once (avoids per-frame snapping)
+          const geometry = this.getGeometry(vehicle.networkType, vehicle.lineCode);
+          if (geometry) {
+            const snapStart = snapTrainToRailway(existingMesh.lerpStartPosition, geometry, 500);
+            const snapEnd = snapTrainToRailway(existingMesh.targetPosition, geometry, 500);
+            if (snapStart && snapEnd) {
+              existingMesh.precomputedSnap = {
+                startDistance: snapStart.distance,
+                endDistance: snapEnd.distance,
+                startBearing: snapStart.bearing,
+                endBearing: snapEnd.bearing,
+                hasValidSnap: true,
+              };
+            } else {
+              existingMesh.precomputedSnap = undefined;
+            }
+          } else {
+            existingMesh.precomputedSnap = undefined;
+          }
         }
       } else {
         // Create new mesh
@@ -366,6 +485,19 @@ export class TransitMeshManager {
     // Apply scale to parent group
     mesh.scale.setScalar(baseScale);
 
+    // Parse line color early for LOD sprite
+    const colorHex = vehicle.lineColor.startsWith('#') ? vehicle.lineColor : `#${vehicle.lineColor}`;
+    const lineColor = new THREE.Color(colorHex);
+
+    // Create LOD sprite (simpler representation for low zoom)
+    const lodSprite = this.createLodSprite(lineColor, baseScale);
+    mesh.add(lodSprite);
+
+    // Set initial LOD state
+    const isLowLOD = this.currentZoom < this.config.lodThreshold;
+    trainModel.visible = !isLowLOD;
+    lodSprite.visible = isLowLOD;
+
     // Set initial position
     const pos = getModelPosition(vehicle.longitude, vehicle.latitude, 0);
     mesh.position.set(pos.x, pos.y, pos.z + this.config.zOffsetFactor * baseScale);
@@ -373,10 +505,17 @@ export class TransitMeshManager {
     // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
-    // Parse line color (used for outlines, stored in mesh data but NOT applied to model)
-    // All transit models use their base model appearance without per-route color overrides
-    const colorHex = vehicle.lineColor.startsWith('#') ? vehicle.lineColor : `#${vehicle.lineColor}`;
-    const lineColor = new THREE.Color(colorHex);
+    // Collect materials for fast opacity updates (avoids mesh traversal later)
+    const cachedMaterials: THREE.Material[] = [];
+    mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          cachedMaterials.push(...child.material);
+        } else if (child.material) {
+          cachedMaterials.push(child.material);
+        }
+      }
+    });
 
     // Add to scene
     this.scene.add(mesh);
@@ -425,6 +564,14 @@ export class TransitMeshManager {
       screenSpaceScale: 1.0,
       lineColor,
       opacity: 1.0,
+
+      // Performance: Cache materials for fast opacity updates
+      cachedMaterials,
+
+      // LOD references
+      detailedModel: trainModel,
+      lodSprite,
+      isLowLOD,
     });
   }
 
@@ -469,6 +616,9 @@ export class TransitMeshManager {
   animatePositions(): void {
     const now = Date.now();
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
+
+    // Update LOD state based on current zoom (toggles between detailed and simple)
+    this.updateLODState();
 
     for (const [, data] of this.meshes) {
       if (data.animationMode === 'continuous') {
@@ -541,8 +691,8 @@ export class TransitMeshManager {
   /**
    * Animate using lerp interpolation (position-based)
    *
-   * For bus routes, snaps the interpolated position to the route geometry
-   * to ensure vehicles follow their designated routes instead of straight lines.
+   * Uses pre-computed snapped path when available for performance.
+   * Falls back to per-frame snapping only if pre-computed data is unavailable.
    */
   private animateLerp(data: TransitMeshData, now: number): void {
     const elapsed = now - data.lerpStartTime;
@@ -551,27 +701,48 @@ export class TransitMeshManager {
     // Smooth easing function (ease-out cubic)
     const eased = 1 - Math.pow(1 - t, 3);
 
-    // Interpolate position (raw GPS interpolation)
-    let lng = data.lerpStartPosition[0] + (data.targetPosition[0] - data.lerpStartPosition[0]) * eased;
-    let lat = data.lerpStartPosition[1] + (data.targetPosition[1] - data.lerpStartPosition[1]) * eased;
+    let lng: number;
+    let lat: number;
+    let bearing: number;
 
-    // Interpolate bearing (handle wrap-around)
-    let bearingDiff = data.targetBearing - data.lerpStartBearing;
-    if (bearingDiff > 180) bearingDiff -= 360;
-    if (bearingDiff < -180) bearingDiff += 360;
-    let bearing = data.lerpStartBearing + bearingDiff * eased;
+    // Use pre-computed snapped path if available (fast path - no per-frame snapping)
+    if (data.precomputedSnap?.hasValidSnap) {
+      const geometry = this.getGeometry(data.networkType, data.lineCode);
+      if (geometry) {
+        // Interpolate along pre-computed railway distance
+        const distance = data.precomputedSnap.startDistance +
+          (data.precomputedSnap.endDistance - data.precomputedSnap.startDistance) * eased;
 
-    // Try to snap position to route geometry (for bus routes)
-    // This ensures vehicles follow their routes instead of moving in straight lines
-    const geometry = this.getGeometry(data.networkType, data.lineCode);
-    if (geometry) {
-      const snapResult = snapTrainToRailway([lng, lat], geometry, 500); // 500m max snap distance
-      if (snapResult) {
-        lng = snapResult.position[0];
-        lat = snapResult.position[1];
-        // Use snapped bearing for smoother rotation along the route
-        bearing = data.direction === 1 ? (snapResult.bearing + 180) % 360 : snapResult.bearing;
+        // Sample position from geometry (O(log n) binary search, no snapping)
+        const sample = sampleRailwayPosition(geometry, distance);
+        lng = sample.position[0];
+        lat = sample.position[1];
+
+        // Interpolate bearing
+        let bearingDiff = data.precomputedSnap.endBearing - data.precomputedSnap.startBearing;
+        if (bearingDiff > 180) bearingDiff -= 360;
+        if (bearingDiff < -180) bearingDiff += 360;
+        bearing = data.precomputedSnap.startBearing + bearingDiff * eased;
+        bearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+      } else {
+        // Fallback: geometry not loaded yet
+        lng = data.lerpStartPosition[0] + (data.targetPosition[0] - data.lerpStartPosition[0]) * eased;
+        lat = data.lerpStartPosition[1] + (data.targetPosition[1] - data.lerpStartPosition[1]) * eased;
+        let bearingDiff = data.targetBearing - data.lerpStartBearing;
+        if (bearingDiff > 180) bearingDiff -= 360;
+        if (bearingDiff < -180) bearingDiff += 360;
+        bearing = data.lerpStartBearing + bearingDiff * eased;
       }
+    } else {
+      // Slow path: no pre-computed snap, use raw GPS interpolation
+      lng = data.lerpStartPosition[0] + (data.targetPosition[0] - data.lerpStartPosition[0]) * eased;
+      lat = data.lerpStartPosition[1] + (data.targetPosition[1] - data.lerpStartPosition[1]) * eased;
+
+      // Interpolate bearing (handle wrap-around)
+      let bearingDiff = data.targetBearing - data.lerpStartBearing;
+      if (bearingDiff > 180) bearingDiff -= 360;
+      if (bearingDiff < -180) bearingDiff += 360;
+      bearing = data.lerpStartBearing + bearingDiff * eased;
     }
 
     // Update position
@@ -592,28 +763,24 @@ export class TransitMeshManager {
 
   /**
    * Set opacity for all meshes (for visibility toggle)
+   * Uses cached material references for performance
    */
   setOpacity(opacity: number): void {
+    const isTransparent = opacity < 1;
     for (const data of this.meshes.values()) {
       data.opacity = opacity;
-      data.mesh.traverse((obj) => {
-        if ((obj as THREE.Mesh).isMesh) {
-          const mesh = obj as THREE.Mesh;
-          if (mesh.material) {
-            const mat = mesh.material as THREE.MeshStandardMaterial;
-            if (mat.opacity !== undefined) {
-              mat.opacity = opacity;
-              mat.transparent = opacity < 1;
-            }
-          }
-        }
-      });
+      // Use cached materials for O(n) instead of O(n × hierarchy depth)
+      for (const mat of data.cachedMaterials) {
+        (mat as THREE.MeshStandardMaterial).opacity = opacity;
+        mat.transparent = isTransparent;
+      }
     }
   }
 
   /**
    * Set opacity for multiple vehicles based on line selection
    * Used for highlight/isolate mode to show only selected lines
+   * Uses cached material references for performance
    *
    * @param opacities - Map of vehicleKey to opacity (0.0 - 1.0)
    */
@@ -623,18 +790,12 @@ export class TransitMeshManager {
       if (!data) return;
 
       data.opacity = opacity;
-      data.mesh.traverse((obj) => {
-        if ((obj as THREE.Mesh).isMesh) {
-          const mesh = obj as THREE.Mesh;
-          if (mesh.material) {
-            const mat = mesh.material as THREE.MeshStandardMaterial;
-            if (mat.opacity !== undefined) {
-              mat.opacity = opacity;
-              mat.transparent = opacity < 1;
-            }
-          }
-        }
-      });
+      const isTransparent = opacity < 1;
+      // Use cached materials for O(n) instead of O(n × hierarchy depth)
+      for (const mat of data.cachedMaterials) {
+        (mat as THREE.MeshStandardMaterial).opacity = opacity;
+        mat.transparent = isTransparent;
+      }
     });
   }
 

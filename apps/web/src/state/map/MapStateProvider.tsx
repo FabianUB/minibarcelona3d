@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useEffect } from 'react';
+import { useMemo, useReducer, useEffect, useRef } from 'react';
 import type { PropsWithChildren } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 
@@ -78,7 +78,11 @@ type MapAction =
   | { type: 'set-exclusive-network'; payload: TransportType }
   | { type: 'toggle-network-multi'; payload: TransportType }
   | { type: 'set-active-control-tab'; payload: TransportType }
-  | { type: 'set-control-panel-mode'; payload: ControlPanelMode };
+  | { type: 'set-control-panel-mode'; payload: ControlPanelMode }
+  | { type: 'toggle-show-stations' }
+  | { type: 'set-show-stations'; payload: boolean }
+  | { type: 'toggle-show-only-top-bus-lines' }
+  | { type: 'set-show-only-top-bus-lines'; payload: boolean };
 
 /**
  * Create initial UI state with preferences loaded from localStorage
@@ -135,6 +139,8 @@ function createInitialUiState(): MapUIState {
     selectedStationId: null,
     stationLoadError: null,
     transportFilters,
+    showStations: getPreference('showStations', true), // Show stations by default
+    showOnlyTopBusLines: getPreference('showOnlyTopBusLines', true), // Show only top 10 bus lines by default
     // Control panel state
     networkHighlights,
     modelSizes,
@@ -401,6 +407,38 @@ function mapReducer(state: MapState, action: MapAction): MapState {
           controlPanelMode: action.payload,
         },
       };
+    case 'toggle-show-stations':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showStations: !state.ui.showStations,
+        },
+      };
+    case 'set-show-stations':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showStations: action.payload,
+        },
+      };
+    case 'toggle-show-only-top-bus-lines':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showOnlyTopBusLines: !state.ui.showOnlyTopBusLines,
+        },
+      };
+    case 'set-show-only-top-bus-lines':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          showOnlyTopBusLines: action.payload,
+        },
+      };
     default:
       return state;
   }
@@ -410,17 +448,33 @@ export function MapStateProvider({ children }: PropsWithChildren) {
   const [state, dispatch] = useReducer(mapReducer, undefined, createInitialState);
 
   // Persist UI preferences to localStorage when they change
-  // Combined into single effect to reduce localStorage writes
+  // Debounced to avoid blocking renders during rapid interactions (e.g., slider changes)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    savePreferences({
-      isHighContrast: state.ui.isHighContrast,
-      isLegendOpen: state.ui.isLegendOpen,
-      transportFilters: state.ui.transportFilters,
-      modelSizes: state.ui.modelSizes,
-      networkHighlights: state.ui.networkHighlights,
-      activeControlTab: state.ui.activeControlTab,
-    });
-  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab]);
+    // Clear any pending save to avoid stale writes
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    // Debounce by 500ms to batch rapid state changes
+    saveTimeoutRef.current = setTimeout(() => {
+      savePreferences({
+        isHighContrast: state.ui.isHighContrast,
+        isLegendOpen: state.ui.isLegendOpen,
+        transportFilters: state.ui.transportFilters,
+        modelSizes: state.ui.modelSizes,
+        networkHighlights: state.ui.networkHighlights,
+        activeControlTab: state.ui.activeControlTab,
+        showStations: state.ui.showStations,
+        showOnlyTopBusLines: state.ui.showOnlyTopBusLines,
+      });
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab, state.ui.showStations, state.ui.showOnlyTopBusLines]);
 
   const actions = useMemo<MapActions>(
     () => ({
@@ -514,6 +568,18 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       setControlPanelMode(mode) {
         dispatch({ type: 'set-control-panel-mode', payload: mode });
+      },
+      toggleShowStations() {
+        dispatch({ type: 'toggle-show-stations' });
+      },
+      setShowStations(show) {
+        dispatch({ type: 'set-show-stations', payload: show });
+      },
+      toggleShowOnlyTopBusLines() {
+        dispatch({ type: 'toggle-show-only-top-bus-lines' });
+      },
+      setShowOnlyTopBusLines(show) {
+        dispatch({ type: 'set-show-only-top-bus-lines', payload: show });
       },
     }),
     [dispatch],

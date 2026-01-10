@@ -10,6 +10,44 @@
 import type { LineConfig } from '../types/transit';
 
 /**
+ * Top 10 most used bus lines in Barcelona by annual ridership.
+ * Used as default filter to reduce visual clutter.
+ *
+ * Source: TMB annual ridership data (millions of passengers):
+ * - H6: 10.6M (Zona Universitària – Onze de Setembre)
+ * - H4: 8.7M (Zona Universitària – Bon Pastor)
+ * - H8: 8.1M (Ernest Lluch – Bon Pastor)
+ * - D20: 7.1M (Pg. Marítim – Ernest Lluch)
+ * - D40: 7.0M (Pl. Espanya – Canyelles)
+ * - H12: 6.5M (Gornal – Besòs/Verneda)
+ * - 7: 6.4M (Zona Universitària – Fòrum)
+ * - V19: 6.2M (Barceloneta – Pl. Alfons Comín)
+ * - H16: 6.2M (Pg. Zona Franca – Fòrum Camp Besòs)
+ * - D50: 5.8M (Paral·lel – Ciutat Meridiana)
+ */
+export const TOP_BUS_LINES = [
+  'H6',
+  'H4',
+  'H8',
+  'D20',
+  'D40',
+  'H12',
+  '7',
+  'V19',
+  'H16',
+  'D50',
+] as const;
+
+export type TopBusLine = (typeof TOP_BUS_LINES)[number];
+
+/**
+ * Check if a route code is one of the top bus lines
+ */
+export function isTopBusLine(routeCode: string): boolean {
+  return TOP_BUS_LINES.includes(routeCode as TopBusLine);
+}
+
+/**
  * Default bus configuration for routes without specific config
  */
 const DEFAULT_BUS_CONFIG: Omit<LineConfig, 'lineCode' | 'name'> = {

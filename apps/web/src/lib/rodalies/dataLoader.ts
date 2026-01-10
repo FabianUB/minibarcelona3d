@@ -193,6 +193,8 @@ export async function loadMapUiState(
           modelSizes: { rodalies: 1.0, metro: 1.0, bus: 1.0, tram: 1.0, fgc: 1.0 },
           activeControlTab: 'rodalies',
           controlPanelMode: 'controls',
+          showStations: true,
+          showOnlyTopBusLines: true,
         };
       }
       const url = resolveManifestAssetUrl(path);
@@ -344,6 +346,8 @@ function normaliseMapUiState(
     modelSizes: { rodalies: 1.0, metro: 1.0, bus: 1.0, tram: 1.0, fgc: 1.0 },
     activeControlTab: 'rodalies',
     controlPanelMode: 'controls',
+    showStations: candidate?.showStations ?? true,
+    showOnlyTopBusLines: candidate?.showOnlyTopBusLines ?? true,
   };
 }
 
