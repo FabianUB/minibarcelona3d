@@ -9,7 +9,8 @@
 import { useCallback } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadTramStops } from '../../lib/metro/dataLoader';
-import { GenericStopLayer, TRAM_STOP_CONFIG } from '../transit/GenericStopLayer';
+import { GenericStopLayer } from '../transit/GenericStopLayer';
+import { TRAM_STOP_CONFIG } from '../transit/stopLayerConfig';
 
 export interface TramStopLayerProps {
   map: MapboxMap;

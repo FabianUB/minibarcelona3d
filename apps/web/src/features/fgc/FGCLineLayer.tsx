@@ -9,7 +9,8 @@
 import { useCallback } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadAllFgcLines } from '../../lib/metro/dataLoader';
-import { GenericLineLayer, FGC_LINE_CONFIG } from '../transit/GenericLineLayer';
+import { GenericLineLayer } from '../transit/GenericLineLayer';
+import { FGC_LINE_CONFIG } from '../transit/lineLayerConfig';
 
 export interface FGCLineLayerProps {
   map: MapboxMap;

@@ -9,7 +9,8 @@
 import { useCallback } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadFgcStations } from '../../lib/metro/dataLoader';
-import { GenericStopLayer, FGC_STOP_CONFIG } from '../transit/GenericStopLayer';
+import { GenericStopLayer } from '../transit/GenericStopLayer';
+import { FGC_STOP_CONFIG } from '../transit/stopLayerConfig';
 
 export interface FGCStationLayerProps {
   map: MapboxMap;

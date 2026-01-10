@@ -11,7 +11,8 @@ import type { Map as MapboxMap } from 'mapbox-gl';
 import { loadAllBusRoutes } from '../../lib/metro/dataLoader';
 import type { MetroLineCollection } from '../../types/metro';
 import { isTopBusLine } from '../../config/busConfig';
-import { GenericLineLayer, BUS_LINE_CONFIG } from '../transit/GenericLineLayer';
+import { GenericLineLayer } from '../transit/GenericLineLayer';
+import { BUS_LINE_CONFIG } from '../transit/lineLayerConfig';
 
 export interface BusLineLayerProps {
   map: MapboxMap;
