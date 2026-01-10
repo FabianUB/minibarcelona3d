@@ -67,3 +67,48 @@ func CalculateLineLength(coords [][2]float64) float64 {
 	}
 	return total
 }
+
+// DistanceToPoint calculates the distance along a line from its start to a given point.
+// It finds the closest segment on the line and returns the cumulative distance.
+func DistanceToPoint(coords [][2]float64, target [2]float64) float64 {
+	if len(coords) < 2 {
+		return 0
+	}
+
+	// Find the closest point index
+	closestIdx := FindClosestPointIndex(coords, target)
+
+	// Calculate cumulative distance to the closest point
+	var cumDistance float64
+	for i := 1; i <= closestIdx; i++ {
+		cumDistance += Haversine(
+			coords[i-1][1], coords[i-1][0],
+			coords[i][1], coords[i][0],
+		)
+	}
+
+	// If we're between the closest point and the next/prev point,
+	// add the fractional distance to the target
+	closestCoord := coords[closestIdx]
+	distToClosest := Haversine(closestCoord[1], closestCoord[0], target[1], target[0])
+
+	// Check if we should look at the segment before or after
+	if closestIdx > 0 && closestIdx < len(coords)-1 {
+		// Check which adjacent point the target is closer to
+		prevDist := Haversine(coords[closestIdx-1][1], coords[closestIdx-1][0], target[1], target[0])
+		nextDist := Haversine(coords[closestIdx+1][1], coords[closestIdx+1][0], target[1], target[0])
+
+		if prevDist < nextDist && prevDist < distToClosest {
+			// Target is between prev and closest, subtract fractional distance
+			cumDistance -= distToClosest
+		} else if nextDist < distToClosest {
+			// Target is between closest and next, add fractional distance
+			cumDistance += distToClosest
+		}
+	} else if closestIdx == 0 {
+		// At start, add distance from start to target
+		cumDistance = distToClosest
+	}
+
+	return cumDistance
+}

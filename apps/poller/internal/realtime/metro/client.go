@@ -455,10 +455,20 @@ func (p *Poller) estimatePosition(trainKey string, arrivals []TrainArrival) *Est
 		directionID = 1
 	}
 
-	// Get line total length
+	// Get line total length and calculate distance along line
 	var lineTotalLength float64
+	var distanceAlongLine float64
 	if lineGeom, ok := p.lineGeoms[lineCode]; ok {
 		lineTotalLength = lineGeom.TotalLength
+		// Calculate distance from line start to current position
+		distanceAlongLine = DistanceToPoint(lineGeom.Coordinates, [2]float64{lng, lat})
+		// Clamp to valid range
+		if distanceAlongLine < 0 {
+			distanceAlongLine = 0
+		}
+		if distanceAlongLine > lineTotalLength {
+			distanceAlongLine = lineTotalLength
+		}
 	}
 
 	return &EstimatedPosition{
@@ -473,7 +483,7 @@ func (p *Poller) estimatePosition(trainKey string, arrivals []TrainArrival) *Est
 		NextStopName:         &station.Name,
 		Status:               status,
 		ProgressFraction:     progress,
-		DistanceAlongLine:    0, // TODO: calculate if needed
+		DistanceAlongLine:    distanceAlongLine,
 		EstimatedSpeedMPS:    averageSpeedMPS,
 		LineTotalLength:      lineTotalLength,
 		Source:               "imetro",
