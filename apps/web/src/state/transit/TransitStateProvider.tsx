@@ -1,12 +1,21 @@
 import { useMemo, useReducer } from 'react';
 import type { PropsWithChildren } from 'react';
 import { TransitStateContext, TransitActionsContext } from './context';
-import type { TransitState, TransitActions, TransitActionType } from './types';
+import type { TransitState, TransitActions, TransitActionType, DataSourceStatus } from './types';
+
+const DEFAULT_DATA_SOURCE_STATUS: DataSourceStatus = {
+  rodalies: 'unknown',
+  metro: 'unknown',
+  bus: 'unknown',
+  tram: 'unknown',
+  fgc: 'unknown',
+};
 
 function createInitialState(): TransitState {
   return {
     selectedVehicle: null,
     isPanelOpen: false,
+    dataSourceStatus: DEFAULT_DATA_SOURCE_STATUS,
   };
 }
 
@@ -29,6 +38,14 @@ function transitReducer(state: TransitState, action: TransitActionType): Transit
         selectedVehicle: null,
         isPanelOpen: false,
       };
+    case 'SET_DATA_SOURCE':
+      return {
+        ...state,
+        dataSourceStatus: {
+          ...state.dataSourceStatus,
+          [action.payload.network]: action.payload.source,
+        },
+      };
     default:
       return state;
   }
@@ -47,6 +64,9 @@ export function TransitStateProvider({ children }: PropsWithChildren) {
       },
       clearSelection() {
         dispatch({ type: 'CLEAR_SELECTION' });
+      },
+      setDataSource(network, source) {
+        dispatch({ type: 'SET_DATA_SOURCE', payload: { network, source } });
       },
     }),
     []

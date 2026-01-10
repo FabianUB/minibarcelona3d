@@ -177,6 +177,7 @@ type MetroPosition struct {
 }
 
 // UpsertMetroPositions inserts or updates Metro positions
+// Note: This function now clears the current table before inserting to remove stale positions
 func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polledAt time.Time, positions []MetroPosition) error {
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
@@ -186,7 +187,14 @@ func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polle
 
 	polledAtStr := polledAt.UTC().Format(time.RFC3339)
 
-	// Prepare upsert statement for current table
+	// Clear current table to remove stale positions from previous polls
+	// This is necessary because trains that are no longer reported (filtered out or service ended)
+	// would otherwise remain indefinitely in the current table
+	if _, err := tx.ExecContext(ctx, "DELETE FROM rt_metro_vehicle_current"); err != nil {
+		return fmt.Errorf("failed to clear metro current table: %w", err)
+	}
+
+	// Prepare insert statement for current table (no ON CONFLICT needed since we clear first)
 	currentStmt, err := tx.PrepareContext(ctx, `
 		INSERT INTO rt_metro_vehicle_current (
 			vehicle_key, snapshot_id, line_code, route_id, direction_id,
@@ -196,29 +204,6 @@ func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polle
 			source, confidence, arrival_seconds_to_next, estimated_at_utc,
 			polled_at_utc, updated_at
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-		ON CONFLICT (vehicle_key) DO UPDATE SET
-			snapshot_id = excluded.snapshot_id,
-			line_code = excluded.line_code,
-			route_id = excluded.route_id,
-			direction_id = excluded.direction_id,
-			latitude = excluded.latitude,
-			longitude = excluded.longitude,
-			bearing = excluded.bearing,
-			previous_stop_id = excluded.previous_stop_id,
-			next_stop_id = excluded.next_stop_id,
-			previous_stop_name = excluded.previous_stop_name,
-			next_stop_name = excluded.next_stop_name,
-			status = excluded.status,
-			progress_fraction = excluded.progress_fraction,
-			distance_along_line = excluded.distance_along_line,
-			estimated_speed_mps = excluded.estimated_speed_mps,
-			line_total_length = excluded.line_total_length,
-			source = excluded.source,
-			confidence = excluded.confidence,
-			arrival_seconds_to_next = excluded.arrival_seconds_to_next,
-			estimated_at_utc = excluded.estimated_at_utc,
-			polled_at_utc = excluded.polled_at_utc,
-			updated_at = datetime('now')
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to prepare current statement: %w", err)

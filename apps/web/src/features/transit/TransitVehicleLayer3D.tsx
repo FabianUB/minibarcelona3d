@@ -20,8 +20,8 @@ import { useBusPositions } from './hooks/useBusPositions';
 import { useTramPositions } from './hooks/useTramPositions';
 import { useFgcPositions } from './hooks/useFgcPositions';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
-import { useTransitActions } from '../../state/transit';
-import { useMapActions } from '../../state/map';
+import { useTransitActions, type DataSourceType } from '../../state/transit';
+import { useMapState, useMapActions } from '../../state/map';
 
 export interface TransitVehicleLayer3DProps {
   /** Mapbox GL Map instance */
@@ -65,8 +65,11 @@ export function TransitVehicleLayer3D({
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
 
+  // State for bus filtering
+  const { ui } = useMapState();
+
   // State actions
-  const { selectVehicle } = useTransitActions();
+  const { selectVehicle, setDataSource } = useTransitActions();
   const { setActivePanel } = useMapActions();
 
   // Three.js references
@@ -74,6 +77,7 @@ export function TransitVehicleLayer3D({
   const cameraRef = useRef<THREE.Camera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const meshManagerRef = useRef<TransitMeshManager | null>(null);
+  const environmentRTRef = useRef<THREE.WebGLRenderTarget | null>(null);
   const layerAddedRef = useRef(false);
 
   // Store current positions for lookup on click
@@ -84,6 +88,14 @@ export function TransitVehicleLayer3D({
   const lastMouseMoveTime = useRef<number>(0);
   const MOUSE_MOVE_THROTTLE_MS = 100; // Throttle to max 10 FPS
 
+  // Reusable matrix instances for render loop (avoid allocations per frame)
+  const matrixRef = useRef({
+    mapboxMatrix: new THREE.Matrix4(),
+    modelTransform: new THREE.Matrix4(),
+    resultMatrix: new THREE.Matrix4(),
+    scaleVector: new THREE.Vector3(1, -1, 1),
+  });
+
   // Layer ID based on network type
   const layerId = `transit-${networkType}-layer-3d`;
 
@@ -92,6 +104,7 @@ export function TransitVehicleLayer3D({
     positions: metroPositions,
     isReady: metroReady,
     isLoading: metroLoading,
+    isSimulationFallback: metroSimulation,
   } = useMetroPositions({
     enabled: networkType === 'metro' && visible,
   });
@@ -100,14 +113,17 @@ export function TransitVehicleLayer3D({
     positions: busPositions,
     isReady: busReady,
     isLoading: busLoading,
+    isSimulationFallback: busSimulation,
   } = useBusPositions({
     enabled: networkType === 'bus' && visible,
+    filterTopLinesOnly: ui.showOnlyTopBusLines,
   });
 
   const {
     positions: tramPositions,
     isReady: tramReady,
     isLoading: tramLoading,
+    isSimulationFallback: tramSimulation,
   } = useTramPositions({
     enabled: networkType === 'tram' && visible,
   });
@@ -116,6 +132,7 @@ export function TransitVehicleLayer3D({
     positions: fgcPositions,
     isReady: fgcReady,
     isLoading: fgcLoading,
+    isSimulationFallback: fgcSimulation,
   } = useFgcPositions({
     enabled: networkType === 'fgc' && visible,
   });
@@ -145,6 +162,14 @@ export function TransitVehicleLayer3D({
     if (networkType === 'fgc') return fgcLoading;
     return false;
   }, [networkType, metroLoading, busLoading, tramLoading, fgcLoading]);
+
+  const isSimulationFallback = useMemo(() => {
+    if (networkType === 'metro') return metroSimulation;
+    if (networkType === 'bus') return busSimulation;
+    if (networkType === 'tram') return tramSimulation;
+    if (networkType === 'fgc') return fgcSimulation;
+    return false;
+  }, [networkType, metroSimulation, busSimulation, tramSimulation, fgcSimulation]);
 
   /**
    * Calculate vehicle opacities based on line selection
@@ -176,6 +201,24 @@ export function TransitVehicleLayer3D({
   useEffect(() => {
     onLoadingChange?.(isDataLoading || !modelLoaded);
   }, [isDataLoading, modelLoaded, onLoadingChange]);
+
+  // Update transit state with data source status
+  // Bus/Tram/FGC are always schedule-based (no real-time GPS data available)
+  // Metro is realtime only if iMetro API works (not simulation fallback)
+  useEffect(() => {
+    if (!isDataReady) return;
+
+    let source: DataSourceType;
+    if (networkType === 'metro') {
+      // Metro can be realtime (iMetro API) or schedule (simulation fallback)
+      source = isSimulationFallback ? 'schedule' : 'realtime';
+    } else {
+      // Bus, Tram, FGC are always schedule-based
+      source = 'schedule';
+    }
+
+    setDataSource(networkType, source);
+  }, [isDataReady, isSimulationFallback, networkType, setDataSource]);
 
   /**
    * Mapbox Custom Layer Implementation
@@ -223,6 +266,7 @@ export function TransitVehicleLayer3D({
         const neutralEnvironment = new RoomEnvironment();
         const envRenderTarget = pmremGenerator.fromScene(neutralEnvironment, 0.04);
         neutralEnvironment.dispose();
+        environmentRTRef.current = envRenderTarget; // Store for cleanup
         scene.environment = envRenderTarget.texture;
         scene.background = null;
         pmremGenerator.dispose();
@@ -303,25 +347,39 @@ export function TransitVehicleLayer3D({
           meshManagerRef.current.animatePositions();
         }
 
-        // Sync camera with Mapbox
-        const mapboxMatrix = new THREE.Matrix4().fromArray(matrix);
-        const modelTransform = new THREE.Matrix4()
+        // Reuse matrix instances for performance (avoid allocations per frame)
+        const matrices = matrixRef.current;
+        matrices.mapboxMatrix.fromArray(matrix);
+        matrices.modelTransform
+          .identity()
           .makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z ?? 0)
-          .scale(new THREE.Vector3(1, -1, 1));
+          .scale(matrices.scaleVector);
 
-        cameraRef.current.projectionMatrix.copy(
-          mapboxMatrix.clone().multiply(modelTransform)
-        );
+        // Use resultMatrix to avoid clone() allocation
+        matrices.resultMatrix.copy(matrices.mapboxMatrix).multiply(matrices.modelTransform);
+        cameraRef.current.projectionMatrix.copy(matrices.resultMatrix);
 
         // Render
         rendererRef.current.resetState();
         rendererRef.current.render(sceneRef.current, cameraRef.current);
+
+        // Continuous repaint loop for smooth animation
+        // This ensures vehicles animate smoothly based on elapsed time
+        // Only trigger when visible and has meshes to avoid unnecessary GPU work
+        const meshCount = meshManagerRef.current?.getMeshCount() ?? 0;
+        if (visibleRef.current && meshCount > 0) {
+          map.triggerRepaint();
+        }
       },
 
       onRemove() {
         if (meshManagerRef.current) {
           meshManagerRef.current.dispose();
           meshManagerRef.current = null;
+        }
+        if (environmentRTRef.current) {
+          environmentRTRef.current.dispose();
+          environmentRTRef.current = null;
         }
         sceneRef.current = null;
         cameraRef.current = null;

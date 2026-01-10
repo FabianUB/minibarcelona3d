@@ -127,7 +127,7 @@ export function MapCanvas() {
   } = useDefaultViewport();
 
   const isHighContrast = ui.isHighContrast;
-  const { transportFilters, networkHighlights, modelSizes } = ui;
+  const { transportFilters, networkHighlights, modelSizes, showStations, showOnlyTopBusLines } = ui;
 
   // Keep a ref to current transportFilters for use in closures
   const transportFiltersRef = useRef(transportFilters);
@@ -808,7 +808,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {mapInstance && isMapLoaded ? (
         <MetroStationLayer
           map={mapInstance}
-          visible={transportFilters.metro}
+          visible={transportFilters.metro && showStations}
           highlightedLines={networkHighlights.metro.selectedLineIds}
           isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
           onStationClick={(stationId, stationName) => {
@@ -834,13 +834,14 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           visible={transportFilters.bus}
           highlightedRoutes={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
+          filterTopLinesOnly={showOnlyTopBusLines}
         />
       ) : null}
       {/* Bus stop markers */}
       {mapInstance && isMapLoaded ? (
         <BusStopLayer
           map={mapInstance}
-          visible={transportFilters.bus}
+          visible={transportFilters.bus && showStations}
           highlightedRoutes={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
           onStopClick={(stopId, stopName) => {
@@ -872,7 +873,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {mapInstance && isMapLoaded ? (
         <TramStopLayer
           map={mapInstance}
-          visible={transportFilters.tram}
+          visible={transportFilters.tram && showStations}
           highlightedLines={networkHighlights.tram.selectedLineIds}
           isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
           onStopClick={(stopId, stopName) => {
@@ -904,7 +905,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {mapInstance && isMapLoaded ? (
         <FGCStationLayer
           map={mapInstance}
-          visible={transportFilters.fgc}
+          visible={transportFilters.fgc && showStations}
           highlightedLines={networkHighlights.fgc.selectedLineIds}
           isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
           onStationClick={(stationId, stationName) => {
@@ -930,7 +931,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
           highlightMode={networkHighlights.rodalies.highlightMode}
           onStationClick={selectStation}
-          visible={transportFilters.rodalies}
+          visible={transportFilters.rodalies && showStations}
         />
       ) : null}
       {/* Phase B 2D markers replaced by Phase C 3D models */}

@@ -7,109 +7,11 @@
  * along line geometry based on time-to-arrival.
  */
 
-import type {
-  GetMetroPositionsResponse,
-  MetroApiError,
-} from '../../types/metro';
+import type { GetMetroPositionsResponse } from '../../types/metro';
+import { fetchWithRetry, parseErrorResponse } from './fetchWithRetry';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
-
-/**
- * Configuration for retry behavior
- */
-const RETRY_CONFIG = {
-  maxAttempts: 3,
-  baseDelay: 1000, // 1 second
-  maxDelay: 5000, // 5 seconds
-  shouldRetry: (status: number) => {
-    // Retry on network errors and 5xx server errors
-    // Don't retry on 4xx client errors (bad request, not found, etc.)
-    return status >= 500 || status === 0;
-  },
-};
-
-/**
- * Sleeps for a specified duration
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Calculates exponential backoff delay with jitter
- * Prevents thundering herd when multiple clients retry simultaneously
- */
-function getRetryDelay(attempt: number): number {
-  const exponentialDelay = Math.min(
-    RETRY_CONFIG.baseDelay * Math.pow(2, attempt - 1),
-    RETRY_CONFIG.maxDelay
-  );
-  // Add random jitter (0-50% of delay)
-  const jitter = Math.random() * exponentialDelay * 0.5;
-  return exponentialDelay + jitter;
-}
-
-/**
- * Fetches with automatic retry on transient failures
- * Uses exponential backoff with jitter to prevent thundering herd
- */
-async function fetchWithRetry(
-  url: string,
-  options?: RequestInit
-): Promise<Response> {
-  let lastError: Error | null = null;
-
-  for (let attempt = 1; attempt <= RETRY_CONFIG.maxAttempts; attempt++) {
-    try {
-      const response = await fetch(url, options);
-
-      // Success or non-retryable error
-      if (response.ok || !RETRY_CONFIG.shouldRetry(response.status)) {
-        return response;
-      }
-
-      // Server error - retry
-      lastError = new Error(
-        `HTTP ${response.status}: ${response.statusText}`
-      );
-
-      if (attempt < RETRY_CONFIG.maxAttempts) {
-        const delay = getRetryDelay(attempt);
-        console.warn(
-          `Metro API request failed (attempt ${attempt}/${RETRY_CONFIG.maxAttempts}): ${url}. Retrying in ${Math.round(delay)}ms...`
-        );
-        await sleep(delay);
-      }
-    } catch (error) {
-      // Network error (no response)
-      lastError = error instanceof Error ? error : new Error(String(error));
-
-      if (attempt < RETRY_CONFIG.maxAttempts) {
-        const delay = getRetryDelay(attempt);
-        console.warn(
-          `Network error (attempt ${attempt}/${RETRY_CONFIG.maxAttempts}): ${lastError.message}. Retrying in ${Math.round(delay)}ms...`
-        );
-        await sleep(delay);
-      }
-    }
-  }
-
-  throw new Error(
-    `Metro API request failed after ${RETRY_CONFIG.maxAttempts} attempts: ${lastError?.message || 'Unknown error'}`
-  );
-}
-
-/**
- * Parses error response from API
- */
-async function parseErrorResponse(response: Response): Promise<string> {
-  try {
-    const error: MetroApiError = await response.json();
-    return error.error;
-  } catch {
-    return `HTTP ${response.status}: ${response.statusText}`;
-  }
-}
+const LOG_PREFIX = 'Metro API';
 
 /**
  * Fetches Metro vehicle positions from the backend
@@ -135,7 +37,7 @@ export async function fetchMetroPositions(
     url.searchParams.set('line_code', lineCode);
   }
 
-  const response = await fetchWithRetry(url.toString());
+  const response = await fetchWithRetry(url.toString(), undefined, LOG_PREFIX);
 
   if (!response.ok) {
     const errorMessage = await parseErrorResponse(response);
@@ -163,7 +65,7 @@ export async function fetchMetroPositionsByLine(
   }
 
   const url = `${API_BASE}/metro/lines/${encodeURIComponent(lineCode)}`;
-  const response = await fetchWithRetry(url);
+  const response = await fetchWithRetry(url, undefined, LOG_PREFIX);
 
   if (!response.ok) {
     const errorMessage = await parseErrorResponse(response);
