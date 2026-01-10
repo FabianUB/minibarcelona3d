@@ -70,29 +70,29 @@ All network layers now delegate to GenericLineLayer with configuration presets.
 
 ## 3. Generic Station/Stop Layer Component
 
-**Status:** Pending
-**Impact:** High (~800 lines saved)
-**Effort:** Medium (2-3 hours)
-
-### Problem
-
-Four similar station layer components:
-- `apps/web/src/features/metro/MetroStationLayer.tsx` (238 lines)
-- `apps/web/src/features/bus/BusStopLayer.tsx` (245 lines)
-- `apps/web/src/features/tram/TramStopLayer.tsx` (~245 lines)
-- `apps/web/src/features/fgc/FGCStationLayer.tsx` (~245 lines)
-
-### Duplicated Code
-- Data loading pattern
-- Circle marker layer creation
-- Label layer creation
-- Hover state management
-- Click handlers
-- Visibility/opacity effects
+**Status:** ✅ Complete
+**Impact:** High (~850 lines saved)
+**Effort:** Low (~30 min)
 
 ### Solution
 
-Create `GenericStopLayer.tsx` with configurable properties for station vs stop terminology and styling differences.
+Created `apps/web/src/features/transit/GenericStopLayer.tsx` (370 lines) with:
+- Configurable circle radius, stroke width, label size
+- Network-specific opacity and min zoom settings
+- Fallback colors for Tram/FGC
+- Shared filtering, highlighting, and click handlers
+
+### Results
+
+| File | Before | After | Saved |
+|------|--------|-------|-------|
+| `metro/MetroStationLayer.tsx` | 295 | 45 | 250 |
+| `bus/BusStopLayer.tsx` | 287 | 45 | 242 |
+| `tram/TramStopLayer.tsx` | 287 | 45 | 242 |
+| `fgc/FGCStationLayer.tsx` | 287 | 45 | 242 |
+| **Total** | **1,156** | **180 + 370 factory = 550** | **~606** |
+
+All station/stop layers now delegate to GenericStopLayer with configuration presets.
 
 ---
 
@@ -234,7 +234,7 @@ grep -r "tw-animate" apps/web/src/   # Check actual usage
 2. **High-impact refactors:**
    - [x] Position simulator unification (#1) - ✅ Done
    - [x] Generic line layer (#2) - ✅ Done
-   - [ ] Generic station layer (#3)
+   - [x] Generic station layer (#3) - ✅ Done
 
 3. **Bundle optimization:**
    - [ ] Lazy-load network layers (#6)
