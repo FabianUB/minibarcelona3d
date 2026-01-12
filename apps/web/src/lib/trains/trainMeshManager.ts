@@ -80,6 +80,7 @@ interface TrainMeshData {
   baseScale: number;
   boundingCenterOffset: THREE.Vector3;
   boundingRadius: number;
+  boundingHalfExtents: THREE.Vector3; // [halfWidth, halfLength, halfHeight] for OBR hit detection
   hasUnrealisticSpeed: boolean;
   warningIndicator?: THREE.Sprite;
   status: string; // Train status (STOPPED_AT, IN_TRANSIT_TO, INCOMING_AT)
@@ -123,7 +124,12 @@ export interface ScreenSpaceCandidate {
   vehicleKey: string;
   routeId: string | null;
   screenPoint: mapboxgl.Point;
-  radiusPx: number;
+  radiusPx: number; // Keep for fallback/minimum threshold
+  orientedRect: {
+    halfWidthPx: number;   // Half-width in screen pixels (perpendicular to train direction)
+    halfLengthPx: number;  // Half-length in screen pixels (along train direction)
+    rotation: number;      // Screen-space rotation in radians
+  };
 }
 
 /**
@@ -171,11 +177,6 @@ export class TrainMeshManager {
 
   // Feature 003: Zoom-responsive scale manager
   private scaleManager: ScaleManager;
-
-  // Screen-space candidate caching to reduce mousemove overhead
-  private screenCandidatesCache: ScreenSpaceCandidate[] | null = null;
-  private screenCandidatesCacheZoom: number | null = null;
-  private screenCandidatesCacheInvalidated: boolean = true;
 
   // Phase 4: Trip details cache for predictive positioning
   private tripDetailsCache: Map<string, TripDetails> = new Map();
@@ -1000,6 +1001,19 @@ export class TrainMeshManager {
     const initialScale = baseScale * scaleVariation * zoomScale * this.userScale;
     mesh.scale.set(initialScale, initialScale, initialScale);
 
+    // Compute object-space half-extents BEFORE rotation for OBR hit detection
+    // At this point mesh is scaled but not rotated, so we get the axis-aligned dimensions
+    const preRotationBox = new THREE.Box3().setFromObject(mesh);
+    const preRotationSize = new THREE.Vector3();
+    preRotationBox.getSize(preRotationSize);
+    // Store unscaled half-extents (we'll apply scale at hit detection time)
+    // Note: x = width, y = length (forward direction), z = height
+    const boundingHalfExtents = new THREE.Vector3(
+      preRotationSize.x / 2 / initialScale,  // halfWidth (perpendicular)
+      preRotationSize.y / 2 / initialScale,  // halfLength (forward)
+      preRotationSize.z / 2 / initialScale   // halfHeight
+    );
+
     // T047: Apply rotation based on bearing to next station
     // This rotates the parent group around Z-axis to point toward next station
     this.applyBearingRotation(mesh, train);
@@ -1020,6 +1034,7 @@ export class TrainMeshManager {
     const lateralOffsetIndex = this.getLateralOffsetIndex(train.vehicleKey);
 
     // Calculate final bounding sphere after all transforms (only once)
+    // Note: half-extents computed earlier BEFORE rotation for accurate OBR hit detection
     // Reuse centerBox to avoid allocating new Box3
     centerBox.setFromObject(mesh);
     const boundingSphere = new THREE.Sphere();
@@ -1051,6 +1066,7 @@ export class TrainMeshManager {
       baseScale,
       boundingCenterOffset: boundingSphere.center.clone(),
       boundingRadius: boundingSphere.radius,
+      boundingHalfExtents,
       hasUnrealisticSpeed: false,
       status: train.status, // Store train status for offset logic
       // Feature 003: Initialize zoom-responsive scaling fields
@@ -1462,9 +1478,6 @@ export class TrainMeshManager {
 
           meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
-      // Invalidate screen-space cache when position changes
-      this.screenCandidatesCacheInvalidated = true;
-
           // Add to scene
           this.scene.add(meshData.mesh);
 
@@ -1523,9 +1536,6 @@ export class TrainMeshManager {
     } else {
       this.lastProcessedPollTimestamp = now;
     }
-
-    // Invalidate screen-space cache after train updates
-    this.screenCandidatesCacheInvalidated = true;
 
     // Log poll debug summary for offline debugging (download via window.__trainPollDebugLog.download())
     const dataAgeMs =
@@ -1801,16 +1811,9 @@ export class TrainMeshManager {
   }
 
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
-    const currentZoom = map.getZoom();
-
-    // Return cached candidates if zoom hasn't changed and positions haven't been updated
-    if (
-      this.screenCandidatesCache &&
-      this.screenCandidatesCacheZoom === currentZoom &&
-      !this.screenCandidatesCacheInvalidated
-    ) {
-      return this.screenCandidatesCache;
-    }
+    // NOTE: Caching disabled - screen positions change on every camera move (pan/rotate/pitch)
+    // Previously cached only on zoom, but that caused stale positions during camera movement
+    // TODO: Re-enable with proper camera position tracking if performance becomes an issue
 
     // Recalculate candidates
     const candidates: ScreenSpaceCandidate[] = [];
@@ -1830,31 +1833,76 @@ export class TrainMeshManager {
       const currentScale = mesh.scale.x;
       const worldRadius = boundingRadius * currentScale;
 
-      // Project radius to screen space
+      // Project radius to screen space (for fallback/compatibility)
       const edgeLngLat = getLngLatFromModelPosition(
         mesh.position.x + worldRadius,
         mesh.position.y,
         mesh.position.z
       );
       const edgePoint = map.project(edgeLngLat);
-
-      // Calculate distance manually (map.project returns plain {x, y} object)
       const dx = edgePoint.x - centerPoint.x;
       const dy = edgePoint.y - centerPoint.y;
       const radiusPx = Math.max(Math.hypot(dx, dy), 10);
+
+      // Compute oriented rectangle for accurate hit detection
+      // Use the radiusPx (which works) as basis, then elongate for train shape
+      // Project actual bounding box corners to screen space for accurate OBR
+      // This accounts for all coordinate system transformations automatically
+      const { boundingHalfExtents } = meshData;
+      // currentScale already defined above
+
+      // Get half-lengths in world units (model is scaled)
+      const worldHalfLength = boundingHalfExtents.x * currentScale; // Length along model's X axis
+      const worldHalfWidth = boundingHalfExtents.y * currentScale;  // Width along model's Y axis
+
+      // Transform local axes to world space using the mesh's quaternion
+      // Model's length is along X axis (faces -X, so length runs from +X to -X)
+      const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(mesh.quaternion);
+      const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(mesh.quaternion);
+
+      // Project front (+X direction) and right (+Y direction) points to screen
+      const frontLngLat = getLngLatFromModelPosition(
+        mesh.position.x + localX.x * worldHalfLength,
+        mesh.position.y + localX.y * worldHalfLength,
+        mesh.position.z
+      );
+      const frontScreen = map.project(frontLngLat);
+
+      const rightLngLat = getLngLatFromModelPosition(
+        mesh.position.x + localY.x * worldHalfWidth,
+        mesh.position.y + localY.y * worldHalfWidth,
+        mesh.position.z
+      );
+      const rightScreen = map.project(rightLngLat);
+
+      // Calculate screen-space dimensions from projected points
+      const halfLengthPx = Math.max(
+        Math.hypot(frontScreen.x - centerPoint.x, frontScreen.y - centerPoint.y),
+        20 // Minimum 20px for clickability
+      );
+      const halfWidthPx = Math.max(
+        Math.hypot(rightScreen.x - centerPoint.x, rightScreen.y - centerPoint.y),
+        10 // Minimum 10px for clickability
+      );
+
+      // Calculate screen-space rotation from the length axis projection
+      const screenRotation = Math.atan2(
+        frontScreen.y - centerPoint.y,
+        frontScreen.x - centerPoint.x
+      );
 
       candidates.push({
         vehicleKey,
         routeId,
         screenPoint: centerPoint,
         radiusPx,
+        orientedRect: {
+          halfWidthPx,
+          halfLengthPx,
+          rotation: screenRotation,
+        },
       });
     });
-
-    // Cache the results
-    this.screenCandidatesCache = candidates;
-    this.screenCandidatesCacheZoom = currentZoom;
-    this.screenCandidatesCacheInvalidated = false;
 
     return candidates;
   }
@@ -1977,9 +2025,6 @@ export class TrainMeshManager {
       });
       this.lastAnimateLogTime = now;
     }
-
-    // Track if any train moved significantly this frame
-    let anyTrainMoved = false;
 
     // Pre-compute values that are constant for all trains (performance optimization)
     const modelScale = getModelScale();
@@ -2123,9 +2168,6 @@ export class TrainMeshManager {
 
       meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
-      // Track that a train moved (for cache invalidation outside the loop)
-      anyTrainMoved = true;
-
       if (bearingOverride) {
         this.applyRailwayBearing(
           meshData.mesh,
@@ -2146,12 +2188,6 @@ export class TrainMeshManager {
         }
       }
     });
-
-    // Invalidate screen-space cache only if at least one train moved
-    // This prevents redundant cache rebuilds when all trains are stationary
-    if (anyTrainMoved) {
-      this.screenCandidatesCacheInvalidated = true;
-    }
   }
 
   /**
@@ -2252,9 +2288,6 @@ export class TrainMeshManager {
                 const position = getModelPosition(parking.position[0], parking.position[1], 0);
                 meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
 
-                // Invalidate screen-space cache since position changed
-                this.screenCandidatesCacheInvalidated = true;
-
                 // CRITICAL: Align logical positions with the parked visual position so
                 // the next poll starts from where the train is actually drawn.
                 // Without this, resuming from STOPPED_AT uses stale track coordinates
@@ -2329,9 +2362,6 @@ export class TrainMeshManager {
           if (hasValidPosition) {
             const position = getModelPosition(currentLng, currentLat, 0);
             meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
-
-            // Invalidate screen-space cache since we're setting position
-            this.screenCandidatesCacheInvalidated = true;
 
             // Log the actual mesh position for debugging
             trainDebug.parking.info(`Fallback position set: ${meshData.vehicleKey}`, {
