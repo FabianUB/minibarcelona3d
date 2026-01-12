@@ -27,13 +27,19 @@ import { createOutlineMesh } from '../trains/outlineManager';
 
 /**
  * Screen-space candidate for click/hover detection
+ * Uses Oriented Bounding Rectangle (OBR) for accurate hit detection on elongated vehicles
  */
 export interface ScreenSpaceCandidate {
   vehicleKey: string;
   lineCode: string;
   networkType: TransportType;
   screenPoint: { x: number; y: number };
-  radiusPx: number;
+  radiusPx: number; // Keep for fallback/minimum threshold
+  orientedRect: {
+    halfWidthPx: number;   // Half-width in screen pixels (perpendicular to vehicle direction)
+    halfLengthPx: number;  // Half-length in screen pixels (along vehicle direction)
+    rotation: number;      // Screen-space rotation in radians
+  };
 }
 
 /**
@@ -81,6 +87,9 @@ interface TransitMeshData {
   screenSpaceScale: number;
   lineColor: THREE.Color;
   opacity: number;
+
+  // Bounding box half-extents for OBR hit detection (in model units before scaling)
+  boundingHalfExtents: THREE.Vector3;
 
   // Outline for hover effect
   outlineMesh?: THREE.Group;
@@ -469,6 +478,15 @@ export class TransitMeshManager {
     // Clone the model
     const trainModel = gltf.scene.clone();
 
+    // Compute bounding box BEFORE rotation for accurate half-extents
+    // The model's natural orientation determines which axis is length vs width
+    const boundingBox = new THREE.Box3().setFromObject(trainModel);
+    const size = new THREE.Vector3();
+    boundingBox.getSize(size);
+    // Store half-extents (will be scaled by mesh.scale later)
+    // For transit vehicles: X is typically length, Y is width, Z is height
+    const boundingHalfExtents = new THREE.Vector3(size.x / 2, size.y / 2, size.z / 2);
+
     // Create a parent group to handle rotation properly
     const mesh = new THREE.Group();
 
@@ -564,6 +582,9 @@ export class TransitMeshManager {
       screenSpaceScale: 1.0,
       lineColor,
       opacity: 1.0,
+
+      // Bounding box half-extents for OBR hit detection
+      boundingHalfExtents,
 
       // Performance: Cache materials for fast opacity updates
       cachedMaterials,
@@ -818,13 +839,16 @@ export class TransitMeshManager {
 
   /**
    * Get screen-space candidates for click/hover detection.
-   * Projects vehicle positions to screen coordinates.
+   * Projects vehicle positions to screen coordinates with Oriented Bounding Rectangles (OBR).
+   *
+   * The OBR approach provides accurate hit detection for elongated vehicles like
+   * metro trains and buses by projecting actual bounding box corners to screen space.
    */
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
     const candidates: ScreenSpaceCandidate[] = [];
 
     for (const [, data] of this.meshes) {
-      const { mesh, vehicleKey, lineCode, networkType } = data;
+      const { mesh, vehicleKey, lineCode, networkType, boundingHalfExtents } = data;
 
       // Get lng/lat from mesh position
       const centerLngLat = getLngLatFromModelPosition(
@@ -836,9 +860,9 @@ export class TransitMeshManager {
       // Project to screen coordinates
       const centerPoint = map.project(centerLngLat);
 
-      // Calculate screen radius from scale
+      // Calculate screen radius from scale (for fallback/minimum threshold)
       const currentScale = mesh.scale.x;
-      const worldRadius = currentScale * 0.5; // Approximate radius
+      const worldRadius = currentScale * 0.5;
 
       // Project edge point to get screen radius
       const edgeLngLat = getLngLatFromModelPosition(
@@ -848,10 +872,50 @@ export class TransitMeshManager {
       );
       const edgePoint = map.project(edgeLngLat);
 
-      // Calculate pixel radius
+      // Calculate pixel radius (fallback)
       const dx = edgePoint.x - centerPoint.x;
       const dy = edgePoint.y - centerPoint.y;
       const radiusPx = Math.max(Math.hypot(dx, dy), 10);
+
+      // Compute oriented bounding rectangle for accurate hit detection
+      // Get half-lengths in world units (model is scaled)
+      const worldHalfLength = boundingHalfExtents.x * currentScale; // Length along model's X axis
+      const worldHalfWidth = boundingHalfExtents.y * currentScale;  // Width along model's Y axis
+
+      // Transform local axes to world space using the mesh's quaternion
+      const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(mesh.quaternion);
+      const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(mesh.quaternion);
+
+      // Project front (+X direction) and right (+Y direction) points to screen
+      const frontLngLat = getLngLatFromModelPosition(
+        mesh.position.x + localX.x * worldHalfLength,
+        mesh.position.y + localX.y * worldHalfLength,
+        mesh.position.z
+      );
+      const frontScreen = map.project(frontLngLat);
+
+      const rightLngLat = getLngLatFromModelPosition(
+        mesh.position.x + localY.x * worldHalfWidth,
+        mesh.position.y + localY.y * worldHalfWidth,
+        mesh.position.z
+      );
+      const rightScreen = map.project(rightLngLat);
+
+      // Calculate screen-space dimensions from projected points
+      const halfLengthPx = Math.max(
+        Math.hypot(frontScreen.x - centerPoint.x, frontScreen.y - centerPoint.y),
+        15 // Minimum 15px for clickability
+      );
+      const halfWidthPx = Math.max(
+        Math.hypot(rightScreen.x - centerPoint.x, rightScreen.y - centerPoint.y),
+        8 // Minimum 8px for clickability
+      );
+
+      // Calculate screen-space rotation from the length axis projection
+      const screenRotation = Math.atan2(
+        frontScreen.y - centerPoint.y,
+        frontScreen.x - centerPoint.x
+      );
 
       candidates.push({
         vehicleKey,
@@ -859,6 +923,11 @@ export class TransitMeshManager {
         networkType,
         screenPoint: { x: centerPoint.x, y: centerPoint.y },
         radiusPx,
+        orientedRect: {
+          halfWidthPx,
+          halfLengthPx,
+          rotation: screenRotation,
+        },
       });
     }
 
