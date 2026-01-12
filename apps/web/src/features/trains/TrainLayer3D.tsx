@@ -635,37 +635,41 @@ export function TrainLayer3D({
         distance: number;
       } | null = null;
 
-      const debugEnabled = debugEnabledRef.current;
-      if (debugEnabled) {
-        console.log(`[resolveScreenHit] Checking ${candidates.length} candidates at (${point.x.toFixed(1)}, ${point.y.toFixed(1)})`);
-      }
-
       for (const candidate of candidates) {
-        const dx = candidate.screenPoint.x - point.x;
-        const dy = candidate.screenPoint.y - point.y;
-        const distance = Math.hypot(dx, dy);
-        const threshold = Math.max(candidate.radiusPx, 14) + paddingPx;
+        const { screenPoint, orientedRect } = candidate;
 
-        if (debugEnabled && distance <= threshold * 2) {
-          console.log(
-            `  ${candidate.vehicleKey}: distance=${distance.toFixed(1)}px, threshold=${threshold.toFixed(1)}px`,
-            distance <= threshold ? '✓ HIT' : '✗ miss'
+        // Transform click point to rectangle's local coordinate system
+        const dx = point.x - screenPoint.x;
+        const dy = point.y - screenPoint.y;
+
+        // Add padding to rectangle dimensions
+        const halfWidth = orientedRect.halfWidthPx + paddingPx;
+        const halfLength = orientedRect.halfLengthPx + paddingPx;
+
+        // Rotate point to align with rectangle axes (inverse rotation)
+        const cos = Math.cos(-orientedRect.rotation);
+        const sin = Math.sin(-orientedRect.rotation);
+        const localX = dx * cos - dy * sin;
+        const localY = dx * sin + dy * cos;
+
+        // Check if point is inside the padded oriented rectangle
+        const isInside = Math.abs(localX) <= halfLength && Math.abs(localY) <= halfWidth;
+
+        if (isInside) {
+          // Calculate "distance" as normalized distance from center (0 = center, 1 = edge)
+          // This allows selecting the train closest to cursor when overlapping
+          const normalizedDistance = Math.sqrt(
+            (localX / halfLength) ** 2 + (localY / halfWidth) ** 2
           );
-        }
 
-        if (distance <= threshold) {
-          if (!nearest || distance < nearest.distance) {
+          if (!nearest || normalizedDistance < nearest.distance) {
             nearest = {
               vehicleKey: candidate.vehicleKey,
               routeId: candidate.routeId,
-              distance,
+              distance: normalizedDistance,
             };
           }
         }
-      }
-
-      if (debugEnabled) {
-        console.log(`[resolveScreenHit] Result:`, nearest ? `${nearest.vehicleKey} (${nearest.distance.toFixed(1)}px)` : 'none');
       }
 
       return nearest;
@@ -729,17 +733,86 @@ export function TrainLayer3D({
     }
 
     const canvas = document.createElement('canvas');
+    const mapCanvas = map.getCanvas();
+    const dpr = window.devicePixelRatio || 1;
+
+    // Set canvas to match map size in CSS pixels, with DPR-scaled resolution
+    const cssWidth = mapCanvas.clientWidth;
+    const cssHeight = mapCanvas.clientHeight;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
     canvas.style.position = 'absolute';
     canvas.style.top = '0';
     canvas.style.left = '0';
     canvas.style.pointerEvents = 'none';
     canvas.style.zIndex = '1000';
-    canvas.width = map.getCanvas().width;
-    canvas.height = map.getCanvas().height;
     map.getCanvasContainer().appendChild(canvas);
     debugCanvasRef.current = canvas;
 
-    console.log('🔍 Debug overlay enabled - red circles show click areas');
+    // Trigger initial draw after a microtask to ensure canvas is fully attached
+    // The draw function will then continue via requestAnimationFrame
+    queueMicrotask(() => {
+      if (debugCanvasRef.current && meshManagerRef.current) {
+        // Start debug overlay drawing loop
+        const startDrawing = () => {
+          if (!debugEnabledRef.current || !debugCanvasRef.current) return;
+          const ctx = debugCanvasRef.current.getContext('2d');
+          if (!ctx || !meshManagerRef.current) return;
+
+          const mapCanvas = map.getCanvas();
+          const dpr = window.devicePixelRatio || 1;
+          const cssW = mapCanvas.clientWidth;
+          const cssH = mapCanvas.clientHeight;
+
+          if (debugCanvasRef.current.width !== cssW * dpr) {
+            debugCanvasRef.current.width = cssW * dpr;
+            debugCanvasRef.current.height = cssH * dpr;
+            debugCanvasRef.current.style.width = `${cssW}px`;
+            debugCanvasRef.current.style.height = `${cssH}px`;
+          }
+
+          ctx.clearRect(0, 0, debugCanvasRef.current.width, debugCanvasRef.current.height);
+          ctx.save();
+          ctx.scale(dpr, dpr);
+
+          const candidates = meshManagerRef.current!.getScreenCandidates(map);
+
+          candidates.forEach((candidate) => {
+            const { screenPoint, orientedRect } = candidate;
+            ctx.save();
+            ctx.translate(screenPoint.x, screenPoint.y);
+            ctx.rotate(orientedRect.rotation);
+            ctx.beginPath();
+            ctx.rect(
+              -orientedRect.halfLengthPx,
+              -orientedRect.halfWidthPx,
+              orientedRect.halfLengthPx * 2,
+              orientedRect.halfWidthPx * 2
+            );
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
+            ctx.fill();
+            ctx.restore();
+
+            // Center dot
+            ctx.beginPath();
+            ctx.arc(screenPoint.x, screenPoint.y, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffff00';
+            ctx.fill();
+          });
+
+          ctx.restore();
+          if (debugEnabledRef.current) {
+            debugRafIdRef.current = requestAnimationFrame(startDrawing);
+          }
+        };
+        startDrawing();
+      }
+    });
 
     return () => {
       // Cancel pending RAF to prevent memory leak
@@ -773,47 +846,86 @@ export function TrainLayer3D({
       return;
     }
 
-    canvas.width = map.getCanvas().width;
-    canvas.height = map.getCanvas().height;
+    const mapCanvas = map.getCanvas();
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = mapCanvas.clientWidth;
+    const cssHeight = mapCanvas.clientHeight;
+
+    // Update canvas size if it changed (e.g., window resize)
+    if (canvas.width !== cssWidth * dpr || canvas.height !== cssHeight * dpr) {
+      canvas.width = cssWidth * dpr;
+      canvas.height = cssHeight * dpr;
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+    }
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Scale context by DPR so coordinates in CSS pixels work correctly
+    ctx.save();
+    ctx.scale(dpr, dpr);
 
     const candidates = meshManagerRef.current.getScreenCandidates(map);
 
     candidates.forEach((candidate) => {
       const isHovered = hoveredVehicleRef.current === candidate.vehicleKey;
+      const { screenPoint, orientedRect } = candidate;
+
+      // Draw oriented rectangle
+      ctx.save();
+      ctx.translate(screenPoint.x, screenPoint.y);
+      ctx.rotate(orientedRect.rotation);
 
       ctx.beginPath();
-      ctx.arc(candidate.screenPoint.x, candidate.screenPoint.y, candidate.radiusPx, 0, 2 * Math.PI);
+      ctx.rect(
+        -orientedRect.halfLengthPx,
+        -orientedRect.halfWidthPx,
+        orientedRect.halfLengthPx * 2,
+        orientedRect.halfWidthPx * 2
+      );
       ctx.strokeStyle = isHovered ? '#00ff00' : '#ff0000';
-      ctx.lineWidth = isHovered ? 3 : 1.5;
+      ctx.lineWidth = isHovered ? 3 : 2;
       ctx.stroke();
 
+      // Fill with semi-transparent color to make it more visible
+      ctx.fillStyle = isHovered ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.15)';
+      ctx.fill();
+
+      ctx.restore();
+
+      // Draw center point
       ctx.beginPath();
-      ctx.arc(candidate.screenPoint.x, candidate.screenPoint.y, 3, 0, 2 * Math.PI);
+      ctx.arc(screenPoint.x, screenPoint.y, 4, 0, 2 * Math.PI);
       ctx.fillStyle = isHovered ? '#00ff00' : '#ffff00';
       ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
       if (isHovered) {
         ctx.fillStyle = 'white';
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 3;
         ctx.font = 'bold 14px monospace';
-        const text = `${candidate.vehicleKey} (${candidate.routeId})`;
-        ctx.strokeText(text, candidate.screenPoint.x + 10, candidate.screenPoint.y - 10);
-        ctx.fillText(text, candidate.screenPoint.x + 10, candidate.screenPoint.y - 10);
+        const text = `${candidate.vehicleKey} (${candidate.routeId}) [${orientedRect.halfLengthPx.toFixed(0)}x${orientedRect.halfWidthPx.toFixed(0)}px]`;
+        ctx.strokeText(text, screenPoint.x + 10, screenPoint.y - 10);
+        ctx.fillText(text, screenPoint.x + 10, screenPoint.y - 10);
       }
     });
+
+    ctx.restore(); // Restore from DPR scale
 
     // Store RAF ID for cleanup
     debugRafIdRef.current = requestAnimationFrame(drawDebugOverlay);
   }, [map]);
 
+  // Start debug overlay drawing when debug is enabled AND canvas exists
+  // Must depend on areDebugToolsEnabled to trigger when user toggles debug
   useEffect(() => {
-    if (debugEnabledRef.current && debugCanvasRef.current) {
+    if (areDebugToolsEnabled && debugCanvasRef.current) {
       drawDebugOverlay();
     }
-  }, [drawDebugOverlay]);
+  }, [areDebugToolsEnabled, drawDebugOverlay]);
 
 /**
  * Screen-space helpers for hover/click

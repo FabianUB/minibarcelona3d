@@ -489,7 +489,10 @@ export function TransitVehicleLayer3D({
   }, [map]);
 
   /**
-   * Resolve screen-space hit from click position
+   * Resolve screen-space hit from click position using Oriented Bounding Rectangle (OBR).
+   *
+   * Uses point-in-rotated-rectangle test for accurate hit detection on elongated vehicles.
+   * The OBR is aligned with the vehicle's direction of travel for precise clicking.
    */
   const resolveScreenHit = useCallback(
     (point: { x: number; y: number }, paddingPx: number) => {
@@ -506,17 +509,37 @@ export function TransitVehicleLayer3D({
       } | null = null;
 
       for (const candidate of candidates) {
-        const dx = point.x - candidate.screenPoint.x;
-        const dy = point.y - candidate.screenPoint.y;
-        const distance = Math.hypot(dx, dy);
+        const { screenPoint, orientedRect } = candidate;
 
-        // Check if within radius + padding
-        if (distance <= candidate.radiusPx + paddingPx) {
-          if (!nearest || distance < nearest.distance) {
+        // Transform click point to rectangle's local coordinate system
+        const dx = point.x - screenPoint.x;
+        const dy = point.y - screenPoint.y;
+
+        // Add padding to rectangle dimensions
+        const halfWidth = orientedRect.halfWidthPx + paddingPx;
+        const halfLength = orientedRect.halfLengthPx + paddingPx;
+
+        // Rotate point to align with rectangle axes (inverse rotation)
+        const cos = Math.cos(-orientedRect.rotation);
+        const sin = Math.sin(-orientedRect.rotation);
+        const localX = dx * cos - dy * sin;
+        const localY = dx * sin + dy * cos;
+
+        // Check if point is inside the padded oriented rectangle
+        const isInside = Math.abs(localX) <= halfLength && Math.abs(localY) <= halfWidth;
+
+        if (isInside) {
+          // Calculate "distance" as normalized distance from center (0 = center, 1 = edge)
+          // This allows selecting the vehicle closest to cursor when overlapping
+          const normalizedDistance = Math.sqrt(
+            (localX / halfLength) ** 2 + (localY / halfWidth) ** 2
+          );
+
+          if (!nearest || normalizedDistance < nearest.distance) {
             nearest = {
               vehicleKey: candidate.vehicleKey,
               lineCode: candidate.lineCode,
-              distance,
+              distance: normalizedDistance,
             };
           }
         }
