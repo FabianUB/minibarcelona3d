@@ -3,7 +3,7 @@
 ## Prerequisites
 - Node.js ≥ 20.11 with `pnpm`
 - Go 1.25.3 (for regression smoke tests)
-- Valid `MAPBOX_TOKEN` exported in environment or `.env`
+- Valid `VITE_MAPBOX_TOKEN` exported in environment or `.env`
 
 ## Setup
 ```bash
