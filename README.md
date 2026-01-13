@@ -49,7 +49,7 @@ apps/
 cd apps/web
 npm install
 cp .env.example .env
-# Add your MAPBOX_TOKEN to .env
+# Add your VITE_MAPBOX_TOKEN to .env
 ```
 
 ### Running

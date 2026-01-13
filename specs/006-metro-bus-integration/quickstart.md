@@ -174,7 +174,7 @@ apps/web/src/
 
 ```env
 # Existing
-MAPBOX_TOKEN=pk.xxx
+VITE_MAPBOX_TOKEN=pk.xxx
 VITE_API_BASE=/api
 
 # New for TMB
