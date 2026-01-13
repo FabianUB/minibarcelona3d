@@ -97,9 +97,12 @@ Data types:
 ### Feature Organization
 
 Features are organized by domain in `apps/web/src/features/`:
-- `map/`: Mapbox canvas, controls, viewport management
-- `legend/`: Line legend UI and interaction (not yet implemented)
-- `trains/`: Real-time train visualization and info panels
+- `map/`: Mapbox canvas, controls, viewport management, ServiceUnavailable page
+- `trains/`: Rodalies train visualization and info panels
+- `transit/`: Generic transit vehicle layer for Metro, Bus, Tram, FGC
+- `metro/`, `bus/`, `tram/`, `fgc/`: Network-specific line and stop layers
+- `stations/`: Station markers and info panels
+- `controlPanel/`: Network selection and vehicle list UI
 
 Shared code:
 - `lib/`: Reusable utilities (data loaders, geometry processing, etc.)
@@ -434,13 +437,21 @@ const routeTrains = trains.filter(t => t.routeId === selectedRoute);
 ```
 
 ## Active Technologies
-- PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`) (002-realtime-train-tracking)
-- TypeScript 5.9.3 (React 19.1.1 frontend) + Three.js 0.180.0, Mapbox GL JS 3.4.0, Vite 7.1.7 (003-train-line-colors-zoom)
-- Static JSON/GeoJSON files in `apps/web/public/rodalies_data/` (003-train-line-colors-zoom)
-- TypeScript 5.9.3, React 19.1.1 + Mapbox GL JS 3.4.0, Radix UI (dialogs, popovers), Tailwind CSS 4.1.16, Vitest 2.1.9, Playwright 1.48.2 (004-station-visualization)
-- Static GeoJSON files (Station.geojson), client-side caching via existing dataLoader (004-station-visualization)
+
+- **Frontend**: TypeScript 5.9, React 19.1, Vite 7.1
+- **3D Rendering**: Three.js 0.180 via Mapbox Custom Layer API
+- **Maps**: Mapbox GL JS 3.4
+- **UI Components**: ShadCN UI, Radix UI (dialogs, popovers), Tailwind CSS 4.1
+- **Testing**: Vitest 2.1, Playwright 1.48
+- **Backend**: Go 1.25.3 with PostgreSQL
+- **Data**: Static GeoJSON files in `apps/web/public/rodalies_data/` and `apps/web/public/tmb_data/`
 
 ## Recent Changes
-- 004-station-visualization: Added interactive station visualization with 200+ station markers displayed as teardrop symbols with zoom-responsive sizing. Features include: click-to-view-details panels (desktop/mobile responsive with ShadCN Dialog), radial offset positioning for overlapping stations at complex interchanges, highlight/isolate mode integration via MapStateProvider, graceful error handling for missing station codes and unloaded lines, and hover tooltips (currently disabled). Station info panels display station name, code (when available), and serving lines with color-coded badges.
-- 003-train-line-colors-zoom: Added zoom-responsive train scaling (ScaleManager), hover outlines with BackSide rendering (outlineManager), and debug panel for train visualization. Simplified railway line rendering to Mini Tokyo 3D approach (single layer) after removing proximity-based system due to performance issues (567 layers)
-- 002-realtime-train-tracking: Added PostgreSQL database with `rt_rodalies_vehicle_current` table (documented in `/docs/DATABASE_SCHEMA.md`)
+
+- 010-deployment-preparation: Added ServiceUnavailable page for graceful Mapbox rate limit handling
+- 009-obr-hit-detection: Implemented Oriented Bounding Rectangle (OBR) hit detection for accurate train/vehicle clicking
+- 008-optimizations: Unified line/stop layer components with GenericLineLayer and GenericStopLayer
+- 006-metro-bus-integration: Added Metro, Bus, Tram, and FGC network visualization
+- 004-station-visualization: Interactive station markers with info panels
+- 003-train-line-colors-zoom: Zoom-responsive train scaling, hover outlines
+- 002-realtime-train-tracking: PostgreSQL database integration for real-time data
