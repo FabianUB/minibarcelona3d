@@ -1,0 +1,70 @@
+# =============================================================================
+# Caddyfile for MiniBarcelona3D
+#
+# Provides:
+#   - Automatic HTTPS with Let's Encrypt
+#   - Reverse proxy to web and api services
+#   - HTTP/2 and HTTP/3 support
+#   - Gzip compression
+#
+# Usage:
+#   Set DOMAIN environment variable or replace {$DOMAIN} with your domain
+# =============================================================================
+
+{$DOMAIN:localhost} {
+    # =========================================================================
+    # API routes - proxy to Go backend
+    # =========================================================================
+    handle /api/* {
+        reverse_proxy api:8080
+    }
+
+    # Health check endpoint for the proxy itself
+    handle /health/proxy {
+        respond "caddy ok" 200
+    }
+
+    # =========================================================================
+    # All other routes - serve from web container
+    # =========================================================================
+    handle {
+        reverse_proxy web:80
+    }
+
+    # =========================================================================
+    # Compression
+    # =========================================================================
+    encode gzip zstd
+
+    # =========================================================================
+    # Logging
+    # =========================================================================
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+
+    # =========================================================================
+    # Security headers
+    # =========================================================================
+    header {
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+        # XSS protection
+        X-XSS-Protection "1; mode=block"
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Remove server header
+        -Server
+    }
+}
+
+# =============================================================================
+# Redirect www to non-www (optional - uncomment if needed)
+# =============================================================================
+# www.{$DOMAIN} {
+#     redir https://{$DOMAIN}{uri} permanent
+# }
