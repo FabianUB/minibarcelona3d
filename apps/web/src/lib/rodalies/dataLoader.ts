@@ -31,6 +31,57 @@ const baseUrl =
 
 const manifestUrl = resolveFromBase(`${RODALIES_DATA_ROOT}/${MANIFEST_FILENAME}`);
 
+/**
+ * localStorage key for cached manifest
+ * Used as fallback when network is unavailable
+ */
+const MANIFEST_CACHE_KEY = 'minibarcelona3d_manifest_cache';
+
+/**
+ * Cache manifest to localStorage for offline fallback
+ */
+function cacheManifestToLocalStorage(manifest: RodaliesManifest): void {
+  try {
+    const cacheEntry = {
+      manifest,
+      cachedAt: Date.now(),
+    };
+    localStorage.setItem(MANIFEST_CACHE_KEY, JSON.stringify(cacheEntry));
+  } catch (error) {
+    // localStorage may be unavailable or full - non-fatal
+    console.warn('Failed to cache manifest to localStorage:', error);
+  }
+}
+
+/**
+ * Try to load manifest from localStorage cache
+ * Returns null if cache is not available or expired (>24 hours)
+ */
+function loadManifestFromLocalStorage(): RodaliesManifest | null {
+  try {
+    const cached = localStorage.getItem(MANIFEST_CACHE_KEY);
+    if (!cached) return null;
+
+    const { manifest, cachedAt } = JSON.parse(cached) as {
+      manifest: RodaliesManifest;
+      cachedAt: number;
+    };
+
+    // Expire cache after 24 hours
+    const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+    if (Date.now() - cachedAt > CACHE_TTL_MS) {
+      localStorage.removeItem(MANIFEST_CACHE_KEY);
+      return null;
+    }
+
+    return manifest;
+  } catch (error) {
+    // Cache corrupted or unavailable - non-fatal
+    console.warn('Failed to load manifest from localStorage:', error);
+    return null;
+  }
+}
+
 let manifestPromise: Promise<RodaliesManifest> | null = null;
 const lineCollectionCache = new Map<string, Promise<RodaliesLineCollection>>();
 let stationCollectionPromise: Promise<StationFeatureCollection> | null = null;
@@ -43,7 +94,24 @@ let lineProximityConfigPromise: Promise<LineProximityConfig> | null = null;
 
 export async function loadManifest(): Promise<RodaliesManifest> {
   if (!manifestPromise) {
-    manifestPromise = fetchJson<RodaliesManifest>(manifestUrl);
+    manifestPromise = (async () => {
+      try {
+        // Critical file - use retry mechanism
+        const manifest = await fetchJsonWithRetry<RodaliesManifest>(manifestUrl, 'Manifest');
+        // Cache successful fetch for offline fallback
+        cacheManifestToLocalStorage(manifest);
+        return manifest;
+      } catch (error) {
+        // Try localStorage fallback
+        const cachedManifest = loadManifestFromLocalStorage();
+        if (cachedManifest) {
+          console.warn('Using cached manifest from localStorage due to network error');
+          return cachedManifest;
+        }
+        // No fallback available - re-throw original error
+        throw error;
+      }
+    })();
   }
   return manifestPromise;
 }
@@ -59,7 +127,8 @@ export async function loadStations(
         throw new Error('Rodalies manifest is missing stations.path');
       }
       const url = resolveManifestAssetUrl(stationPath);
-      return fetchJson<StationFeatureCollection>(url);
+      // Critical file - use retry mechanism
+      return fetchJsonWithRetry<StationFeatureCollection>(url, 'Stations');
     })();
   }
   return stationCollectionPromise;
@@ -105,7 +174,8 @@ export async function loadLineGeometryCollection(
       const path =
         manifestData.line_geometries_path ?? 'LineGeometry.geojson';
       const url = resolveManifestAssetUrl(path);
-      return fetchJson<LineGeometryCollection>(url);
+      // Critical file - use retry mechanism
+      return fetchJsonWithRetry<LineGeometryCollection>(url, 'Line geometry');
     })();
   }
   return lineGeometryCollectionPromise;
@@ -249,14 +319,91 @@ function resolveManifestAssetUrl(path: string): string {
   );
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
+/**
+ * Default timeout for static data fetches (10 seconds)
+ * Slightly shorter than API timeout since static files should load quickly
+ */
+const STATIC_DATA_TIMEOUT_MS = 10000;
+
+/**
+ * Retry configuration for critical static files
+ */
+const STATIC_RETRY_CONFIG = {
+  maxAttempts: 3,
+  baseDelayMs: 500,
+  maxDelayMs: 2000,
+};
+
+/**
+ * Calculates exponential backoff delay with jitter for static file retries
+ */
+function getStaticRetryDelay(attempt: number): number {
+  const exponentialDelay = Math.min(
+    STATIC_RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt - 1),
+    STATIC_RETRY_CONFIG.maxDelayMs
+  );
+  // Add random jitter (0-30% of delay)
+  const jitter = Math.random() * exponentialDelay * 0.3;
+  return exponentialDelay + jitter;
+}
+
+/**
+ * Sleep for a specified duration
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Fetches JSON with automatic retry for transient failures
+ * Used for critical static files that must load for the app to function
+ */
+async function fetchJsonWithRetry<T>(
+  url: string,
+  logPrefix: string = 'Static data'
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= STATIC_RETRY_CONFIG.maxAttempts; attempt++) {
+    try {
+      return await fetchJson<T>(url);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on 404 - file doesn't exist
+      if (lastError.message.includes('not found') || lastError.message.includes('404')) {
+        throw lastError;
+      }
+
+      if (attempt < STATIC_RETRY_CONFIG.maxAttempts) {
+        const delay = getStaticRetryDelay(attempt);
+        console.warn(
+          `${logPrefix} fetch failed (attempt ${attempt}/${STATIC_RETRY_CONFIG.maxAttempts}): ${lastError.message}. Retrying in ${Math.round(delay)}ms...`
+        );
+        await sleep(delay);
+      }
+    }
+  }
+
+  throw new Error(
+    `${logPrefix} failed after ${STATIC_RETRY_CONFIG.maxAttempts} attempts: ${lastError?.message || 'Unknown error'}`
+  );
+}
+
+async function fetchJson<T>(url: string, timeoutMs: number = STATIC_DATA_TIMEOUT_MS): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const response = await fetch(url, {
       credentials: 'same-origin',
       headers: {
         'Accept': 'application/json',
       },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       // Provide more specific error messages based on status code
@@ -281,6 +428,15 @@ async function fetchJson<T>(url: string): Promise<T> {
       );
     }
   } catch (error) {
+    clearTimeout(timeoutId);
+
+    // Handle timeout errors
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(
+        `Request timed out loading ${url} after ${timeoutMs}ms. Check your internet connection.`,
+      );
+    }
+
     // Handle network errors
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error(

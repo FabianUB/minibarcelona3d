@@ -6,6 +6,7 @@
  */
 
 import type { VehiclePosition, TransportType, PositionConfidence } from '../../types/transit';
+import { fetchWithRetry } from './fetchWithRetry';
 
 // Trip details functions are shared across all transit types
 // They all use the same /api/trips/{tripId} endpoint
@@ -112,7 +113,7 @@ export async function fetchSchedulePositions(
     ? `/api/transit/schedule?network=${network}`
     : '/api/transit/schedule';
 
-  const response = await fetch(url);
+  const response = await fetchWithRetry(url, undefined, 'Schedule API');
 
   if (!response.ok) {
     throw new Error(`Failed to fetch schedule positions: ${response.status}`);
