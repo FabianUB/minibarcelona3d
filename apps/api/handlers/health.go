@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"time"
 
@@ -16,6 +17,15 @@ type MetricsRepository interface {
 	GetLatestSnapshot(ctx context.Context) (*time.Time, error)
 	GetRodaliesDataQuality(ctx context.Context) (total int, withGPS int, err error)
 	GetMetroDataQuality(ctx context.Context) (total int, highConfidence int, err error)
+	// Baseline methods
+	GetBaseline(ctx context.Context, network models.NetworkType, hour, dayOfWeek int) (*models.NetworkBaseline, error)
+	GetAllBaselines(ctx context.Context, network models.NetworkType) ([]models.NetworkBaseline, error)
+	SaveBaseline(ctx context.Context, baseline models.NetworkBaseline) error
+	// Anomaly methods
+	GetActiveAnomalies(ctx context.Context) ([]models.AnomalyEvent, error)
+	GetActiveAnomalyCount(ctx context.Context, network models.NetworkType) (int, error)
+	RecordAnomaly(ctx context.Context, network models.NetworkType, actualCount int, expectedCount, zScore float64, severity string) error
+	ResolveAnomaly(ctx context.Context, network models.NetworkType) error
 }
 
 // HealthHandler handles HTTP requests for health and metrics data
@@ -132,16 +142,54 @@ func (h *HealthHandler) calculateNetworkHealth(ctx context.Context, f models.Dat
 	}
 	health.DataQuality = dataQualityScore
 
-	// Service level score (40% weight) - simplified for now
-	// TODO: Compare against baselines when available
+	// Service level score (40% weight) - compare against baselines
 	serviceLevelScore := 100
 	if f.VehicleCount == 0 && (f.Network == models.NetworkRodalies || f.Network == models.NetworkMetro) {
 		serviceLevelScore = 0
 	} else if f.VehicleCount > 0 {
-		// Basic heuristic: assume healthy if we have vehicles
-		serviceLevelScore = 100
+		// Compare against baseline if available
+		baseline, err := h.repo.GetBaseline(ctx, f.Network, now.Hour(), int(now.Weekday()))
+		if err == nil && baseline != nil && baseline.SampleCount >= 7 {
+			expectedCount := int(baseline.VehicleCountMean)
+			health.ExpectedCount = &expectedCount
+
+			// Calculate service level based on deviation from baseline
+			if baseline.VehicleCountMean > 0 {
+				ratio := float64(f.VehicleCount) / baseline.VehicleCountMean
+				if ratio >= 0.8 {
+					serviceLevelScore = 100
+				} else if ratio >= 0.5 {
+					serviceLevelScore = int(ratio * 100)
+				} else {
+					serviceLevelScore = int(ratio * 50)
+				}
+			}
+
+			// Anomaly detection using Z-score
+			if baseline.VehicleCountStdDev > 0 {
+				zScore := (float64(f.VehicleCount) - baseline.VehicleCountMean) / baseline.VehicleCountStdDev
+
+				// Detect anomaly (|Z| > 2 = warning, |Z| > 3 = critical)
+				if math.Abs(zScore) > 2.0 {
+					severity := "warning"
+					if math.Abs(zScore) > 3.0 {
+						severity = "critical"
+					}
+					_ = h.repo.RecordAnomaly(ctx, f.Network, f.VehicleCount, baseline.VehicleCountMean, zScore, severity)
+				} else {
+					// Resolve any existing anomaly when back to normal
+					_ = h.repo.ResolveAnomaly(ctx, f.Network)
+				}
+			}
+		}
 	}
 	health.ServiceLevel = serviceLevelScore
+
+	// Get active anomaly count for this network
+	anomalyCount, err := h.repo.GetActiveAnomalyCount(ctx, f.Network)
+	if err == nil {
+		health.ActiveAnomalies = anomalyCount
+	}
 
 	// API health (10% weight) - simplified for now
 	apiHealthScore := 100
@@ -228,11 +276,91 @@ func (h *HealthHandler) calculateOverallHealth(networks []models.NetworkHealth, 
 		status = models.StatusDegraded
 	}
 
-	return models.OverallHealth{
-		Status:        status,
-		HealthScore:   avgScore,
-		Networks:      networks,
-		LastUpdated:   now,
-		UptimePercent: 99.9, // TODO: Calculate from historical data
+	// Count total active anomalies across all networks
+	activeIncidents := 0
+	for _, n := range networks {
+		activeIncidents += n.ActiveAnomalies
 	}
+
+	return models.OverallHealth{
+		Status:          status,
+		HealthScore:     avgScore,
+		Networks:        networks,
+		LastUpdated:     now,
+		UptimePercent:   99.9, // TODO: Calculate from historical data
+		ActiveIncidents: activeIncidents,
+	}
+}
+
+// =============================================================================
+// BASELINE & ANOMALY ENDPOINTS
+// =============================================================================
+
+// BaselinesResponse is the JSON response for GET /api/health/baselines
+type BaselinesResponse struct {
+	Baselines   map[string][]models.NetworkBaseline `json:"baselines"`
+	LastChecked time.Time                           `json:"lastChecked"`
+}
+
+// AnomaliesResponse is the JSON response for GET /api/health/anomalies
+type AnomaliesResponse struct {
+	Anomalies   []models.AnomalyEvent `json:"anomalies"`
+	Count       int                   `json:"count"`
+	LastChecked time.Time             `json:"lastChecked"`
+}
+
+// GetBaselines handles GET /api/health/baselines
+// Returns all baselines for all networks
+func (h *HealthHandler) GetBaselines(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	baselines := make(map[string][]models.NetworkBaseline)
+
+	for _, network := range models.AllNetworks() {
+		networkBaselines, err := h.repo.GetAllBaselines(ctx, network)
+		if err == nil && len(networkBaselines) > 0 {
+			baselines[string(network)] = networkBaselines
+		}
+	}
+
+	response := BaselinesResponse{
+		Baselines:   baselines,
+		LastChecked: time.Now().UTC(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// GetAnomalies handles GET /api/health/anomalies
+// Returns all active anomalies
+func (h *HealthHandler) GetAnomalies(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	anomalies, err := h.repo.GetActiveAnomalies(ctx)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "Failed to get anomalies",
+		})
+		return
+	}
+
+	if anomalies == nil {
+		anomalies = []models.AnomalyEvent{}
+	}
+
+	response := AnomaliesResponse{
+		Anomalies:   anomalies,
+		Count:       len(anomalies),
+		LastChecked: time.Now().UTC(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }

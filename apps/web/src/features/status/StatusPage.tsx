@@ -258,12 +258,26 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
               {network.vehicleCount >= 0 && (
                 <div className="flex justify-between col-span-2">
                   <span className="text-muted-foreground">Active Vehicles</span>
-                  <span>{network.vehicleCount}</span>
+                  <span>
+                    {network.vehicleCount}
+                    {network.expectedCount !== undefined && (
+                      <span className="text-muted-foreground/60 ml-1">
+                        / {network.expectedCount} expected
+                      </span>
+                    )}
+                  </span>
                 </div>
               )}
             </>
           )}
         </div>
+
+        {/* Anomaly Warning */}
+        {network.activeAnomalies > 0 && (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1 text-xs text-yellow-400">
+            {network.activeAnomalies} active anomal{network.activeAnomalies === 1 ? 'y' : 'ies'} detected
+          </div>
+        )}
 
         <Separator />
 

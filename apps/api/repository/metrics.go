@@ -295,3 +295,188 @@ func (r *MetricsRepository) GetMetroDataQuality(ctx context.Context) (total int,
 	err = r.db.QueryRowContext(ctx, query).Scan(&total, &highConfidence)
 	return
 }
+
+// =============================================================================
+// BASELINE METHODS
+// =============================================================================
+
+// GetBaseline returns the baseline for a network at a specific hour and day of week
+func (r *MetricsRepository) GetBaseline(ctx context.Context, network models.NetworkType, hour, dayOfWeek int) (*models.NetworkBaseline, error) {
+	query := `
+		SELECT network, hour_of_day, day_of_week, vehicle_count_mean, vehicle_count_stddev, sample_count
+		FROM metrics_baselines
+		WHERE network = ? AND hour_of_day = ? AND day_of_week = ?
+	`
+
+	var baseline models.NetworkBaseline
+	err := r.db.QueryRowContext(ctx, query, string(network), hour, dayOfWeek).Scan(
+		&baseline.Network,
+		&baseline.HourOfDay,
+		&baseline.DayOfWeek,
+		&baseline.VehicleCountMean,
+		&baseline.VehicleCountStdDev,
+		&baseline.SampleCount,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &baseline, nil
+}
+
+// GetAllBaselines returns all baselines for a network
+func (r *MetricsRepository) GetAllBaselines(ctx context.Context, network models.NetworkType) ([]models.NetworkBaseline, error) {
+	query := `
+		SELECT network, hour_of_day, day_of_week, vehicle_count_mean, vehicle_count_stddev, sample_count
+		FROM metrics_baselines
+		WHERE network = ?
+		ORDER BY day_of_week, hour_of_day
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, string(network))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var baselines []models.NetworkBaseline
+	for rows.Next() {
+		var b models.NetworkBaseline
+		if err := rows.Scan(&b.Network, &b.HourOfDay, &b.DayOfWeek, &b.VehicleCountMean, &b.VehicleCountStdDev, &b.SampleCount); err != nil {
+			continue
+		}
+		baselines = append(baselines, b)
+	}
+
+	return baselines, nil
+}
+
+// SaveBaseline upserts a baseline record
+func (r *MetricsRepository) SaveBaseline(ctx context.Context, baseline models.NetworkBaseline) error {
+	query := `
+		INSERT INTO metrics_baselines (network, hour_of_day, day_of_week, vehicle_count_mean, vehicle_count_stddev, sample_count, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT (network, hour_of_day, day_of_week) DO UPDATE SET
+			vehicle_count_mean = excluded.vehicle_count_mean,
+			vehicle_count_stddev = excluded.vehicle_count_stddev,
+			sample_count = excluded.sample_count,
+			updated_at = excluded.updated_at
+	`
+
+	_, err := r.db.ExecContext(ctx, query,
+		string(baseline.Network),
+		baseline.HourOfDay,
+		baseline.DayOfWeek,
+		baseline.VehicleCountMean,
+		baseline.VehicleCountStdDev,
+		baseline.SampleCount,
+		time.Now().UTC().Format(time.RFC3339),
+	)
+	return err
+}
+
+// =============================================================================
+// ANOMALY METHODS
+// =============================================================================
+
+// GetActiveAnomalies returns all unresolved anomalies
+func (r *MetricsRepository) GetActiveAnomalies(ctx context.Context) ([]models.AnomalyEvent, error) {
+	query := `
+		SELECT id, network, detected_at, actual_count, expected_count, z_score, severity, resolved_at
+		FROM metrics_anomalies
+		WHERE resolved_at IS NULL
+		ORDER BY detected_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var anomalies []models.AnomalyEvent
+	for rows.Next() {
+		var a models.AnomalyEvent
+		var detectedAt string
+		var resolvedAt sql.NullString
+		var actualCount int
+		var expectedCount, zScore float64
+
+		if err := rows.Scan(&a.ID, &a.Network, &detectedAt, &actualCount, &expectedCount, &zScore, &a.Severity, &resolvedAt); err != nil {
+			continue
+		}
+
+		if t, err := time.Parse(time.RFC3339, detectedAt); err == nil {
+			a.DetectedAt = t
+		}
+		if resolvedAt.Valid {
+			if t, err := time.Parse(time.RFC3339, resolvedAt.String); err == nil {
+				a.ResolvedAt = &t
+			}
+		}
+
+		a.ActualValue = &[]float64{float64(actualCount)}[0]
+		a.ExpectedValue = &expectedCount
+		a.ZScore = &zScore
+		a.AnomalyType = "low_vehicle_count"
+		a.IsActive = true
+		a.Description = "Vehicle count deviation from baseline"
+
+		anomalies = append(anomalies, a)
+	}
+
+	return anomalies, nil
+}
+
+// GetActiveAnomalyCount returns the count of active anomalies for a network
+func (r *MetricsRepository) GetActiveAnomalyCount(ctx context.Context, network models.NetworkType) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM metrics_anomalies
+		WHERE network = ? AND resolved_at IS NULL
+	`
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query, string(network)).Scan(&count)
+	return count, err
+}
+
+// RecordAnomaly logs a new anomaly event
+func (r *MetricsRepository) RecordAnomaly(ctx context.Context, network models.NetworkType, actualCount int, expectedCount, zScore float64, severity string) error {
+	// Check if there's already an active anomaly for this network
+	existing, _ := r.GetActiveAnomalyCount(ctx, network)
+	if existing > 0 {
+		// Update existing anomaly instead of creating duplicate
+		return nil
+	}
+
+	query := `
+		INSERT INTO metrics_anomalies (network, detected_at, actual_count, expected_count, z_score, severity)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+
+	_, err := r.db.ExecContext(ctx, query,
+		string(network),
+		time.Now().UTC().Format(time.RFC3339),
+		actualCount,
+		expectedCount,
+		zScore,
+		severity,
+	)
+	return err
+}
+
+// ResolveAnomaly marks all active anomalies for a network as resolved
+func (r *MetricsRepository) ResolveAnomaly(ctx context.Context, network models.NetworkType) error {
+	query := `
+		UPDATE metrics_anomalies
+		SET resolved_at = ?
+		WHERE network = ? AND resolved_at IS NULL
+	`
+
+	_, err := r.db.ExecContext(ctx, query, time.Now().UTC().Format(time.RFC3339), string(network))
+	return err
+}

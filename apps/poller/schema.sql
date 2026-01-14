@@ -211,6 +211,40 @@ CREATE INDEX IF NOT EXISTS idx_stop_times_trip
 
 
 -- =============================================================================
+-- METRICS & BASELINES
+-- =============================================================================
+
+-- Baseline statistics for expected vehicle counts by network/hour/day
+CREATE TABLE IF NOT EXISTS metrics_baselines (
+    network TEXT NOT NULL,
+    hour_of_day INTEGER NOT NULL,  -- 0-23
+    day_of_week INTEGER NOT NULL,  -- 0=Sun, 1=Mon, ..., 6=Sat
+    vehicle_count_mean REAL NOT NULL,
+    vehicle_count_stddev REAL NOT NULL,
+    sample_count INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (network, hour_of_day, day_of_week)
+);
+
+-- Anomaly events log for tracking deviations from baselines
+CREATE TABLE IF NOT EXISTS metrics_anomalies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    network TEXT NOT NULL,
+    detected_at TEXT NOT NULL,
+    actual_count INTEGER NOT NULL,
+    expected_count REAL NOT NULL,
+    z_score REAL NOT NULL,
+    severity TEXT NOT NULL,  -- 'warning', 'critical'
+    resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_anomalies_active
+    ON metrics_anomalies(network, resolved_at);
+CREATE INDEX IF NOT EXISTS idx_anomalies_detected
+    ON metrics_anomalies(detected_at DESC);
+
+
+-- =============================================================================
 -- CLEANUP VIEWS
 -- =============================================================================
 
