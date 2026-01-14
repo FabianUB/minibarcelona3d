@@ -153,13 +153,32 @@ func (h *HealthHandler) calculateNetworkHealth(ctx context.Context, f models.Dat
 	health.HealthScore = (freshnessScore*30 + serviceLevelScore*40 + dataQualityScore*20 + apiHealthScore*10) / 100
 	health.Status = models.CalculateHealthStatus(health.HealthScore)
 
-	// Determine confidence level
-	if f.Status == models.FreshnessUnavailable || f.VehicleCount == 0 {
+	// Determine confidence level based on data source type
+	// - Rodalies: Real-time GPS data from API → high confidence
+	// - Metro: Real-time schedule interpolation → medium confidence
+	// - Bus/Tram/FGC: Static schedule-based positioning → low confidence
+	switch f.Network {
+	case models.NetworkRodalies:
+		// Real GPS data - high confidence unless data is stale/unavailable
+		if f.Status == models.FreshnessUnavailable || f.VehicleCount == 0 {
+			health.ConfidenceLevel = "low"
+		} else if f.AgeSeconds > 60 {
+			health.ConfidenceLevel = "medium"
+		} else {
+			health.ConfidenceLevel = "high"
+		}
+	case models.NetworkMetro:
+		// Interpolated positions from real-time schedule - medium confidence
+		if f.Status == models.FreshnessUnavailable || f.VehicleCount == 0 {
+			health.ConfidenceLevel = "low"
+		} else {
+			health.ConfidenceLevel = "medium"
+		}
+	case models.NetworkBus, models.NetworkTram, models.NetworkFGC:
+		// Static schedule-based positioning - always low confidence
 		health.ConfidenceLevel = "low"
-	} else if f.AgeSeconds > 60 {
-		health.ConfidenceLevel = "medium"
-	} else {
-		health.ConfidenceLevel = "high"
+	default:
+		health.ConfidenceLevel = "low"
 	}
 
 	return health
