@@ -120,6 +120,8 @@ func main() {
 	// Health and metrics API routes
 	r.Get("/api/health/data", healthHandler.GetDataFreshness)
 	r.Get("/api/health/networks", healthHandler.GetNetworkHealth)
+	r.Get("/api/health/baselines", healthHandler.GetBaselines)
+	r.Get("/api/health/anomalies", healthHandler.GetAnomalies)
 
 	// Static file serving (if configured)
 	staticDir := os.Getenv("STATIC_DIR")
@@ -149,6 +151,8 @@ func main() {
 	log.Println("  GET /health (database connectivity)")
 	log.Println("  GET /api/health/data (data freshness)")
 	log.Println("  GET /api/health/networks (network health scores)")
+	log.Println("  GET /api/health/baselines (vehicle count baselines)")
+	log.Println("  GET /api/health/anomalies (active anomalies)")
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)

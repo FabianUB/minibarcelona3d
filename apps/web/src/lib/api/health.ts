@@ -61,6 +61,26 @@ export interface NetworkHealthResponse {
   networks: NetworkHealth[];
 }
 
+export interface AnomalyEvent {
+  id: number;
+  detectedAt: string;
+  network: NetworkType;
+  anomalyType: string;
+  severity: 'info' | 'warning' | 'critical';
+  expectedValue?: number;
+  actualValue?: number;
+  zScore?: number;
+  description: string;
+  resolvedAt?: string;
+  isActive: boolean;
+}
+
+export interface AnomaliesResponse {
+  anomalies: AnomalyEvent[];
+  count: number;
+  lastChecked: string;
+}
+
 // API Functions
 
 /**
@@ -92,6 +112,23 @@ export async function fetchNetworkHealth(): Promise<NetworkHealthResponse> {
 
   if (!response.ok) {
     throw new Error(`Failed to fetch network health: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch active anomalies
+ */
+export async function fetchAnomalies(): Promise<AnomaliesResponse> {
+  const response = await fetchWithRetry(`${API_BASE}/health/anomalies`, {
+    logPrefix: 'Health API',
+    timeoutMs: 5000,
+    useCircuitBreaker: false,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch anomalies: ${response.status}`);
   }
 
   return response.json();
