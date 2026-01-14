@@ -51,6 +51,10 @@ func main() {
 	scheduleRepo := repository.NewSQLiteScheduleRepository(sqliteDB.GetDB())
 	scheduleHandler := handlers.NewScheduleHandler(scheduleRepo)
 
+	// Create Metrics repository and health handler
+	metricsRepo := repository.NewMetricsRepository(sqliteDB.GetDB())
+	healthHandler := handlers.NewHealthHandler(metricsRepo)
+
 	// Setup router
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -113,6 +117,10 @@ func main() {
 	// Schedule-based transit API routes (TRAM, FGC, Bus)
 	r.Get("/api/transit/schedule", scheduleHandler.GetAllSchedulePositions)
 
+	// Health and metrics API routes
+	r.Get("/api/health/data", healthHandler.GetDataFreshness)
+	r.Get("/api/health/networks", healthHandler.GetNetworkHealth)
+
 	// Static file serving (if configured)
 	staticDir := os.Getenv("STATIC_DIR")
 	if staticDir != "" {
@@ -137,8 +145,10 @@ func main() {
 	log.Println("  GET /api/metro/lines/{lineCode}")
 	log.Println("Schedule-based endpoints (TRAM, FGC, Bus):")
 	log.Println("  GET /api/transit/schedule")
-	log.Println("Health:")
-	log.Println("  GET /health (with database check)")
+	log.Println("Health & Metrics:")
+	log.Println("  GET /health (database connectivity)")
+	log.Println("  GET /api/health/data (data freshness)")
+	log.Println("  GET /api/health/networks (network health scores)")
 
 	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
