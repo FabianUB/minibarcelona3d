@@ -26,6 +26,7 @@ import { TramLineLayer, TramStopLayer } from '../tram';
 import { FGCLineLayer, FGCStationLayer } from '../fgc';
 // TransportFilterButton replaced by ControlPanel
 import { TransitVehicleLayer3D } from '../transit';
+import { DataFreshnessIndicator } from '../status';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
@@ -1013,6 +1014,14 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
       {mapInstance && isMapLoaded ? (
         <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} />
+      ) : null}
+      {/* Data Freshness Indicator - bottom right */}
+      {mapInstance && isMapLoaded ? (
+        <div className="map-canvas__freshness-indicator">
+          <DataFreshnessIndicator
+            onClick={() => window.location.href = '/status'}
+          />
+        </div>
       ) : null}
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
