@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/you/myapp/apps/api/models"
@@ -45,11 +46,13 @@ func (r *MetricsRepository) GetDataFreshness(ctx context.Context) ([]models.Data
 
 // getRodaliesFreshness gets freshness for Rodalies network
 func (r *MetricsRepository) getRodaliesFreshness(ctx context.Context, now time.Time) (models.DataFreshness, error) {
+	// Only count vehicles updated in the last 10 minutes (same filter as trains API)
 	query := `
 		SELECT
 			MAX(polled_at_utc) as last_polled,
 			COUNT(*) as vehicle_count
 		FROM rt_rodalies_vehicle_current
+		WHERE datetime(updated_at) > datetime('now', '-10 minutes')
 	`
 
 	var lastPolled sql.NullString
@@ -130,36 +133,110 @@ func (r *MetricsRepository) getMetroFreshness(ctx context.Context, now time.Time
 // getScheduleFreshness returns freshness for schedule-based networks
 func (r *MetricsRepository) getScheduleFreshness(ctx context.Context, now time.Time) []models.DataFreshness {
 	// Schedule-based networks are always "fresh" since they're calculated from static schedules
-	// We just need to check if the schedule data exists
+	// Get current vehicle counts from pre_schedule_positions table
 	networks := []models.NetworkType{models.NetworkBus, models.NetworkTram, models.NetworkFGC}
 	result := make([]models.DataFreshness, 0, len(networks))
 
+	// Get vehicle counts for each network
+	counts := r.getScheduleVehicleCounts(ctx, now)
+
 	for _, network := range networks {
+		count := -1
+		if c, ok := counts[network]; ok {
+			count = c
+		}
 		result = append(result, models.DataFreshness{
 			Network:      network,
 			AgeSeconds:   0,
 			Status:       models.FreshnessFresh,
-			VehicleCount: -1, // Unknown for schedule-based
+			VehicleCount: count,
 		})
 	}
 
 	return result
 }
 
+// getScheduleVehicleCounts returns vehicle counts from pre-calculated schedule positions
+func (r *MetricsRepository) getScheduleVehicleCounts(ctx context.Context, now time.Time) map[models.NetworkType]int {
+	counts := make(map[models.NetworkType]int)
+
+	// Load Barcelona timezone
+	barcelonaTZ, err := time.LoadLocation("Europe/Madrid")
+	if err != nil {
+		return counts
+	}
+
+	// Get current time in Barcelona timezone
+	bcnNow := now.In(barcelonaTZ)
+
+	// Calculate day type
+	dayType := "weekday"
+	switch bcnNow.Weekday() {
+	case time.Saturday:
+		dayType = "saturday"
+	case time.Sunday:
+		dayType = "sunday"
+	}
+
+	// Calculate time slot (30-second intervals)
+	secondsSinceMidnight := bcnNow.Hour()*3600 + bcnNow.Minute()*60 + bcnNow.Second()
+	timeSlot := secondsSinceMidnight / 30
+
+	// Query for positions JSON per network
+	query := `
+		SELECT network, positions_json
+		FROM pre_schedule_positions
+		WHERE day_type = ? AND time_slot = ?
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, dayType, timeSlot)
+	if err != nil {
+		return counts
+	}
+	defer rows.Close()
+
+	// Map network names to NetworkType
+	networkMap := map[string]models.NetworkType{
+		"bus":  models.NetworkBus,
+		"tram": models.NetworkTram,
+		"fgc":  models.NetworkFGC,
+	}
+
+	for rows.Next() {
+		var network string
+		var positionsJSON string
+		if err := rows.Scan(&network, &positionsJSON); err != nil {
+			continue
+		}
+
+		// Parse JSON array to count vehicles
+		var positions []map[string]interface{}
+		if err := json.Unmarshal([]byte(positionsJSON), &positions); err != nil {
+			continue
+		}
+
+		if netType, ok := networkMap[network]; ok {
+			counts[netType] = len(positions)
+		}
+	}
+
+	return counts
+}
+
 // GetNetworkVehicleCounts returns current vehicle counts per network
 func (r *MetricsRepository) GetNetworkVehicleCounts(ctx context.Context) (map[models.NetworkType]int, error) {
 	counts := make(map[models.NetworkType]int)
 
-	// Rodalies count
+	// Rodalies count (only vehicles updated in last 10 minutes)
 	var rodaliesCount int
-	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_rodalies_vehicle_current").Scan(&rodaliesCount)
+	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_rodalies_vehicle_current WHERE datetime(updated_at) > datetime('now', '-10 minutes')").Scan(&rodaliesCount)
 	if err == nil {
 		counts[models.NetworkRodalies] = rodaliesCount
 	}
 
-	// Metro count
+	// Metro count (only vehicles updated in last 10 minutes)
 	var metroCount int
-	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_metro_vehicle_current").Scan(&metroCount)
+	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_metro_vehicle_current WHERE datetime(updated_at) > datetime('now', '-10 minutes')").Scan(&metroCount)
 	if err == nil {
 		counts[models.NetworkMetro] = metroCount
 	}
@@ -191,11 +268,13 @@ func (r *MetricsRepository) GetLatestSnapshot(ctx context.Context) (*time.Time, 
 
 // GetRodaliesDataQuality returns data quality metrics for Rodalies
 func (r *MetricsRepository) GetRodaliesDataQuality(ctx context.Context) (total int, withGPS int, err error) {
+	// Only count vehicles updated in last 10 minutes (same filter as trains API)
 	query := `
 		SELECT
 			COUNT(*) as total,
 			COUNT(CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN 1 END) as with_gps
 		FROM rt_rodalies_vehicle_current
+		WHERE datetime(updated_at) > datetime('now', '-10 minutes')
 	`
 
 	err = r.db.QueryRowContext(ctx, query).Scan(&total, &withGPS)
@@ -204,11 +283,13 @@ func (r *MetricsRepository) GetRodaliesDataQuality(ctx context.Context) (total i
 
 // GetMetroDataQuality returns data quality metrics for Metro
 func (r *MetricsRepository) GetMetroDataQuality(ctx context.Context) (total int, highConfidence int, err error) {
+	// Only count vehicles updated in last 10 minutes
 	query := `
 		SELECT
 			COUNT(*) as total,
 			COUNT(CASE WHEN confidence IN ('high', 'medium') THEN 1 END) as high_confidence
 		FROM rt_metro_vehicle_current
+		WHERE datetime(updated_at) > datetime('now', '-10 minutes')
 	`
 
 	err = r.db.QueryRowContext(ctx, query).Scan(&total, &highConfidence)
