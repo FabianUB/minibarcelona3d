@@ -3,17 +3,21 @@
  *
  * Public status page showing health of all transit networks.
  * Accessible at /status route.
+ * Uses ShadCN UI components to match main app styling.
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   fetchNetworkHealth,
   type NetworkHealth,
   type OverallHealth,
   type HealthStatus,
+  type ConfidenceLevel,
   getNetworkDisplayName,
-  getHealthStatusColor,
-  getOverallStatusColor,
 } from '../../lib/api/health';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
@@ -60,165 +64,218 @@ export function StatusPage() {
 
   if (loading) {
     return (
-      <div className="status-page">
-        <div className="status-page__loading">Loading status...</div>
-        <style>{styles}</style>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-muted-foreground">Loading status...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="status-page">
-        <div className="status-page__error">
-          <h2>Unable to load status</h2>
-          <p>{error}</p>
-          <button onClick={loadHealth}>Retry</button>
-        </div>
-        <style>{styles}</style>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-destructive">Unable to load status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">{error}</p>
+            <Button onClick={loadHealth} variant="default">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="status-page">
-      {/* Header */}
-      <header className="status-page__header">
-        <h1>MiniBarcelona3D Status</h1>
-        <p className="status-page__subtitle">
-          Real-time status of Barcelona transit data services
-        </p>
-      </header>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
+        {/* Header */}
+        <header className="text-center space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold">MiniBarcelona3D Status</h1>
+          <p className="text-muted-foreground">
+            Real-time status of Barcelona transit data services
+          </p>
+        </header>
 
-      {/* Overall Status Banner */}
-      {overall && (
-        <div
-          className="status-page__banner"
-          style={{ backgroundColor: getOverallStatusColor(overall.status) }}
-        >
-          <span className="status-page__banner-icon">
-            {overall.status === 'operational' ? '✓' : overall.status === 'degraded' ? '!' : '✕'}
-          </span>
-          <span className="status-page__banner-text">
-            {getOverallStatusText(overall.status)}
-          </span>
-          <span className="status-page__banner-score">
-            Health Score: {overall.healthScore}%
-          </span>
-        </div>
-      )}
+        {/* Overall Status Banner */}
+        {overall && (
+          <div className="flex items-center justify-center gap-3 py-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${overall.status === 'operational' ? 'bg-green-500' : overall.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+            <span className="text-sm font-medium text-muted-foreground">
+              {getOverallStatusText(overall.status)}
+            </span>
+            <span className="text-xs text-muted-foreground/60">
+              {overall.healthScore}%
+            </span>
+          </div>
+        )}
 
-      {/* Network Cards */}
-      <section className="status-page__networks">
-        <h2>Network Status</h2>
-        <div className="status-page__network-grid">
-          {networks.map((network) => (
-            <NetworkCard key={network.network} network={network} />
-          ))}
-        </div>
-      </section>
+        {/* Network Cards */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">Network Status</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {networks.map((network) => (
+              <NetworkCard key={network.network} network={network} />
+            ))}
+          </div>
+        </section>
 
-      {/* Metrics Section */}
-      <section className="status-page__metrics">
-        <h2>System Metrics</h2>
-        <div className="status-page__metrics-grid">
-          {overall && (
-            <>
-              <MetricCard
-                label="Uptime (24h)"
-                value={`${overall.uptimePercent.toFixed(1)}%`}
-                status={overall.uptimePercent >= 99 ? 'healthy' : overall.uptimePercent >= 95 ? 'degraded' : 'unhealthy'}
-              />
-              <MetricCard
-                label="Active Incidents"
-                value={overall.activeIncidents.toString()}
-                status={overall.activeIncidents === 0 ? 'healthy' : 'degraded'}
-              />
-            </>
-          )}
-        </div>
-      </section>
+        <Separator />
 
-      {/* Footer */}
-      <footer className="status-page__footer">
-        <p>
-          Last updated: {lastRefresh ? lastRefresh.toLocaleTimeString() : 'Never'}
-          {' · '}
-          Auto-refreshes every 30 seconds
-        </p>
-        <a href="/" className="status-page__back-link">
-          ← Back to Map
-        </a>
-      </footer>
+        {/* Metrics Section */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">System Metrics</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {overall && (
+              <>
+                <MetricCard
+                  label="Uptime (24h)"
+                  value={`${overall.uptimePercent.toFixed(1)}%`}
+                  status={overall.uptimePercent >= 99 ? 'healthy' : overall.uptimePercent >= 95 ? 'degraded' : 'unhealthy'}
+                />
+                <MetricCard
+                  label="Active Incidents"
+                  value={overall.activeIncidents.toString()}
+                  status={overall.activeIncidents === 0 ? 'healthy' : 'degraded'}
+                />
+                <MetricCard
+                  label="Networks"
+                  value={networks.length.toString()}
+                  status="healthy"
+                />
+                <MetricCard
+                  label="Health Score"
+                  value={`${overall.healthScore}%`}
+                  status={overall.healthScore >= 80 ? 'healthy' : overall.healthScore >= 50 ? 'degraded' : 'unhealthy'}
+                />
+              </>
+            )}
+          </div>
+        </section>
 
-      <style>{styles}</style>
+        {/* Footer */}
+        <footer className="text-center space-y-3 pt-4 border-t border-border">
+          <p className="text-sm text-muted-foreground">
+            Last updated: {lastRefresh ? lastRefresh.toLocaleTimeString() : 'Never'}
+            {' · '}
+            Auto-refreshes every 30 seconds
+          </p>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/">← Back to Map</a>
+          </Button>
+        </footer>
+      </div>
     </div>
   );
 }
 
 // Network Card Component
 function NetworkCard({ network }: { network: NetworkHealth }) {
-  const statusColor = getHealthStatusColor(network.status);
   const isRealTime = network.network === 'rodalies' || network.network === 'metro';
 
+  const getStatusColor = (status: HealthStatus): string => {
+    switch (status) {
+      case 'healthy':
+        return 'bg-green-500';
+      case 'degraded':
+        return 'bg-yellow-500';
+      case 'unhealthy':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getConfidenceBadgeClass = (level: ConfidenceLevel): string => {
+    switch (level) {
+      case 'high':
+        return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'medium':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'low':
+        return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    }
+  };
+
+  const getDataSourceLabel = (): string => {
+    switch (network.network) {
+      case 'rodalies':
+        return 'Real-time GPS';
+      case 'metro':
+        return 'Schedule interpolation';
+      default:
+        return 'Static schedule';
+    }
+  };
+
   return (
-    <div className="network-card">
-      <div className="network-card__header">
-        <div
-          className="network-card__status-dot"
-          style={{ backgroundColor: statusColor }}
-        />
-        <h3 className="network-card__name">{getNetworkDisplayName(network.network)}</h3>
-        <span
-          className="network-card__status-badge"
-          style={{ backgroundColor: statusColor }}
-        >
-          {network.status}
-        </span>
-      </div>
-
-      <div className="network-card__score">
-        <div className="network-card__score-bar">
-          <div
-            className="network-card__score-fill"
-            style={{
-              width: `${network.healthScore}%`,
-              backgroundColor: statusColor,
-            }}
-          />
+    <Card className="bg-card/50 backdrop-blur-sm">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${getStatusColor(network.status)}`} />
+            <CardTitle className="text-base">{getNetworkDisplayName(network.network)}</CardTitle>
+          </div>
+          <Badge variant="outline" className="text-xs uppercase">
+            {network.status}
+          </Badge>
         </div>
-        <span className="network-card__score-value">{network.healthScore}%</span>
-      </div>
-
-      <div className="network-card__details">
-        {isRealTime && (
-          <>
-            <div className="network-card__detail">
-              <span className="network-card__detail-label">Data Freshness</span>
-              <span className="network-card__detail-value">{network.dataFreshness}%</span>
-            </div>
-            <div className="network-card__detail">
-              <span className="network-card__detail-label">Data Quality</span>
-              <span className="network-card__detail-value">{network.dataQuality}%</span>
-            </div>
-            <div className="network-card__detail">
-              <span className="network-card__detail-label">Active Vehicles</span>
-              <span className="network-card__detail-value">{network.vehicleCount}</span>
-            </div>
-          </>
-        )}
-        <div className="network-card__detail">
-          <span className="network-card__detail-label">Confidence</span>
-          <span className="network-card__detail-value">{network.confidenceLevel}</span>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Health Score Bar */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Health Score</span>
+            <span className="font-medium text-foreground">{network.healthScore}%</span>
+          </div>
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${getStatusColor(network.status)}`}
+              style={{ width: `${network.healthScore}%` }}
+            />
+          </div>
         </div>
-      </div>
 
-      {!isRealTime && (
-        <div className="network-card__schedule-note">
-          Schedule-based positioning
+        {/* Details Grid */}
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          {isRealTime && (
+            <>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Freshness</span>
+                <span>{network.dataFreshness}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Quality</span>
+                <span>{network.dataQuality}%</span>
+              </div>
+              {network.vehicleCount >= 0 && (
+                <div className="flex justify-between col-span-2">
+                  <span className="text-muted-foreground">Active Vehicles</span>
+                  <span>{network.vehicleCount}</span>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
-    </div>
+
+        <Separator />
+
+        {/* Confidence & Data Source */}
+        <div className="flex items-center justify-between gap-2">
+          <Badge variant="outline" className={`text-xs ${getConfidenceBadgeClass(network.confidenceLevel)}`}>
+            {network.confidenceLevel} confidence
+          </Badge>
+          <span className="text-xs text-muted-foreground">{getDataSourceLabel()}</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -232,260 +289,25 @@ function MetricCard({
   value: string;
   status: HealthStatus;
 }) {
+  const getValueColor = (status: HealthStatus): string => {
+    switch (status) {
+      case 'healthy':
+        return 'text-green-500';
+      case 'degraded':
+        return 'text-yellow-500';
+      case 'unhealthy':
+        return 'text-red-500';
+      default:
+        return 'text-muted-foreground';
+    }
+  };
+
   return (
-    <div className="metric-card">
-      <span className="metric-card__value" style={{ color: getHealthStatusColor(status) }}>
-        {value}
-      </span>
-      <span className="metric-card__label">{label}</span>
-    </div>
+    <Card className="bg-card/50 backdrop-blur-sm">
+      <CardContent className="py-4 text-center">
+        <p className={`text-2xl font-bold ${getValueColor(status)}`}>{value}</p>
+        <p className="text-xs text-muted-foreground mt-1">{label}</p>
+      </CardContent>
+    </Card>
   );
 }
-
-// Styles
-const styles = `
-  .status-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #f1f5f9;
-    font-family: system-ui, -apple-system, sans-serif;
-    padding: 2rem;
-  }
-
-  .status-page__header {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  .status-page__header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem 0;
-  }
-
-  .status-page__subtitle {
-    color: #94a3b8;
-    margin: 0;
-  }
-
-  .status-page__banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 1rem 2rem;
-    border-radius: 0.75rem;
-    margin-bottom: 2rem;
-    color: white;
-    font-weight: 600;
-  }
-
-  .status-page__banner-icon {
-    font-size: 1.5rem;
-  }
-
-  .status-page__banner-text {
-    font-size: 1.25rem;
-  }
-
-  .status-page__banner-score {
-    margin-left: auto;
-    font-size: 0.9rem;
-    opacity: 0.9;
-  }
-
-  .status-page__networks h2,
-  .status-page__metrics h2 {
-    font-size: 1.25rem;
-    margin: 0 0 1rem 0;
-    color: #e2e8f0;
-  }
-
-  .status-page__network-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  .status-page__metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  .status-page__footer {
-    text-align: center;
-    color: #64748b;
-    font-size: 0.875rem;
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #334155;
-  }
-
-  .status-page__back-link {
-    color: #60a5fa;
-    text-decoration: none;
-    display: inline-block;
-    margin-top: 0.5rem;
-  }
-
-  .status-page__back-link:hover {
-    text-decoration: underline;
-  }
-
-  .status-page__loading,
-  .status-page__error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 50vh;
-    text-align: center;
-  }
-
-  .status-page__error button {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-  }
-
-  /* Network Card */
-  .network-card {
-    background: rgba(30, 41, 59, 0.8);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    border: 1px solid #334155;
-  }
-
-  .network-card__header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  .network-card__status-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }
-
-  .network-card__name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0;
-    flex-grow: 1;
-  }
-
-  .network-card__status-badge {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    color: white;
-  }
-
-  .network-card__score {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  .network-card__score-bar {
-    flex-grow: 1;
-    height: 8px;
-    background: #334155;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .network-card__score-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-  }
-
-  .network-card__score-value {
-    font-weight: 600;
-    min-width: 3rem;
-    text-align: right;
-  }
-
-  .network-card__details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-  }
-
-  .network-card__detail {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-  }
-
-  .network-card__detail-label {
-    color: #94a3b8;
-  }
-
-  .network-card__detail-value {
-    font-weight: 500;
-  }
-
-  .network-card__schedule-note {
-    margin-top: 0.75rem;
-    font-size: 0.75rem;
-    color: #64748b;
-    text-align: center;
-    padding-top: 0.75rem;
-    border-top: 1px solid #334155;
-  }
-
-  /* Metric Card */
-  .metric-card {
-    background: rgba(30, 41, 59, 0.8);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    text-align: center;
-    border: 1px solid #334155;
-  }
-
-  .metric-card__value {
-    display: block;
-    font-size: 2rem;
-    font-weight: 700;
-  }
-
-  .metric-card__label {
-    display: block;
-    font-size: 0.85rem;
-    color: #94a3b8;
-    margin-top: 0.25rem;
-  }
-
-  @media (max-width: 640px) {
-    .status-page {
-      padding: 1rem;
-    }
-
-    .status-page__banner {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .status-page__banner-score {
-      margin-left: 0;
-    }
-
-    .network-card__details {
-      grid-template-columns: 1fr;
-    }
-  }
-`;

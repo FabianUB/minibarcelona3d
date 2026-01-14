@@ -3,14 +3,15 @@
  *
  * Shows a compact indicator of data freshness for all networks.
  * Designed to be placed in the map UI header/footer.
+ * Uses Tailwind CSS to match main app styling.
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { Badge } from '@/components/ui/badge';
 import {
   fetchDataFreshness,
   type DataFreshness,
   type FreshnessStatus,
-  getFreshnessStatusColor,
   formatAge,
   getNetworkDisplayName,
 } from '../../lib/api/health';
@@ -32,11 +33,16 @@ export function DataFreshnessIndicator({
   const [freshness, setFreshness] = useState<DataFreshness[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Track when data was last fetched to calculate elapsed time locally
+  const [lastFetchTime, setLastFetchTime] = useState<number>(Date.now());
+  // Counter to force re-render for time updates
+  const [, setTick] = useState(0);
 
   const loadFreshness = useCallback(async () => {
     try {
       const response = await fetchDataFreshness();
       setFreshness(response.networks);
+      setLastFetchTime(Date.now());
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load');
@@ -50,6 +56,14 @@ export function DataFreshnessIndicator({
     const interval = setInterval(loadFreshness, refreshInterval);
     return () => clearInterval(interval);
   }, [loadFreshness, refreshInterval]);
+
+  // Update displayed time every second
+  useEffect(() => {
+    const tickInterval = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+    return () => clearInterval(tickInterval);
+  }, []);
 
   // Calculate overall status
   const getOverallStatus = (): FreshnessStatus => {
@@ -69,9 +83,24 @@ export function DataFreshnessIndicator({
   };
 
   const overallStatus = getOverallStatus();
-  const statusColor = getFreshnessStatusColor(overallStatus);
 
-  // Get the most recent update time
+  const getStatusDotClass = (status: FreshnessStatus): string => {
+    switch (status) {
+      case 'fresh':
+        return 'bg-green-500';
+      case 'stale':
+        return 'bg-yellow-500';
+      case 'unavailable':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  // Calculate elapsed seconds since last API fetch
+  const elapsedSinceLastFetch = Math.floor((Date.now() - lastFetchTime) / 1000);
+
+  // Get the most recent update time (adjusted for elapsed time)
   const getMostRecentAge = (): number => {
     const realTimeNetworks = freshness.filter(
       (f) => f.network === 'rodalies' || f.network === 'metro'
@@ -82,14 +111,24 @@ export function DataFreshnessIndicator({
       .map((f) => f.ageSeconds)
       .filter((age) => age >= 0);
 
-    return ages.length > 0 ? Math.min(...ages) : -1;
+    if (ages.length === 0) return -1;
+    // Add elapsed time since last fetch to the reported age
+    return Math.min(...ages) + elapsedSinceLastFetch;
+  };
+
+  // Get adjusted age for a specific network
+  const getAdjustedAge = (ageSeconds: number): number => {
+    if (ageSeconds < 0) return ageSeconds;
+    return ageSeconds + elapsedSinceLastFetch;
   };
 
   if (loading) {
     return (
-      <div className="data-freshness-indicator data-freshness-indicator--loading">
-        <div className="data-freshness-indicator__dot" style={{ backgroundColor: '#6b7280' }} />
-        <span className="data-freshness-indicator__text">Loading...</span>
+      <div
+        className="inline-flex items-center gap-1.5 px-2 py-1 bg-card/80 backdrop-blur-sm rounded text-xs text-muted-foreground border border-border"
+      >
+        <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse" />
+        <span>Loading...</span>
       </div>
     );
   }
@@ -97,13 +136,13 @@ export function DataFreshnessIndicator({
   if (error) {
     return (
       <div
-        className="data-freshness-indicator data-freshness-indicator--error"
+        className={`inline-flex items-center gap-1.5 px-2 py-1 bg-card/80 backdrop-blur-sm rounded text-xs text-muted-foreground border border-border ${onClick ? 'cursor-pointer hover:bg-accent/50' : ''}`}
         onClick={onClick}
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
       >
-        <div className="data-freshness-indicator__dot" style={{ backgroundColor: '#ef4444' }} />
-        <span className="data-freshness-indicator__text">Error</span>
+        <div className="w-2 h-2 rounded-full bg-red-500" />
+        <span>Error</span>
       </div>
     );
   }
@@ -112,19 +151,17 @@ export function DataFreshnessIndicator({
 
   return (
     <div
-      className={`data-freshness-indicator ${expanded ? 'data-freshness-indicator--expanded' : ''}`}
+      className={`inline-flex ${expanded ? 'flex-col' : ''} items-center gap-1.5 px-2 py-1 bg-card/80 backdrop-blur-sm rounded text-xs border border-border transition-colors ${onClick ? 'cursor-pointer hover:bg-accent/50' : ''}`}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
     >
       {/* Compact view */}
       {!expanded && (
         <>
-          <div
-            className="data-freshness-indicator__dot"
-            style={{ backgroundColor: statusColor }}
-          />
-          <span className="data-freshness-indicator__text">
+          <div className={`w-2 h-2 rounded-full ${getStatusDotClass(overallStatus)}`} />
+          <span className="text-foreground whitespace-nowrap">
             {mostRecentAge >= 0 ? formatAge(mostRecentAge) : 'No data'}
           </span>
         </>
@@ -132,93 +169,27 @@ export function DataFreshnessIndicator({
 
       {/* Expanded view */}
       {expanded && (
-        <div className="data-freshness-indicator__networks">
+        <div className="space-y-1 w-full">
           {freshness
             .filter((f) => f.network === 'rodalies' || f.network === 'metro')
             .map((f) => (
-              <div key={f.network} className="data-freshness-indicator__network">
-                <div
-                  className="data-freshness-indicator__dot"
-                  style={{ backgroundColor: getFreshnessStatusColor(f.status) }}
-                />
-                <span className="data-freshness-indicator__network-name">
+              <div key={f.network} className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${getStatusDotClass(f.status)}`} />
+                <span className="font-medium min-w-[50px]">
                   {getNetworkDisplayName(f.network)}
                 </span>
-                <span className="data-freshness-indicator__network-age">
-                  {f.ageSeconds >= 0 ? formatAge(f.ageSeconds) : 'N/A'}
+                <span className="text-muted-foreground">
+                  {f.ageSeconds >= 0 ? formatAge(getAdjustedAge(f.ageSeconds)) : 'N/A'}
                 </span>
                 {f.vehicleCount >= 0 && (
-                  <span className="data-freshness-indicator__network-count">
-                    ({f.vehicleCount})
-                  </span>
+                  <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                    {f.vehicleCount}
+                  </Badge>
                 )}
               </div>
             ))}
         </div>
       )}
-
-      <style>{`
-        .data-freshness-indicator {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 4px 8px;
-          background: rgba(0, 0, 0, 0.6);
-          border-radius: 4px;
-          font-size: 11px;
-          color: #e5e7eb;
-          cursor: ${onClick ? 'pointer' : 'default'};
-          transition: background 0.2s;
-        }
-
-        .data-freshness-indicator:hover {
-          background: rgba(0, 0, 0, 0.75);
-        }
-
-        .data-freshness-indicator__dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-
-        .data-freshness-indicator__text {
-          white-space: nowrap;
-        }
-
-        .data-freshness-indicator--expanded {
-          flex-direction: column;
-          align-items: stretch;
-          gap: 4px;
-          padding: 8px;
-        }
-
-        .data-freshness-indicator__networks {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .data-freshness-indicator__network {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .data-freshness-indicator__network-name {
-          font-weight: 500;
-          min-width: 60px;
-        }
-
-        .data-freshness-indicator__network-age {
-          color: #9ca3af;
-        }
-
-        .data-freshness-indicator__network-count {
-          color: #6b7280;
-          font-size: 10px;
-        }
-      `}</style>
     </div>
   );
 }
