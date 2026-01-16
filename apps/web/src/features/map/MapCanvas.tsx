@@ -9,6 +9,7 @@ import { useMapActions, useMapHighlightSelectors, useMapState } from '../../stat
 import { loadLineGeometryCollection } from '../../lib/rodalies/dataLoader';
 import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
+import { ServiceUnavailable } from './ServiceUnavailable';
 import { getLinePaintProperties } from './layers/lineLayers';
 import type { MapViewport } from '../../types/rodalies';
 import { startMetric, endMetric } from '../../lib/analytics/perf';
@@ -25,6 +26,7 @@ import { TramLineLayer, TramStopLayer } from '../tram';
 import { FGCLineLayer, FGCStationLayer } from '../fgc';
 // TransportFilterButton replaced by ControlPanel
 import { TransitVehicleLayer3D } from '../transit';
+import { DataFreshnessIndicator } from '../status';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
@@ -109,6 +111,20 @@ export function MapCanvas() {
   const [debugToolsEnabled, setDebugToolsEnabled] = useState(
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
   );
+  const [serviceUnavailable, setServiceUnavailable] = useState<{
+    type: 'rate-limit' | 'auth' | 'network' | 'unknown';
+  } | null>(() => {
+    // Debug: Allow testing ServiceUnavailable page via URL parameter
+    // Usage: ?service-error=rate-limit or ?service-error=auth or ?service-error=network
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const errorType = params.get('service-error');
+      if (errorType === 'rate-limit' || errorType === 'auth' || errorType === 'network') {
+        return { type: errorType };
+      }
+    }
+    return null;
+  });
 
   const mapActions = useMapActions();
   const {
@@ -517,8 +533,37 @@ export function MapCanvas() {
       setViewport(getViewportFromMap(map, baseViewport));
     };
 
-    // Handle tile load errors - use functional update to avoid stale closure
-    const handleTileError = (event: { error?: Error; tile?: { tileID: { canonical: { x: number; y: number; z: number } } }; source?: { id: string } }) => {
+    // Handle map errors including rate limits and auth issues
+    const handleMapError = (event: { error?: Error & { status?: number }; tile?: { tileID: { canonical: { x: number; y: number; z: number } } }; source?: { id: string } }) => {
+      const status = event.error?.status;
+      const message = event.error?.message || '';
+
+      // Check for rate limit (429) or unauthorized (401) errors
+      if (status === 429 || message.includes('429') || message.toLowerCase().includes('rate limit')) {
+        console.error('Mapbox rate limit exceeded:', message);
+        setServiceUnavailable({ type: 'rate-limit' });
+        return;
+      }
+
+      if (status === 401 || status === 403 || message.includes('401') || message.includes('403') || message.toLowerCase().includes('unauthorized')) {
+        console.error('Mapbox authentication error:', message);
+        setServiceUnavailable({ type: 'auth' });
+        return;
+      }
+
+      // Check for network errors
+      if (message.toLowerCase().includes('network') || message.toLowerCase().includes('failed to fetch')) {
+        setTileErrorCount((prev) => {
+          const errorCount = prev + 1;
+          if (errorCount > 5) {
+            setServiceUnavailable({ type: 'network' });
+          }
+          return errorCount;
+        });
+        return;
+      }
+
+      // Handle regular tile errors
       setTileErrorCount((prev) => {
         const errorCount = prev + 1;
 
@@ -535,12 +580,12 @@ export function MapCanvas() {
       });
     };
 
-    map.on('error', handleTileError);
+    map.on('error', handleMapError);
     map.on('load', handleLoad);
     map.on('moveend', updateCameraSnapshot);
 
     return () => {
-      map.off('error', handleTileError);
+      map.off('error', handleMapError);
       map.off('load', handleLoad);
       map.off('moveend', updateCameraSnapshot);
 
@@ -714,6 +759,24 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
   const toggleStationDebug = () => {
     setIsStationDebugMode((prev) => !prev);
   };
+
+  const handleServiceRetry = useCallback(() => {
+    setServiceUnavailable(null);
+    setTileError(null);
+    setTileErrorCount(0);
+    // Reload the page to reinitialize Mapbox
+    window.location.reload();
+  }, []);
+
+  // Show service unavailable page when Mapbox limits are exceeded
+  if (serviceUnavailable) {
+    return (
+      <ServiceUnavailable
+        errorType={serviceUnavailable.type}
+        onRetry={handleServiceRetry}
+      />
+    );
+  }
 
   return (
     <div className="map-canvas">
@@ -951,6 +1014,14 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
       {mapInstance && isMapLoaded ? (
         <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} />
+      ) : null}
+      {/* Data Freshness Indicator - bottom right */}
+      {mapInstance && isMapLoaded ? (
+        <div className="map-canvas__freshness-indicator">
+          <DataFreshnessIndicator
+            onClick={() => window.location.href = '/status'}
+          />
+        </div>
       ) : null}
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>

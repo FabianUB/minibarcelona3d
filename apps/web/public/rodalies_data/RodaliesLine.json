@@ -1,29 +1,29 @@
 [
   {
+    "id": "C8B",
+    "name": "Cercedilla                              -Chamartín - Clara Campoamor",
+    "short_code": "C8B",
+    "brand_color": "888888",
+    "default_pattern": "solid-c8b",
+    "high_contrast_pattern": "hatched-c8b",
+    "order": 0
+  },
+  {
+    "id": "C1A",
+    "name": "Universidad                             -Las Aletas",
+    "short_code": "C1A",
+    "brand_color": "888888",
+    "default_pattern": "solid-c1a",
+    "high_contrast_pattern": "hatched-c1a",
+    "order": 0
+  },
+  {
     "id": "C9",
     "name": "Cercedilla                              -Cotos",
     "short_code": "C9",
     "brand_color": "888888",
     "default_pattern": "solid-c9",
     "high_contrast_pattern": "hatched-c9",
-    "order": 0
-  },
-  {
-    "id": "C3",
-    "name": "Marrón                                  -Orejo",
-    "short_code": "C3",
-    "brand_color": "888888",
-    "default_pattern": "solid-c3",
-    "high_contrast_pattern": "hatched-c3",
-    "order": 0
-  },
-  {
-    "id": "C1",
-    "name": "-",
-    "short_code": "C1",
-    "brand_color": "888888",
-    "default_pattern": "solid-c1",
-    "high_contrast_pattern": "hatched-c1",
     "order": 0
   },
   {
@@ -36,12 +36,12 @@
     "order": 0
   },
   {
-    "id": "R1",
-    "name": "-",
-    "short_code": "R1",
-    "brand_color": "7DBCEC",
-    "default_pattern": "solid-r1",
-    "high_contrast_pattern": "hatched-r1",
+    "id": "C3",
+    "name": "Marrón                                  -Orejo",
+    "short_code": "C3",
+    "brand_color": "888888",
+    "default_pattern": "solid-c3",
+    "high_contrast_pattern": "hatched-c3",
     "order": 0
   },
   {
@@ -81,6 +81,15 @@
     "order": 0
   },
   {
+    "id": "C5A",
+    "name": "Oviedo                                  -Gijon (Sanz Crespo)",
+    "short_code": "C5A",
+    "brand_color": "888888",
+    "default_pattern": "solid-c5a",
+    "high_contrast_pattern": "hatched-c5a",
+    "order": 0
+  },
+  {
     "id": "C6",
     "name": "Castello de la Plana                    -Valencia Nord",
     "short_code": "C6",
@@ -99,12 +108,12 @@
     "order": 0
   },
   {
-    "id": "T1",
-    "name": "Ardila                                  -Ntra. Sra. de los Remedios",
-    "short_code": "T1",
+    "id": "C8",
+    "name": "-",
+    "short_code": "C8",
     "brand_color": "888888",
-    "default_pattern": "solid-t1",
-    "high_contrast_pattern": "hatched-t1",
+    "default_pattern": "solid-c8",
+    "high_contrast_pattern": "hatched-c8",
     "order": 0
   },
   {
@@ -117,21 +126,12 @@
     "order": 0
   },
   {
-    "id": "C8B",
-    "name": "Cercedilla                              -Chamartín - Clara Campoamor",
-    "short_code": "C8B",
+    "id": "T1",
+    "name": "Ardila                                  -Ntra. Sra. de los Remedios",
+    "short_code": "T1",
     "brand_color": "888888",
-    "default_pattern": "solid-c8b",
-    "high_contrast_pattern": "hatched-c8b",
-    "order": 0
-  },
-  {
-    "id": "C1A",
-    "name": "Universidad                             -Las Aletas",
-    "short_code": "C1A",
-    "brand_color": "888888",
-    "default_pattern": "solid-c1a",
-    "high_contrast_pattern": "hatched-c1a",
+    "default_pattern": "solid-t1",
+    "high_contrast_pattern": "hatched-t1",
     "order": 0
   },
   {
@@ -144,12 +144,21 @@
     "order": 0
   },
   {
-    "id": "C8",
+    "id": "R1",
     "name": "-",
-    "short_code": "C8",
+    "short_code": "R1",
+    "brand_color": "7DBCEC",
+    "default_pattern": "solid-r1",
+    "high_contrast_pattern": "hatched-r1",
+    "order": 0
+  },
+  {
+    "id": "C1",
+    "name": "-",
+    "short_code": "C1",
     "brand_color": "888888",
-    "default_pattern": "solid-c8",
-    "high_contrast_pattern": "hatched-c8",
+    "default_pattern": "solid-c1",
+    "high_contrast_pattern": "hatched-c1",
     "order": 0
   },
   {

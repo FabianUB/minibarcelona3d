@@ -1,28 +1,28 @@
 [
   {
+    "line_id": "C8B",
+    "label": "C8B - Cercedilla                              -Chamartín - Clara Campoamor",
+    "theme_tokens": {
+      "standard": "solid-c8b",
+      "high_contrast": "hatched-c8b"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C1A",
+    "label": "C1A - Universidad                             -Las Aletas",
+    "theme_tokens": {
+      "standard": "solid-c1a",
+      "high_contrast": "hatched-c1a"
+    },
+    "is_highlighted": false
+  },
+  {
     "line_id": "C9",
     "label": "C9 - Cercedilla                              -Cotos",
     "theme_tokens": {
       "standard": "solid-c9",
       "high_contrast": "hatched-c9"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "C3",
-    "label": "C3 - Marrón                                  -Orejo",
-    "theme_tokens": {
-      "standard": "solid-c3",
-      "high_contrast": "hatched-c3"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "C1",
-    "label": "C1 - -",
-    "theme_tokens": {
-      "standard": "solid-c1",
-      "high_contrast": "hatched-c1"
     },
     "is_highlighted": false
   },
@@ -36,11 +36,11 @@
     "is_highlighted": false
   },
   {
-    "line_id": "R1",
-    "label": "R1 - -",
+    "line_id": "C3",
+    "label": "C3 - Marrón                                  -Orejo",
     "theme_tokens": {
-      "standard": "solid-r1",
-      "high_contrast": "hatched-r1"
+      "standard": "solid-c3",
+      "high_contrast": "hatched-c3"
     },
     "is_highlighted": false
   },
@@ -81,6 +81,15 @@
     "is_highlighted": false
   },
   {
+    "line_id": "C5A",
+    "label": "C5A - Oviedo                                  -Gijon (Sanz Crespo)",
+    "theme_tokens": {
+      "standard": "solid-c5a",
+      "high_contrast": "hatched-c5a"
+    },
+    "is_highlighted": false
+  },
+  {
     "line_id": "C6",
     "label": "C6 - Castello de la Plana                    -Valencia Nord",
     "theme_tokens": {
@@ -99,11 +108,11 @@
     "is_highlighted": false
   },
   {
-    "line_id": "T1",
-    "label": "T1 - Ardila                                  -Ntra. Sra. de los Remedios",
+    "line_id": "C8",
+    "label": "C8 - -",
     "theme_tokens": {
-      "standard": "solid-t1",
-      "high_contrast": "hatched-t1"
+      "standard": "solid-c8",
+      "high_contrast": "hatched-c8"
     },
     "is_highlighted": false
   },
@@ -117,20 +126,11 @@
     "is_highlighted": false
   },
   {
-    "line_id": "C8B",
-    "label": "C8B - Cercedilla                              -Chamartín - Clara Campoamor",
+    "line_id": "T1",
+    "label": "T1 - Ardila                                  -Ntra. Sra. de los Remedios",
     "theme_tokens": {
-      "standard": "solid-c8b",
-      "high_contrast": "hatched-c8b"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "C1A",
-    "label": "C1A - Universidad                             -Las Aletas",
-    "theme_tokens": {
-      "standard": "solid-c1a",
-      "high_contrast": "hatched-c1a"
+      "standard": "solid-t1",
+      "high_contrast": "hatched-t1"
     },
     "is_highlighted": false
   },
@@ -144,11 +144,20 @@
     "is_highlighted": false
   },
   {
-    "line_id": "C8",
-    "label": "C8 - -",
+    "line_id": "R1",
+    "label": "R1 - -",
     "theme_tokens": {
-      "standard": "solid-c8",
-      "high_contrast": "hatched-c8"
+      "standard": "solid-r1",
+      "high_contrast": "hatched-r1"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C1",
+    "label": "C1 - -",
+    "theme_tokens": {
+      "standard": "solid-c1",
+      "high_contrast": "hatched-c1"
     },
     "is_highlighted": false
   },
