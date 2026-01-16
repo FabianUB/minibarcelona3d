@@ -93,6 +93,7 @@ apps/web/src/features/
   transit/       # Generic transit vehicle layer (Metro, Bus, Tram, FGC)
   stations/      # Station markers and info panels
   controlPanel/  # Network selection UI
+  status/        # Health monitoring and observability (/status page)
   metro/, bus/, tram/, fgc/  # Network-specific layers
 ```
 
@@ -234,6 +235,7 @@ const routeTrains = trains.filter(t => t.routeId === selectedRoute);
 
 ## Recent Changes
 
+- **011-observability-reliability**: Health monitoring `/status` page, baseline learning with Welford's algorithm, anomaly detection, uptime tracking
 - **010-deployment-preparation**: Production deployment config, error handling with circuit breaker
 - **009-obr-hit-detection**: Oriented Bounding Rectangle for accurate 3D model clicking
 - **008-optimizations**: Unified GenericLineLayer and GenericStopLayer components

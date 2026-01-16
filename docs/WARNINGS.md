@@ -175,40 +175,31 @@ w.Header().Set("Cache-Control", "public, max-age=15, stale-while-revalidate=10")
 
 ---
 
-## Database Connection Pooling
+## Database Considerations
 
-### Connection Pool Sizing
+### SQLite in Production
 
-**Current Configuration**:
-```go
-config.MaxConns = 10                // Maximum connections
-config.MinConns = 2                 // Minimum idle connections
-config.MaxConnLifetime = 1 * time.Hour
-config.MaxConnIdleTime = 5 * time.Minute
-```
+**Current Implementation**: SQLite with WAL mode enabled
 
-**Location**: `apps/api/repository/postgres.go`
+**Location**: `apps/api/repository/sqlite.go`
 
-**Why These Settings May Need Adjustment**:
+**Why SQLite Works for This Project**:
 
-1. **High Traffic**: If the app scales to many concurrent users, 10 connections may not be enough
-2. **Connection Exhaustion**: All connections might be in use during peak polling intervals (every 30s from all clients)
-3. **Cloud Database Limits**: Some hosted databases (e.g., Heroku Postgres) have connection limits
+1. **Single Writer**: Only one poller service writes to the database
+2. **Moderate Read Load**: Frontend polls every 30 seconds, not hundreds of concurrent users
+3. **Simple Deployment**: No separate database server required
+4. **File-Based**: Easy to backup and restore
 
-**Symptoms of Issues**:
-- "Too many connections" errors in logs
-- Slow API response times during peak load
-- Connection timeout errors
+**When to Consider PostgreSQL**:
 
-**Monitoring Recommendations**:
-- Log connection pool stats (available connections, in-use connections)
-- Track average query execution time
-- Monitor database connection count from DB admin panel
+- If multiple poller instances need to write concurrently
+- If read load exceeds SQLite's capabilities (~100k requests/day)
+- If you need advanced features (JSONB, full-text search, etc.)
 
-**Scaling Guidelines**:
-- Rule of thumb: `MaxConns = (number of CPU cores * 2) + disk spindles`
-- For cloud deployments, check database provider's connection limits
-- Consider connection pooling at infrastructure level (PgBouncer)
+**Current Performance**:
+- Read queries typically <10ms
+- WAL mode allows concurrent reads during writes
+- Database file size grows linearly with data (~50MB typical)
 
 ---
 
