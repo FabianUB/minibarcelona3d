@@ -196,3 +196,77 @@ export function formatAge(ageSeconds: number): string {
   if (ageSeconds < 3600) return `${Math.floor(ageSeconds / 60)}m ago`;
   return `${Math.floor(ageSeconds / 3600)}h ago`;
 }
+
+// =============================================================================
+// HEALTH HISTORY & BASELINE SUMMARY
+// =============================================================================
+
+export interface HealthHistoryPoint {
+  timestamp: string;
+  healthScore: number;
+  vehicleCount: number;
+  status: HealthStatus;
+}
+
+export interface HealthHistoryResponse {
+  network: string;
+  points: HealthHistoryPoint[];
+  hours: number;
+  lastChecked: string;
+}
+
+export interface BaselineSummary {
+  network: string;
+  totalSlots: number;
+  mappedSlots: number;
+  matureSlots: number;
+  coveragePercent: number;
+  maturityPercent: number;
+  totalSamples: number;
+  status: 'learning' | 'developing' | 'established';
+}
+
+export interface BaselineSummaryResponse {
+  networks: BaselineSummary[];
+  lastChecked: string;
+}
+
+/**
+ * Fetch health history for a network
+ */
+export async function fetchHealthHistory(
+  network: string = 'overall',
+  hours: number = 2
+): Promise<HealthHistoryResponse> {
+  const response = await fetchWithRetry(
+    `${API_BASE}/health/history?network=${network}&hours=${hours}`,
+    {
+      logPrefix: 'Health API',
+      timeoutMs: 5000,
+      useCircuitBreaker: false,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch health history: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch baseline maturity summary for all networks
+ */
+export async function fetchBaselineSummary(): Promise<BaselineSummaryResponse> {
+  const response = await fetchWithRetry(`${API_BASE}/health/baselines/summary`, {
+    logPrefix: 'Health API',
+    timeoutMs: 5000,
+    useCircuitBreaker: false,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch baseline summary: ${response.status}`);
+  }
+
+  return response.json();
+}

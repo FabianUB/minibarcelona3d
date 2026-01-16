@@ -196,10 +196,12 @@ func (r *MetricsRepository) getScheduleVehicleCounts(ctx context.Context, now ti
 	defer rows.Close()
 
 	// Map network names to NetworkType
+	// Note: tram is stored as tram_tbs and tram_tbx in the database
 	networkMap := map[string]models.NetworkType{
-		"bus":  models.NetworkBus,
-		"tram": models.NetworkTram,
-		"fgc":  models.NetworkFGC,
+		"bus":      models.NetworkBus,
+		"tram_tbs": models.NetworkTram,
+		"tram_tbx": models.NetworkTram,
+		"fgc":      models.NetworkFGC,
 	}
 
 	for rows.Next() {
@@ -216,7 +218,8 @@ func (r *MetricsRepository) getScheduleVehicleCounts(ctx context.Context, now ti
 		}
 
 		if netType, ok := networkMap[network]; ok {
-			counts[netType] = len(positions)
+			// Accumulate counts for networks that have multiple DB entries (like tram)
+			counts[netType] += len(positions)
 		}
 	}
 
@@ -479,4 +482,93 @@ func (r *MetricsRepository) ResolveAnomaly(ctx context.Context, network models.N
 
 	_, err := r.db.ExecContext(ctx, query, time.Now().UTC().Format(time.RFC3339), string(network))
 	return err
+}
+
+// =============================================================================
+// UPTIME METHODS
+// =============================================================================
+
+// GetUptimePercent calculates uptime percentage over the last 24 hours.
+// Uptime is defined as the percentage of time the status was "healthy" or "degraded".
+func (r *MetricsRepository) GetUptimePercent(ctx context.Context, network string) (float64, error) {
+	query := `
+		SELECT
+			COUNT(*) as total,
+			COUNT(CASE WHEN status IN ('healthy', 'degraded') THEN 1 END) as up
+		FROM metrics_health_history
+		WHERE network = ?
+		  AND datetime(recorded_at) >= datetime('now', '-24 hours')
+	`
+
+	var total, up int
+	err := r.db.QueryRowContext(ctx, query, network).Scan(&total, &up)
+	if err != nil {
+		return 0, err
+	}
+
+	if total == 0 {
+		return 100.0, nil // No data means we assume it was up
+	}
+
+	return float64(up) / float64(total) * 100, nil
+}
+
+// =============================================================================
+// HEALTH HISTORY METHODS
+// =============================================================================
+
+// GetHealthHistory returns health history points for a network over the specified hours.
+// Points are sampled to return approximately 120 points for sparkline display.
+func (r *MetricsRepository) GetHealthHistory(ctx context.Context, network string, hours int) ([]models.HealthHistoryPoint, error) {
+	// Calculate sampling interval to get ~120 points
+	// At 30s intervals: 2 hours = 240 points, so sample every 2nd point
+	// For 24 hours = 2880 points, sample every 24th point
+	totalExpectedPoints := hours * 120 // 120 points per hour at 30s intervals
+	sampleInterval := 1
+	if totalExpectedPoints > 120 {
+		sampleInterval = totalExpectedPoints / 120
+	}
+
+	query := `
+		WITH numbered AS (
+			SELECT
+				recorded_at,
+				health_score,
+				vehicle_count,
+				status,
+				ROW_NUMBER() OVER (ORDER BY recorded_at ASC) as rn
+			FROM metrics_health_history
+			WHERE network = ?
+			  AND datetime(recorded_at) >= datetime('now', '-' || ? || ' hours')
+		)
+		SELECT recorded_at, health_score, vehicle_count, status
+		FROM numbered
+		WHERE rn % ? = 0 OR rn = 1
+		ORDER BY recorded_at ASC
+		LIMIT 150
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, network, hours, sampleInterval)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var points []models.HealthHistoryPoint
+	for rows.Next() {
+		var recordedAt string
+		var p models.HealthHistoryPoint
+
+		if err := rows.Scan(&recordedAt, &p.HealthScore, &p.VehicleCount, &p.Status); err != nil {
+			continue
+		}
+
+		if t, err := time.Parse(time.RFC3339, recordedAt); err == nil {
+			p.Timestamp = t
+		}
+
+		points = append(points, p)
+	}
+
+	return points, nil
 }

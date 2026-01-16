@@ -253,3 +253,24 @@ CREATE VIEW IF NOT EXISTS v_stale_snapshots AS
 SELECT snapshot_id, polled_at_utc
 FROM rt_snapshots
 WHERE datetime(polled_at_utc) < datetime('now', '-24 hours');
+
+
+-- =============================================================================
+-- HEALTH HISTORY (for uptime calculation)
+-- =============================================================================
+
+-- Records health status every poll cycle (30 seconds) for uptime tracking
+CREATE TABLE IF NOT EXISTS metrics_health_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recorded_at TEXT NOT NULL,
+    network TEXT NOT NULL,        -- 'rodalies', 'metro', 'bus', 'tram', 'fgc', 'overall'
+    health_score INTEGER NOT NULL,
+    status TEXT NOT NULL,         -- 'healthy', 'degraded', 'unhealthy', 'unknown'
+    vehicle_count INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_health_history_lookup
+    ON metrics_health_history(network, recorded_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_health_history_cleanup
+    ON metrics_health_history(recorded_at);
