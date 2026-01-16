@@ -35,12 +35,7 @@ COPY --from=builder /app/precalc-positions .
 COPY schema.sql /app/
 COPY scripts/init-db.sh /app/
 
-# Create data and web_public directories
-RUN mkdir -p /data /data/gtfs /app/web_public/rodalies_data /app/web_public/tmb_data/metro/lines /app/web_public/tmb_data/bus/routes
-
-# Run as non-root user
-RUN adduser -D -H appuser
-RUN chown -R appuser:appuser /data /app
-USER appuser
+# Create data directory
+RUN mkdir -p /data /data/gtfs
 
 CMD ["./poller"]
