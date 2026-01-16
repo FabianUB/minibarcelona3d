@@ -39,7 +39,7 @@ The train visualization system displays real-time positions of Rodalies de Catal
 - **Three.js** for 3D train models via Custom Layer API
 - **React** for component lifecycle and state management
 - **Go backend** for API endpoints
-- **PostgreSQL** for real-time train data storage
+- **SQLite** for real-time train data storage
 
 ### Key Features
 
@@ -62,8 +62,8 @@ The train visualization system displays real-time positions of Rodalies de Catal
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│  PostgreSQL  │───▶│   Go API     │───▶│  React App   │───▶│   Mapbox +   │
-│  Database    │    │  /api/trains │    │  TrainLayer  │    │   Three.js   │
+│    SQLite    │───▶│   Go API     │───▶│  React App   │───▶│   Mapbox +   │
+│  transit.db  │    │  /api/trains │    │  TrainLayer  │    │   Three.js   │
 └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
        │                   │                   │                    │
        │                   │                   │                    │
@@ -1381,29 +1381,29 @@ w.Header().Set("Content-Type", "application/json")
 
 ```sql
 CREATE TABLE rt_rodalies_vehicle_current (
-  vehicle_key VARCHAR PRIMARY KEY,
-  vehicle_id VARCHAR NOT NULL,
-  vehicle_label VARCHAR NOT NULL,
-  entity_id VARCHAR,
-  trip_id VARCHAR,
-  route_id VARCHAR NOT NULL,
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  current_stop_id VARCHAR,
-  previous_stop_id VARCHAR,
-  next_stop_id VARCHAR,
+  vehicle_key TEXT PRIMARY KEY,
+  vehicle_id TEXT NOT NULL,
+  vehicle_label TEXT NOT NULL,
+  entity_id TEXT,
+  trip_id TEXT,
+  route_id TEXT NOT NULL,
+  latitude REAL,
+  longitude REAL,
+  current_stop_id TEXT,
+  previous_stop_id TEXT,
+  next_stop_id TEXT,
   next_stop_sequence INTEGER,
-  status VARCHAR NOT NULL,
+  status TEXT NOT NULL,
   arrival_delay_seconds INTEGER,
   departure_delay_seconds INTEGER,
-  schedule_relationship VARCHAR,
-  predicted_arrival_utc TIMESTAMP,
-  predicted_departure_utc TIMESTAMP,
-  vehicle_timestamp_utc TIMESTAMP,
-  polled_at_utc TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  snapshot_id VARCHAR,
-  trip_update_timestamp_utc TIMESTAMP
+  schedule_relationship TEXT,
+  predicted_arrival_utc TEXT,
+  predicted_departure_utc TEXT,
+  vehicle_timestamp_utc TEXT,
+  polled_at_utc TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  snapshot_id TEXT,
+  trip_update_timestamp_utc TEXT
 );
 
 -- Indexes for common queries
