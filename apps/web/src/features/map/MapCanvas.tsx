@@ -334,6 +334,7 @@ export function MapCanvas() {
       pitch: 60, // MiniTokyo3D style 3D perspective
       bearing: 0,
       maxBounds: initialViewportRef.current!.max_bounds,
+      minZoom: 8,
       maxZoom: 16.5,
       maxPitch: 60,
       attributionControl: true,
