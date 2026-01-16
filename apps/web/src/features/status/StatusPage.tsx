@@ -19,6 +19,8 @@ import {
   type ConfidenceLevel,
   getNetworkDisplayName,
 } from '../../lib/api/health';
+import { HealthSparkline } from './HealthSparkline';
+import { BaselineMaturity } from './BaselineMaturity';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
@@ -104,14 +106,17 @@ export function StatusPage() {
 
         {/* Overall Status Banner */}
         {overall && (
-          <div className="flex items-center justify-center gap-3 py-2">
-            <div className={`w-2.5 h-2.5 rounded-full ${overall.status === 'operational' ? 'bg-green-500' : overall.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'}`} />
-            <span className="text-sm font-medium text-muted-foreground">
-              {getOverallStatusText(overall.status)}
-            </span>
-            <span className="text-xs text-muted-foreground/60">
-              {overall.healthScore}%
-            </span>
+          <div className="flex flex-col items-center gap-2 py-2">
+            <div className="flex items-center gap-3">
+              <div className={`w-2.5 h-2.5 rounded-full ${overall.status === 'operational' ? 'bg-green-500' : overall.status === 'degraded' ? 'bg-yellow-500' : 'bg-red-500'}`} />
+              <span className="text-sm font-medium text-muted-foreground">
+                {getOverallStatusText(overall.status)}
+              </span>
+              <span className="text-xs text-muted-foreground/60">
+                {overall.healthScore}%
+              </span>
+            </div>
+            <HealthSparkline network="overall" width={200} height={40} hours={2} />
           </div>
         )}
 
@@ -123,6 +128,12 @@ export function StatusPage() {
               <NetworkCard key={network.network} network={network} />
             ))}
           </div>
+        </section>
+
+        {/* Baseline Learning Section */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">ML Baseline Learning</h2>
+          <BaselineMaturity />
         </section>
 
         <Separator />
@@ -229,11 +240,14 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Health Score Bar */}
+        {/* Health Score Bar with Sparkline */}
         <div className="space-y-1">
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
             <span>Health Score</span>
-            <span className="font-medium text-foreground">{network.healthScore}%</span>
+            <div className="flex items-center gap-2">
+              <HealthSparkline network={network.network} width={80} height={20} hours={2} />
+              <span className="font-medium text-foreground">{network.healthScore}%</span>
+            </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
             <div
@@ -245,6 +259,7 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
 
         {/* Details Grid */}
         <div className="grid grid-cols-2 gap-2 text-sm">
+          {/* Freshness and Quality only for real-time networks */}
           {isRealTime && (
             <>
               <div className="flex justify-between">
@@ -255,20 +270,21 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
                 <span className="text-muted-foreground">Quality</span>
                 <span>{network.dataQuality}%</span>
               </div>
-              {network.vehicleCount >= 0 && (
-                <div className="flex justify-between col-span-2">
-                  <span className="text-muted-foreground">Active Vehicles</span>
-                  <span>
-                    {network.vehicleCount}
-                    {network.expectedCount !== undefined && (
-                      <span className="text-muted-foreground/60 ml-1">
-                        / {network.expectedCount} expected
-                      </span>
-                    )}
-                  </span>
-                </div>
-              )}
             </>
+          )}
+          {/* Active Vehicles for all networks */}
+          {network.vehicleCount >= 0 && (
+            <div className="flex justify-between col-span-2">
+              <span className="text-muted-foreground">Active Vehicles</span>
+              <span>
+                {network.vehicleCount}
+                {network.expectedCount !== undefined && (
+                  <span className="text-muted-foreground/60 ml-1">
+                    / {network.expectedCount} expected
+                  </span>
+                )}
+              </span>
+            </div>
           )}
         </div>
 

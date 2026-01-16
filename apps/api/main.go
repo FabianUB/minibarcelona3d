@@ -121,7 +121,9 @@ func main() {
 	r.Get("/api/health/data", healthHandler.GetDataFreshness)
 	r.Get("/api/health/networks", healthHandler.GetNetworkHealth)
 	r.Get("/api/health/baselines", healthHandler.GetBaselines)
+	r.Get("/api/health/baselines/summary", healthHandler.GetBaselineSummary)
 	r.Get("/api/health/anomalies", healthHandler.GetAnomalies)
+	r.Get("/api/health/history", healthHandler.GetHealthHistory)
 
 	// Static file serving (if configured)
 	staticDir := os.Getenv("STATIC_DIR")

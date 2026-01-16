@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/you/myapp/apps/api/models"
@@ -26,6 +27,10 @@ type MetricsRepository interface {
 	GetActiveAnomalyCount(ctx context.Context, network models.NetworkType) (int, error)
 	RecordAnomaly(ctx context.Context, network models.NetworkType, actualCount int, expectedCount, zScore float64, severity string) error
 	ResolveAnomaly(ctx context.Context, network models.NetworkType) error
+	// Uptime methods
+	GetUptimePercent(ctx context.Context, network string) (float64, error)
+	// History methods
+	GetHealthHistory(ctx context.Context, network string, hours int) ([]models.HealthHistoryPoint, error)
 }
 
 // HealthHandler handles HTTP requests for health and metrics data
@@ -103,7 +108,7 @@ func (h *HealthHandler) GetNetworkHealth(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Calculate overall health
-	overall := h.calculateOverallHealth(networkHealths, now)
+	overall := h.calculateOverallHealth(ctx, networkHealths, now)
 
 	response := NetworkHealthResponse{
 		Overall:  overall,
@@ -148,8 +153,9 @@ func (h *HealthHandler) calculateNetworkHealth(ctx context.Context, f models.Dat
 		serviceLevelScore = 0
 	} else if f.VehicleCount > 0 {
 		// Compare against baseline if available
+		// Show expected count after 3 samples (for visibility), but only use for anomaly detection after 7
 		baseline, err := h.repo.GetBaseline(ctx, f.Network, now.Hour(), int(now.Weekday()))
-		if err == nil && baseline != nil && baseline.SampleCount >= 7 {
+		if err == nil && baseline != nil && baseline.SampleCount >= 3 {
 			expectedCount := int(baseline.VehicleCountMean)
 			health.ExpectedCount = &expectedCount
 
@@ -165,8 +171,8 @@ func (h *HealthHandler) calculateNetworkHealth(ctx context.Context, f models.Dat
 				}
 			}
 
-			// Anomaly detection using Z-score
-			if baseline.VehicleCountStdDev > 0 {
+			// Anomaly detection using Z-score (only when baseline is mature enough)
+			if baseline.SampleCount >= 7 && baseline.VehicleCountStdDev > 0 {
 				zScore := (float64(f.VehicleCount) - baseline.VehicleCountMean) / baseline.VehicleCountStdDev
 
 				// Detect anomaly (|Z| > 2 = warning, |Z| > 3 = critical)
@@ -233,7 +239,7 @@ func (h *HealthHandler) calculateNetworkHealth(ctx context.Context, f models.Dat
 }
 
 // calculateOverallHealth calculates overall system health from network healths
-func (h *HealthHandler) calculateOverallHealth(networks []models.NetworkHealth, now time.Time) models.OverallHealth {
+func (h *HealthHandler) calculateOverallHealth(ctx context.Context, networks []models.NetworkHealth, now time.Time) models.OverallHealth {
 	if len(networks) == 0 {
 		return models.OverallHealth{
 			Status:      models.StatusUnknown,
@@ -282,12 +288,18 @@ func (h *HealthHandler) calculateOverallHealth(networks []models.NetworkHealth, 
 		activeIncidents += n.ActiveAnomalies
 	}
 
+	// Calculate actual uptime from health history
+	uptimePercent, err := h.repo.GetUptimePercent(ctx, "overall")
+	if err != nil {
+		uptimePercent = 100.0 // Fallback if no history data yet
+	}
+
 	return models.OverallHealth{
 		Status:          status,
 		HealthScore:     avgScore,
 		Networks:        networks,
 		LastUpdated:     now,
-		UptimePercent:   99.9, // TODO: Calculate from historical data
+		UptimePercent:   uptimePercent,
 		ActiveIncidents: activeIncidents,
 	}
 }
@@ -357,6 +369,155 @@ func (h *HealthHandler) GetAnomalies(w http.ResponseWriter, r *http.Request) {
 	response := AnomaliesResponse{
 		Anomalies:   anomalies,
 		Count:       len(anomalies),
+		LastChecked: time.Now().UTC(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// =============================================================================
+// HEALTH HISTORY & BASELINE SUMMARY ENDPOINTS
+// =============================================================================
+
+// HealthHistoryPoint represents a single point in health history
+type HealthHistoryPoint struct {
+	Timestamp    time.Time `json:"timestamp"`
+	HealthScore  int       `json:"healthScore"`
+	VehicleCount int       `json:"vehicleCount"`
+	Status       string    `json:"status"`
+}
+
+// HealthHistoryResponse is the JSON response for GET /api/health/history
+type HealthHistoryResponse struct {
+	Network     string               `json:"network"`
+	Points      []HealthHistoryPoint `json:"points"`
+	Hours       int                  `json:"hours"`
+	LastChecked time.Time            `json:"lastChecked"`
+}
+
+// BaselineSummary represents baseline maturity for a network
+type BaselineSummary struct {
+	Network          string  `json:"network"`
+	TotalSlots       int     `json:"totalSlots"`       // 168 = 24h × 7 days
+	MappedSlots      int     `json:"mappedSlots"`      // Slots with any data
+	MatureSlots      int     `json:"matureSlots"`      // Slots with >= 7 samples
+	CoveragePercent  float64 `json:"coveragePercent"`  // MappedSlots / TotalSlots
+	MaturityPercent  float64 `json:"maturityPercent"`  // MatureSlots / TotalSlots
+	TotalSamples     int     `json:"totalSamples"`     // Sum of all sample counts
+	Status           string  `json:"status"`           // "learning", "developing", "established"
+}
+
+// BaselineSummaryResponse is the JSON response for GET /api/health/baselines/summary
+type BaselineSummaryResponse struct {
+	Networks    []BaselineSummary `json:"networks"`
+	LastChecked time.Time         `json:"lastChecked"`
+}
+
+// GetHealthHistory handles GET /api/health/history
+// Query params: network (required), hours (optional, default 2)
+func (h *HealthHandler) GetHealthHistory(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	network := r.URL.Query().Get("network")
+	if network == "" {
+		network = "overall"
+	}
+
+	hoursStr := r.URL.Query().Get("hours")
+	hours := 2
+	if hoursStr != "" {
+		if h, err := strconv.Atoi(hoursStr); err == nil && h > 0 && h <= 24 {
+			hours = h
+		}
+	}
+
+	points, err := h.repo.GetHealthHistory(ctx, network, hours)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "Failed to get health history",
+		})
+		return
+	}
+
+	// Convert to response format
+	responsePoints := make([]HealthHistoryPoint, len(points))
+	for i, p := range points {
+		responsePoints[i] = HealthHistoryPoint{
+			Timestamp:    p.Timestamp,
+			HealthScore:  p.HealthScore,
+			VehicleCount: p.VehicleCount,
+			Status:       p.Status,
+		}
+	}
+
+	response := HealthHistoryResponse{
+		Network:     network,
+		Points:      responsePoints,
+		Hours:       hours,
+		LastChecked: time.Now().UTC(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// GetBaselineSummary handles GET /api/health/baselines/summary
+// Returns baseline maturity information for all networks
+func (h *HealthHandler) GetBaselineSummary(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	const totalSlots = 168 // 24 hours × 7 days
+
+	summaries := make([]BaselineSummary, 0, 5)
+
+	for _, network := range models.AllNetworks() {
+		baselines, err := h.repo.GetAllBaselines(ctx, network)
+		if err != nil {
+			continue
+		}
+
+		mappedSlots := len(baselines)
+		matureSlots := 0
+		totalSamples := 0
+
+		for _, b := range baselines {
+			totalSamples += b.SampleCount
+			if b.SampleCount >= 7 {
+				matureSlots++
+			}
+		}
+
+		coveragePercent := float64(mappedSlots) / float64(totalSlots) * 100
+		maturityPercent := float64(matureSlots) / float64(totalSlots) * 100
+
+		status := "learning"
+		if maturityPercent >= 80 {
+			status = "established"
+		} else if maturityPercent >= 30 {
+			status = "developing"
+		}
+
+		summaries = append(summaries, BaselineSummary{
+			Network:          string(network),
+			TotalSlots:       totalSlots,
+			MappedSlots:      mappedSlots,
+			MatureSlots:      matureSlots,
+			CoveragePercent:  coveragePercent,
+			MaturityPercent:  maturityPercent,
+			TotalSamples:     totalSamples,
+			Status:           status,
+		})
+	}
+
+	response := BaselineSummaryResponse{
+		Networks:    summaries,
 		LastChecked: time.Now().UTC(),
 	}
 

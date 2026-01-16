@@ -142,3 +142,11 @@ func CalculateHealthStatus(score int) string {
 	}
 	return StatusUnknown
 }
+
+// HealthHistoryPoint represents a single point in health history time series
+type HealthHistoryPoint struct {
+	Timestamp    time.Time `json:"timestamp"`
+	HealthScore  int       `json:"healthScore"`
+	VehicleCount int       `json:"vehicleCount"`
+	Status       string    `json:"status"`
+}
