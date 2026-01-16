@@ -86,7 +86,6 @@ services:
       LINES_DIR: /app/web_public/tmb_data/metro/lines
     volumes:
       - transit_data:/data
-      - web_public:/app/web_public
     networks:
       - app_network
     depends_on:
@@ -142,10 +141,8 @@ services:
       args:
         VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN}
     container_name: minibarcelona3d-web
-    volumes:
-      # Mount shared public data (updated by poller)
-      - web_public:/usr/share/nginx/html/rodalies_data:ro
-      - web_public:/usr/share/nginx/html/tmb_data:ro
+    # GeoJSON files (lines, stations) are baked into the image
+    # Real-time vehicle positions come from the API, not static files
     networks:
       - app_network
     restart: unless-stopped
@@ -174,10 +171,6 @@ volumes:
     name: minibarcelona3d_caddy_data
   caddy_config:
     name: minibarcelona3d_caddy_config
-
-  # Shared web public data (GeoJSON files updated by poller)
-  web_public:
-    name: minibarcelona3d_web_public
 
 # =============================================================================
 # NETWORKS
