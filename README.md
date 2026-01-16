@@ -4,33 +4,29 @@ A 3D visualization of Barcelona's public transport network, inspired by [Mini To
 
 ![MiniBarcelona3D](screenshot.png)
 
-## Description
+## Features
 
-MiniBarcelona3D displays positions of trains and vehicles across Barcelona's transit networks: Rodalies, Metro, Bus, Tram, and FGC. Vehicles are rendered as 3D models on an interactive Mapbox map.
-
-### Current Version
-
-* **Real-time tracking**: Rodalies, Metro
-* **Schedule-based**: Bus, Tram, FGC
-
-### Roadmap
-
-* Real-time FGC tracking
+- **Real-time vehicle tracking** for Rodalies and Metro
+- **Schedule-based positions** for Bus, Tram, and FGC
+- **Interactive 3D trains** with click-to-select and hover effects
+- **Vehicle list panel** showing all active trains with search and filtering
+- **Live delay information** from GTFS-RT feeds
+- **Network health monitoring** at `/status`
 
 ## Architecture
 
 ```
 apps/
-  web/      # React frontend
-  api/      # Go backend API
-  poller/   # Data polling service
+  web/      # React frontend with Three.js 3D rendering
+  api/      # Go backend API (SQLite)
+  poller/   # Real-time data polling service
 ```
 
 ### Data Sources
 
 | Network | Source | Type |
 |---------|--------|------|
-| Rodalies | Renfe API | Real-time GPS |
+| Rodalies | Renfe GTFS-RT | Real-time GPS |
 | Metro | TMB API | Real-time schedule |
 | Bus | TMB GTFS | Static schedule |
 | Tram | TRAM GTFS | Static schedule |
@@ -38,40 +34,46 @@ apps/
 
 ## Getting Started
 
-### Dependencies
+### Prerequisites
 
-* Node.js 18+
-* Mapbox account with API token
+- Docker and Docker Compose
+- [Mapbox](https://account.mapbox.com/) API token
+- [TMB Developer](https://developer.tmb.cat/) API credentials
 
-### Installing
+### Setup
 
 ```bash
-cd apps/web
-npm install
+# Clone and configure
+git clone https://github.com/FabianUB/mini-rodalies-3d.git
+cd mini-rodalies-3d
 cp .env.example .env
-# Add your VITE_MAPBOX_TOKEN to .env
+# Edit .env with your VITE_MAPBOX_TOKEN, TMB_APP_ID, TMB_APP_KEY
 ```
 
-### Running
+### Run with Docker (Recommended)
 
 ```bash
-npm run dev
+docker compose up
 ```
 
 Open http://localhost:5173
 
+### Run Frontend Only
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
 ## Built With
 
-* [React](https://react.dev/) - UI framework
-* [Three.js](https://threejs.org/) - 3D rendering
-* [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) - Map visualization
-* [Vite](https://vite.dev/) - Build tool
-* [Go](https://go.dev/) - Backend API and poller services
-* [SQLite](https://sqlite.org/) - Database
-
-## Authors
-
-Fabian Serrano Lopez
+- [React](https://react.dev/) - UI framework
+- [Three.js](https://threejs.org/) - 3D rendering
+- [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) - Map visualization
+- [Go](https://go.dev/) - Backend services
+- [SQLite](https://sqlite.org/) - Database
+- [Vite](https://vite.dev/) - Build tool
 
 ## License
 
@@ -79,5 +81,5 @@ MIT
 
 ## Acknowledgments
 
-* [Mini Tokyo 3D](https://minitokyo3d.com/) - Principal inspiration for this project
-* Transit data from Rodalies de Catalunya, TMB, FGC, and TRAM
+- [Mini Tokyo 3D](https://minitokyo3d.com/) - Principal inspiration
+- Transit data from Rodalies de Catalunya, TMB, FGC, and TRAM
