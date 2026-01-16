@@ -34,7 +34,7 @@ Ensure `.env.local` exists with Mapbox token:
 
 ```bash
 # apps/web/.env.local
-VITE_MAPBOX_TOKEN=your_mapbox_token_here
+VITE_VITE_MAPBOX_TOKEN=your_mapbox_token_here
 VITE_API_BASE=/api
 ```
 

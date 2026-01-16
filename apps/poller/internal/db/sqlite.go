@@ -301,6 +301,44 @@ func (db *DB) EnsureSchema(ctx context.Context) error {
 		PRIMARY KEY (network, day_type, time_slot)
 	);
 	CREATE INDEX IF NOT EXISTS idx_pre_schedule_lookup ON pre_schedule_positions(network, day_type, time_slot);
+
+	-- Metrics: Baseline statistics for expected vehicle counts by network/hour/day
+	CREATE TABLE IF NOT EXISTS metrics_baselines (
+		network TEXT NOT NULL,
+		hour_of_day INTEGER NOT NULL,
+		day_of_week INTEGER NOT NULL,
+		vehicle_count_mean REAL NOT NULL,
+		vehicle_count_stddev REAL NOT NULL,
+		sample_count INTEGER NOT NULL DEFAULT 0,
+		updated_at TEXT NOT NULL,
+		PRIMARY KEY (network, hour_of_day, day_of_week)
+	);
+
+	-- Metrics: Health status history for uptime calculation
+	CREATE TABLE IF NOT EXISTS metrics_health_history (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		recorded_at TEXT NOT NULL,
+		network TEXT NOT NULL,
+		health_score INTEGER NOT NULL,
+		status TEXT NOT NULL,
+		vehicle_count INTEGER NOT NULL DEFAULT 0
+	);
+	CREATE INDEX IF NOT EXISTS idx_health_history_lookup ON metrics_health_history(network, recorded_at DESC);
+	CREATE INDEX IF NOT EXISTS idx_health_history_cleanup ON metrics_health_history(recorded_at);
+
+	-- Metrics: Anomaly events log
+	CREATE TABLE IF NOT EXISTS metrics_anomalies (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		network TEXT NOT NULL,
+		detected_at TEXT NOT NULL,
+		actual_count INTEGER NOT NULL,
+		expected_count REAL NOT NULL,
+		z_score REAL NOT NULL,
+		severity TEXT NOT NULL,
+		resolved_at TEXT
+	);
+	CREATE INDEX IF NOT EXISTS idx_anomalies_active ON metrics_anomalies(network, resolved_at);
+	CREATE INDEX IF NOT EXISTS idx_anomalies_detected ON metrics_anomalies(detected_at DESC);
 	`
 
 	_, err := db.conn.ExecContext(ctx, schema)

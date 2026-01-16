@@ -1,0 +1,188 @@
+# =============================================================================
+# Production Docker Compose for MiniBarcelona3D
+#
+# Usage:
+#   1. Copy .env.prod.example to .env and fill in values
+#   2. docker compose -f docker-compose.prod.yml up -d --build
+#
+# Architecture:
+#   Caddy (HTTPS) -> Web (static) + API (Go)
+#                    Poller (background) -> SQLite
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # CADDY: Reverse proxy with automatic HTTPS
+  # ===========================================================================
+  caddy:
+    image: caddy:2-alpine
+    container_name: minibarcelona3d-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  # ===========================================================================
+  # INIT-DB: One-shot container to initialize database
+  # Imports GTFS data and pre-calculates schedule positions
+  # ===========================================================================
+  init-db:
+    build:
+      context: ./apps/poller
+      dockerfile: Dockerfile
+    container_name: minibarcelona3d-init-db
+    volumes:
+      - transit_data:/data
+      - ./data/gtfs:/data/gtfs:ro
+    environment:
+      SQLITE_DATABASE: /data/transit.db
+      GTFS_DIR: /data/gtfs
+    command: ["sh", "/app/init-db.sh"]
+    networks:
+      - app_network
+    restart: "no"
+
+  # ===========================================================================
+  # POLLER: Real-time data polling service
+  # Polls Rodalies (GTFS-RT) and Metro (TMB API) every 30 seconds
+  # Updates GeoJSON files and SQLite database
+  # ===========================================================================
+  poller:
+    build:
+      context: ./apps/poller
+      dockerfile: Dockerfile
+    container_name: minibarcelona3d-poller
+    environment:
+      # Database
+      SQLITE_DATABASE: /data/transit.db
+      # Polling configuration
+      POLL_INTERVAL: ${POLL_INTERVAL:-30}
+      RETENTION_HOURS: ${RETENTION_HOURS:-1}
+      # Static data refresh (days between GTFS downloads)
+      STATIC_REFRESH_DAYS: ${STATIC_REFRESH_DAYS:-7}
+      WEB_PUBLIC_DIR: /app/web_public
+      CACHE_DIR: /data/cache
+      # Rodalies (Renfe) - Real-time GTFS feeds
+      GTFS_VEHICLE_POSITIONS_URL: https://gtfsrt.renfe.com/vehicle_positions.pb
+      GTFS_TRIP_UPDATES_URL: https://gtfsrt.renfe.com/trip_updates.pb
+      RENFE_GTFS_URL: https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip
+      # TMB (Metro/Bus) API credentials
+      TMB_APP_ID: ${TMB_APP_ID}
+      TMB_APP_KEY: ${TMB_APP_KEY}
+      TMB_GTFS_URL: https://api.tmb.cat/v1/static/datasets/gtfs.zip
+      STATIONS_GEOJSON: /app/web_public/tmb_data/metro/stations.geojson
+      LINES_DIR: /app/web_public/tmb_data/metro/lines
+    volumes:
+      - transit_data:/data
+      - web_public:/app/web_public
+    networks:
+      - app_network
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # API: Go backend serving transit data
+  # Reads from SQLite database (read-only)
+  # ===========================================================================
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: minibarcelona3d-api
+    environment:
+      PORT: 8080
+      SQLITE_DATABASE: /data/transit.db
+      GIN_MODE: release
+    volumes:
+      - transit_data:/data:ro
+    networks:
+      - app_network
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # WEB: React frontend (static build served by Nginx)
+  # ===========================================================================
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN}
+    container_name: minibarcelona3d-web
+    volumes:
+      # Mount shared public data (updated by poller)
+      - web_public:/usr/share/nginx/html/rodalies_data:ro
+      - web_public:/usr/share/nginx/html/tmb_data:ro
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  # Persistent transit database
+  transit_data:
+    name: minibarcelona3d_transit_data
+
+  # Caddy certificates and config
+  caddy_data:
+    name: minibarcelona3d_caddy_data
+  caddy_config:
+    name: minibarcelona3d_caddy_config
+
+  # Shared web public data (GeoJSON files updated by poller)
+  web_public:
+    name: minibarcelona3d_web_public
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  app_network:
+    name: minibarcelona3d_network
+    driver: bridge

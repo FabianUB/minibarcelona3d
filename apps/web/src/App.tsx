@@ -5,11 +5,19 @@ import { MapCanvas } from './features/map';
 import { TrainInfoPanel } from './features/trains/TrainInfoPanel';
 import { StationInfoPanelContainer } from './features/stations/StationInfoPanelContainer';
 import { TransitInfoPanel } from './features/transit';
+import { StatusPage } from './features/status';
 import { MapStateProvider } from './state/map';
 import { TrainStateProvider } from './state/trains';
 import { TransitStateProvider } from './state/transit';
 
 function App() {
+  // Simple path-based routing without react-router
+  const isStatusPage = window.location.pathname === '/status';
+
+  if (isStatusPage) {
+    return <StatusPage />;
+  }
+
   return (
     <MapStateProvider>
       <TrainStateProvider>

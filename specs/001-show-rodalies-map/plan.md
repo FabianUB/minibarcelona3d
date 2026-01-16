@@ -16,7 +16,7 @@ Deliver a Mapbox GL JS-powered web map that opens centered on the full Rodalies 
 **Target Platform**: Vite dev/build pipeline deployed via Docker Compose; browsers: latest Chrome, Firefox, Safari, mobile Safari/Chrome  
 **Project Type**: Frontend-heavy feature within existing full-stack app  
 **Performance Goals**: Initial map render ≤3 s on broadband; interactions remain ≥45 FPS on mainstream laptops/mobiles  
-**Constraints**: Map-first responsive layout with ShadCN overlays; manual high-contrast toggle for colorblind users; Mapbox token via `MAPBOX_TOKEN` env  
+**Constraints**: Map-first responsive layout with ShadCN overlays; manual high-contrast toggle for colorblind users; Mapbox token via `VITE_MAPBOX_TOKEN` env  
 **Scale/Scope**: Covers all Rodalies Catalonia lines; supports simultaneous sessions without backend federation
 
 ## Constitution Check

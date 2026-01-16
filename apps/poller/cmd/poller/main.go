@@ -11,6 +11,7 @@ import (
 
 	"github.com/mini-rodalies-3d/poller/internal/config"
 	"github.com/mini-rodalies-3d/poller/internal/db"
+	"github.com/mini-rodalies-3d/poller/internal/metrics"
 	"github.com/mini-rodalies-3d/poller/internal/realtime/metro"
 	"github.com/mini-rodalies-3d/poller/internal/realtime/rodalies"
 	"github.com/mini-rodalies-3d/poller/internal/realtime/schedule"
@@ -72,6 +73,9 @@ func main() {
 		// Continue without schedule-based estimation
 	}
 
+	// Initialize baseline learner for gradual ML learning
+	baselineLearner := metrics.NewBaselineLearner(database)
+
 	// ═══════════════════════════════════════════════════════
 	// PHASE 4: Start Polling Loops
 	// ═══════════════════════════════════════════════════════
@@ -80,7 +84,7 @@ func main() {
 
 	// Initial poll immediately
 	log.Println("Running initial poll...")
-	pollOnce(ctx, rodaliesPoller, metroPoller, schedulePoller, database, cfg)
+	pollOnce(ctx, rodaliesPoller, metroPoller, schedulePoller, database, cfg, baselineLearner)
 
 	// Real-time polling goroutine
 	go func() {
@@ -90,7 +94,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				pollOnce(ctx, rodaliesPoller, metroPoller, schedulePoller, database, cfg)
+				pollOnce(ctx, rodaliesPoller, metroPoller, schedulePoller, database, cfg, baselineLearner)
 			case <-ctx.Done():
 				log.Println("Polling loop stopped")
 				return
@@ -135,7 +139,7 @@ func main() {
 	log.Println("Goodbye!")
 }
 
-func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller *metro.Poller, schedulePoller *schedule.Poller, database *db.DB, cfg *config.Config) {
+func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller *metro.Poller, schedulePoller *schedule.Poller, database *db.DB, cfg *config.Config, baselineLearner *metrics.BaselineLearner) {
 	// Poll Rodalies
 	if err := rodaliesPoller.Poll(ctx); err != nil {
 		log.Printf("Rodalies poll error: %v", err)
@@ -151,6 +155,16 @@ func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller 
 		if err := schedulePoller.Poll(ctx); err != nil {
 			log.Printf("Schedule poll error: %v", err)
 		}
+	}
+
+	// Update baselines with current vehicle counts (gradual learning)
+	if err := baselineLearner.UpdateBaselines(ctx); err != nil {
+		log.Printf("Baseline update error: %v", err)
+	}
+
+	// Record health status for uptime tracking
+	if err := baselineLearner.RecordHealthStatuses(ctx); err != nil {
+		log.Printf("Health status recording error: %v", err)
 	}
 
 	// Async cleanup - don't block polling, skip if already running

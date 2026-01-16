@@ -23,7 +23,7 @@
 **Purpose**: Ensure dependencies, environment, and tooling uphold the constitution.
 
 - [X] T001 Update apps/web/package.json to add Mapbox GL JS, @types/mapbox-gl, Playwright, and rollup-plugin-visualizer entries.
-- [X] T002 [P] Create apps/web/.env.example documenting required `MAPBOX_TOKEN` and data asset expectations.
+- [X] T002 [P] Create apps/web/.env.example documenting required `VITE_MAPBOX_TOKEN` and data asset expectations.
 - [X] T003 [P] Scaffold Playwright configuration with axe hooks in apps/web/playwright.config.ts.
 - [X] T004 [P] Wire bundle analysis (`pnpm run analyze-bundle`) and accessibility scripts in apps/web/package.json.
 
