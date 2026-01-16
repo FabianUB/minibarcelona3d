@@ -70,21 +70,21 @@ function App() {
 
 ### Answer — Explanation
 
-The **Repository Pattern** is a data access abstraction that sits between your business logic (HTTP handlers) and your data storage layer (PostgreSQL). In our train tracking implementation (`apps/api/repository/postgres.go`), the `TrainRepository` encapsulates all database queries for train data, providing a clean interface with methods like `GetAllTrains()`, `GetTrainByKey()`, and `GetTrainsByRoute()`.
+The **Repository Pattern** is a data access abstraction that sits between your business logic (HTTP handlers) and your data storage layer (SQLite). In our train tracking implementation (`apps/api/repository/sqlite.go`), the `Repository` encapsulates all database queries for train data, providing a clean interface with methods like `GetAllTrains()`, `GetTrainByKey()`, and `GetTrainsByRoute()`.
 
 **Key benefits in this codebase:**
 
-1. **Testability**: HTTP handlers can be tested with a mock repository instead of requiring a real database. You could create a `MockTrainRepository` that implements the same interface for unit tests, allowing you to verify handler logic without database dependencies.
+1. **Testability**: HTTP handlers can be tested with a mock repository instead of requiring a real database. You could create a `MockRepository` that implements the same interface for unit tests, allowing you to verify handler logic without database dependencies.
 
-2. **Database Independence**: If we later decide to switch from PostgreSQL to another database (or add caching with Redis), we only need to modify the repository implementation. The handlers remain unchanged because they depend on the repository interface, not the specific database implementation. This follows the Dependency Inversion Principle.
+2. **Database Independence**: If we later decide to switch from SQLite to PostgreSQL (or add caching with Redis), we only need to modify the repository implementation. The handlers remain unchanged because they depend on the repository interface, not the specific database implementation. This follows the Dependency Inversion Principle.
 
-3. **Centralized Query Logic**: All SQL queries live in one place (`postgres.go`), making it easy to optimize performance, add indexes, or debug query issues. For example, when we discovered the performance requirement of <100ms for `GetAllTrains()`, we knew exactly where to look and optimize.
+3. **Centralized Query Logic**: All SQL queries live in one place (`sqlite.go`), making it easy to optimize performance, add indexes, or debug query issues. For example, when we discovered the performance requirement of <100ms for `GetAllTrains()`, we knew exactly where to look and optimize.
 
-4. **Connection Pooling Management**: The repository owns the `pgxpool.Pool` connection pool, ensuring proper lifecycle management (creation in `NewTrainRepository()`, cleanup in `Close()`). Handlers don't need to worry about database connections—they just call repository methods with a `context.Context`.
+4. **Connection Management**: The repository owns the SQLite database connection, ensuring proper lifecycle management (creation in `NewRepository()`, cleanup in `Close()`). Handlers don't need to worry about database connections—they just call repository methods with a `context.Context`.
 
 5. **Separation of Concerns**: Handlers focus on HTTP-specific logic (parsing requests, building JSON responses, status codes), while the repository handles database-specific concerns (SQL queries, row scanning, error translation). This makes both layers simpler and easier to maintain.
 
-**Specific to our implementation**: We use pgx's connection pooling (`pgxpool`) which is 20-30% faster than `lib/pq` according to our research. The repository pattern allows us to encapsulate this performance optimization detail—handlers don't know or care that we're using pgx; they just get fast query results.
+**Specific to our implementation**: We use SQLite with WAL mode enabled for better concurrent read performance. The repository pattern allows us to encapsulate this detail—handlers don't know or care about the database engine; they just get fast query results.
 
 ### Key Takeaways
 
@@ -133,11 +133,11 @@ func TestGetAllTrains(t *testing.T) {
 In our train tracking system:
 
 ```
-HTTP Request → TrainHandler → TrainRepository → PostgreSQL
-                     ↓               ↓
-              Business Logic    SQL Queries
-              JSON Response    Connection Pool
-              Status Codes     Row Scanning
+HTTP Request → TrainHandler → Repository → SQLite
+                     ↓             ↓
+              Business Logic  SQL Queries
+              JSON Response   Row Scanning
+              Status Codes    Error Translation
 ```
 
 **Without repository pattern:**

@@ -1,5 +1,7 @@
 # Renfe GTFS-RT Database Schema
 
+> **Note**: This document describes the logical database schema. The actual implementation uses **SQLite**, which stores values as one of: NULL, INTEGER, REAL, TEXT, or BLOB. The type names shown below (e.g., `timestamptz`, `uuid`) indicate the intended data format and are stored as TEXT in SQLite. See `apps/poller/schema.sql` for the actual table definitions.
+
 ## Overview
 
 The Renfe real-time ingestion pipeline stores GTFS static reference data alongside real-time snapshots. Dimension tables (`dim_*`) capture the slowly changing reference data downloaded from the static GTFS bundle. Real-time tables (`rt_*`) capture every polling iteration, keyed by a UUID snapshot identifier so that downstream jobs can stage and aggregate the feed history.
@@ -190,7 +192,7 @@ Rows are only inserted when the referenced entity exists in the dimensions. `ON 
 
 ## Relationships and Data Flow
 
-- GTFS static refresh (`scripts/refresh_static_gtfs.py`) truncates and reloads `dim_routes`, `dim_trips`, `dim_stops`, and `dim_stop_times`. Real-time tables rely on these dimensions for referential integrity.
+- GTFS static data is loaded by the `init-db` Docker service during startup. Real-time tables rely on these dimensions for referential integrity.
 - Each polling run inserts one row in `rt_snapshots` and multiple fact rows referencing that snapshot.
 - Foreign keys from `rt_vehicle_positions`, `rt_rodalies_vehicle_positions`, `rt_trip_delays`, and alert bridge tables point back to the dimension tables, enabling joins without duplicating static metadata.
 - `rt_feed_cursors` stores the last processed header timestamp per feed so the poller can skip ingesting unchanged payloads.

@@ -1,24 +1,24 @@
-# Mini Rodalies 3D - Backend API
+# MiniBarcelona3D - Backend API
 
-Go backend API for serving real-time train position data for the Rodalies (Barcelona commuter rail) network.
+Go backend API for serving real-time transit position data for Barcelona's public transport networks (Rodalies, Metro, Bus, Tram, FGC).
 
 ## Overview
 
-This API provides endpoints for fetching real-time train positions, trip details, and schedule information. The data is sourced from a PostgreSQL database that's continuously updated with GTFS-RT (General Transit Feed Specification - Realtime) data.
+This API provides endpoints for fetching real-time vehicle positions, trip details, schedule information, and system health metrics. The data is sourced from a SQLite database that's continuously updated by the poller service with GTFS-RT and TMB API data.
 
 ## Technology Stack
 
-- **Language:** Go 1.25.3
+- **Language:** Go 1.23
 - **Router:** Chi v5
-- **Database:** PostgreSQL with pgx v5 (connection pooling)
+- **Database:** SQLite with mattn/go-sqlite3
 - **CORS:** Chi CORS middleware
 
 ## Getting Started
 
 ### Prerequisites
 
-- Go 1.25.3 or higher
-- PostgreSQL database with train data
+- Go 1.23 or higher
+- SQLite database with transit data (created by init-db service)
 - Environment variables configured (see below)
 
 ### Installation
@@ -30,11 +30,12 @@ go mod download
 
 ### Environment Variables
 
-Create a `.env` file in `apps/api/`:
+```bash
+# Required
+SQLITE_DATABASE=/data/transit.db    # Path to SQLite database
 
-```env
-PORT=8080
-DATABASE_URL=postgresql://user:password@localhost:5432/rodalies?sslmode=disable
+# Optional
+PORT=8080                           # API port (default: 8080)
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
@@ -42,16 +43,16 @@ ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 
 **Development:**
 ```bash
-go run main.go
+go run .
 ```
 
 **Production:**
 ```bash
-go build -o bin/api
+go build -o bin/api .
 ./bin/api
 ```
 
-**With Docker:**
+**With Docker (recommended):**
 ```bash
 docker-compose up api
 ```
@@ -64,36 +65,34 @@ go test ./...
 
 ## API Endpoints
 
-### Train Positions
+### Train Positions (Rodalies)
 
 #### GET `/api/trains/positions`
 
-Returns lightweight position data for all active trains, optimized for frequent polling (every 30 seconds).
+Returns lightweight position data for all active Rodalies trains, optimized for frequent polling (every 30 seconds).
 
 **Response:**
 ```json
 {
   "positions": [
     {
-      "vehicleKey": "71-470-004-00_51T0093R11_0",
+      "vehicleKey": "R4-77626",
       "latitude": 41.3851,
       "longitude": 2.1734,
       "nextStopId": "79409",
-      "routeId": "51T0093R11",
+      "routeId": "R4",
       "status": "IN_TRANSIT_TO",
-      "polledAtUTC": "2025-01-09T12:30:00Z"
+      "polledAtUtc": "2026-01-09T12:30:00Z"
     }
   ],
   "previousPositions": [...],
   "count": 95,
-  "polledAt": "2025-01-09T12:30:00Z",
-  "previousPolledAt": "2025-01-09T12:29:30Z"
+  "polledAt": "2026-01-09T12:30:00Z",
+  "previousPolledAt": "2026-01-09T12:29:30Z"
 }
 ```
 
 **Caching:** `Cache-Control: public, max-age=15, stale-while-revalidate=10`
-
-**Performance Target:** <50ms for ~100 trains
 
 ---
 
@@ -102,46 +101,7 @@ Returns lightweight position data for all active trains, optimized for frequent 
 Returns full train details including all GTFS-RT fields.
 
 **Query Parameters:**
-- `route_id` (optional): Filter trains by route ID (e.g., `51T0093R11`)
-
-**Response:**
-```json
-{
-  "trains": [
-    {
-      "vehicleKey": "71-470-004-00_51T0093R11_0",
-      "vehicleId": "71-470-004-00",
-      "vehicleLabel": "004",
-      "entityId": "71-470-004-00_51T0093R11",
-      "tripId": "51T0093R11",
-      "routeId": "51T0093R11",
-      "latitude": 41.3851,
-      "longitude": 2.1734,
-      "currentStopId": null,
-      "previousStopId": "79408",
-      "nextStopId": "79409",
-      "nextStopSequence": 5,
-      "status": "IN_TRANSIT_TO",
-      "arrivalDelaySeconds": 120,
-      "departureDelaySeconds": 120,
-      "scheduleRelationship": "SCHEDULED",
-      "predictedArrivalUTC": "2025-01-09T12:32:00Z",
-      "predictedDepartureUTC": "2025-01-09T12:32:30Z",
-      "vehicleTimestampUTC": "2025-01-09T12:29:45Z",
-      "polledAtUTC": "2025-01-09T12:30:00Z",
-      "updatedAt": "2025-01-09T12:30:01Z",
-      "snapshotId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "tripUpdateTimestampUTC": "2025-01-09T12:29:50Z"
-    }
-  ],
-  "count": 95,
-  "polledAt": "2025-01-09T12:30:00Z"
-}
-```
-
-**Caching:** `Cache-Control: public, max-age=15, stale-while-revalidate=10`
-
-**Performance Target:** <100ms for ~100 trains
+- `route_id` (optional): Filter trains by route ID
 
 ---
 
@@ -149,129 +109,89 @@ Returns full train details including all GTFS-RT fields.
 
 Returns full details for a specific train by its vehicle key.
 
-**Parameters:**
-- `vehicleKey` (path): Unique train identifier (e.g., `71-470-004-00_51T0093R11_0`)
+---
 
-**Response:**
-```json
-{
-  "vehicleKey": "71-470-004-00_51T0093R11_0",
-  "vehicleId": "71-470-004-00",
-  "vehicleLabel": "004",
-  ...
-}
-```
+### Metro Positions
 
-**Error Responses:**
-- `404 Not Found`: Train not found
-- `400 Bad Request`: Invalid vehicle key
+#### GET `/api/metro/positions`
 
-**Caching:** `Cache-Control: public, max-age=10, stale-while-revalidate=5`
-
-**Performance Target:** <10ms (primary key lookup)
+Returns estimated positions for all Metro trains (derived from iMetro arrival predictions).
 
 ---
 
-### Trip Details
+### Schedule-Based Positions (Bus, Tram, FGC)
 
-#### GET `/api/trips/{tripId}`
+#### GET `/api/transit/schedule`
 
-Returns schedule details for a specific trip, including all stops with scheduled and predicted times.
+Returns pre-calculated positions from GTFS schedules.
 
-**Parameters:**
-- `tripId` (path): Trip identifier (e.g., `51T0093R11`)
+**Query Parameters:**
+- `network` (optional): Filter by network (`bus`, `tram`, `fgc`)
 
-**Response:**
-```json
-{
-  "tripId": "51T0093R11",
-  "routeId": "R1",
-  "stopTimes": [
-    {
-      "stopId": "79400",
-      "stopSequence": 1,
-      "stopName": "Barcelona-Sants",
-      "scheduledArrival": "12:15:00",
-      "scheduledDeparture": "12:15:00",
-      "predictedArrivalUTC": "2025-01-09T12:17:00Z",
-      "predictedDepartureUTC": "2025-01-09T12:17:30Z",
-      "arrivalDelaySeconds": 120,
-      "departureDelaySeconds": 150,
-      "scheduleRelationship": "SCHEDULED"
-    }
-  ],
-  "updatedAt": "2025-01-09T12:30:00Z"
-}
-```
+---
 
-**Error Responses:**
-- `404 Not Found`: Trip not found
-- `400 Bad Request`: Invalid trip ID
+### Health & Observability
 
-**Caching:** `Cache-Control: public, max-age=15, stale-while-revalidate=10`
+#### GET `/api/health/networks`
 
-**Use Case:** Delay calculation in TrainInfoPanel
+Returns health status for all transit networks including:
+- Health scores (0-100)
+- Vehicle counts vs expected baselines
+- Data freshness metrics
+- Uptime percentages
+
+#### GET `/api/health/history`
+
+Returns health score history for sparkline visualization.
+
+#### GET `/api/health/baselines`
+
+Returns baseline learning statistics (Welford's algorithm).
 
 ---
 
 ## Database Schema
 
-The API queries two main tables:
+The API queries SQLite tables organized into:
 
-### `rt_rodalies_vehicle_current`
+### Real-Time Tables
+- `rt_rodalies_vehicle_current` - Current Rodalies train positions
+- `rt_metro_vehicle_current` - Current Metro positions (estimated)
 
-Current snapshot of all active trains (last known position).
+### Schedule Tables
+- `pre_schedule_positions` - Pre-calculated Bus/Tram/FGC positions
 
-**Key Columns:**
-- `vehicle_key` (PK): Unique train identifier
-- `latitude`, `longitude`: GPS coordinates
-- `route_id`: Train route/line
-- `status`: Movement status (IN_TRANSIT_TO, STOPPED_AT, etc.)
-- `polled_at_utc`: When this data was collected
-- `snapshot_id`: Links to rt_snapshots
+### Metrics Tables
+- `metrics_baselines` - Learned baseline statistics per network/hour/day
+- `metrics_health_history` - Health score history for uptime calculation
 
-### `rt_rodalies_vehicle_history`
-
-Historical train positions for interpolation.
-
-### `rt_trip_delays`
-
-Real-time delay information per stop.
-
-### `dim_stop_times`
-
-Scheduled stop times from GTFS static data.
+### Dimension Tables (GTFS Static)
+- `dim_routes`, `dim_trips`, `dim_stops`, `dim_stop_times`
 
 See `/docs/DATABASE_SCHEMA.md` for complete schema documentation.
 
 ---
 
-## Performance Optimizations
+## Repository Pattern
 
-### Connection Pooling (T101)
+The API uses the repository pattern to abstract database operations:
 
-The repository uses pgx connection pooling with optimized settings:
-
-```go
-config.MaxConns = 10                        // Max connections
-config.MinConns = 2                         // Min idle connections
-config.MaxConnLifetime = 1 * time.Hour      // Recycle after 1 hour
-config.MaxConnIdleTime = 5 * time.Minute    // Close idle after 5 min
-config.HealthCheckPeriod = 30 * time.Second // Health checks
+```
+apps/api/
+├── handlers/          # HTTP handlers (request/response logic)
+│   ├── trains.go      # Rodalies endpoints
+│   ├── metro.go       # Metro endpoints
+│   ├── schedule.go    # Bus/Tram/FGC endpoints
+│   └── health.go      # Health & observability
+├── repository/        # Database access layer
+│   └── sqlite.go      # SQLite implementation
+└── models/            # Data structures
 ```
 
-### HTTP Caching (T102)
-
-All endpoints include appropriate `Cache-Control` headers:
-- **Position endpoints:** 15 second cache (half of 30s polling interval)
-- **Trip details:** 15 second cache (includes real-time delay data)
-- **Stale-while-revalidate:** Allows serving slightly stale data while fetching fresh data
-
-### Query Optimization
-
-- Primary key lookups for single train queries
-- Indexes on `route_id`, `vehicle_key`, `snapshot_id`
-- Only active trains returned (updated within 10 minutes)
+This separation allows:
+- Testing handlers with mock repositories
+- Swapping database implementations without changing handlers
+- Centralized query optimization
 
 ---
 
@@ -283,8 +203,7 @@ All endpoints return consistent error responses:
 {
   "error": "Human-readable error message",
   "details": {
-    "internal": "Detailed error for debugging",
-    "vehicleKey": "context-specific-field"
+    "internal": "Detailed error for debugging"
   }
 }
 ```
@@ -305,78 +224,21 @@ The API supports CORS for frontend integration. Allowed origins are configured v
 
 ---
 
-## Monitoring & Logging
-
-The API logs:
-- Request method, path, and status code
-- Query execution times (debug mode)
-- Connection pool statistics
-- Database errors
-
-Example log output:
-```
-2025/01/09 12:30:00 GET /api/trains/positions - 200 (45ms)
-```
-
----
-
-## Development Tips
-
-**Testing a single endpoint:**
-```bash
-curl http://localhost:8080/api/trains/positions | jq
-```
-
-**Check connection pool stats:**
-The pool automatically logs health check results every 30 seconds.
-
-**Hot reload during development:**
-```bash
-# Install air for hot reloading
-go install github.com/cosmtrek/air@latest
-
-# Run with hot reload
-air
-```
-
-**Database connection test:**
-```bash
-go run main.go
-# Look for "Database connection established" in logs
-```
-
----
-
 ## Production Deployment
 
 ### Docker
 
-Build and run with Docker:
 ```bash
-docker build -t mini-rodalies-api .
-docker run -p 8080:8080 --env-file .env mini-rodalies-api
+docker build -t mini-barcelona-api .
+docker run -p 8080:8080 -v /data:/data mini-barcelona-api
 ```
 
-### Environment Variables for Production
+### Health Check
 
-```env
-PORT=8080
-DATABASE_URL=postgresql://user:password@db-host:5432/rodalies?sslmode=require
-ALLOWED_ORIGINS=https://yourdomain.com
-```
-
-### Health Check Endpoint
-
-Use `/api/trains/positions` as a health check endpoint. A successful response indicates:
+Use `/api/health/networks` as a health check endpoint. A successful response indicates:
 - API is running
 - Database connection is healthy
 - Data is being served
-
----
-
-## API Contract
-
-The API contract is defined in `contracts/api.yaml` (OpenAPI specification). This ensures consistency between frontend and backend.
 
 ---
 
@@ -384,16 +246,16 @@ The API contract is defined in `contracts/api.yaml` (OpenAPI specification). Thi
 
 When adding new endpoints:
 
-1. Define the handler in `handlers/trains.go`
-2. Add repository method in `repository/postgres.go`
+1. Define the handler in `handlers/`
+2. Add repository method in `repository/sqlite.go`
 3. Define request/response types in `models/`
 4. Add route in `main.go`
 5. Add appropriate caching headers
 6. Update this README
-7. Add tests in `handlers/*_test.go`
+7. Add tests
 
 ---
 
 ## License
 
-Part of the Mini Rodalies 3D project.
+Part of the MiniBarcelona3D project.
