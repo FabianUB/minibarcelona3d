@@ -20,7 +20,7 @@ type SQLiteDB struct {
 
 // NewSQLiteDB creates a new SQLite database connection
 func NewSQLiteDB(dbPath string) (*SQLiteDB, error) {
-	db, err := sql.Open("sqlite", dbPath+"?_journal=WAL&_fk=1")
+	db, err := sql.Open("sqlite", dbPath+"?_journal=WAL&_fk=1&_busy_timeout=5000")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
