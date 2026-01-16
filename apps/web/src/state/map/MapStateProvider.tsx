@@ -25,8 +25,8 @@ import type {
 import { getPreference, loadPreferences, savePreferences } from './persistence';
 
 const DEFAULT_TRANSPORT_FILTERS: TransportFilterState = {
-  rodalies: true,
-  metro: false,
+  rodalies: false,
+  metro: true,
   bus: false,
   tram: false,
   fgc: false,
