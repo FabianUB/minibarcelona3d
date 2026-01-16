@@ -85,6 +85,7 @@ SQLITE_DATABASE=/data/transit.db
 
 ## Recent Changes
 
+- **011-observability-reliability**: Health monitoring `/status` page, baseline learning, anomaly detection
 - **010-deployment-preparation**: Production config, error handling, circuit breaker
 - **009-obr-hit-detection**: OBR hit detection for 3D models
 - **008-optimizations**: Unified GenericLineLayer/GenericStopLayer

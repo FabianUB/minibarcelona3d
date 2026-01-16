@@ -1,6 +1,8 @@
 # Real-Time Vehicle Tables
 
-This document outlines the tables designed to power the application’s real-time views of Rodalies trains. Each section includes column-by-column details plus guidance on how the app should use the data. The source `rt_vehicle_positions` table continues to store every vehicle feed row; the tables below are Rodalies-only projections maintained by the poller.
+> **Note**: This document describes the logical database schema. The actual implementation uses **SQLite**. Type names like `double precision` and `timestamptz` indicate intended data formats and are stored as REAL and TEXT respectively in SQLite.
+
+This document outlines the tables designed to power the application's real-time views of Rodalies trains. Each section includes column-by-column details plus guidance on how the app should use the data. The source `rt_vehicle_positions` table continues to store every vehicle feed row; the tables below are Rodalies-only projections maintained by the poller.
 
 ## `rt_rodalies_vehicle_current`
 

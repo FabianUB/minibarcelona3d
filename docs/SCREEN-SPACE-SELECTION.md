@@ -1,6 +1,8 @@
 # Screen-Space Train Selection
 
-## Overview
+> **Note**: This document describes the original screen-space hit detection approach. It has been superseded by **Oriented Bounding Rectangle (OBR)** hit detection implemented in **009-obr-hit-detection**. See `apps/web/src/lib/map/MapboxRaycaster.ts` for the current implementation.
+
+## Overview (Historical)
 
 We replaced GPU-based picking with a purely screen-space approach so hover and click detection stay in sync with Mapbox rendering without maintaining a parallel camera/picking scene. The pointer logic now:
 

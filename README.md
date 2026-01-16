@@ -66,6 +66,8 @@ Open http://localhost:5173
 * [Three.js](https://threejs.org/) - 3D rendering
 * [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) - Map visualization
 * [Vite](https://vite.dev/) - Build tool
+* [Go](https://go.dev/) - Backend API and poller services
+* [SQLite](https://sqlite.org/) - Database
 
 ## Authors
 
