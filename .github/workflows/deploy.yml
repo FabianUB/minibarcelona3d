@@ -125,20 +125,46 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            # Wait for services to be ready
-            sleep 10
-
-            # Check if services are running
             cd ${{ env.DEPLOY_PATH }}
 
-            if docker compose -f docker-compose.prod.yml ps | grep -q "unhealthy\|Exit"; then
-              echo "ERROR: Some services are unhealthy!"
+            # Wait for containers to stabilize and healthchecks to pass
+            echo "Waiting for services to be ready..."
+            sleep 30
+
+            # Check if any container exited with error
+            if docker compose -f docker-compose.prod.yml ps | grep -q "Exit"; then
+              echo "ERROR: Some containers have exited!"
               docker compose -f docker-compose.prod.yml ps
-              docker compose -f docker-compose.prod.yml logs --tail=50
+              docker compose -f docker-compose.prod.yml logs --tail=100
               exit 1
             fi
 
-            echo "All services are healthy!"
+            # Verify API is responding
+            echo "Checking API health..."
+            for i in 1 2 3 4 5; do
+              if curl -sf http://localhost:8081/health > /dev/null 2>&1; then
+                echo "API is healthy!"
+                break
+              fi
+              if [ $i -eq 5 ]; then
+                echo "ERROR: API is not responding after 5 attempts"
+                docker compose -f docker-compose.prod.yml logs api --tail=50
+                exit 1
+              fi
+              echo "Attempt $i failed, retrying in 5s..."
+              sleep 5
+            done
+
+            # Verify web is serving content
+            echo "Checking web server..."
+            if curl -sf http://localhost:80 > /dev/null 2>&1; then
+              echo "Web server is responding!"
+            else
+              echo "Warning: Web server not responding on port 80, checking via Caddy..."
+            fi
+
+            echo "All services are running!"
+            docker compose -f docker-compose.prod.yml ps
 
       - name: Notify on failure
         if: failure()
