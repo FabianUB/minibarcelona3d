@@ -139,10 +139,10 @@ jobs:
               exit 1
             fi
 
-            # Verify API is responding
+            # Verify API is responding (check via Docker network)
             echo "Checking API health..."
             for i in 1 2 3 4 5; do
-              if curl -sf http://localhost:8081/health > /dev/null 2>&1; then
+              if docker compose -f docker-compose.prod.yml exec -T api wget -q -O- http://localhost:8080/health > /dev/null 2>&1; then
                 echo "API is healthy!"
                 break
               fi
@@ -155,12 +155,12 @@ jobs:
               sleep 5
             done
 
-            # Verify web is serving content
-            echo "Checking web server..."
-            if curl -sf http://localhost:80 > /dev/null 2>&1; then
-              echo "Web server is responding!"
+            # Verify public endpoint is accessible
+            echo "Checking public HTTPS endpoint..."
+            if curl -sf https://${{ secrets.DOMAIN }}/api/health/data > /dev/null 2>&1; then
+              echo "Public API endpoint is responding!"
             else
-              echo "Warning: Web server not responding on port 80, checking via Caddy..."
+              echo "Warning: Public endpoint not responding yet (may still be initializing)"
             fi
 
             echo "All services are running!"
