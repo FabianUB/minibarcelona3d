@@ -5869,7 +5869,10 @@
       "properties": {
         "id": "2.444.675202",
         "lines": [
-          "55"
+          "13",
+          "55",
+          "91",
+          "H16"
         ],
         "name": "Entença - Floridablanca",
         "stop_code": "444"
@@ -36105,7 +36108,7 @@
         "lines": [
           "155"
         ],
-        "name": "Camí Font Freda - Castelló",
+        "name": "Castelló - Camí Font Freda (Origen-Final)",
         "stop_code": "2944"
       }
     },
@@ -37153,7 +37156,7 @@
         "lines": [
           "122"
         ],
-        "name": "Espinagua - Darnius",
+        "name": "Espinauga - Darnius",
         "stop_code": "3021"
       }
     },
@@ -39653,7 +39656,9 @@
         "id": "2.3237.688327",
         "lines": [
           "109",
-          "D20"
+          "D20",
+          "D40",
+          "V7"
         ],
         "name": "Tarragona - Pl Espanya",
         "stop_code": "3237"
@@ -48492,20 +48497,19 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.131003,
-          41.403506
+          2.151729,
+          41.397401
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.8672.700298",
+        "id": "2.8983.700420",
         "lines": [
-          "70",
-          "V11",
-          "V13"
+          "27",
+          "D40"
         ],
-        "name": "Ganduxer, 132",
-        "stop_code": "8672"
+        "name": "Travessera de Gràcia, 82",
+        "stop_code": "8983"
       }
     },
     {
@@ -48560,6 +48564,24 @@
         ],
         "name": "via Augusta, 107",
         "stop_code": "9191"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.150219,
+          41.378136
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9196.700173",
+        "lines": [
+          "V7"
+        ],
+        "name": "Vilamarí - Diputació",
+        "stop_code": "9196"
       }
     },
     {

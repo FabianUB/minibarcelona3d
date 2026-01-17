@@ -9,20 +9,20 @@
     "is_highlighted": false
   },
   {
-    "line_id": "C1A",
-    "label": "C1A - Universidad                             -Las Aletas",
+    "line_id": "T1",
+    "label": "T1 - Ardila                                  -Ntra. Sra. de los Remedios",
     "theme_tokens": {
-      "standard": "solid-c1a",
-      "high_contrast": "hatched-c1a"
+      "standard": "solid-t1",
+      "high_contrast": "hatched-t1"
     },
     "is_highlighted": false
   },
   {
-    "line_id": "C9",
-    "label": "C9 - Cercedilla                              -Cotos",
+    "line_id": "C1",
+    "label": "C1 - -",
     "theme_tokens": {
-      "standard": "solid-c9",
-      "high_contrast": "hatched-c9"
+      "standard": "solid-c1",
+      "high_contrast": "hatched-c1"
     },
     "is_highlighted": false
   },
@@ -126,20 +126,11 @@
     "is_highlighted": false
   },
   {
-    "line_id": "T1",
-    "label": "T1 - Ardila                                  -Ntra. Sra. de los Remedios",
+    "line_id": "C1A",
+    "label": "C1A - Universidad                             -Las Aletas",
     "theme_tokens": {
-      "standard": "solid-t1",
-      "high_contrast": "hatched-t1"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "C10",
-    "label": "C10 - Nuevos Ministerios                      -Pinar de las Rozas",
-    "theme_tokens": {
-      "standard": "solid-c10",
-      "high_contrast": "hatched-c10"
+      "standard": "solid-c1a",
+      "high_contrast": "hatched-c1a"
     },
     "is_highlighted": false
   },
@@ -153,11 +144,29 @@
     "is_highlighted": false
   },
   {
-    "line_id": "C1",
-    "label": "C1 - -",
+    "line_id": "C10",
+    "label": "C10 - Nuevos Ministerios                      -Pinar de las Rozas",
     "theme_tokens": {
-      "standard": "solid-c1",
-      "high_contrast": "hatched-c1"
+      "standard": "solid-c10",
+      "high_contrast": "hatched-c10"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "C9",
+    "label": "C9 - Cercedilla                              -Cotos",
+    "theme_tokens": {
+      "standard": "solid-c9",
+      "high_contrast": "hatched-c9"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "R13",
+    "label": "R13 - Vinaixa                                 -Lleida",
+    "theme_tokens": {
+      "standard": "solid-r13",
+      "high_contrast": "hatched-r13"
     },
     "is_highlighted": false
   },

@@ -9,21 +9,21 @@
     "order": 0
   },
   {
-    "id": "C1A",
-    "name": "Universidad                             -Las Aletas",
-    "short_code": "C1A",
+    "id": "T1",
+    "name": "Ardila                                  -Ntra. Sra. de los Remedios",
+    "short_code": "T1",
     "brand_color": "888888",
-    "default_pattern": "solid-c1a",
-    "high_contrast_pattern": "hatched-c1a",
+    "default_pattern": "solid-t1",
+    "high_contrast_pattern": "hatched-t1",
     "order": 0
   },
   {
-    "id": "C9",
-    "name": "Cercedilla                              -Cotos",
-    "short_code": "C9",
+    "id": "C1",
+    "name": "-",
+    "short_code": "C1",
     "brand_color": "888888",
-    "default_pattern": "solid-c9",
-    "high_contrast_pattern": "hatched-c9",
+    "default_pattern": "solid-c1",
+    "high_contrast_pattern": "hatched-c1",
     "order": 0
   },
   {
@@ -126,21 +126,12 @@
     "order": 0
   },
   {
-    "id": "T1",
-    "name": "Ardila                                  -Ntra. Sra. de los Remedios",
-    "short_code": "T1",
+    "id": "C1A",
+    "name": "Universidad                             -Las Aletas",
+    "short_code": "C1A",
     "brand_color": "888888",
-    "default_pattern": "solid-t1",
-    "high_contrast_pattern": "hatched-t1",
-    "order": 0
-  },
-  {
-    "id": "C10",
-    "name": "Nuevos Ministerios                      -Pinar de las Rozas",
-    "short_code": "C10",
-    "brand_color": "888888",
-    "default_pattern": "solid-c10",
-    "high_contrast_pattern": "hatched-c10",
+    "default_pattern": "solid-c1a",
+    "high_contrast_pattern": "hatched-c1a",
     "order": 0
   },
   {
@@ -153,12 +144,30 @@
     "order": 0
   },
   {
-    "id": "C1",
-    "name": "-",
-    "short_code": "C1",
+    "id": "C10",
+    "name": "Nuevos Ministerios                      -Pinar de las Rozas",
+    "short_code": "C10",
     "brand_color": "888888",
-    "default_pattern": "solid-c1",
-    "high_contrast_pattern": "hatched-c1",
+    "default_pattern": "solid-c10",
+    "high_contrast_pattern": "hatched-c10",
+    "order": 0
+  },
+  {
+    "id": "C9",
+    "name": "Cercedilla                              -Cotos",
+    "short_code": "C9",
+    "brand_color": "888888",
+    "default_pattern": "solid-c9",
+    "high_contrast_pattern": "hatched-c9",
+    "order": 0
+  },
+  {
+    "id": "R13",
+    "name": "Vinaixa                                 -Lleida",
+    "short_code": "R13",
+    "brand_color": "888888",
+    "default_pattern": "solid-r13",
+    "high_contrast_pattern": "hatched-r13",
     "order": 0
   },
   {

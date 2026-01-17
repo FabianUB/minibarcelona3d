@@ -1400,6 +1400,7 @@
         "name": "Barcelona Estació De França",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R15",
           "R16",
@@ -1487,6 +1488,7 @@
         "code": null,
         "lines": [
           "R11",
+          "R13",
           "R14",
           "R15",
           "R16",
@@ -1556,6 +1558,7 @@
         "lines": [
           "R1",
           "R11",
+          "R13",
           "R14",
           "R15",
           "R16",
@@ -3726,8 +3729,7 @@
         "code": null,
         "lines": [
           "C5A",
-          "C6",
-          "C7"
+          "C6"
         ]
       },
       "geometry": {
@@ -4234,8 +4236,7 @@
         "lines": [
           "C5",
           "C5A",
-          "C6",
-          "C7"
+          "C6"
         ]
       },
       "geometry": {
@@ -4352,7 +4353,6 @@
         "code": null,
         "lines": [
           "C10",
-          "C8",
           "C8A"
         ]
       },
@@ -4372,6 +4372,7 @@
         "name": "El Goloso",
         "code": null,
         "lines": [
+          "C4",
           "C4B"
         ]
       },
@@ -4994,6 +4995,7 @@
         "name": "Fuencarral",
         "code": null,
         "lines": [
+          "C4",
           "C4A",
           "C4B"
         ]
@@ -5349,8 +5351,7 @@
           "C1",
           "C4",
           "C5",
-          "C5A",
-          "C7"
+          "C5A"
         ]
       },
       "geometry": {
@@ -6084,8 +6085,8 @@
         "name": "Juneda",
         "code": null,
         "lines": [
-          "R14",
-          "R2S"
+          "R13",
+          "R14"
         ]
       },
       "geometry": {
@@ -6256,6 +6257,7 @@
         "name": "L'espluga De Francolí",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R2S"
         ]
@@ -6584,8 +6586,8 @@
         "name": "La Floresta",
         "code": null,
         "lines": [
-          "R14",
-          "R2S"
+          "R13",
+          "R14"
         ]
       },
       "geometry": {
@@ -6873,6 +6875,7 @@
         "name": "La Plana-Picamoixons",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R2S",
           "RT1"
@@ -6951,6 +6954,7 @@
         "name": "La Riba",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R2S"
         ]
@@ -7571,8 +7575,8 @@
         "name": "Les Borges Blanques",
         "code": null,
         "lines": [
-          "R14",
-          "R2S"
+          "R13",
+          "R14"
         ]
       },
       "geometry": {
@@ -7863,8 +7867,8 @@
         "name": "Lleida-Pirineus",
         "code": null,
         "lines": [
+          "R13",
           "R14",
-          "R2S",
           "RL3",
           "RL4"
         ]
@@ -9215,6 +9219,7 @@
         "name": "Montblanc",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R2S"
         ]
@@ -9799,8 +9804,7 @@
         "code": null,
         "lines": [
           "C5",
-          "C5A",
-          "C7"
+          "C5A"
         ]
       },
       "geometry": {
@@ -9914,7 +9918,7 @@
         "name": "Nulles-Bràfim",
         "code": null,
         "lines": [
-          "R2S"
+          "R13"
         ]
       },
       "geometry": {
@@ -10362,8 +10366,7 @@
         "code": null,
         "lines": [
           "C5A",
-          "C6",
-          "C7"
+          "C6"
         ]
       },
       "geometry": {
@@ -11325,8 +11328,8 @@
         "name": "Puigverd De Lleida-Artesa",
         "code": null,
         "lines": [
-          "R14",
-          "R2S"
+          "R13",
+          "R14"
         ]
       },
       "geometry": {
@@ -11851,7 +11854,7 @@
         "name": "Roda De Mar",
         "code": null,
         "lines": [
-          "R2S"
+          "R13"
         ]
       },
       "geometry": {
@@ -12100,7 +12103,7 @@
         "name": "Salomó",
         "code": null,
         "lines": [
-          "R2S"
+          "R13"
         ]
       },
       "geometry": {
@@ -13105,6 +13108,7 @@
         "name": "Sant Vicenç De Calders",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R15",
           "R16",
@@ -13750,7 +13754,6 @@
         "name": "Sils",
         "code": null,
         "lines": [
-          "R1",
           "R11",
           "R2N",
           "RG1"
@@ -14222,7 +14225,6 @@
         "code": null,
         "lines": [
           "R1",
-          "R11",
           "R2N"
         ]
       },
@@ -14648,6 +14650,7 @@
         "name": "Tres Cantos",
         "code": null,
         "lines": [
+          "C4",
           "C4B"
         ]
       },
@@ -14953,6 +14956,7 @@
         "name": "Universidad-Cantoblanco",
         "code": null,
         "lines": [
+          "C4",
           "C4A",
           "C4B"
         ]
@@ -15450,7 +15454,7 @@
         "name": "Valls",
         "code": null,
         "lines": [
-          "R2S"
+          "R13"
         ]
       },
       "geometry": {
@@ -15747,7 +15751,7 @@
         "name": "Vilabella",
         "code": null,
         "lines": [
-          "R2S"
+          "R13"
         ]
       },
       "geometry": {
@@ -15909,6 +15913,7 @@
         "name": "Vilaverd",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R2S"
         ]
@@ -16122,6 +16127,7 @@
         "name": "Vimbodí I Poblet",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R2S"
         ]
@@ -16142,6 +16148,7 @@
         "name": "Vinaixa",
         "code": null,
         "lines": [
+          "R13",
           "R14",
           "R2S"
         ]
