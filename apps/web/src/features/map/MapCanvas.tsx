@@ -108,6 +108,9 @@ export function MapCanvas() {
   const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
   const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
+
+  // Mesh position getters from each layer (for VehicleListView click-to-zoom)
+  const meshPositionGettersRef = useRef<Map<string, (vehicleKey: string) => [number, number] | null>>(new Map());
   const [debugToolsEnabled, setDebugToolsEnabled] = useState(
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
   );
@@ -148,6 +151,57 @@ export function MapCanvas() {
   // Keep a ref to current transportFilters for use in closures
   const transportFiltersRef = useRef(transportFilters);
   transportFiltersRef.current = transportFilters;
+
+  // Callbacks to register mesh position getters from each layer
+  const handleRodaliesMeshPositionGetterReady = useCallback(
+    (getter: (vehicleKey: string) => [number, number] | null) => {
+      meshPositionGettersRef.current.set('rodalies', getter);
+    },
+    []
+  );
+
+  const handleMetroMeshPositionGetterReady = useCallback(
+    (getter: (vehicleKey: string) => [number, number] | null) => {
+      meshPositionGettersRef.current.set('metro', getter);
+    },
+    []
+  );
+
+  const handleBusMeshPositionGetterReady = useCallback(
+    (getter: (vehicleKey: string) => [number, number] | null) => {
+      meshPositionGettersRef.current.set('bus', getter);
+    },
+    []
+  );
+
+  const handleTramMeshPositionGetterReady = useCallback(
+    (getter: (vehicleKey: string) => [number, number] | null) => {
+      meshPositionGettersRef.current.set('tram', getter);
+    },
+    []
+  );
+
+  const handleFgcMeshPositionGetterReady = useCallback(
+    (getter: (vehicleKey: string) => [number, number] | null) => {
+      meshPositionGettersRef.current.set('fgc', getter);
+    },
+    []
+  );
+
+  // Aggregated getMeshPosition function that queries all registered layers
+  const getMeshPosition = useCallback(
+    (vehicleKey: string): [number, number] | null => {
+      // Try each layer's getter until one returns a position
+      for (const getter of meshPositionGettersRef.current.values()) {
+        const position = getter(vehicleKey);
+        if (position) {
+          return position;
+        }
+      }
+      return null;
+    },
+    []
+  );
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -889,6 +943,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           modelScale={modelSizes.metro}
           highlightedLineIds={networkHighlights.metro.selectedLineIds}
           isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
+          onMeshPositionGetterReady={handleMetroMeshPositionGetterReady}
         />
       ) : null}
       {/* Bus route lines (below stops) */}
@@ -922,6 +977,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           modelScale={modelSizes.bus}
           highlightedLineIds={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
+          onMeshPositionGetterReady={handleBusMeshPositionGetterReady}
         />
       ) : null}
       {/* TRAM line geometries */}
@@ -954,6 +1010,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           modelScale={modelSizes.tram}
           highlightedLineIds={networkHighlights.tram.selectedLineIds}
           isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
+          onMeshPositionGetterReady={handleTramMeshPositionGetterReady}
         />
       ) : null}
       {/* FGC line geometries */}
@@ -986,6 +1043,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           modelScale={modelSizes.fgc}
           highlightedLineIds={networkHighlights.fgc.selectedLineIds}
           isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
+          onMeshPositionGetterReady={handleFgcMeshPositionGetterReady}
         />
       ) : null}
       {/* Rodalies station markers layer */}
@@ -1010,11 +1068,12 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
           isolateMode={networkHighlights.rodalies.highlightMode === 'isolate'}
           modelScale={modelSizes.rodalies}
+          onMeshPositionGetterReady={handleRodaliesMeshPositionGetterReady}
         />
       ) : null}
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
       {mapInstance && isMapLoaded ? (
-        <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} />
+        <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
       ) : null}
       {/* Data Freshness Indicator - bottom right */}
       {mapInstance && isMapLoaded ? (

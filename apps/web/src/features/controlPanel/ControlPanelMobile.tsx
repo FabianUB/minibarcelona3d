@@ -30,11 +30,14 @@ import { DataSourceBadge } from './components/DataSourceBadge';
 interface ControlPanelMobileProps {
   rodaliesTrains?: TrainPosition[];
   map?: MapboxMap | null;
+  /** Optional function to get actual mesh position (accounts for line snapping) */
+  getMeshPosition?: ((vehicleKey: string) => [number, number] | null) | null;
 }
 
 export function ControlPanelMobile({
   rodaliesTrains = [],
   map,
+  getMeshPosition,
 }: ControlPanelMobileProps) {
   const { ui } = useMapState();
   const { dataSourceStatus } = useTransitState();
@@ -113,6 +116,7 @@ export function ControlPanelMobile({
               tramPositions={tramPositions}
               fgcPositions={fgcPositions}
               onVehicleClick={handleVehicleClick}
+              getMeshPosition={getMeshPosition}
             />
           )}
         </div>

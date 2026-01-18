@@ -13,6 +13,8 @@ import { ControlPanelMobile } from './ControlPanelMobile';
 interface ControlPanelProps {
   rodaliesTrains?: TrainPosition[];
   map?: MapboxMap | null;
+  /** Optional function to get actual mesh position (accounts for line snapping) */
+  getMeshPosition?: ((vehicleKey: string) => [number, number] | null) | null;
 }
 
 export function ControlPanel(props: ControlPanelProps) {
