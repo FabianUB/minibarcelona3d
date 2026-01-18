@@ -28,11 +28,23 @@ services:
     environment:
       - DOMAIN=${DOMAIN:-localhost}
     depends_on:
-      - web
-      - api
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   # ===========================================================================
   # INIT-DB: One-shot container to initialize database
@@ -53,6 +65,10 @@ services:
     networks:
       - app_network
     restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   # ===========================================================================
   # POLLER: Real-time data polling service
@@ -97,6 +113,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # ===========================================================================
   # API: Go backend serving transit data
@@ -130,6 +150,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # ===========================================================================
   # WEB: React frontend (static build served by Nginx)
@@ -157,6 +181,10 @@ services:
       options:
         max-size: "5m"
         max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
 # =============================================================================
 # VOLUMES
