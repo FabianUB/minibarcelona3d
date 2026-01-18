@@ -40,6 +40,8 @@ export interface TransitVehicleLayer3DProps {
   highlightedLineIds?: string[];
   /** Whether isolate mode is active (hide non-highlighted vs dim them) */
   isolateMode?: boolean;
+  /** Callback when mesh position getter is available */
+  onMeshPositionGetterReady?: (getter: (vehicleKey: string) => [number, number] | null) => void;
 }
 
 /**
@@ -56,6 +58,7 @@ export function TransitVehicleLayer3D({
   modelScale = 1.0,
   highlightedLineIds = [],
   isolateMode = false,
+  onMeshPositionGetterReady,
 }: TransitVehicleLayer3DProps) {
   const [sceneReady, setSceneReady] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -665,6 +668,18 @@ export function TransitVehicleLayer3D({
       canvas.removeEventListener('click', handlePointerClick);
     };
   }, [map, sceneReady, handlePointerMove, handlePointerLeave, handlePointerClick]);
+
+  /**
+   * Notify parent when mesh position getter is ready
+   * Allows external components (like VehicleListView) to look up actual mesh positions
+   */
+  useEffect(() => {
+    if (modelLoaded && meshManagerRef.current && onMeshPositionGetterReady) {
+      onMeshPositionGetterReady((vehicleKey: string) => {
+        return meshManagerRef.current?.getVehiclePosition(vehicleKey) ?? null;
+      });
+    }
+  }, [modelLoaded, onMeshPositionGetterReady]);
 
   // This component renders nothing - all rendering is done via Mapbox custom layer
   return null;
