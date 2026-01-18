@@ -37,6 +37,9 @@ func (db *DB) GetBaseline(ctx context.Context, network metrics.NetworkType, hour
 
 // SaveBaseline upserts a baseline record
 func (db *DB) SaveBaseline(ctx context.Context, baseline metrics.NetworkBaseline) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	query := `
 		INSERT INTO metrics_baselines (network, hour_of_day, day_of_week, vehicle_count_mean, vehicle_count_stddev, sample_count, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -153,6 +156,9 @@ func (db *DB) getScheduleVehicleCount(ctx context.Context, network metrics.Netwo
 
 // RecordHealthStatus records a health status snapshot for uptime tracking
 func (db *DB) RecordHealthStatus(ctx context.Context, status metrics.HealthStatus) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	query := `
 		INSERT INTO metrics_health_history (recorded_at, network, health_score, status, vehicle_count)
 		VALUES (?, ?, ?, ?, ?)
@@ -169,6 +175,9 @@ func (db *DB) RecordHealthStatus(ctx context.Context, status metrics.HealthStatu
 
 // CleanupHealthHistory removes health history older than 48 hours
 func (db *DB) CleanupHealthHistory(ctx context.Context) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	query := `DELETE FROM metrics_health_history WHERE datetime(recorded_at) < datetime('now', '-48 hours')`
 	_, err := db.conn.ExecContext(ctx, query)
 	return err
