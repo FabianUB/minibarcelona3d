@@ -92,6 +92,16 @@ aircache/
 .codex/
 .claude/
 
+# === Debug / Temp files ===
+loc.txt
+screenshot.png
+train-debug*.json
+*-debug-*.json
+
+# === Spec data (GTFS downloads) ===
+specs/*/data/
+!specs/*/data-model.md
+
 # === SQLite Database ===
 *.db
 *.db-shm
