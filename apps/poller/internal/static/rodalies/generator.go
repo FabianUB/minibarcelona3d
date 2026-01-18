@@ -567,51 +567,16 @@ func generateCombinedLineGeometry(data *gtfs.Data, routeToLine map[string]string
 }
 
 func computeViewport(stops []gtfs.Stop) MapViewport {
-	if len(stops) == 0 {
-		// Default Barcelona viewport
-		return MapViewport{
-			Center: ManifestCenter{Lat: 41.3896, Lng: 2.170302},
-			Zoom:   13.48,
-			MaxBounds: [][2]float64{
-				{0.249476, 40.395723},
-				{3.363469, 42.65891},
-			},
-			Padding: ManifestPadding{Top: 48, Right: 24, Bottom: 48, Left: 24},
-		}
-	}
-
-	// Calculate bounding box
-	minLon, maxLon := 180.0, -180.0
-	minLat, maxLat := 90.0, -90.0
-
-	for _, stop := range stops {
-		if stop.StopLon < minLon {
-			minLon = stop.StopLon
-		}
-		if stop.StopLon > maxLon {
-			maxLon = stop.StopLon
-		}
-		if stop.StopLat < minLat {
-			minLat = stop.StopLat
-		}
-		if stop.StopLat > maxLat {
-			maxLat = stop.StopLat
-		}
-	}
-
-	// Add padding to bounds
-	lonPad := (maxLon - minLon) * 0.1
-	latPad := (maxLat - minLat) * 0.1
-
+	// Always use Barcelona viewport for this Barcelona-focused app.
+	// The Renfe GTFS data covers all of Spain's Rodalies networks (Madrid, Valencia, etc.),
+	// so computing the viewport from all stops would center the map on central Spain.
+	// We hardcode Barcelona coordinates to ensure correct initial view.
 	return MapViewport{
-		Center: ManifestCenter{
-			Lat: (minLat + maxLat) / 2,
-			Lng: (minLon + maxLon) / 2,
-		},
-		Zoom: 13.48, // Default zoom
+		Center: ManifestCenter{Lat: 41.3896, Lng: 2.170302},
+		Zoom:   13.48,
 		MaxBounds: [][2]float64{
-			{minLon - lonPad, minLat - latPad},
-			{maxLon + lonPad, maxLat + latPad},
+			{0.249476, 40.395723},
+			{3.363469, 42.65891},
 		},
 		Padding: ManifestPadding{Top: 48, Right: 24, Bottom: 48, Left: 24},
 	}
