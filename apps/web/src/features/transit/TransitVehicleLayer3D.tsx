@@ -448,6 +448,20 @@ export function TransitVehicleLayer3D({
       return;
     }
 
+    // Safety check: ensure meshManager's internal model state matches React state
+    // This can desync if model loading promise resolves for a previous meshManager
+    // (e.g., in StrictMode double-mount scenarios)
+    if (!meshManagerRef.current.isModelLoaded()) {
+      console.warn(
+        `TransitVehicleLayer3D [${networkType}]: State desync detected - ` +
+        `React says loaded but meshManager disagrees. Resetting state.`
+      );
+      // Reset modelLoaded to false - the correct meshManager's promise
+      // will set it to true when it actually finishes loading
+      setModelLoaded(false);
+      return;
+    }
+
     console.log(`TransitVehicleLayer3D [${networkType}]: Updating ${positions.length} vehicles`);
     meshManagerRef.current.updateVehicles(positions);
 
