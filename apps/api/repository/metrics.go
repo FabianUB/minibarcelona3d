@@ -47,12 +47,13 @@ func (r *MetricsRepository) GetDataFreshness(ctx context.Context) ([]models.Data
 // getRodaliesFreshness gets freshness for Rodalies network
 func (r *MetricsRepository) getRodaliesFreshness(ctx context.Context, now time.Time) (models.DataFreshness, error) {
 	// Only count vehicles updated in the last 10 minutes (same filter as trains API)
+	// Note: Compare updated_at directly (without datetime() wrapper) to allow index usage.
 	query := `
 		SELECT
 			MAX(polled_at_utc) as last_polled,
 			COUNT(*) as vehicle_count
 		FROM rt_rodalies_vehicle_current
-		WHERE datetime(updated_at) > datetime('now', '-10 minutes')
+		WHERE updated_at > datetime('now', '-10 minutes')
 	`
 
 	var lastPolled sql.NullString
@@ -232,14 +233,14 @@ func (r *MetricsRepository) GetNetworkVehicleCounts(ctx context.Context) (map[mo
 
 	// Rodalies count (only vehicles updated in last 10 minutes)
 	var rodaliesCount int
-	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_rodalies_vehicle_current WHERE datetime(updated_at) > datetime('now', '-10 minutes')").Scan(&rodaliesCount)
+	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_rodalies_vehicle_current WHERE updated_at > datetime('now', '-10 minutes')").Scan(&rodaliesCount)
 	if err == nil {
 		counts[models.NetworkRodalies] = rodaliesCount
 	}
 
 	// Metro count (only vehicles updated in last 10 minutes)
 	var metroCount int
-	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_metro_vehicle_current WHERE datetime(updated_at) > datetime('now', '-10 minutes')").Scan(&metroCount)
+	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM rt_metro_vehicle_current WHERE updated_at > datetime('now', '-10 minutes')").Scan(&metroCount)
 	if err == nil {
 		counts[models.NetworkMetro] = metroCount
 	}
@@ -277,7 +278,7 @@ func (r *MetricsRepository) GetRodaliesDataQuality(ctx context.Context) (total i
 			COUNT(*) as total,
 			COUNT(CASE WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN 1 END) as with_gps
 		FROM rt_rodalies_vehicle_current
-		WHERE datetime(updated_at) > datetime('now', '-10 minutes')
+		WHERE updated_at > datetime('now', '-10 minutes')
 	`
 
 	err = r.db.QueryRowContext(ctx, query).Scan(&total, &withGPS)
@@ -292,7 +293,7 @@ func (r *MetricsRepository) GetMetroDataQuality(ctx context.Context) (total int,
 			COUNT(*) as total,
 			COUNT(CASE WHEN confidence IN ('high', 'medium') THEN 1 END) as high_confidence
 		FROM rt_metro_vehicle_current
-		WHERE datetime(updated_at) > datetime('now', '-10 minutes')
+		WHERE updated_at > datetime('now', '-10 minutes')
 	`
 
 	err = r.db.QueryRowContext(ctx, query).Scan(&total, &highConfidence)
