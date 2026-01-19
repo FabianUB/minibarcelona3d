@@ -5,11 +5,11 @@
     "id": "RT1",
     "name": "Tarragona                               -La Plana-Picamoixons",
     "short_code": "RT1",
-    "brand_color": "888888",
+    "brand_color": "35BDB2",
     "default_pattern": "solid-rt1",
     "high_contrast_pattern": "hatched-rt1",
     "order": 0,
-    "last_verified_at": "2026-01-16T22:28:04Z"
+    "last_verified_at": "2026-01-18T21:07:26Z"
   },
   "geometry": {
     "type": "LineString",

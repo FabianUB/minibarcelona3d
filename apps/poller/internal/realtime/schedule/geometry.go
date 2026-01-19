@@ -88,3 +88,10 @@ func Clamp(value, min, max float64) float64 {
 	}
 	return value
 }
+
+// isValidCoordinate checks if a coordinate is within valid bounds for Catalunya/Barcelona
+// This catches (0,0) coordinates from missing/corrupt GTFS data and out-of-bounds values
+// Valid bounds: latitude 40-43, longitude 0-4 (covers all of Catalunya with margin)
+func isValidCoordinate(lat, lon float64) bool {
+	return lat > 40 && lat < 43 && lon > 0 && lon < 4
+}

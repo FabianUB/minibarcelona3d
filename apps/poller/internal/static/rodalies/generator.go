@@ -151,6 +151,7 @@ type MapViewport struct {
 }
 
 // LineColorMap contains brand colors for Rodalies lines
+// Colors sourced from official Rodalies Catalunya branding and Wikidata
 var LineColorMap = map[string]string{
 	"R1":  "7DBCEC",
 	"R2":  "26A741",
@@ -160,15 +161,17 @@ var LineColorMap = map[string]string{
 	"R4":  "F7A30D",
 	"R7":  "B57CBB",
 	"R8":  "88016A",
-	"RG1": "409EF5",
-	"RL3": "B6AE33",
-	"RL4": "F7A30D",
-	"RT2": "F965DE",
 	"R11": "0069AA",
+	"R13": "E52E87", // Magenta/pink - Barcelona-Lleida regional
 	"R14": "6C60A8",
 	"R15": "978571",
 	"R16": "B52B46",
 	"R17": "F3B12E",
+	"RG1": "409EF5",
+	"RL3": "B6AE33",
+	"RL4": "F7A30D",
+	"RT1": "35BDB2", // Teal - Camp de Tarragona commuter
+	"RT2": "F965DE",
 }
 
 // LineOrderMap contains display order for Rodalies lines
@@ -181,15 +184,17 @@ var LineOrderMap = map[string]int{
 	"R4":  6,
 	"R7":  7,
 	"R8":  8,
-	"RG1": 9,
-	"RL3": 10,
-	"RL4": 11,
-	"RT2": 12,
-	"R11": 13,
-	"R14": 14,
-	"R15": 15,
-	"R16": 16,
-	"R17": 17,
+	"R11": 9,
+	"R13": 10,
+	"R14": 11,
+	"R15": 12,
+	"R16": 13,
+	"R17": 14,
+	"RG1": 15,
+	"RL3": 16,
+	"RL4": 17,
+	"RT1": 18,
+	"RT2": 19,
 }
 
 // Generate creates GeoJSON files from GTFS data
@@ -567,51 +572,16 @@ func generateCombinedLineGeometry(data *gtfs.Data, routeToLine map[string]string
 }
 
 func computeViewport(stops []gtfs.Stop) MapViewport {
-	if len(stops) == 0 {
-		// Default Barcelona viewport
-		return MapViewport{
-			Center: ManifestCenter{Lat: 41.3896, Lng: 2.170302},
-			Zoom:   13.48,
-			MaxBounds: [][2]float64{
-				{0.249476, 40.395723},
-				{3.363469, 42.65891},
-			},
-			Padding: ManifestPadding{Top: 48, Right: 24, Bottom: 48, Left: 24},
-		}
-	}
-
-	// Calculate bounding box
-	minLon, maxLon := 180.0, -180.0
-	minLat, maxLat := 90.0, -90.0
-
-	for _, stop := range stops {
-		if stop.StopLon < minLon {
-			minLon = stop.StopLon
-		}
-		if stop.StopLon > maxLon {
-			maxLon = stop.StopLon
-		}
-		if stop.StopLat < minLat {
-			minLat = stop.StopLat
-		}
-		if stop.StopLat > maxLat {
-			maxLat = stop.StopLat
-		}
-	}
-
-	// Add padding to bounds
-	lonPad := (maxLon - minLon) * 0.1
-	latPad := (maxLat - minLat) * 0.1
-
+	// Always use Barcelona viewport for this Barcelona-focused app.
+	// The Renfe GTFS data covers all of Spain's Rodalies networks (Madrid, Valencia, etc.),
+	// so computing the viewport from all stops would center the map on central Spain.
+	// We hardcode Barcelona coordinates to ensure correct initial view.
 	return MapViewport{
-		Center: ManifestCenter{
-			Lat: (minLat + maxLat) / 2,
-			Lng: (minLon + maxLon) / 2,
-		},
-		Zoom: 13.48, // Default zoom
+		Center: ManifestCenter{Lat: 41.3896, Lng: 2.170302},
+		Zoom:   13.48,
 		MaxBounds: [][2]float64{
-			{minLon - lonPad, minLat - latPad},
-			{maxLon + lonPad, maxLat + latPad},
+			{0.249476, 40.395723},
+			{3.363469, 42.65891},
 		},
 		Padding: ManifestPadding{Top: 48, Right: 24, Bottom: 48, Left: 24},
 	}

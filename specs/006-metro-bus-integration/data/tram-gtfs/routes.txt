@@ -1,4 +1,0 @@
-"route_id","agency_id","route_short_name","route_long_name","route_desc","route_type","route_url","route_color","route_text_color","route_sort_order","continuous_pickup","continuous_drop_off"
-"997-1","997-1","T1","Bon Viatge-Francesc Macià","","0","http://www.tram.cat/linies-i-horaris/linea-t1/","FF0D0D","000000","","",""
-"997-2","997-1","T2","Llevant Les Planes-Francesc Macià","Description of Route","2","http://www.tram.cat/linies-i-horaris/linea-t3/","80FF80","000000","","",""
-"997-3","997-1","T3","Sant Feliu|Consell Comarcal-Francesc Macià","Description of Route","0","http://www.tram.cat/linies-i-horaris/linea-t3/","0074E8","FFFFFF","","",""

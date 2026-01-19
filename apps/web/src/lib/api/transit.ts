@@ -121,9 +121,24 @@ export async function fetchSchedulePositions(
 
   const data: SchedulePositionsResponse = await response.json();
 
+  // Filter out positions with invalid coordinates (outside Catalunya/Barcelona region)
+  // Valid bounds: lat 40-43, lng 1-4 (covers all of Catalunya with margin)
+  const validPositions = data.positions
+    .filter((pos) => {
+      const lat = pos.latitude;
+      const lng = pos.longitude;
+      const isValid = lat > 40 && lat < 43 && lng > 1 && lng < 4;
+      if (!isValid && pos.latitude !== 0 && pos.longitude !== 0) {
+        // Only log if coordinates are present but invalid (not just missing/zero)
+        console.warn(`[Schedule API] Filtering out position with invalid coords: ${pos.vehicleKey} (${lat}, ${lng})`);
+      }
+      return isValid;
+    })
+    .map(apiToVehiclePosition);
+
   return {
-    positions: data.positions.map(apiToVehiclePosition),
-    count: data.count,
+    positions: validPositions,
+    count: validPositions.length,
     networks: data.networks,
     polledAt: data.polledAt,
   };

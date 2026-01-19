@@ -110,7 +110,7 @@ interface TrainMeshData {
   nextStopId?: string; // Next stop ID for schedule lookup
   lastPredictiveSource?: 'gps' | 'predicted' | 'blended'; // Source of last position update
   predictiveConfidence?: number; // Confidence in predictive position (0-1)
-  // Performance: Cached material references to avoid mesh traversal in setMeshOpacity
+  // Performance: Cached material references for shared material access
   cachedMaterials?: THREE.Material[];
 }
 
@@ -754,12 +754,8 @@ export class TrainMeshManager {
     const meshData = this.trainMeshes.get(vehicleKey);
     if (!meshData) return null;
 
-    // currentPosition stores the [lng, lat] of the mesh
-    // For parked trains, this is updated to the parking position
-    // For moving trains, this is interpolated between positions
-    if (meshData.parkingPosition) {
-      return meshData.parkingPosition.position;
-    }
+    // Always use currentPosition - it's updated during animation to match
+    // the visual position of the mesh (including interpolation and snapping)
     return meshData.currentPosition;
   }
 
@@ -1040,13 +1036,17 @@ export class TrainMeshManager {
     const boundingSphere = new THREE.Sphere();
     centerBox.getBoundingSphere(boundingSphere);
 
-    // Collect materials for fast opacity updates (avoids mesh traversal later)
+    // Clone materials for each mesh to ensure independent opacity control.
+    // This prevents trains sharing the same model type (e.g., R1 and R2 both using 'civia')
+    // from sharing material references - setting opacity on one would affect the other.
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         if (Array.isArray(child.material)) {
+          child.material = child.material.map(m => m.clone());
           cachedMaterials.push(...child.material);
         } else if (child.material) {
+          child.material = child.material.clone();
           cachedMaterials.push(child.material);
         }
       }
@@ -1623,34 +1623,7 @@ export class TrainMeshManager {
   }
 
   /**
-   * Set opacity for all materials in a mesh
-   * Recursively traverses the mesh and updates all materials
-   *
-   * @param mesh - The mesh to update
-   * @param opacity - Opacity value between 0 (invisible) and 1 (fully visible)
-   */
-  private setMeshOpacity(mesh: THREE.Group, opacity: number): void {
-    mesh.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        const material = child.material;
-
-        if (Array.isArray(material)) {
-          // Handle multi-material meshes
-          material.forEach((mat) => {
-            mat.transparent = opacity < 1.0;
-            mat.opacity = opacity;
-          });
-        } else if (material) {
-          // Handle single material
-          material.transparent = opacity < 1.0;
-          material.opacity = opacity;
-        }
-      }
-    });
-  }
-
-  /**
-   * Set opacity for multiple trains based on line selection
+   * Set opacity for multiple trains based on line selection.
    * Task: T089 - Filter trains by line selection
    *
    * @param opacities - Map of vehicleKey to opacity (0.0 - 1.0)
@@ -1667,9 +1640,6 @@ export class TrainMeshManager {
           mat.transparent = isTransparent;
           mat.opacity = opacity;
         }
-      } else {
-        // Fallback to mesh traversal
-        this.setMeshOpacity(meshData.mesh, opacity);
       }
     });
   }
@@ -1994,19 +1964,15 @@ export class TrainMeshManager {
 
   /**
    * Determine which station ID to use for STOPPED_AT trains.
-   * Prefer the current stop, then next, then previous (as a last resort).
+   * Only use currentStopId - don't fall back to nextStopId because that's
+   * where the train is GOING, not where it IS. Falling back to nextStopId
+   * caused click-to-zoom to zoom to the wrong station.
    */
   private getStoppedStationId(train: TrainPosition): string | undefined {
     const rawTrain = train as RawTrainPosition;
-    const current = train.currentStopId ?? rawTrain.current_stop_id ?? null;
-    const next = train.nextStopId ?? rawTrain.next_stop_id ?? null;
-    const previous = train.previousStopId ?? rawTrain.previous_stop_id ?? null;
-    return (
-      current ??
-      next ??
-      previous ??
-      undefined
-    );
+    // Only use currentStopId - the actual stop where the train is stopped
+    // Don't fall back to nextStopId (where it's going) or previousStopId
+    return train.currentStopId ?? rawTrain.current_stop_id ?? undefined;
   }
 
   private lastAnimateLogTime = 0;

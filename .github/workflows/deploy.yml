@@ -89,21 +89,64 @@ jobs:
             # Navigate to project directory
             cd ${{ env.DEPLOY_PATH }}
 
+            # =================================================================
+            # Pre-deployment validation
+            # =================================================================
+            echo "Running pre-deployment checks..."
+
+            # Check disk space (require at least 2GB free)
+            AVAILABLE_KB=$(df -k . | tail -1 | awk '{print $4}')
+            REQUIRED_KB=2097152  # 2GB in KB
+            if [ "$AVAILABLE_KB" -lt "$REQUIRED_KB" ]; then
+              echo "ERROR: Insufficient disk space. Available: $((AVAILABLE_KB/1024))MB, Required: 2048MB"
+              exit 1
+            fi
+            echo "✓ Disk space OK: $((AVAILABLE_KB/1024))MB available"
+
+            # Ensure data/gtfs directory exists
+            mkdir -p data/gtfs
+            echo "✓ GTFS data directory exists"
+
+            # Check if ports are available (or used by our containers)
+            for PORT in 80 443; do
+              PID=$(lsof -ti :$PORT 2>/dev/null || true)
+              if [ -n "$PID" ]; then
+                PROC=$(ps -p $PID -o comm= 2>/dev/null || echo "unknown")
+                if [ "$PROC" != "docker-proxy" ] && [ "$PROC" != "caddy" ]; then
+                  echo "WARNING: Port $PORT is in use by $PROC (PID $PID)"
+                fi
+              fi
+            done
+            echo "✓ Port check completed"
+
+            # =================================================================
             # Pull latest changes
+            # =================================================================
             echo "Pulling latest changes..."
             git fetch origin main
             git reset --hard origin/main
 
+            # =================================================================
             # Create/update .env file with secrets
+            # =================================================================
             echo "Updating environment variables..."
-            cat > .env << 'ENVEOF'
-            DOMAIN=${{ secrets.DOMAIN }}
-            VITE_MAPBOX_TOKEN=${{ secrets.VITE_MAPBOX_TOKEN }}
-            TMB_APP_ID=${{ secrets.TMB_APP_ID }}
-            TMB_APP_KEY=${{ secrets.TMB_APP_KEY }}
-            ENVEOF
+            cat > .env << ENVEOF
+DOMAIN=${{ secrets.DOMAIN }}
+VITE_MAPBOX_TOKEN=${{ secrets.VITE_MAPBOX_TOKEN }}
+TMB_APP_ID=${{ secrets.TMB_APP_ID }}
+TMB_APP_KEY=${{ secrets.TMB_APP_KEY }}
+ENVEOF
 
+            # Validate .env file was created correctly
+            if [ ! -s .env ]; then
+              echo "ERROR: .env file is empty or was not created"
+              exit 1
+            fi
+            echo "✓ Environment file created"
+
+            # =================================================================
             # Build and deploy
+            # =================================================================
             echo "Building and deploying containers..."
             if [ "${{ github.event.inputs.force_rebuild }}" = "true" ]; then
               docker compose -f docker-compose.prod.yml build --no-cache
@@ -127,9 +170,29 @@ jobs:
           script: |
             cd ${{ env.DEPLOY_PATH }}
 
-            # Wait for containers to stabilize and healthchecks to pass
-            echo "Waiting for services to be ready..."
-            sleep 30
+            # Wait for Docker health checks to pass (more reliable than fixed sleep)
+            echo "Waiting for services to become healthy..."
+
+            # Wait for API container health check (up to 90 seconds)
+            for i in $(seq 1 18); do
+              API_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minibarcelona3d-api 2>/dev/null || echo "unknown")
+
+              if [ "$API_HEALTH" = "healthy" ]; then
+                echo "API container is healthy!"
+                break
+              fi
+
+              if [ $i -eq 18 ]; then
+                echo "ERROR: API container did not become healthy after 90 seconds"
+                echo "Current health status: $API_HEALTH"
+                docker compose -f docker-compose.prod.yml ps
+                docker compose -f docker-compose.prod.yml logs api --tail=50
+                exit 1
+              fi
+
+              echo "Waiting for API health... (status: $API_HEALTH, attempt $i/18)"
+              sleep 5
+            done
 
             # Check if any container exited with error
             if docker compose -f docker-compose.prod.yml ps | grep -q "Exit"; then
@@ -139,21 +202,14 @@ jobs:
               exit 1
             fi
 
-            # Verify API is responding (check via Docker network)
-            echo "Checking API health..."
-            for i in 1 2 3 4 5; do
-              if docker compose -f docker-compose.prod.yml exec -T api wget -q -O- http://localhost:8080/health > /dev/null 2>&1; then
-                echo "API is healthy!"
-                break
-              fi
-              if [ $i -eq 5 ]; then
-                echo "ERROR: API is not responding after 5 attempts"
-                docker compose -f docker-compose.prod.yml logs api --tail=50
-                exit 1
-              fi
-              echo "Attempt $i failed, retrying in 5s..."
-              sleep 5
-            done
+            # Quick verification that API responds (uses /healthz which doesn't require DB)
+            echo "Verifying API endpoint..."
+            if docker compose -f docker-compose.prod.yml exec -T api wget -q -O- http://localhost:8080/healthz > /dev/null 2>&1; then
+              echo "API is responding!"
+            else
+              echo "Warning: API /healthz check failed, checking /health..."
+              docker compose -f docker-compose.prod.yml exec -T api wget -q -O- http://localhost:8080/health || true
+            fi
 
             # Verify public endpoint is accessible
             echo "Checking public HTTPS endpoint..."

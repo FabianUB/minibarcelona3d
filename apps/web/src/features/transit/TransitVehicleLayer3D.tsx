@@ -40,6 +40,8 @@ export interface TransitVehicleLayer3DProps {
   highlightedLineIds?: string[];
   /** Whether isolate mode is active (hide non-highlighted vs dim them) */
   isolateMode?: boolean;
+  /** Callback when mesh position getter is available */
+  onMeshPositionGetterReady?: (getter: (vehicleKey: string) => [number, number] | null) => void;
 }
 
 /**
@@ -56,6 +58,7 @@ export function TransitVehicleLayer3D({
   modelScale = 1.0,
   highlightedLineIds = [],
   isolateMode = false,
+  onMeshPositionGetterReady,
 }: TransitVehicleLayer3DProps) {
   const [sceneReady, setSceneReady] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -79,6 +82,10 @@ export function TransitVehicleLayer3D({
   const meshManagerRef = useRef<TransitMeshManager | null>(null);
   const environmentRTRef = useRef<THREE.WebGLRenderTarget | null>(null);
   const layerAddedRef = useRef(false);
+
+  // Generation counter to handle StrictMode double-mount race condition.
+  // Ensures only the current meshManager's model loading promise updates state.
+  const meshManagerGenerationRef = useRef(0);
 
   // Store current positions for lookup on click
   const positionsRef = useRef<VehiclePosition[]>([]);
@@ -230,6 +237,9 @@ export function TransitVehicleLayer3D({
       renderingMode: '3d',
 
       onAdd(mapInstance: mapboxgl.Map, gl: WebGLRenderingContext) {
+        // Increment generation to invalidate any pending promises from previous mounts
+        const currentGeneration = ++meshManagerGenerationRef.current;
+
         // Initialize model origin if not set
         if (!getModelOrigin()) {
           setModelOrigin(mapInstance.getCenter());
@@ -313,8 +323,16 @@ export function TransitVehicleLayer3D({
         meshManager
           .loadModel()
           .then(() => {
-            setModelLoaded(true);
-            console.log(`TransitVehicleLayer3D [${networkType}]: Model loaded`);
+            // Only update state if this is still the current generation
+            // Prevents StrictMode race where disposed meshManager's promise updates state
+            if (currentGeneration === meshManagerGenerationRef.current) {
+              setModelLoaded(true);
+              console.log(`TransitVehicleLayer3D [${networkType}]: Model loaded`);
+            } else {
+              console.log(
+                `TransitVehicleLayer3D [${networkType}]: Model loaded but generation changed, ignoring`
+              );
+            }
           })
           .catch((err) => {
             console.error(
@@ -417,20 +435,19 @@ export function TransitVehicleLayer3D({
    */
   useEffect(() => {
     if (!sceneReady || !modelLoaded || !isDataReady || !meshManagerRef.current) {
-      // Log why we're not updating
-      if (positions.length > 0) {
-        console.log(`TransitVehicleLayer3D [${networkType}]: Waiting for conditions`, {
-          sceneReady,
-          modelLoaded,
-          isDataReady,
-          hasMeshManager: !!meshManagerRef.current,
-          positionCount: positions.length,
-        });
-      }
       return;
     }
 
-    console.log(`TransitVehicleLayer3D [${networkType}]: Updating ${positions.length} vehicles`);
+    // Safety check: ensure meshManager's internal model state matches React state
+    // This can desync if model loading promise resolves for a previous meshManager
+    // (e.g., in StrictMode double-mount scenarios)
+    if (!meshManagerRef.current.isModelLoaded()) {
+      // Reset modelLoaded to false - the correct meshManager's promise
+      // will set it to true when it actually finishes loading
+      setModelLoaded(false);
+      return;
+    }
+
     meshManagerRef.current.updateVehicles(positions);
 
     // Apply vehicle opacities based on line selection (highlight/isolate mode)
@@ -665,6 +682,18 @@ export function TransitVehicleLayer3D({
       canvas.removeEventListener('click', handlePointerClick);
     };
   }, [map, sceneReady, handlePointerMove, handlePointerLeave, handlePointerClick]);
+
+  /**
+   * Notify parent when mesh position getter is ready
+   * Allows external components (like VehicleListView) to look up actual mesh positions
+   */
+  useEffect(() => {
+    if (modelLoaded && meshManagerRef.current && onMeshPositionGetterReady) {
+      onMeshPositionGetterReady((vehicleKey: string) => {
+        return meshManagerRef.current?.getVehiclePosition(vehicleKey) ?? null;
+      });
+    }
+  }, [modelLoaded, onMeshPositionGetterReady]);
 
   // This component renders nothing - all rendering is done via Mapbox custom layer
   return null;

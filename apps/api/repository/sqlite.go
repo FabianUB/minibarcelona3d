@@ -80,6 +80,8 @@ func parseTimeString(s *string) *time.Time {
 
 // GetAllTrains returns all current Rodalies train positions
 func (r *SQLiteTrainRepository) GetAllTrains(ctx context.Context) ([]models.Train, error) {
+	// Note: Compare updated_at directly (without datetime() wrapper) to allow index usage.
+	// SQLite's datetime('now') produces lexicographically sortable strings like '2024-01-19 10:30:00'.
 	query := `
 		SELECT
 			vehicle_key,
@@ -106,7 +108,7 @@ func (r *SQLiteTrainRepository) GetAllTrains(ctx context.Context) ([]models.Trai
 			snapshot_id,
 			trip_update_timestamp_utc
 		FROM rt_rodalies_vehicle_current
-		WHERE datetime(updated_at) > datetime('now', '-10 minutes')
+		WHERE updated_at > datetime('now', '-10 minutes')
 		ORDER BY vehicle_key
 	`
 
@@ -298,7 +300,7 @@ func (r *SQLiteTrainRepository) GetTrainsByRoute(ctx context.Context, routeID st
 			trip_update_timestamp_utc
 		FROM rt_rodalies_vehicle_current
 		WHERE route_id = ?
-		  AND datetime(updated_at) > datetime('now', '-10 minutes')
+		  AND updated_at > datetime('now', '-10 minutes')
 		ORDER BY next_stop_sequence
 	`
 

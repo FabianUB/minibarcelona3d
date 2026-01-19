@@ -41,7 +41,8 @@ async function loadAndPreprocessRoutes(): Promise<void> {
     const routeCollection: MetroLineCollection = await loadAllBusRoutes();
 
     for (const feature of routeCollection.features) {
-      const routeCode = feature.properties?.line_code || feature.properties?.route_id;
+      // Bus GeoJSON uses 'route_code', not 'line_code' like metro
+      const routeCode = feature.properties?.route_code || feature.properties?.line_code || feature.properties?.route_id;
       if (!routeCode) continue;
 
       const geometry = feature.geometry as RodaliesLineGeometry;

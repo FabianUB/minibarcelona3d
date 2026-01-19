@@ -1,5 +1,0 @@
-# Data files - do not commit large binary files
-*.zip
-tmb-gtfs/
-tmb-metro/
-amb-bus-gtfs/

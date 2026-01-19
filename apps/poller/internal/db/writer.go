@@ -10,6 +10,9 @@ import (
 
 // CreateSnapshot creates a new snapshot record and returns its ID
 func (db *DB) CreateSnapshot(ctx context.Context, polledAt time.Time) (string, error) {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	snapshotID := uuid.New().String()
 	polledAtStr := polledAt.UTC().Format(time.RFC3339)
 
@@ -50,6 +53,9 @@ type RodaliesPosition struct {
 
 // UpsertRodaliesPositions inserts or updates Rodalies positions
 func (db *DB) UpsertRodaliesPositions(ctx context.Context, snapshotID string, polledAt time.Time, positions []RodaliesPosition) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -179,6 +185,9 @@ type MetroPosition struct {
 // UpsertMetroPositions inserts or updates Metro positions
 // Note: This function now clears the current table before inserting to remove stale positions
 func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polledAt time.Time, positions []MetroPosition) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -359,6 +368,9 @@ type GTFSStopTime struct {
 
 // UpsertGTFSDimensionData populates GTFS dimension tables
 func (db *DB) UpsertGTFSDimensionData(ctx context.Context, network string, stops []GTFSStop, trips []GTFSTrip, stopTimes []GTFSStopTime) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -460,6 +472,9 @@ type GTFSCalendarDate struct {
 
 // UpsertGTFSRouteData populates the routes dimension table
 func (db *DB) UpsertGTFSRouteData(ctx context.Context, network string, routes []GTFSRoute) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -492,6 +507,9 @@ func (db *DB) UpsertGTFSRouteData(ctx context.Context, network string, routes []
 
 // UpsertGTFSCalendarData populates the calendar dimension tables
 func (db *DB) UpsertGTFSCalendarData(ctx context.Context, network string, calendars []GTFSCalendar, calendarDates []GTFSCalendarDate) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -578,6 +596,9 @@ type SchedulePosition struct {
 
 // UpsertSchedulePositions inserts or updates schedule-estimated positions
 func (db *DB) UpsertSchedulePositions(ctx context.Context, snapshotID string, polledAt time.Time, positions []SchedulePosition) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)

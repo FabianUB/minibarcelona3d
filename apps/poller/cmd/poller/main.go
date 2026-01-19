@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -18,11 +18,8 @@ import (
 	"github.com/mini-rodalies-3d/poller/internal/static"
 )
 
-// cleanupState tracks async cleanup to prevent overlapping runs
-var (
-	cleanupMu      sync.Mutex
-	cleanupRunning bool
-)
+// cleanupRunning tracks async cleanup to prevent overlapping runs using atomic CAS
+var cleanupRunning atomic.Bool
 
 func main() {
 	log.Println("Starting Go Poller Service...")
@@ -171,21 +168,14 @@ func pollOnce(ctx context.Context, rodaliesPoller *rodalies.Poller, metroPoller 
 	go runCleanupAsync(database, cfg.RetentionDuration)
 }
 
-// runCleanupAsync runs cleanup in background, skipping if already running
+// runCleanupAsync runs cleanup in background, skipping if already running.
+// Uses atomic CompareAndSwap to avoid TOCTOU race conditions.
 func runCleanupAsync(database *db.DB, retention time.Duration) {
-	cleanupMu.Lock()
-	if cleanupRunning {
-		cleanupMu.Unlock()
-		return // Skip if cleanup is already in progress
+	// Atomically set flag to true only if currently false
+	if !cleanupRunning.CompareAndSwap(false, true) {
+		return // Already running, skip this cleanup cycle
 	}
-	cleanupRunning = true
-	cleanupMu.Unlock()
-
-	defer func() {
-		cleanupMu.Lock()
-		cleanupRunning = false
-		cleanupMu.Unlock()
-	}()
+	defer cleanupRunning.Store(false)
 
 	if err := database.Cleanup(context.Background(), retention); err != nil {
 		log.Printf("Cleanup error: %v", err)

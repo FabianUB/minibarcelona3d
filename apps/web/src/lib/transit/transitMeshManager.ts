@@ -115,6 +115,8 @@ export interface TransitMeshManagerConfig {
   zOffsetFactor?: number;
   /** Zoom level below which to use simple LOD sprites (default: 13) */
   lodThreshold?: number;
+  /** Spread distance in meters along the line to separate overlapping vehicles (default: 30 for buses) */
+  spreadDistanceMeters?: number;
 }
 
 const DEFAULT_CONFIG: Required<TransitMeshManagerConfig> = {
@@ -122,6 +124,7 @@ const DEFAULT_CONFIG: Required<TransitMeshManagerConfig> = {
   modelType: 'metro',
   zOffsetFactor: 0.5,
   lodThreshold: 13,
+  spreadDistanceMeters: 50, // Spread overlapping vehicles along the line by up to 50 meters
 };
 
 /**
@@ -154,6 +157,30 @@ export class TransitMeshManager {
       maxHeightPx: 50,
       targetHeightPx: 30,
     });
+  }
+
+  /**
+   * Calculate a longitudinal offset for a vehicle to spread out overlapping vehicles.
+   * Uses a hash of the vehicle key to get a consistent offset value.
+   * Returns an offset in meters along the line direction.
+   *
+   * This helps visually separate buses/trains that are at the same stop or bunched together,
+   * making them easier to distinguish and click on.
+   */
+  private calculateLongitudinalOffset(vehicleKey: string): number {
+    // Simple hash function to get a consistent value from the vehicle key
+    let hash = 0;
+    for (let i = 0; i < vehicleKey.length; i++) {
+      const char = vehicleKey.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    // Convert hash to a value between 0 and 1 (positive only for consistent direction)
+    const normalizedHash = Math.abs(hash % 1000) / 1000;
+
+    // Scale by the configured spread distance
+    return normalizedHash * this.config.spreadDistanceMeters;
   }
 
   /**
@@ -255,6 +282,38 @@ export class TransitMeshManager {
   }
 
   /**
+   * Get the set of vehicle keys that currently have meshes
+   */
+  getActiveVehicleKeys(): Set<string> {
+    return new Set(this.meshes.keys());
+  }
+
+  /**
+   * Get current position of a vehicle mesh (for click-to-zoom)
+   * Returns [lng, lat] or null if mesh doesn't exist
+   */
+  getVehiclePosition(vehicleKey: string): [number, number] | null {
+    const data = this.meshes.get(vehicleKey);
+    if (!data || !data.currentPosition) {
+      return null;
+    }
+    return data.currentPosition;
+  }
+
+  /**
+   * Get all current vehicle positions (for debugging/comparison)
+   */
+  getAllVehiclePositions(): Map<string, [number, number]> {
+    const positions = new Map<string, [number, number]>();
+    for (const [key, data] of this.meshes) {
+      if (data.currentPosition) {
+        positions.set(key, data.currentPosition);
+      }
+    }
+    return positions;
+  }
+
+  /**
    * Update current zoom level for scale calculations
    */
   setZoom(zoom: number): void {
@@ -309,6 +368,10 @@ export class TransitMeshManager {
    * This is where the vehicle currently appears to be (before any visual mirroring).
    */
   private getCurrentRawDistance(data: TransitMeshData, now: number): number {
+    // Guard against division/modulo by zero which produces NaN
+    if (data.lineTotalLength <= 0) {
+      return data.referenceDistance;
+    }
     const elapsedSeconds = (now - data.referenceTime) / 1000;
     const distanceTraveled = elapsedSeconds * data.speedMetersPerSecond;
     return (data.referenceDistance + distanceTraveled) % data.lineTotalLength;
@@ -332,6 +395,11 @@ export class TransitMeshManager {
     totalLength: number,
     tolerance: number = 50
   ): boolean {
+    // Guard against division/modulo by zero
+    if (totalLength <= 0) {
+      return false; // Can't determine direction, allow update
+    }
+
     // Normalize positions to [0, totalLength)
     currentRaw = ((currentRaw % totalLength) + totalLength) % totalLength;
     newRaw = ((newRaw % totalLength) + totalLength) % totalLength;
@@ -354,6 +422,41 @@ export class TransitMeshManager {
   private static readonly LERP_DURATION_MS = 30000;
 
   /**
+   * Default speed for schedule-based vehicles (meters per second)
+   * Used when progressFraction is available but speed is not
+   * ~25 km/h average for urban transit (bus, tram)
+   */
+  private static readonly DEFAULT_TRANSIT_SPEED_MPS = 7;
+
+  /**
+   * Derive motion parameters from progressFraction and geometry
+   * Returns null if parameters cannot be derived
+   */
+  private deriveMotionParams(
+    vehicle: VehiclePosition
+  ): { distanceAlongLine: number; lineTotalLength: number; speedMetersPerSecond: number } | null {
+    // Need progressFraction to derive position
+    // Note: progressFraction === 0 is VALID (vehicle at start of route)
+    // Only reject if negative (invalid value)
+    if (vehicle.progressFraction < 0) {
+      return null;
+    }
+
+    // Get geometry for this vehicle's route
+    const geometry = this.getGeometry(vehicle.networkType, vehicle.lineCode);
+    if (!geometry || geometry.totalLength <= 0) {
+      return null;
+    }
+
+    const lineTotalLength = geometry.totalLength;
+    // progressFraction of 0 means at the start, which is valid
+    const distanceAlongLine = vehicle.progressFraction * lineTotalLength;
+    const speedMetersPerSecond = TransitMeshManager.DEFAULT_TRANSIT_SPEED_MPS;
+
+    return { distanceAlongLine, lineTotalLength, speedMetersPerSecond };
+  }
+
+  /**
    * Determine which animation mode to use based on available data
    */
   private getAnimationMode(vehicle: VehiclePosition): 'continuous' | 'lerp' {
@@ -364,7 +467,17 @@ export class TransitMeshManager {
       vehicle.lineTotalLength > 0 &&
       vehicle.distanceAlongLine > 0;
 
-    return hasMotionParams ? 'continuous' : 'lerp';
+    if (hasMotionParams) {
+      return 'continuous';
+    }
+
+    // Try to derive motion params from progressFraction
+    const derived = this.deriveMotionParams(vehicle);
+    if (derived) {
+      return 'continuous';
+    }
+
+    return 'lerp';
   }
 
   /**
@@ -398,15 +511,27 @@ export class TransitMeshManager {
       if (existingMesh) {
         if (animationMode === 'continuous') {
           // Continuous motion mode - use speed and distance
+          // Use derived params if vehicle's motion params are missing
+          const derivedParams = vehicle.distanceAlongLine > 0 ? null : this.deriveMotionParams(vehicle);
+          const distanceAlongLine = derivedParams?.distanceAlongLine ?? vehicle.distanceAlongLine;
+          const lineTotalLength = derivedParams?.lineTotalLength ?? vehicle.lineTotalLength;
+          const speedMetersPerSecond = derivedParams?.speedMetersPerSecond ?? vehicle.speedMetersPerSecond;
+
+          // IMPORTANT: Update lineTotalLength BEFORE using it in calculations
+          // This fixes the bug when switching from 'lerp' to 'continuous' mode
+          // where the old lineTotalLength (0) would cause NaN in modulo operations
+          existingMesh.lineTotalLength = lineTotalLength;
+          existingMesh.speedMetersPerSecond = speedMetersPerSecond;
+
           const newRawDistance = this.toRawAnimationDistance(
-            vehicle.distanceAlongLine,
+            distanceAlongLine,
             vehicle.direction,
-            vehicle.lineTotalLength
+            lineTotalLength
           );
 
           const currentRawDistance = this.getCurrentRawDistance(existingMesh, now);
 
-          if (this.wouldMoveBackward(currentRawDistance, newRawDistance, existingMesh.lineTotalLength)) {
+          if (this.wouldMoveBackward(currentRawDistance, newRawDistance, lineTotalLength)) {
             existingMesh.referenceDistance = currentRawDistance;
             existingMesh.referenceTime = now;
           } else {
@@ -414,8 +539,6 @@ export class TransitMeshManager {
             existingMesh.referenceTime = vehicle.estimatedAt;
           }
 
-          existingMesh.speedMetersPerSecond = vehicle.speedMetersPerSecond;
-          existingMesh.lineTotalLength = vehicle.lineTotalLength;
           existingMesh.animationMode = 'continuous';
         } else {
           // Lerp mode - interpolate between current and target position
@@ -523,13 +646,17 @@ export class TransitMeshManager {
     // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
-    // Collect materials for fast opacity updates (avoids mesh traversal later)
+    // Clone materials for each mesh to ensure independent opacity control.
+    // This prevents layers sharing the same model type (e.g., FGC and Metro both use 'metro')
+    // from sharing material references - setting opacity on one would affect the other.
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         if (Array.isArray(child.material)) {
+          child.material = child.material.map(m => m.clone());
           cachedMaterials.push(...child.material);
         } else if (child.material) {
+          child.material = child.material.clone();
           cachedMaterials.push(child.material);
         }
       }
@@ -538,11 +665,26 @@ export class TransitMeshManager {
     // Add to scene
     this.scene.add(mesh);
 
+    // For continuous mode, derive motion params if API values are missing (0)
+    // This is critical for schedule-based vehicles where API returns 0 for these fields
+    let distanceAlongLine = vehicle.distanceAlongLine;
+    let speedMetersPerSecond = vehicle.speedMetersPerSecond;
+    let lineTotalLength = vehicle.lineTotalLength;
+
+    if (animationMode === 'continuous' && vehicle.distanceAlongLine <= 0) {
+      const derivedParams = this.deriveMotionParams(vehicle);
+      if (derivedParams) {
+        distanceAlongLine = derivedParams.distanceAlongLine;
+        speedMetersPerSecond = derivedParams.speedMetersPerSecond;
+        lineTotalLength = derivedParams.lineTotalLength;
+      }
+    }
+
     // Convert to raw animation distance for consistent forward movement
     const rawDistance = this.toRawAnimationDistance(
-      vehicle.distanceAlongLine,
+      distanceAlongLine,
       vehicle.direction,
-      vehicle.lineTotalLength
+      lineTotalLength
     );
 
     const now = Date.now();
@@ -562,8 +704,8 @@ export class TransitMeshManager {
       // Continuous motion parameters
       referenceDistance: rawDistance,
       referenceTime: vehicle.estimatedAt,
-      speedMetersPerSecond: vehicle.speedMetersPerSecond,
-      lineTotalLength: vehicle.lineTotalLength,
+      speedMetersPerSecond: speedMetersPerSecond,
+      lineTotalLength: lineTotalLength,
 
       // Lerp animation parameters (initialize to current position)
       targetPosition: currentPos,
@@ -667,12 +809,32 @@ export class TransitMeshManager {
    * Animate using continuous motion (speed-based)
    */
   private animateContinuous(data: TransitMeshData, now: number): void {
+    // Get line geometry to sample position - must have geometry for continuous mode
+    const geometry = this.getGeometry(data.networkType, data.lineCode);
+    if (!geometry || geometry.totalLength <= 0) {
+      // No geometry available - can't animate in continuous mode
+      // This shouldn't happen if getAnimationMode worked correctly
+      console.warn(`[TransitMeshManager] No geometry for continuous animation: ${data.networkType}/${data.lineCode}`);
+      return;
+    }
+
+    // Guard against invalid lineTotalLength (would cause NaN from modulo)
+    if (data.lineTotalLength <= 0) {
+      // Use geometry's total length as fallback
+      data.lineTotalLength = geometry.totalLength;
+    }
+
     // Calculate current distance based on elapsed time
     const elapsedSeconds = (now - data.referenceTime) / 1000;
     const distanceTraveled = elapsedSeconds * data.speedMetersPerSecond;
 
     // Calculate current distance along line (with wrapping)
     let currentDistance = (data.referenceDistance + distanceTraveled) % data.lineTotalLength;
+
+    // Apply longitudinal offset to spread overlapping vehicles along the line
+    // This is added BEFORE the direction mirroring so vehicles spread consistently
+    const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
+    currentDistance = (currentDistance + spreadOffset) % data.lineTotalLength;
 
     // For reverse direction, mirror the distance
     if (data.direction === 1) {
@@ -682,31 +844,26 @@ export class TransitMeshManager {
       }
     }
 
-    // Get line geometry to sample position
-    const geometry = this.getGeometry(data.networkType, data.lineCode);
+    // Sample position and bearing from geometry
+    const { position, bearing } = sampleRailwayPosition(geometry, currentDistance);
 
-    if (geometry) {
-      // Sample position and bearing from geometry
-      const { position, bearing } = sampleRailwayPosition(geometry, currentDistance);
+    // Adjust bearing for reverse direction
+    const finalBearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
 
-      // Adjust bearing for reverse direction
-      const finalBearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+    // Update position
+    const pos = getModelPosition(position[0], position[1], 0);
+    data.mesh.position.set(
+      pos.x,
+      pos.y,
+      pos.z + this.config.zOffsetFactor * data.baseScale
+    );
 
-      // Update position
-      const pos = getModelPosition(position[0], position[1], 0);
-      data.mesh.position.set(
-        pos.x,
-        pos.y,
-        pos.z + this.config.zOffsetFactor * data.baseScale
-      );
+    // Update bearing
+    this.applyBearing(data.mesh, finalBearing);
 
-      // Update bearing
-      this.applyBearing(data.mesh, finalBearing);
-
-      // Update current state
-      data.currentPosition = position;
-      data.currentBearing = finalBearing;
-    }
+    // Update current state (store actual position for click-to-zoom)
+    data.currentPosition = [position[0], position[1]];
+    data.currentBearing = finalBearing;
   }
 
   /**
@@ -731,8 +888,12 @@ export class TransitMeshManager {
       const geometry = this.getGeometry(data.networkType, data.lineCode);
       if (geometry) {
         // Interpolate along pre-computed railway distance
-        const distance = data.precomputedSnap.startDistance +
+        let distance = data.precomputedSnap.startDistance +
           (data.precomputedSnap.endDistance - data.precomputedSnap.startDistance) * eased;
+
+        // Apply longitudinal offset to spread overlapping vehicles along the line
+        const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
+        distance = (distance + spreadOffset) % geometry.totalLength;
 
         // Sample position from geometry (O(log n) binary search, no snapping)
         const sample = sampleRailwayPosition(geometry, distance);
