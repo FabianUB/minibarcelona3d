@@ -1036,13 +1036,18 @@ export class TrainMeshManager {
     const boundingSphere = new THREE.Sphere();
     centerBox.getBoundingSphere(boundingSphere);
 
-    // Collect materials for fast opacity updates (avoids mesh traversal later)
+    // Collect and CLONE materials for fast opacity updates.
+    // IMPORTANT: Clone materials to ensure each mesh has independent materials.
+    // Without cloning, trains sharing the same model type (e.g., R1 and R2 both using 'civia')
+    // would share material references. Setting opacity on one would affect the other.
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         if (Array.isArray(child.material)) {
+          child.material = child.material.map(m => m.clone());
           cachedMaterials.push(...child.material);
         } else if (child.material) {
+          child.material = child.material.clone();
           cachedMaterials.push(child.material);
         }
       }
