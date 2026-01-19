@@ -30,6 +30,8 @@ interface VehicleListViewProps {
   tramPositions?: VehiclePosition[];
   fgcPositions?: VehiclePosition[];
   onVehicleClick?: (lat: number, lng: number) => void;
+  /** Optional function to get actual mesh position (accounts for line snapping) */
+  getMeshPosition?: ((vehicleKey: string) => [number, number] | null) | null;
   className?: string;
 }
 
@@ -68,6 +70,7 @@ export function VehicleListView({
   tramPositions = [],
   fgcPositions = [],
   onVehicleClick,
+  getMeshPosition,
   className,
 }: VehicleListViewProps) {
   const { ui } = useMapState();
@@ -285,12 +288,41 @@ export function VehicleListView({
                 }}
               >
                 <button
-                  onClick={() =>
-                    vehicle.lat &&
-                    vehicle.lng &&
-                    onVehicleClick?.(vehicle.lat, vehicle.lng)
+                  onClick={() => {
+                    // Try to get actual mesh position (accounts for line snapping)
+                    // Fall back to API coordinates if mesh position unavailable
+                    const meshPos = getMeshPosition?.(vehicle.id);
+                    if (meshPos) {
+                      // Mesh position is [lng, lat] format
+                      onVehicleClick?.(meshPos[1], meshPos[0]);
+                      return;
+                    }
+
+                    // Fallback to API coordinates with bounds validation
+                    // Barcelona bounds: lat ~41.3-41.5, lng ~2.0-2.3
+                    const hasValidCoords =
+                      vehicle.lat != null &&
+                      vehicle.lng != null &&
+                      vehicle.lat > 40 &&
+                      vehicle.lat < 43 &&
+                      vehicle.lng > 1 &&
+                      vehicle.lng < 4;
+                    if (hasValidCoords) {
+                      onVehicleClick?.(vehicle.lat!, vehicle.lng!);
+                    }
+                  }}
+                  disabled={
+                    // Disable if we don't have mesh position AND API coords are invalid
+                    !getMeshPosition?.(vehicle.id) && (
+                      vehicle.lat == null ||
+                      vehicle.lng == null ||
+                      vehicle.lat < 40 ||
+                      vehicle.lat > 43 ||
+                      vehicle.lng < 1 ||
+                      vehicle.lng > 4
+                    )
                   }
-                  className="w-full h-full px-3 py-2 flex items-center gap-3 text-left hover:bg-muted/50 transition-colors border-b"
+                  className="w-full h-full px-3 py-2 flex items-center gap-3 text-left hover:bg-muted/50 transition-colors border-b disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span
                     className="w-10 h-6 flex items-center justify-center rounded text-xs font-bold text-white shrink-0"

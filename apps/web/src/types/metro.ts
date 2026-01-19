@@ -26,14 +26,17 @@ export interface MetroStationFeatureProperties {
 }
 
 /**
- * Properties for Metro line geometry GeoJSON features
+ * Properties for Metro/Bus line geometry GeoJSON features
+ * Metro uses line_code, Bus uses route_code
  */
 export interface MetroLineFeatureProperties {
-  route_id: string;
-  line_code: string;
-  name: string;
+  route_id?: string;
+  line_code?: string;
+  route_code?: string;  // Bus routes use route_code instead of line_code
+  name?: string;
+  route_name?: string;  // Bus routes use route_name
   color: string;
-  text_color: string;
+  text_color?: string;
 }
 
 export type MetroStationFeature = Feature<MetroStationFeatureProperties, PointGeometry>;

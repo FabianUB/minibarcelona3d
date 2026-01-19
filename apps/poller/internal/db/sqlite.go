@@ -5,14 +5,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	_ "modernc.org/sqlite"
 )
 
-// DB wraps a SQLite database connection
+// DB wraps a SQLite database connection with write serialization
 type DB struct {
-	conn *sql.DB
+	conn    *sql.DB
+	writeMu sync.Mutex // Serializes all write operations to prevent transaction conflicts
 }
 
 // Connect opens a SQLite database with WAL mode enabled
@@ -25,8 +27,11 @@ func Connect(dbPath string) (*DB, error) {
 	}
 
 	// Configure connection pool
-	// SQLite only supports one writer at a time, so we limit to 1 connection
-	// to prevent "cannot start a transaction within a transaction" errors
+	// SQLite only supports one writer at a time. We use a combination of:
+	// 1. MaxOpenConns(1) to ensure a single connection
+	// 2. A write mutex (writeMu) to serialize all write operations
+	// This prevents "cannot start a transaction within a transaction" errors
+	// when async operations (like cleanup) run concurrently with polling.
 	conn.SetMaxOpenConns(1)
 	conn.SetMaxIdleConns(1)
 	conn.SetConnMaxLifetime(time.Hour)
@@ -64,8 +69,23 @@ func (db *DB) Conn() *sql.DB {
 	return db.conn
 }
 
+// LockWrite acquires the write mutex. Must be paired with UnlockWrite.
+// Use this for any operation that modifies the database to prevent
+// "cannot start a transaction within a transaction" errors.
+func (db *DB) LockWrite() {
+	db.writeMu.Lock()
+}
+
+// UnlockWrite releases the write mutex.
+func (db *DB) UnlockWrite() {
+	db.writeMu.Unlock()
+}
+
 // EnsureSchema creates tables if they don't exist
 func (db *DB) EnsureSchema(ctx context.Context) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	schema := `
 	-- Snapshots table
 	CREATE TABLE IF NOT EXISTS rt_snapshots (

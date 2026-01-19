@@ -203,28 +203,11 @@ export function useSchedulePositions(
   }, [fetchPositions]);
 
   /**
-   * Preload geometries on mount
-   * Required for both simulation fallback AND route snapping (even with API positions)
-   */
-  useEffect(() => {
-    if (!enabled || !preloadGeometries || geometriesLoadedRef.current) return;
-
-    async function preload() {
-      try {
-        await preloadGeometries!();
-        geometriesLoadedRef.current = true;
-        console.log(`${network.toUpperCase()}: Geometries preloaded for route snapping`);
-      } catch (err) {
-        console.warn(`Failed to preload ${network} geometries:`, err);
-        // Non-fatal - vehicles will use straight-line interpolation instead
-      }
-    }
-
-    void preload();
-  }, [enabled, network, preloadGeometries]);
-
-  /**
-   * Set up polling when enabled
+   * Preload geometries and then set up polling
+   *
+   * IMPORTANT: Geometry must be preloaded BEFORE fetching positions to ensure
+   * vehicles can be snapped to routes. Otherwise, the first update will use
+   * raw GPS interpolation (straight lines) instead of following routes.
    */
   useEffect(() => {
     if (!enabled) {
@@ -236,21 +219,46 @@ export function useSchedulePositions(
       return;
     }
 
-    // Initial fetch
-    void fetchPositions();
+    let cancelled = false;
 
-    // Set up polling interval
-    pollingIntervalRef.current = setInterval(() => {
-      void fetchPositions();
-    }, intervalMs);
+    async function initializeAndPoll() {
+      // Step 1: Preload geometries first (if available and not already loaded)
+      if (preloadGeometries && !geometriesLoadedRef.current) {
+        try {
+          await preloadGeometries();
+          geometriesLoadedRef.current = true;
+          console.log(`${network.toUpperCase()}: Geometries preloaded for route snapping`);
+        } catch (err) {
+          console.warn(`Failed to preload ${network} geometries:`, err);
+          // Non-fatal - vehicles will use straight-line interpolation instead
+        }
+      }
+
+      // Check if cancelled during preload
+      if (cancelled) return;
+
+      // Step 2: Initial fetch (after geometry is loaded)
+      await fetchPositions();
+
+      // Check if cancelled during fetch
+      if (cancelled) return;
+
+      // Step 3: Set up polling interval for subsequent updates
+      pollingIntervalRef.current = setInterval(() => {
+        void fetchPositions();
+      }, intervalMs);
+    }
+
+    void initializeAndPoll();
 
     return () => {
+      cancelled = true;
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
       }
     };
-  }, [enabled, intervalMs, fetchPositions]);
+  }, [enabled, intervalMs, fetchPositions, network, preloadGeometries]);
 
   return {
     positions,

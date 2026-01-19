@@ -198,7 +198,6 @@ export function useMetroPositions(
 
     if (!apiSuccess) {
       // Fall back to simulation
-      console.log('Metro: Falling back to simulation');
       await fetchFromSimulation();
     }
 

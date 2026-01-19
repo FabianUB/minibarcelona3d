@@ -9,6 +9,9 @@ import (
 
 // Cleanup deletes data older than the specified retention duration
 func (db *DB) Cleanup(ctx context.Context, retention time.Duration) error {
+	db.LockWrite()
+	defer db.UnlockWrite()
+
 	hours := int(retention.Hours())
 	if hours < 1 {
 		hours = 1

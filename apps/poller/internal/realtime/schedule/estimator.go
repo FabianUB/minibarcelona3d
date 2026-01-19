@@ -85,6 +85,16 @@ func (e *Estimator) estimateTripPosition(ctx context.Context, trip ActiveTrip, c
 		return nil, nil // Trip hasn't started or has ended
 	}
 
+	// Validate stop coordinates - skip if either stop has invalid coordinates
+	// Valid bounds for Catalunya: lat 40-43, lng 0-4
+	// Stops with (0,0) or out-of-bounds coordinates indicate missing/corrupt GTFS data
+	if !isValidCoordinate(prevStop.StopLat, prevStop.StopLon) {
+		return nil, nil // Previous stop has invalid coordinates
+	}
+	if !isValidCoordinate(nextStop.StopLat, nextStop.StopLon) {
+		return nil, nil // Next stop has invalid coordinates
+	}
+
 	// Interpolate position between the two stops
 	lat, lng, bearing := InterpolateAlongSegment(
 		prevStop.StopLat, prevStop.StopLon,
