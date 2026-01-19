@@ -110,7 +110,7 @@ interface TrainMeshData {
   nextStopId?: string; // Next stop ID for schedule lookup
   lastPredictiveSource?: 'gps' | 'predicted' | 'blended'; // Source of last position update
   predictiveConfidence?: number; // Confidence in predictive position (0-1)
-  // Performance: Cached material references to avoid mesh traversal in setMeshOpacity
+  // Performance: Cached material references for shared material access
   cachedMaterials?: THREE.Material[];
 }
 
@@ -1036,10 +1036,9 @@ export class TrainMeshManager {
     const boundingSphere = new THREE.Sphere();
     centerBox.getBoundingSphere(boundingSphere);
 
-    // Collect and CLONE materials for fast opacity updates.
-    // IMPORTANT: Clone materials to ensure each mesh has independent materials.
-    // Without cloning, trains sharing the same model type (e.g., R1 and R2 both using 'civia')
-    // would share material references. Setting opacity on one would affect the other.
+    // Clone materials for each mesh to ensure independent opacity control.
+    // This prevents trains sharing the same model type (e.g., R1 and R2 both using 'civia')
+    // from sharing material references - setting opacity on one would affect the other.
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -1624,34 +1623,7 @@ export class TrainMeshManager {
   }
 
   /**
-   * Set opacity for all materials in a mesh
-   * Recursively traverses the mesh and updates all materials
-   *
-   * @param mesh - The mesh to update
-   * @param opacity - Opacity value between 0 (invisible) and 1 (fully visible)
-   */
-  private setMeshOpacity(mesh: THREE.Group, opacity: number): void {
-    mesh.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        const material = child.material;
-
-        if (Array.isArray(material)) {
-          // Handle multi-material meshes
-          material.forEach((mat) => {
-            mat.transparent = opacity < 1.0;
-            mat.opacity = opacity;
-          });
-        } else if (material) {
-          // Handle single material
-          material.transparent = opacity < 1.0;
-          material.opacity = opacity;
-        }
-      }
-    });
-  }
-
-  /**
-   * Set opacity for multiple trains based on line selection
+   * Set opacity for multiple trains based on line selection.
    * Task: T089 - Filter trains by line selection
    *
    * @param opacities - Map of vehicleKey to opacity (0.0 - 1.0)
@@ -1668,9 +1640,6 @@ export class TrainMeshManager {
           mat.transparent = isTransparent;
           mat.opacity = opacity;
         }
-      } else {
-        // Fallback to mesh traversal
-        this.setMeshOpacity(meshData.mesh, opacity);
       }
     });
   }
