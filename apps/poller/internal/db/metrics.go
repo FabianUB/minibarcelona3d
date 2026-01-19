@@ -79,8 +79,9 @@ func (db *DB) GetVehicleCount(ctx context.Context, network metrics.NetworkType) 
 }
 
 // getRealTimeVehicleCount counts vehicles from real-time tables
+// Note: Compare updated_at directly (without datetime() wrapper) to allow index usage.
 func (db *DB) getRealTimeVehicleCount(ctx context.Context, table string) (int, error) {
-	query := `SELECT COUNT(*) FROM ` + table + ` WHERE datetime(updated_at) > datetime('now', '-10 minutes')`
+	query := `SELECT COUNT(*) FROM ` + table + ` WHERE updated_at > datetime('now', '-10 minutes')`
 	var count int
 	err := db.conn.QueryRowContext(ctx, query).Scan(&count)
 	if err != nil {
