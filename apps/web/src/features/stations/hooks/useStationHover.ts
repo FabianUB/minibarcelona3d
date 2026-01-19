@@ -46,6 +46,7 @@ export function useStationHover({
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lineCountTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const removeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentStationRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -159,9 +160,13 @@ export function useStationHover({
         clearTimeout(lineCountTimeoutRef.current);
         lineCountTimeoutRef.current = null;
       }
+      if (removeTimeoutRef.current) {
+        clearTimeout(removeTimeoutRef.current);
+      }
 
       // Remove popup with 200ms delay (meets requirement)
-      setTimeout(() => {
+      // Track timeout to prevent memory leak if component unmounts
+      removeTimeoutRef.current = setTimeout(() => {
         if (popupRef.current) {
           popupRef.current.remove();
         }
@@ -196,6 +201,9 @@ export function useStationHover({
       }
       if (lineCountTimeoutRef.current) {
         clearTimeout(lineCountTimeoutRef.current);
+      }
+      if (removeTimeoutRef.current) {
+        clearTimeout(removeTimeoutRef.current);
       }
       if (popupRef.current) {
         popupRef.current.remove();

@@ -688,9 +688,14 @@ export function MapCanvas() {
     map.once('moveend', () => {
       skipMoveSyncRef.current = false;
     });
-    setTimeout(() => {
+    // Fallback timeout in case moveend doesn't fire - tracked to prevent memory leak
+    const fallbackTimeout = setTimeout(() => {
       skipMoveSyncRef.current = false;
     }, 0);
+
+    return () => {
+      clearTimeout(fallbackTimeout);
+    };
   }, [effectiveViewport, updateCameraSnapshot]);
 
   useEffect(() => {
