@@ -151,6 +151,7 @@ type MapViewport struct {
 }
 
 // LineColorMap contains brand colors for Rodalies lines
+// Colors sourced from official Rodalies Catalunya branding and Wikidata
 var LineColorMap = map[string]string{
 	"R1":  "7DBCEC",
 	"R2":  "26A741",
@@ -160,15 +161,17 @@ var LineColorMap = map[string]string{
 	"R4":  "F7A30D",
 	"R7":  "B57CBB",
 	"R8":  "88016A",
-	"RG1": "409EF5",
-	"RL3": "B6AE33",
-	"RL4": "F7A30D",
-	"RT2": "F965DE",
 	"R11": "0069AA",
+	"R13": "E52E87", // Magenta/pink - Barcelona-Lleida regional
 	"R14": "6C60A8",
 	"R15": "978571",
 	"R16": "B52B46",
 	"R17": "F3B12E",
+	"RG1": "409EF5",
+	"RL3": "B6AE33",
+	"RL4": "F7A30D",
+	"RT1": "35BDB2", // Teal - Camp de Tarragona commuter
+	"RT2": "F965DE",
 }
 
 // LineOrderMap contains display order for Rodalies lines
@@ -181,15 +184,17 @@ var LineOrderMap = map[string]int{
 	"R4":  6,
 	"R7":  7,
 	"R8":  8,
-	"RG1": 9,
-	"RL3": 10,
-	"RL4": 11,
-	"RT2": 12,
-	"R11": 13,
-	"R14": 14,
-	"R15": 15,
-	"R16": 16,
-	"R17": 17,
+	"R11": 9,
+	"R13": 10,
+	"R14": 11,
+	"R15": 12,
+	"R16": 13,
+	"R17": 14,
+	"RG1": 15,
+	"RL3": 16,
+	"RL4": 17,
+	"RT1": 18,
+	"RT2": 19,
 }
 
 // Generate creates GeoJSON files from GTFS data
