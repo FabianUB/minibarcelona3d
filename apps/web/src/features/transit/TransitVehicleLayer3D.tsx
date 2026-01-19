@@ -435,16 +435,6 @@ export function TransitVehicleLayer3D({
    */
   useEffect(() => {
     if (!sceneReady || !modelLoaded || !isDataReady || !meshManagerRef.current) {
-      // Log why we're not updating
-      if (positions.length > 0) {
-        console.log(`TransitVehicleLayer3D [${networkType}]: Waiting for conditions`, {
-          sceneReady,
-          modelLoaded,
-          isDataReady,
-          hasMeshManager: !!meshManagerRef.current,
-          positionCount: positions.length,
-        });
-      }
       return;
     }
 
@@ -452,17 +442,12 @@ export function TransitVehicleLayer3D({
     // This can desync if model loading promise resolves for a previous meshManager
     // (e.g., in StrictMode double-mount scenarios)
     if (!meshManagerRef.current.isModelLoaded()) {
-      console.warn(
-        `TransitVehicleLayer3D [${networkType}]: State desync detected - ` +
-        `React says loaded but meshManager disagrees. Resetting state.`
-      );
       // Reset modelLoaded to false - the correct meshManager's promise
       // will set it to true when it actually finishes loading
       setModelLoaded(false);
       return;
     }
 
-    console.log(`TransitVehicleLayer3D [${networkType}]: Updating ${positions.length} vehicles`);
     meshManagerRef.current.updateVehicles(positions);
 
     // Apply vehicle opacities based on line selection (highlight/isolate mode)
