@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mini-rodalies-3d/poller/internal/config"
@@ -29,11 +30,12 @@ const (
 
 // Poller handles real-time polling of Metro iMetro API
 type Poller struct {
-	db         *db.DB
-	cfg        *config.Config
-	client     *http.Client
-	stations   map[string]Station // keyed by stop_code
-	lineGeoms  map[string]LineGeometry
+	db        *db.DB
+	cfg       *config.Config
+	client    *http.Client
+	mu        sync.RWMutex              // protects stations and lineGeoms
+	stations  map[string]Station        // keyed by stop_code
+	lineGeoms map[string]LineGeometry
 }
 
 // NewPoller creates a new Metro poller
@@ -51,13 +53,16 @@ func NewPoller(database *db.DB, cfg *config.Config) *Poller {
 
 // LoadStaticData loads stations and line geometries from GeoJSON files
 func (p *Poller) LoadStaticData() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	// Load stations
-	if err := p.loadStations(); err != nil {
+	if err := p.loadStationsLocked(); err != nil {
 		return fmt.Errorf("failed to load stations: %w", err)
 	}
 
 	// Load line geometries
-	if err := p.loadLineGeometries(); err != nil {
+	if err := p.loadLineGeometriesLocked(); err != nil {
 		return fmt.Errorf("failed to load line geometries: %w", err)
 	}
 
@@ -65,7 +70,8 @@ func (p *Poller) LoadStaticData() error {
 	return nil
 }
 
-func (p *Poller) loadStations() error {
+// loadStationsLocked loads stations - caller must hold p.mu lock
+func (p *Poller) loadStationsLocked() error {
 	data, err := os.ReadFile(p.cfg.StationsGeoJSON)
 	if err != nil {
 		return err
@@ -105,7 +111,8 @@ func (p *Poller) loadStations() error {
 	return nil
 }
 
-func (p *Poller) loadLineGeometries() error {
+// loadLineGeometriesLocked loads line geometries - caller must hold p.mu lock
+func (p *Poller) loadLineGeometriesLocked() error {
 	files, err := filepath.Glob(filepath.Join(p.cfg.LinesDir, "*.geojson"))
 	if err != nil {
 		return err
@@ -174,6 +181,12 @@ func (p *Poller) Poll(ctx context.Context) error {
 		return nil
 	}
 
+	// Take a snapshot of static data to avoid holding lock during API calls
+	p.mu.RLock()
+	stations := p.stations
+	lineGeoms := p.lineGeoms
+	p.mu.RUnlock()
+
 	polledAt := time.Now().UTC()
 
 	// Fetch arrivals from iMetro API
@@ -211,7 +224,7 @@ func (p *Poller) Poll(ctx context.Context) error {
 	// Estimate positions
 	var positions []EstimatedPosition
 	for trainKey, trainArrivals := range trainGroups {
-		pos := p.estimatePosition(trainKey, trainArrivals)
+		pos := p.estimatePosition(trainKey, trainArrivals, stations, lineGeoms)
 		if pos != nil {
 			positions = append(positions, *pos)
 		}
@@ -352,7 +365,7 @@ func (p *Poller) groupArrivalsByTrain(arrivals []TrainArrival) map[string][]Trai
 	return groups
 }
 
-func (p *Poller) estimatePosition(trainKey string, arrivals []TrainArrival) *EstimatedPosition {
+func (p *Poller) estimatePosition(trainKey string, arrivals []TrainArrival, stations map[string]Station, lineGeoms map[string]LineGeometry) *EstimatedPosition {
 	if len(arrivals) == 0 {
 		return nil
 	}
@@ -364,7 +377,7 @@ func (p *Poller) estimatePosition(trainKey string, arrivals []TrainArrival) *Est
 	secondsToNext := nextArrival.SecondsToNext
 
 	// Look up station
-	station, ok := p.stations[nextArrival.StationCode]
+	station, ok := stations[nextArrival.StationCode]
 	if !ok {
 		return nil
 	}
@@ -396,7 +409,7 @@ func (p *Poller) estimatePosition(trainKey string, arrivals []TrainArrival) *Est
 		}
 
 		// Try to interpolate along line geometry
-		lineGeom, hasGeom := p.lineGeoms[lineCode]
+		lineGeom, hasGeom := lineGeoms[lineCode]
 		if hasGeom && len(lineGeom.Coordinates) > 1 {
 			// Find station position in line
 			stationCoord := [2]float64{station.Longitude, station.Latitude}
@@ -458,7 +471,7 @@ func (p *Poller) estimatePosition(trainKey string, arrivals []TrainArrival) *Est
 	// Get line total length and calculate distance along line
 	var lineTotalLength float64
 	var distanceAlongLine float64
-	if lineGeom, ok := p.lineGeoms[lineCode]; ok {
+	if lineGeom, ok := lineGeoms[lineCode]; ok {
 		lineTotalLength = lineGeom.TotalLength
 		// Calculate distance from line start to current position
 		distanceAlongLine = DistanceToPoint(lineGeom.Coordinates, [2]float64{lng, lat})
