@@ -130,9 +130,11 @@ export function GenericStopLayer({
             15, circleRadius.zoom15,
             18, circleRadius.zoom18,
           ],
-          'circle-color': fallbackColor
-            ? ['coalesce', ['get', 'primary_color'], fallbackColor]
-            : ['get', 'primary_color'],
+          'circle-color': [
+            'coalesce',
+            ['get', 'primary_color'],
+            fallbackColor ?? '#888888',
+          ],
           'circle-stroke-width': [
             'interpolate',
             ['linear'],

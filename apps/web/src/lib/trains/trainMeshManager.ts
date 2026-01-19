@@ -754,12 +754,8 @@ export class TrainMeshManager {
     const meshData = this.trainMeshes.get(vehicleKey);
     if (!meshData) return null;
 
-    // currentPosition stores the [lng, lat] of the mesh
-    // For parked trains, this is updated to the parking position
-    // For moving trains, this is interpolated between positions
-    if (meshData.parkingPosition) {
-      return meshData.parkingPosition.position;
-    }
+    // Always use currentPosition - it's updated during animation to match
+    // the visual position of the mesh (including interpolation and snapping)
     return meshData.currentPosition;
   }
 
@@ -1994,19 +1990,15 @@ export class TrainMeshManager {
 
   /**
    * Determine which station ID to use for STOPPED_AT trains.
-   * Prefer the current stop, then next, then previous (as a last resort).
+   * Only use currentStopId - don't fall back to nextStopId because that's
+   * where the train is GOING, not where it IS. Falling back to nextStopId
+   * caused click-to-zoom to zoom to the wrong station.
    */
   private getStoppedStationId(train: TrainPosition): string | undefined {
     const rawTrain = train as RawTrainPosition;
-    const current = train.currentStopId ?? rawTrain.current_stop_id ?? null;
-    const next = train.nextStopId ?? rawTrain.next_stop_id ?? null;
-    const previous = train.previousStopId ?? rawTrain.previous_stop_id ?? null;
-    return (
-      current ??
-      next ??
-      previous ??
-      undefined
-    );
+    // Only use currentStopId - the actual stop where the train is stopped
+    // Don't fall back to nextStopId (where it's going) or previousStopId
+    return train.currentStopId ?? rawTrain.current_stop_id ?? undefined;
   }
 
   private lastAnimateLogTime = 0;
