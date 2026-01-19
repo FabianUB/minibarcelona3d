@@ -83,6 +83,10 @@ export function TransitVehicleLayer3D({
   const environmentRTRef = useRef<THREE.WebGLRenderTarget | null>(null);
   const layerAddedRef = useRef(false);
 
+  // Generation counter to handle StrictMode double-mount race condition.
+  // Ensures only the current meshManager's model loading promise updates state.
+  const meshManagerGenerationRef = useRef(0);
+
   // Store current positions for lookup on click
   const positionsRef = useRef<VehiclePosition[]>([]);
 
@@ -233,6 +237,9 @@ export function TransitVehicleLayer3D({
       renderingMode: '3d',
 
       onAdd(mapInstance: mapboxgl.Map, gl: WebGLRenderingContext) {
+        // Increment generation to invalidate any pending promises from previous mounts
+        const currentGeneration = ++meshManagerGenerationRef.current;
+
         // Initialize model origin if not set
         if (!getModelOrigin()) {
           setModelOrigin(mapInstance.getCenter());
@@ -316,8 +323,16 @@ export function TransitVehicleLayer3D({
         meshManager
           .loadModel()
           .then(() => {
-            setModelLoaded(true);
-            console.log(`TransitVehicleLayer3D [${networkType}]: Model loaded`);
+            // Only update state if this is still the current generation
+            // Prevents StrictMode race where disposed meshManager's promise updates state
+            if (currentGeneration === meshManagerGenerationRef.current) {
+              setModelLoaded(true);
+              console.log(`TransitVehicleLayer3D [${networkType}]: Model loaded`);
+            } else {
+              console.log(
+                `TransitVehicleLayer3D [${networkType}]: Model loaded but generation changed, ignoring`
+              );
+            }
           })
           .catch((err) => {
             console.error(
