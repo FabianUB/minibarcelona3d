@@ -646,10 +646,9 @@ export class TransitMeshManager {
     // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
-    // Collect and CLONE materials for fast opacity updates.
-    // IMPORTANT: Clone materials to ensure each mesh has independent materials.
-    // Without cloning, layers sharing the same model type (e.g., FGC and Metro both use 'metro')
-    // would share material references. Setting opacity on one would affect the other.
+    // Clone materials for each mesh to ensure independent opacity control.
+    // This prevents layers sharing the same model type (e.g., FGC and Metro both use 'metro')
+    // from sharing material references - setting opacity on one would affect the other.
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
