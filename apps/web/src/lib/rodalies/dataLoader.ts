@@ -85,6 +85,7 @@ function loadManifestFromLocalStorage(): RodaliesManifest | null {
 let manifestPromise: Promise<RodaliesManifest> | null = null;
 const lineCollectionCache = new Map<string, Promise<RodaliesLineCollection>>();
 let stationCollectionPromise: Promise<StationFeatureCollection> | null = null;
+let stationListPromise: Promise<Station[]> | null = null;
 let lineGeometryCollectionPromise: Promise<LineGeometryCollection> | null = null;
 let rodaliesLineListPromise: Promise<RodaliesLine[]> | null = null;
 let legendEntriesPromise: Promise<LegendEntry[]> | null = null;
@@ -278,14 +279,19 @@ export async function loadMapUiState(
 export async function loadStationList(
   manifest?: RodaliesManifest,
 ): Promise<Station[]> {
-  const stationFeatures = await loadStations(manifest);
-  return stationFeatures.features.map((feature) => ({
-    id: feature.properties.id,
-    name: feature.properties.name,
-    code: feature.properties.code ?? null,
-    lines: [...feature.properties.lines],
-    geometry: feature.geometry,
-  }));
+  if (!stationListPromise) {
+    stationListPromise = (async () => {
+      const stationFeatures = await loadStations(manifest);
+      return stationFeatures.features.map((feature) => ({
+        id: feature.properties.id,
+        name: feature.properties.name,
+        code: feature.properties.code ?? null,
+        lines: feature.properties.lines, // Share reference instead of copying
+        geometry: feature.geometry,
+      }));
+    })();
+  }
+  return stationListPromise;
 }
 
 export async function loadLineProximityConfig(): Promise<LineProximityConfig> {
