@@ -5,8 +5,19 @@ DB_PATH="${SQLITE_DATABASE:-/data/transit.db}"
 GTFS_DIR="${GTFS_DIR:-/data/gtfs}"
 GTFS_DOWNLOAD_DIR="${GTFS_DOWNLOAD_DIR:-/data/gtfs_download}"
 RODALIES_GTFS_URL="${RODALIES_GTFS_URL:-https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip}"
+SCHEMA_FILE="/app/schema.sql"
 
 echo "Checking database initialization..."
+
+# Always ensure schema exists (idempotent - CREATE TABLE IF NOT EXISTS)
+# This is critical because the API needs the tables to exist for health checks
+if [ -f "$SCHEMA_FILE" ]; then
+    echo "Ensuring database schema exists..."
+    sqlite3 "$DB_PATH" < "$SCHEMA_FILE"
+    echo "Schema applied successfully"
+else
+    echo "Warning: schema.sql not found at $SCHEMA_FILE"
+fi
 
 # Check if pre_schedule_positions table has data (indicates full init was done)
 if sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM pre_schedule_positions LIMIT 1;" 2>/dev/null | grep -q "^[1-9]"; then
