@@ -37,10 +37,10 @@ const DEFAULT_NETWORK_HIGHLIGHTS: NetworkHighlightMap = {
 
 const DEFAULT_MODEL_SIZES: ModelSizeMap = {
   rodalies: 1.0,
-  metro: 1.0,
+  metro: 1.6,
   fgc: 1.0,
   tram: 1.0,
-  bus: 1.0,
+  bus: 1.2,
 };
 
 type MapAction =
