@@ -162,24 +162,6 @@
     "order": 0
   },
   {
-    "id": "R13",
-    "name": "Vinaixa                                 -Lleida",
-    "short_code": "R13",
-    "brand_color": "888888",
-    "default_pattern": "solid-r13",
-    "high_contrast_pattern": "hatched-r13",
-    "order": 0
-  },
-  {
-    "id": "RT1",
-    "name": "Tarragona                               -La Plana-Picamoixons",
-    "short_code": "RT1",
-    "brand_color": "888888",
-    "default_pattern": "solid-rt1",
-    "high_contrast_pattern": "hatched-rt1",
-    "order": 0
-  },
-  {
     "id": "R2",
     "name": "Barcelona-Sant Andreu                   -El Prat de Llobregat",
     "short_code": "R2",
@@ -240,7 +222,16 @@
     "brand_color": "0069AA",
     "default_pattern": "solid-r11",
     "high_contrast_pattern": "hatched-r11",
-    "order": 13
+    "order": 9
+  },
+  {
+    "id": "R13",
+    "name": "Vinaixa                                 -Lleida",
+    "short_code": "R13",
+    "brand_color": "E52E87",
+    "default_pattern": "solid-r13",
+    "high_contrast_pattern": "hatched-r13",
+    "order": 10
   },
   {
     "id": "R14",
@@ -249,7 +240,7 @@
     "brand_color": "6C60A8",
     "default_pattern": "solid-r14",
     "high_contrast_pattern": "hatched-r14",
-    "order": 14
+    "order": 11
   },
   {
     "id": "R15",
@@ -258,7 +249,7 @@
     "brand_color": "978571",
     "default_pattern": "solid-r15",
     "high_contrast_pattern": "hatched-r15",
-    "order": 15
+    "order": 12
   },
   {
     "id": "R16",
@@ -267,7 +258,7 @@
     "brand_color": "B52B46",
     "default_pattern": "solid-r16",
     "high_contrast_pattern": "hatched-r16",
-    "order": 16
+    "order": 13
   },
   {
     "id": "R17",
@@ -276,6 +267,15 @@
     "brand_color": "F3B12E",
     "default_pattern": "solid-r17",
     "high_contrast_pattern": "hatched-r17",
-    "order": 17
+    "order": 14
+  },
+  {
+    "id": "RT1",
+    "name": "Tarragona                               -La Plana-Picamoixons",
+    "short_code": "RT1",
+    "brand_color": "35BDB2",
+    "default_pattern": "solid-rt1",
+    "high_contrast_pattern": "hatched-rt1",
+    "order": 18
   }
 ]

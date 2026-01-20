@@ -162,24 +162,6 @@
     "is_highlighted": false
   },
   {
-    "line_id": "R13",
-    "label": "R13 - Vinaixa                                 -Lleida",
-    "theme_tokens": {
-      "standard": "solid-r13",
-      "high_contrast": "hatched-r13"
-    },
-    "is_highlighted": false
-  },
-  {
-    "line_id": "RT1",
-    "label": "RT1 - Tarragona                               -La Plana-Picamoixons",
-    "theme_tokens": {
-      "standard": "solid-rt1",
-      "high_contrast": "hatched-rt1"
-    },
-    "is_highlighted": false
-  },
-  {
     "line_id": "R2",
     "label": "R2 - Barcelona-Sant Andreu                   -El Prat de Llobregat",
     "theme_tokens": {
@@ -243,6 +225,15 @@
     "is_highlighted": false
   },
   {
+    "line_id": "R13",
+    "label": "R13 - Vinaixa                                 -Lleida",
+    "theme_tokens": {
+      "standard": "solid-r13",
+      "high_contrast": "hatched-r13"
+    },
+    "is_highlighted": false
+  },
+  {
     "line_id": "R14",
     "label": "R14 - Cunit                                   -Lleida",
     "theme_tokens": {
@@ -275,6 +266,15 @@
     "theme_tokens": {
       "standard": "solid-r17",
       "high_contrast": "hatched-r17"
+    },
+    "is_highlighted": false
+  },
+  {
+    "line_id": "RT1",
+    "label": "RT1 - Tarragona                               -La Plana-Picamoixons",
+    "theme_tokens": {
+      "standard": "solid-rt1",
+      "high_contrast": "hatched-rt1"
     },
     "is_highlighted": false
   }

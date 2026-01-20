@@ -8,8 +8,8 @@
     "brand_color": "B52B46",
     "default_pattern": "solid-r16",
     "high_contrast_pattern": "hatched-r16",
-    "order": 16,
-    "last_verified_at": "2026-01-18T21:07:26Z"
+    "order": 13,
+    "last_verified_at": "2026-01-20T14:51:15Z"
   },
   "geometry": {
     "type": "LineString",
