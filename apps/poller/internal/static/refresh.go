@@ -67,8 +67,10 @@ func RefreshIfStale(cfg *config.Config, database *db.DB) error {
 func isStaleOrMissing(manifestPath string, maxAgeDays int) bool {
 	data, err := os.ReadFile(manifestPath)
 	if err != nil {
-		// File doesn't exist or can't be read
-		return true
+		// File doesn't exist - skip refresh (init-db handles first-time setup)
+		// Only refresh if we previously generated data and it's now stale
+		log.Printf("Manifest not found at %s, skipping refresh (use init-db for first-time setup)", manifestPath)
+		return false
 	}
 
 	var manifest Manifest
