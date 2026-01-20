@@ -2,7 +2,10 @@ package static
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,8 +21,10 @@ import (
 
 // Manifest represents the manifest.json structure
 type Manifest struct {
-	GeneratedAt string `json:"generated_at"`
-	Version     string `json:"version"`
+	UpdatedAt    string `json:"updated_at"`              // When the manifest was last updated
+	GeneratedAt  string `json:"generated_at"`            // Legacy field, also check this
+	Version      string `json:"version"`
+	GTFSChecksum string `json:"gtfs_checksum,omitempty"` // SHA256 of source GTFS zip
 }
 
 // RefreshIfStale checks manifest files and refreshes data if older than threshold
@@ -75,18 +80,35 @@ func isStaleOrMissing(manifestPath string, maxAgeDays int) bool {
 
 	var manifest Manifest
 	if err := json.Unmarshal(data, &manifest); err != nil {
+		log.Printf("Failed to parse manifest %s: %v", manifestPath, err)
 		return true
 	}
 
-	generatedAt, err := time.Parse(time.RFC3339, manifest.GeneratedAt)
+	// Try updated_at first (new format), fall back to generated_at (legacy)
+	timestamp := manifest.UpdatedAt
+	if timestamp == "" {
+		timestamp = manifest.GeneratedAt
+	}
+	if timestamp == "" {
+		log.Printf("No timestamp found in manifest %s", manifestPath)
+		return true
+	}
+
+	generatedAt, err := time.Parse(time.RFC3339, timestamp)
 	if err != nil {
+		log.Printf("Failed to parse timestamp %s in manifest: %v", timestamp, err)
 		return true
 	}
 
 	age := time.Since(generatedAt)
 	maxAge := time.Duration(maxAgeDays) * 24 * time.Hour
 
-	return age > maxAge
+	if age > maxAge {
+		log.Printf("Manifest %s is stale (age: %v, max: %v)", manifestPath, age.Round(time.Hour), maxAge)
+		return true
+	}
+
+	return false
 }
 
 func refreshRodalies(cfg *config.Config, database *db.DB) error {
@@ -96,7 +118,26 @@ func refreshRodalies(cfg *config.Config, database *db.DB) error {
 		return err
 	}
 
-	// Parse GTFS data
+	// Calculate checksum of downloaded file
+	newChecksum, err := fileChecksum(zipPath)
+	if err != nil {
+		log.Printf("Warning: failed to calculate checksum: %v", err)
+		// Continue with refresh if checksum fails
+	} else {
+		// Compare with stored checksum
+		manifestPath := filepath.Join(cfg.WebPublicDir, "rodalies_data", "manifest.json")
+		oldChecksum := getStoredChecksum(manifestPath)
+		if oldChecksum != "" && oldChecksum == newChecksum {
+			log.Printf("Rodalies GTFS unchanged (checksum: %s...)", newChecksum[:12])
+			// Update manifest timestamp but skip expensive parsing
+			updateManifestTimestamp(manifestPath, newChecksum)
+			return nil
+		}
+		log.Printf("Rodalies GTFS changed (old: %s, new: %s), refreshing...",
+			truncateChecksum(oldChecksum), truncateChecksum(newChecksum))
+	}
+
+	// Parse GTFS data (only when checksum differs)
 	data, err := gtfs.Parse(zipPath)
 	if err != nil {
 		return err
@@ -106,6 +147,11 @@ func refreshRodalies(cfg *config.Config, database *db.DB) error {
 	outputDir := filepath.Join(cfg.WebPublicDir, "rodalies_data")
 	if err := rodaliesgen.Generate(data, outputDir); err != nil {
 		return err
+	}
+
+	// Store checksum in manifest for next comparison
+	if newChecksum != "" {
+		storeChecksumInManifest(filepath.Join(outputDir, "manifest.json"), newChecksum)
 	}
 
 	// Populate dimension tables if database is provided
@@ -140,7 +186,24 @@ func refreshTMB(cfg *config.Config, database *db.DB) error {
 		return err
 	}
 
-	// Parse GTFS data
+	// Calculate checksum of downloaded file
+	newChecksum, err := fileChecksum(zipPath)
+	if err != nil {
+		log.Printf("Warning: failed to calculate TMB checksum: %v", err)
+	} else {
+		// Compare with stored checksum
+		manifestPath := filepath.Join(cfg.WebPublicDir, "tmb_data", "manifest.json")
+		oldChecksum := getStoredChecksum(manifestPath)
+		if oldChecksum != "" && oldChecksum == newChecksum {
+			log.Printf("TMB GTFS unchanged (checksum: %s...)", newChecksum[:12])
+			updateManifestTimestamp(manifestPath, newChecksum)
+			return nil
+		}
+		log.Printf("TMB GTFS changed (old: %s, new: %s), refreshing...",
+			truncateChecksum(oldChecksum), truncateChecksum(newChecksum))
+	}
+
+	// Parse GTFS data (only when checksum differs)
 	data, err := gtfs.Parse(zipPath)
 	if err != nil {
 		return err
@@ -150,6 +213,11 @@ func refreshTMB(cfg *config.Config, database *db.DB) error {
 	outputDir := filepath.Join(cfg.WebPublicDir, "tmb_data")
 	if err := tmbgen.Generate(data, outputDir); err != nil {
 		return err
+	}
+
+	// Store checksum in manifest
+	if newChecksum != "" {
+		storeChecksumInManifest(filepath.Join(outputDir, "manifest.json"), newChecksum)
 	}
 
 	// Populate dimension tables if database is provided
@@ -165,13 +233,65 @@ func refreshTMB(cfg *config.Config, database *db.DB) error {
 	return nil
 }
 
+// RodaliesCatalunyaLines defines the Rodalies de Catalunya lines (Barcelona area only).
+// The Renfe GTFS contains all of Spain's Cercanías, but we only need Barcelona.
+// Note: C1-C10 are Cercanías from other regions (Madrid, etc.), NOT Barcelona.
+var RodaliesCatalunyaLines = map[string]bool{
+	"R1": true, "R2": true, "R2N": true, "R2S": true,
+	"R3": true, "R4": true, "R7": true, "R8": true,
+	"R11": true, "R12": true, "R13": true, "R14": true,
+	"R15": true, "R16": true, "R17": true,
+	"RG1": true, "RL3": true, "RL4": true,
+	"RT1": true, "RT2": true,
+}
+
 // populateDimensionTables converts GTFS data to dimension table format and inserts into database
 func populateDimensionTables(database *db.DB, network string, data *gtfs.Data) error {
 	ctx := context.Background()
 
-	// Convert stops
-	stops := make([]db.GTFSStop, 0, len(data.Stops))
+	// For Rodalies, filter to only Barcelona/Catalunya lines
+	// This reduces 1.85M stop_times (all of Spain) to ~100K (just Barcelona)
+	filterToCatalunya := (network == "rodalies")
+
+	// Build route filter: route_id -> keep?
+	routeFilter := make(map[string]bool)
+	if filterToCatalunya {
+		for _, r := range data.Routes {
+			lineCode := strings.ToUpper(r.RouteShortName)
+			if RodaliesCatalunyaLines[lineCode] {
+				routeFilter[r.RouteID] = true
+			}
+		}
+		log.Printf("Filtering to %d Rodalies Catalunya routes (from %d total Spain routes)",
+			len(routeFilter), len(data.Routes))
+	}
+
+	// Build trip filter based on routes
+	tripFilter := make(map[string]bool)
+	if filterToCatalunya {
+		for _, t := range data.Trips {
+			if routeFilter[t.RouteID] {
+				tripFilter[t.TripID] = true
+			}
+		}
+		log.Printf("Filtering to %d Catalunya trips (from %d total)", len(tripFilter), len(data.Trips))
+	}
+
+	// Convert stops - for Catalunya, only include stops used by filtered trips
+	stopsUsed := make(map[string]bool)
+	if filterToCatalunya {
+		for _, st := range data.StopTimes {
+			if tripFilter[st.TripID] {
+				stopsUsed[st.StopID] = true
+			}
+		}
+	}
+
+	stops := make([]db.GTFSStop, 0)
 	for _, s := range data.Stops {
+		if filterToCatalunya && !stopsUsed[s.StopID] {
+			continue
+		}
 		stops = append(stops, db.GTFSStop{
 			StopID:   s.StopID,
 			StopCode: s.StopCode,
@@ -181,9 +301,12 @@ func populateDimensionTables(database *db.DB, network string, data *gtfs.Data) e
 		})
 	}
 
-	// Convert trips
-	trips := make([]db.GTFSTrip, 0, len(data.Trips))
+	// Convert trips - filter if needed
+	trips := make([]db.GTFSTrip, 0)
 	for _, t := range data.Trips {
+		if filterToCatalunya && !tripFilter[t.TripID] {
+			continue
+		}
 		trips = append(trips, db.GTFSTrip{
 			TripID:       t.TripID,
 			RouteID:      t.RouteID,
@@ -193,9 +316,12 @@ func populateDimensionTables(database *db.DB, network string, data *gtfs.Data) e
 		})
 	}
 
-	// Convert stop times
-	stopTimes := make([]db.GTFSStopTime, 0, len(data.StopTimes))
+	// Convert stop times - filter if needed
+	stopTimes := make([]db.GTFSStopTime, 0)
 	for _, st := range data.StopTimes {
+		if filterToCatalunya && !tripFilter[st.TripID] {
+			continue
+		}
 		arrivalSecs := parseTimeToSeconds(st.ArrivalTime)
 		departureSecs := parseTimeToSeconds(st.DepartureTime)
 		stopTimes = append(stopTimes, db.GTFSStopTime{
@@ -205,6 +331,11 @@ func populateDimensionTables(database *db.DB, network string, data *gtfs.Data) e
 			ArrivalSeconds:   arrivalSecs,
 			DepartureSeconds: departureSecs,
 		})
+	}
+
+	if filterToCatalunya {
+		log.Printf("Filtered: %d stops, %d trips, %d stop_times (Catalunya only)",
+			len(stops), len(trips), len(stopTimes))
 	}
 
 	// Upsert core dimension data (stops, trips, stop_times)
@@ -296,4 +427,98 @@ func parseIntSafe(s string) int {
 		}
 	}
 	return result
+}
+
+// fileChecksum calculates SHA256 checksum of a file
+func fileChecksum(filePath string) (string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// getStoredChecksum reads the GTFS checksum from a manifest file
+func getStoredChecksum(manifestPath string) string {
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return ""
+	}
+
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return ""
+	}
+
+	return manifest.GTFSChecksum
+}
+
+// storeChecksumInManifest updates the GTFS checksum in an existing manifest file
+func storeChecksumInManifest(manifestPath, checksum string) {
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		log.Printf("Warning: failed to read manifest for checksum update: %v", err)
+		return
+	}
+
+	// Parse as generic map to preserve all existing fields
+	var manifest map[string]interface{}
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		log.Printf("Warning: failed to parse manifest for checksum update: %v", err)
+		return
+	}
+
+	manifest["gtfs_checksum"] = checksum
+
+	updatedData, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		log.Printf("Warning: failed to marshal manifest with checksum: %v", err)
+		return
+	}
+
+	if err := os.WriteFile(manifestPath, updatedData, 0644); err != nil {
+		log.Printf("Warning: failed to write manifest with checksum: %v", err)
+	}
+}
+
+// updateManifestTimestamp updates the timestamp in manifest without changing other fields
+func updateManifestTimestamp(manifestPath, checksum string) {
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return
+	}
+
+	var manifest map[string]interface{}
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return
+	}
+
+	// Update timestamp fields that indicate freshness
+	manifest["updated_at"] = time.Now().UTC().Format(time.RFC3339)
+	manifest["gtfs_checksum"] = checksum
+
+	updatedData, err := json.MarshalIndent(manifest, "", "  ")
+	if err != nil {
+		return
+	}
+
+	os.WriteFile(manifestPath, updatedData, 0644)
+}
+
+// truncateChecksum returns first 12 chars of checksum for logging, or "none" if empty
+func truncateChecksum(checksum string) string {
+	if checksum == "" {
+		return "none"
+	}
+	if len(checksum) > 12 {
+		return checksum[:12] + "..."
+	}
+	return checksum
 }
