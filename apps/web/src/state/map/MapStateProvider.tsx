@@ -24,13 +24,27 @@ import type {
 } from '../../types/rodalies';
 import { getPreference, loadPreferences, savePreferences } from './persistence';
 
-const DEFAULT_TRANSPORT_FILTERS: TransportFilterState = {
-  rodalies: false,
-  metro: true,
-  bus: false,
-  tram: false,
-  fgc: false,
-};
+/**
+ * Single source of truth for the default network.
+ * Both transport filters and active tab derive from this value.
+ */
+export const DEFAULT_NETWORK: TransportType = 'metro';
+
+/**
+ * Creates transport filter state with only the specified network enabled.
+ * Used for both default state and exclusive network selection.
+ */
+export function createExclusiveFilters(network: TransportType): TransportFilterState {
+  return {
+    rodalies: network === 'rodalies',
+    metro: network === 'metro',
+    bus: network === 'bus',
+    tram: network === 'tram',
+    fgc: network === 'fgc',
+  };
+}
+
+const DEFAULT_TRANSPORT_FILTERS: TransportFilterState = createExclusiveFilters(DEFAULT_NETWORK);
 
 const DEFAULT_NETWORK_HIGHLIGHTS: NetworkHighlightMap = {
   rodalies: { highlightMode: 'none', selectedLineIds: [] },
@@ -103,11 +117,11 @@ function createInitialUiState(): MapUIState {
     ...(savedModelSizes && typeof savedModelSizes === 'object' ? savedModelSizes : {}),
   };
 
-  // Load active control tab from preferences
+  // Load active control tab from preferences (falls back to DEFAULT_NETWORK)
   const savedActiveTab = prefs.activeControlTab;
   const validTabs: TransportType[] = ['rodalies', 'metro', 'fgc', 'tram', 'bus'];
   const activeControlTab: TransportType =
-    savedActiveTab && validTabs.includes(savedActiveTab) ? savedActiveTab : 'rodalies';
+    savedActiveTab && validTabs.includes(savedActiveTab) ? savedActiveTab : DEFAULT_NETWORK;
 
   // Load network highlights from preferences, merging with defaults
   const savedNetworkHighlights = prefs.networkHighlights;
@@ -365,13 +379,7 @@ function mapReducer(state: MapState, action: MapAction): MapState {
         ...state,
         ui: {
           ...state.ui,
-          transportFilters: {
-            rodalies: network === 'rodalies',
-            metro: network === 'metro',
-            bus: network === 'bus',
-            tram: network === 'tram',
-            fgc: network === 'fgc',
-          },
+          transportFilters: createExclusiveFilters(network),
           activeControlTab: network,
         },
       };
