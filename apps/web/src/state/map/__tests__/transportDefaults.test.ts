@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_NETWORK, createExclusiveFilters } from '../MapStateProvider';
+import { DEFAULT_NETWORK, createExclusiveFilters } from '../transportDefaults';
 
 describe('Transport defaults alignment', () => {
   it('DEFAULT_NETWORK should be enabled in default transport filters', () => {
@@ -10,7 +10,7 @@ describe('Transport defaults alignment', () => {
   it('createExclusiveFilters should enable only the specified network', () => {
     const filters = createExclusiveFilters(DEFAULT_NETWORK);
     const enabledNetworks = Object.entries(filters)
-      .filter(([_, enabled]) => enabled)
+      .filter(([, enabled]) => enabled)
       .map(([network]) => network);
 
     expect(enabledNetworks).toHaveLength(1);
