@@ -968,6 +968,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           visible={transportFilters.bus && showStations}
           highlightedRoutes={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
+          filterTopLinesOnly={showOnlyTopBusLines}
           onStopClick={(stopId, stopName) => {
             console.log('Bus stop clicked:', stopId, stopName);
           }}
