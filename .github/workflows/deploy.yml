@@ -130,12 +130,10 @@ jobs:
             # Create/update .env file with secrets
             # =================================================================
             echo "Updating environment variables..."
-            cat > .env << ENVEOF
-DOMAIN=${{ secrets.DOMAIN }}
-VITE_MAPBOX_TOKEN=${{ secrets.VITE_MAPBOX_TOKEN }}
-TMB_APP_ID=${{ secrets.TMB_APP_ID }}
-TMB_APP_KEY=${{ secrets.TMB_APP_KEY }}
-ENVEOF
+            echo "DOMAIN=${{ secrets.DOMAIN }}" > .env
+            echo "VITE_MAPBOX_TOKEN=${{ secrets.VITE_MAPBOX_TOKEN }}" >> .env
+            echo "TMB_APP_ID=${{ secrets.TMB_APP_ID }}" >> .env
+            echo "TMB_APP_KEY=${{ secrets.TMB_APP_KEY }}" >> .env
 
             # Validate .env file was created correctly
             if [ ! -s .env ]; then
