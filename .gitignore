@@ -94,7 +94,6 @@ aircache/
 
 # === Debug / Temp files ===
 loc.txt
-screenshot.png
 train-debug*.json
 *-debug-*.json
 
