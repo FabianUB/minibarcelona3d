@@ -29,6 +29,9 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 FROM nginx:alpine
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
@@ -46,6 +49,6 @@ EXPOSE 80
 
 # Health check (must match docker-compose.prod.yml and nginx.conf /health endpoint)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
+  CMD curl -sf http://localhost/health || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
