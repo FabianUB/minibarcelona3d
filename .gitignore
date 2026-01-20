@@ -106,4 +106,12 @@ specs/*/data/
 *.db-shm
 *.db-wal
 data/
+# Include GTFS static files needed for schedule-based networks (FGC, TRAM)
+# These don't change frequently and are needed for production initialization
+!data/gtfs/
+data/gtfs/*
+!data/gtfs/fgc_gtfs.zip
+!data/gtfs/tram_tbs_gtfs.zip
+!data/gtfs/tram_tbx_gtfs.zip
+
 apps/poller/data/

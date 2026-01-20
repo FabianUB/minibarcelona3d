@@ -64,6 +64,10 @@ func (db *DB) UpsertRodaliesPositions(ctx context.Context, snapshotID string, po
 
 	polledAtStr := polledAt.UTC().Format(time.RFC3339)
 
+	// Use explicit UTC timestamp for updated_at to ensure consistency across containers
+	// (SQLite's datetime('now') could differ between poller and API containers due to clock skew)
+	updatedAtStr := time.Now().UTC().Format(time.RFC3339)
+
 	// Prepare upsert statement for current table
 	currentStmt, err := tx.PrepareContext(ctx, `
 		INSERT INTO rt_rodalies_vehicle_current (
@@ -73,7 +77,7 @@ func (db *DB) UpsertRodaliesPositions(ctx context.Context, snapshotID string, po
 			polled_at_utc, arrival_delay_seconds, departure_delay_seconds,
 			schedule_relationship, predicted_arrival_utc, predicted_departure_utc,
 			trip_update_timestamp_utc, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (vehicle_key) DO UPDATE SET
 			snapshot_id = excluded.snapshot_id,
 			vehicle_id = excluded.vehicle_id,
@@ -96,7 +100,7 @@ func (db *DB) UpsertRodaliesPositions(ctx context.Context, snapshotID string, po
 			predicted_arrival_utc = excluded.predicted_arrival_utc,
 			predicted_departure_utc = excluded.predicted_departure_utc,
 			trip_update_timestamp_utc = excluded.trip_update_timestamp_utc,
-			updated_at = datetime('now')
+			updated_at = excluded.updated_at
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to prepare current statement: %w", err)
@@ -138,7 +142,8 @@ func (db *DB) UpsertRodaliesPositions(ctx context.Context, snapshotID string, po
 			tripUpTS = &s
 		}
 
-		args := []interface{}{
+		// Base args for history table (22 columns)
+		historyArgs := []interface{}{
 			p.VehicleKey, snapshotID, p.VehicleID, p.EntityID, p.VehicleLabel,
 			p.TripID, p.RouteID, p.CurrentStopID, p.PreviousStopID, p.NextStopID,
 			p.NextStopSequence, p.Status, p.Latitude, p.Longitude, vehicleTS,
@@ -146,11 +151,14 @@ func (db *DB) UpsertRodaliesPositions(ctx context.Context, snapshotID string, po
 			p.ScheduleRelationship, predArr, predDep, tripUpTS,
 		}
 
-		if _, err := currentStmt.ExecContext(ctx, args...); err != nil {
+		// Current table args include updated_at (23 columns)
+		currentArgs := append(historyArgs, updatedAtStr)
+
+		if _, err := currentStmt.ExecContext(ctx, currentArgs...); err != nil {
 			return fmt.Errorf("failed to upsert position %s: %w", p.VehicleKey, err)
 		}
 
-		if _, err := historyStmt.ExecContext(ctx, args...); err != nil {
+		if _, err := historyStmt.ExecContext(ctx, historyArgs...); err != nil {
 			return fmt.Errorf("failed to insert history %s: %w", p.VehicleKey, err)
 		}
 	}
@@ -196,6 +204,9 @@ func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polle
 
 	polledAtStr := polledAt.UTC().Format(time.RFC3339)
 
+	// Use explicit UTC timestamp for updated_at to ensure consistency across containers
+	updatedAtStr := time.Now().UTC().Format(time.RFC3339)
+
 	// Clear current table to remove stale positions from previous polls
 	// This is necessary because trains that are no longer reported (filtered out or service ended)
 	// would otherwise remain indefinitely in the current table
@@ -212,7 +223,7 @@ func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polle
 			distance_along_line, estimated_speed_mps, line_total_length,
 			source, confidence, arrival_seconds_to_next, estimated_at_utc,
 			polled_at_utc, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to prepare current statement: %w", err)
@@ -235,14 +246,14 @@ func (db *DB) UpsertMetroPositions(ctx context.Context, snapshotID string, polle
 	for _, p := range positions {
 		estimatedAtStr := p.EstimatedAt.UTC().Format(time.RFC3339)
 
-		// Current table
+		// Current table (includes updated_at)
 		_, err := currentStmt.ExecContext(ctx,
 			p.VehicleKey, snapshotID, p.LineCode, p.RouteID, p.DirectionID,
 			p.Latitude, p.Longitude, p.Bearing, p.PreviousStopID, p.NextStopID,
 			p.PreviousStopName, p.NextStopName, p.Status, p.ProgressFraction,
 			p.DistanceAlongLine, p.EstimatedSpeedMPS, p.LineTotalLength,
 			p.Source, p.Confidence, p.ArrivalSecondsToNext, estimatedAtStr,
-			polledAtStr,
+			polledAtStr, updatedAtStr,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to upsert metro position %s: %w", p.VehicleKey, err)
@@ -607,6 +618,9 @@ func (db *DB) UpsertSchedulePositions(ctx context.Context, snapshotID string, po
 
 	polledAtStr := polledAt.UTC().Format(time.RFC3339)
 
+	// Use explicit UTC timestamp for updated_at to ensure consistency across containers
+	updatedAtStr := time.Now().UTC().Format(time.RFC3339)
+
 	// Prepare upsert statement
 	stmt, err := tx.PrepareContext(ctx, `
 		INSERT INTO rt_schedule_vehicle_current (
@@ -615,7 +629,7 @@ func (db *DB) UpsertSchedulePositions(ctx context.Context, snapshotID string, po
 			bearing, previous_stop_id, next_stop_id, previous_stop_name, next_stop_name,
 			status, progress_fraction, scheduled_arrival, scheduled_departure,
 			source, confidence, estimated_at_utc, polled_at_utc, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (vehicle_key) DO UPDATE SET
 			snapshot_id = excluded.snapshot_id,
 			network_type = excluded.network_type,
@@ -639,7 +653,7 @@ func (db *DB) UpsertSchedulePositions(ctx context.Context, snapshotID string, po
 			confidence = excluded.confidence,
 			estimated_at_utc = excluded.estimated_at_utc,
 			polled_at_utc = excluded.polled_at_utc,
-			updated_at = datetime('now')
+			updated_at = excluded.updated_at
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
@@ -654,7 +668,7 @@ func (db *DB) UpsertSchedulePositions(ctx context.Context, snapshotID string, po
 			p.RouteColor, p.TripID, p.DirectionID, p.Latitude, p.Longitude,
 			p.Bearing, p.PreviousStopID, p.NextStopID, p.PreviousStopName, p.NextStopName,
 			p.Status, p.ProgressFraction, p.ScheduledArrival, p.ScheduledDeparture,
-			p.Source, p.Confidence, estimatedAtStr, polledAtStr,
+			p.Source, p.Confidence, estimatedAtStr, polledAtStr, updatedAtStr,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to upsert schedule position %s: %w", p.VehicleKey, err)
