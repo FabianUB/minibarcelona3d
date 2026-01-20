@@ -7,8 +7,8 @@ services:
   # ═══════════════════════════════════════════════════════════
   init-db:
     build:
-      context: ./apps/poller
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/poller/Dockerfile
     volumes:
       - transit_data:/data
       - ./data/gtfs:/data/gtfs:ro
@@ -27,8 +27,8 @@ services:
   # ═══════════════════════════════════════════════════════════
   poller:
     build:
-      context: ./apps/poller
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/poller/Dockerfile
     environment:
       # Database
       SQLITE_DATABASE: /data/transit.db
