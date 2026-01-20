@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"log"
 	"sync"
@@ -10,6 +11,13 @@ import (
 
 	_ "modernc.org/sqlite"
 )
+
+// schemaSQL is the single source of truth for the database schema.
+// It is embedded at compile time from schema.sql.
+// Both Go code (EnsureSchema) and init-db.sh use this same file.
+//
+//go:embed schema.sql
+var schemaSQL string
 
 // DB wraps a SQLite database connection with write serialization
 type DB struct {
@@ -81,291 +89,22 @@ func (db *DB) UnlockWrite() {
 	db.writeMu.Unlock()
 }
 
-// EnsureSchema creates tables if they don't exist
+// EnsureSchema creates tables if they don't exist.
+// Uses the embedded schema.sql file as the single source of truth.
 func (db *DB) EnsureSchema(ctx context.Context) error {
 	db.LockWrite()
 	defer db.UnlockWrite()
 
-	schema := `
-	-- Snapshots table
-	CREATE TABLE IF NOT EXISTS rt_snapshots (
-		snapshot_id TEXT PRIMARY KEY,
-		polled_at_utc TEXT NOT NULL,
-		vehicle_feed_timestamp_utc TEXT,
-		trip_feed_timestamp_utc TEXT,
-		alert_feed_timestamp_utc TEXT
-	);
-	CREATE INDEX IF NOT EXISTS idx_snapshots_polled ON rt_snapshots(polled_at_utc DESC);
-
-	-- Rodalies current positions
-	CREATE TABLE IF NOT EXISTS rt_rodalies_vehicle_current (
-		vehicle_key TEXT PRIMARY KEY,
-		snapshot_id TEXT NOT NULL,
-		vehicle_id TEXT,
-		entity_id TEXT,
-		vehicle_label TEXT,
-		trip_id TEXT,
-		route_id TEXT,
-		current_stop_id TEXT,
-		previous_stop_id TEXT,
-		next_stop_id TEXT,
-		next_stop_sequence INTEGER,
-		status TEXT,
-		latitude REAL,
-		longitude REAL,
-		vehicle_timestamp_utc TEXT,
-		polled_at_utc TEXT NOT NULL,
-		arrival_delay_seconds INTEGER,
-		departure_delay_seconds INTEGER,
-		schedule_relationship TEXT,
-		predicted_arrival_utc TEXT,
-		predicted_departure_utc TEXT,
-		trip_update_timestamp_utc TEXT,
-		updated_at TEXT DEFAULT (datetime('now'))
-	);
-	CREATE INDEX IF NOT EXISTS idx_rodalies_current_route ON rt_rodalies_vehicle_current(route_id);
-	CREATE INDEX IF NOT EXISTS idx_rodalies_current_snapshot ON rt_rodalies_vehicle_current(snapshot_id);
-	CREATE INDEX IF NOT EXISTS idx_rodalies_current_updated ON rt_rodalies_vehicle_current(updated_at DESC);
-
-	-- Rodalies history
-	CREATE TABLE IF NOT EXISTS rt_rodalies_vehicle_history (
-		vehicle_key TEXT NOT NULL,
-		snapshot_id TEXT NOT NULL,
-		vehicle_id TEXT,
-		entity_id TEXT,
-		vehicle_label TEXT,
-		trip_id TEXT,
-		route_id TEXT,
-		current_stop_id TEXT,
-		previous_stop_id TEXT,
-		next_stop_id TEXT,
-		next_stop_sequence INTEGER,
-		status TEXT,
-		latitude REAL,
-		longitude REAL,
-		vehicle_timestamp_utc TEXT,
-		polled_at_utc TEXT NOT NULL,
-		arrival_delay_seconds INTEGER,
-		departure_delay_seconds INTEGER,
-		schedule_relationship TEXT,
-		predicted_arrival_utc TEXT,
-		predicted_departure_utc TEXT,
-		trip_update_timestamp_utc TEXT,
-		PRIMARY KEY (vehicle_key, snapshot_id)
-	);
-	CREATE INDEX IF NOT EXISTS idx_rodalies_history_vehicle ON rt_rodalies_vehicle_history(vehicle_key, polled_at_utc DESC);
-
-	-- Metro current positions
-	CREATE TABLE IF NOT EXISTS rt_metro_vehicle_current (
-		vehicle_key TEXT PRIMARY KEY,
-		snapshot_id TEXT NOT NULL,
-		line_code TEXT NOT NULL,
-		route_id TEXT,
-		direction_id INTEGER NOT NULL,
-		latitude REAL NOT NULL,
-		longitude REAL NOT NULL,
-		bearing REAL,
-		previous_stop_id TEXT,
-		next_stop_id TEXT,
-		previous_stop_name TEXT,
-		next_stop_name TEXT,
-		status TEXT NOT NULL,
-		progress_fraction REAL,
-		distance_along_line REAL,
-		estimated_speed_mps REAL,
-		line_total_length REAL,
-		source TEXT NOT NULL DEFAULT 'imetro',
-		confidence TEXT NOT NULL DEFAULT 'medium',
-		arrival_seconds_to_next INTEGER,
-		estimated_at_utc TEXT NOT NULL,
-		polled_at_utc TEXT NOT NULL,
-		updated_at TEXT DEFAULT (datetime('now'))
-	);
-	CREATE INDEX IF NOT EXISTS idx_metro_current_line ON rt_metro_vehicle_current(line_code);
-	CREATE INDEX IF NOT EXISTS idx_metro_current_snapshot ON rt_metro_vehicle_current(snapshot_id);
-	CREATE INDEX IF NOT EXISTS idx_metro_current_updated ON rt_metro_vehicle_current(updated_at DESC);
-
-	-- Metro history
-	CREATE TABLE IF NOT EXISTS rt_metro_vehicle_history (
-		vehicle_key TEXT NOT NULL,
-		snapshot_id TEXT NOT NULL,
-		line_code TEXT NOT NULL,
-		direction_id INTEGER NOT NULL,
-		latitude REAL NOT NULL,
-		longitude REAL NOT NULL,
-		bearing REAL,
-		previous_stop_id TEXT,
-		next_stop_id TEXT,
-		status TEXT,
-		progress_fraction REAL,
-		polled_at_utc TEXT NOT NULL,
-		PRIMARY KEY (vehicle_key, snapshot_id)
-	);
-	CREATE INDEX IF NOT EXISTS idx_metro_history_vehicle ON rt_metro_vehicle_history(vehicle_key, polled_at_utc DESC);
-
-	-- GTFS Dimension Tables (populated from static GTFS data)
-	-- Stops dimension
-	CREATE TABLE IF NOT EXISTS dim_stops (
-		stop_id TEXT PRIMARY KEY,
-		network TEXT,
-		stop_code TEXT,
-		stop_name TEXT,
-		stop_lat REAL,
-		stop_lon REAL
-	);
-	CREATE INDEX IF NOT EXISTS idx_stops_network ON dim_stops(network);
-
-	-- Trips dimension
-	CREATE TABLE IF NOT EXISTS dim_trips (
-		trip_id TEXT PRIMARY KEY,
-		network TEXT,
-		route_id TEXT,
-		service_id TEXT,
-		trip_headsign TEXT,
-		direction_id INTEGER
-	);
-	CREATE INDEX IF NOT EXISTS idx_trips_route ON dim_trips(route_id);
-
-	-- Stop times dimension
-	CREATE TABLE IF NOT EXISTS dim_stop_times (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		network TEXT,
-		trip_id TEXT,
-		stop_id TEXT,
-		stop_sequence INTEGER,
-		arrival_seconds INTEGER,
-		departure_seconds INTEGER
-	);
-	CREATE INDEX IF NOT EXISTS idx_stop_times_trip ON dim_stop_times(trip_id, stop_sequence);
-
-	-- Routes dimension (for route metadata like colors, names)
-	CREATE TABLE IF NOT EXISTS dim_routes (
-		route_id TEXT PRIMARY KEY,
-		network TEXT NOT NULL,
-		route_short_name TEXT,
-		route_long_name TEXT,
-		route_type INTEGER,
-		route_color TEXT,
-		route_text_color TEXT
-	);
-	CREATE INDEX IF NOT EXISTS idx_routes_network ON dim_routes(network);
-	CREATE INDEX IF NOT EXISTS idx_routes_type ON dim_routes(route_type);
-
-	-- Service calendar (weekly pattern from calendar.txt)
-	CREATE TABLE IF NOT EXISTS dim_calendar (
-		service_id TEXT NOT NULL,
-		network TEXT NOT NULL,
-		monday INTEGER NOT NULL,
-		tuesday INTEGER NOT NULL,
-		wednesday INTEGER NOT NULL,
-		thursday INTEGER NOT NULL,
-		friday INTEGER NOT NULL,
-		saturday INTEGER NOT NULL,
-		sunday INTEGER NOT NULL,
-		start_date TEXT NOT NULL,
-		end_date TEXT NOT NULL,
-		PRIMARY KEY (network, service_id)
-	);
-	CREATE INDEX IF NOT EXISTS idx_calendar_dates_range ON dim_calendar(start_date, end_date);
-
-	-- Service exceptions (holidays, special days from calendar_dates.txt)
-	CREATE TABLE IF NOT EXISTS dim_calendar_dates (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		network TEXT NOT NULL,
-		service_id TEXT NOT NULL,
-		date TEXT NOT NULL,
-		exception_type INTEGER NOT NULL
-	);
-	CREATE INDEX IF NOT EXISTS idx_calendar_dates_lookup ON dim_calendar_dates(date, service_id, network);
-
-	-- Schedule-estimated vehicle positions (for TRAM, FGC, Bus)
-	CREATE TABLE IF NOT EXISTS rt_schedule_vehicle_current (
-		vehicle_key TEXT PRIMARY KEY,
-		snapshot_id TEXT NOT NULL,
-		network_type TEXT NOT NULL,
-		route_id TEXT NOT NULL,
-		route_short_name TEXT,
-		route_color TEXT,
-		trip_id TEXT NOT NULL,
-		direction_id INTEGER,
-		latitude REAL NOT NULL,
-		longitude REAL NOT NULL,
-		bearing REAL,
-		previous_stop_id TEXT,
-		next_stop_id TEXT,
-		previous_stop_name TEXT,
-		next_stop_name TEXT,
-		status TEXT NOT NULL,
-		progress_fraction REAL,
-		scheduled_arrival TEXT,
-		scheduled_departure TEXT,
-		source TEXT DEFAULT 'schedule',
-		confidence TEXT DEFAULT 'low',
-		estimated_at_utc TEXT NOT NULL,
-		polled_at_utc TEXT NOT NULL,
-		updated_at TEXT DEFAULT (datetime('now'))
-	);
-	CREATE INDEX IF NOT EXISTS idx_schedule_current_network ON rt_schedule_vehicle_current(network_type);
-	CREATE INDEX IF NOT EXISTS idx_schedule_current_route ON rt_schedule_vehicle_current(route_id);
-	CREATE INDEX IF NOT EXISTS idx_schedule_current_snapshot ON rt_schedule_vehicle_current(snapshot_id);
-
-	-- Pre-calculated schedule positions by day type (positions stored as JSON per time slot)
-	-- day_type: 'weekday' (Mon-Thu), 'friday', 'saturday', 'sunday'
-	-- time_slot = seconds_since_midnight / 30 (0-2879 for 30-second intervals)
-	CREATE TABLE IF NOT EXISTS pre_schedule_positions (
-		network TEXT NOT NULL,
-		day_type TEXT NOT NULL,
-		time_slot INTEGER NOT NULL,
-		positions_json TEXT NOT NULL,
-		vehicle_count INTEGER NOT NULL,
-		PRIMARY KEY (network, day_type, time_slot)
-	);
-	CREATE INDEX IF NOT EXISTS idx_pre_schedule_lookup ON pre_schedule_positions(network, day_type, time_slot);
-
-	-- Metrics: Baseline statistics for expected vehicle counts by network/hour/day
-	CREATE TABLE IF NOT EXISTS metrics_baselines (
-		network TEXT NOT NULL,
-		hour_of_day INTEGER NOT NULL,
-		day_of_week INTEGER NOT NULL,
-		vehicle_count_mean REAL NOT NULL,
-		vehicle_count_stddev REAL NOT NULL,
-		sample_count INTEGER NOT NULL DEFAULT 0,
-		updated_at TEXT NOT NULL,
-		PRIMARY KEY (network, hour_of_day, day_of_week)
-	);
-
-	-- Metrics: Health status history for uptime calculation
-	CREATE TABLE IF NOT EXISTS metrics_health_history (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		recorded_at TEXT NOT NULL,
-		network TEXT NOT NULL,
-		health_score INTEGER NOT NULL,
-		status TEXT NOT NULL,
-		vehicle_count INTEGER NOT NULL DEFAULT 0
-	);
-	CREATE INDEX IF NOT EXISTS idx_health_history_lookup ON metrics_health_history(network, recorded_at DESC);
-	CREATE INDEX IF NOT EXISTS idx_health_history_cleanup ON metrics_health_history(recorded_at);
-
-	-- Metrics: Anomaly events log
-	CREATE TABLE IF NOT EXISTS metrics_anomalies (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		network TEXT NOT NULL,
-		detected_at TEXT NOT NULL,
-		actual_count INTEGER NOT NULL,
-		expected_count REAL NOT NULL,
-		z_score REAL NOT NULL,
-		severity TEXT NOT NULL,
-		resolved_at TEXT
-	);
-	CREATE INDEX IF NOT EXISTS idx_anomalies_active ON metrics_anomalies(network, resolved_at);
-	CREATE INDEX IF NOT EXISTS idx_anomalies_detected ON metrics_anomalies(detected_at DESC);
-	`
-
-	_, err := db.conn.ExecContext(ctx, schema)
+	_, err := db.conn.ExecContext(ctx, schemaSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create schema: %w", err)
 	}
 
-	log.Println("Database schema ensured")
+	log.Println("Database schema ensured (from embedded schema.sql)")
 	return nil
+}
+
+// GetSchemaSQL returns the embedded schema for external use (e.g., init scripts).
+func GetSchemaSQL() string {
+	return schemaSQL
 }

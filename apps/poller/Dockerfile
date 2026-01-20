@@ -32,7 +32,8 @@ COPY --from=builder /app/import-gtfs .
 COPY --from=builder /app/precalc-positions .
 
 # Copy schema file and scripts (paths relative to root context)
-COPY apps/poller/schema.sql /app/
+# schema.sql is the single source of truth - also embedded in Go binary via go:embed
+COPY apps/poller/internal/db/schema.sql /app/
 COPY apps/poller/scripts/init-db.sh /app/
 
 # Copy static web data for Metro/transit position estimation
