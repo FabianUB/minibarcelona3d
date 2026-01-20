@@ -7,11 +7,11 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev
 WORKDIR /app
 
 # Copy go.mod and go.sum first for caching
-COPY go.mod go.sum ./
+COPY apps/poller/go.mod apps/poller/go.sum ./
 RUN go mod download
 
 # Copy source code
-COPY . .
+COPY apps/poller/ .
 
 # Build all binaries with CGO enabled for SQLite
 RUN CGO_ENABLED=1 GOOS=linux go build -o poller ./cmd/poller
@@ -31,9 +31,14 @@ COPY --from=builder /app/poller .
 COPY --from=builder /app/import-gtfs .
 COPY --from=builder /app/precalc-positions .
 
-# Copy schema file and scripts
-COPY schema.sql /app/
-COPY scripts/init-db.sh /app/
+# Copy schema file and scripts (paths relative to root context)
+COPY apps/poller/schema.sql /app/
+COPY apps/poller/scripts/init-db.sh /app/
+
+# Copy static web data for Metro/transit position estimation
+# These GeoJSON files contain station locations needed by the poller
+COPY apps/web/public/tmb_data /app/web_public/tmb_data
+COPY apps/web/public/rodalies_data /app/web_public/rodalies_data
 
 # Create data directory
 RUN mkdir -p /data /data/gtfs

@@ -52,8 +52,8 @@ services:
   # ===========================================================================
   init-db:
     build:
-      context: ./apps/poller
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/poller/Dockerfile
     container_name: minibarcelona3d-init-db
     volumes:
       - transit_data:/data
@@ -77,8 +77,8 @@ services:
   # ===========================================================================
   poller:
     build:
-      context: ./apps/poller
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/poller/Dockerfile
     container_name: minibarcelona3d-poller
     environment:
       # Database
