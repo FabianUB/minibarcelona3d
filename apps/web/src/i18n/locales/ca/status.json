@@ -11,7 +11,7 @@
   },
   "sections": {
     "networkStatus": "Estat de la Xarxa",
-    "mlBaseline": "Aprenentatge de Línia Base ML",
+    "mlBaseline": "Aprenentatge ML de Baseline",
     "systemMetrics": "Mètriques del Sistema"
   },
   "metrics": {
@@ -22,8 +22,8 @@
   },
   "network": {
     "healthScore": "Puntuació de Salut",
-    "freshness": "Frescor",
-    "quality": "Qualitat",
+    "freshness": "Frescor les Dades",
+    "quality": "Qualitat de Dades",
     "activeVehicles": "Vehicles Actius",
     "expected": "/ {{count}} esperats",
     "anomalyDetected_one": "{{count}} anomalia activa detectada",
@@ -34,18 +34,27 @@
     "dataSourceStatic": "Horari estàtic"
   },
   "baseline": {
-    "title": "Aprenentatge de Línia Base",
+    "title": "Aprenentatge ML de baseline",
     "mature": "{{percentage}}% madur",
     "description": "El sistema aprèn comptes típics de vehicles per a cada hora/dia. Més maduresa significa detecció d'anomalies més fiable.",
     "empty": "Sense dades de línia base encara. Torna en uns minuts.",
     "legendLearning": "Aprenent",
     "legendDeveloping": "Desenvolupant",
     "legendEstablished": "Establert",
+    "statusLearning": "aprenent",
+    "statusDeveloping": "desenvolupant",
+    "statusEstablished": "establert",
     "timeSlots": "Franges horàries:",
+    "slotsCount": "{{mature}} / {{total}} madurs",
     "coverage": "Cobertura:",
     "maturity": "Maduresa:",
-    "totalSamples": "Mostres totals:",
-    "matureSuffix": "madur"
+    "totalSamples": "Mostres totals:"
+  },
+  "freshness": {
+    "loading": "Carregant...",
+    "error": "Error",
+    "noData": "Sense dades",
+    "notAvailable": "N/D"
   },
   "footer": {
     "lastUpdated": "Última actualització: {{time}}",

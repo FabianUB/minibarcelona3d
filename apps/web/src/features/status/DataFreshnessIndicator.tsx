@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import {
   fetchDataFreshness,
@@ -30,6 +31,7 @@ export function DataFreshnessIndicator({
   expanded = false,
   onClick,
 }: DataFreshnessIndicatorProps) {
+  const { t } = useTranslation('status');
   const [freshness, setFreshness] = useState<DataFreshness[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +130,7 @@ export function DataFreshnessIndicator({
         className="inline-flex items-center gap-1.5 px-2 py-1 bg-card/80 backdrop-blur-sm rounded text-xs text-muted-foreground border border-border"
       >
         <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse" />
-        <span>Loading...</span>
+        <span>{t('freshness.loading')}</span>
       </div>
     );
   }
@@ -142,7 +144,7 @@ export function DataFreshnessIndicator({
         tabIndex={onClick ? 0 : undefined}
       >
         <div className="w-2 h-2 rounded-full bg-red-500" />
-        <span>Error</span>
+        <span>{t('freshness.error')}</span>
       </div>
     );
   }
@@ -162,7 +164,7 @@ export function DataFreshnessIndicator({
         <>
           <div className={`w-2 h-2 rounded-full ${getStatusDotClass(overallStatus)}`} />
           <span className="text-foreground whitespace-nowrap">
-            {mostRecentAge >= 0 ? formatAge(mostRecentAge) : 'No data'}
+            {mostRecentAge >= 0 ? formatAge(mostRecentAge) : t('freshness.noData')}
           </span>
         </>
       )}
@@ -179,7 +181,7 @@ export function DataFreshnessIndicator({
                   {getNetworkDisplayName(f.network)}
                 </span>
                 <span className="text-muted-foreground">
-                  {f.ageSeconds >= 0 ? formatAge(getAdjustedAge(f.ageSeconds)) : 'N/A'}
+                  {f.ageSeconds >= 0 ? formatAge(getAdjustedAge(f.ageSeconds)) : t('freshness.notAvailable')}
                 </span>
                 {f.vehicleCount >= 0 && (
                   <Badge variant="secondary" className="text-[10px] px-1 py-0">

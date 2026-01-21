@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,7 @@ function getRoutePrefix(routeCode: string): BusRoutePrefix | 'other' {
 }
 
 export function BusRouteList({ className }: BusRouteListProps) {
+  const { t } = useTranslation('controlPanel');
   const { ui } = useMapState();
   const { setNetworkHighlight, toggleNetworkLine, clearNetworkHighlight, toggleShowOnlyTopBusLines } = useMapActions();
   const [routes, setRoutes] = useState<BusRoute[]>([]);
@@ -95,7 +97,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
       })
       .catch((err) => {
         console.error('Failed to load bus routes:', err);
-        setError('Failed to load bus routes');
+        setError(t('busRoutes.failedToLoad'));
         setIsLoading(false);
       });
   }, []);
@@ -191,7 +193,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
   if (isLoading) {
     return (
       <div className={cn('py-4 text-center text-muted-foreground', className)}>
-        Loading bus routes...
+        {t('busRoutes.loading')}
       </div>
     );
   }
@@ -212,7 +214,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
           htmlFor="top-bus-toggle"
           className="text-sm cursor-pointer select-none"
         >
-          Show only top {TOP_BUS_LINES.length} lines
+          {t('busRoutes.showOnlyTop', { count: TOP_BUS_LINES.length })}
         </label>
         <Switch
           id="top-bus-toggle"
@@ -224,7 +226,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
       {/* Search */}
       <Input
         type="search"
-        placeholder="Search routes..."
+        placeholder={t('busRoutes.searchPlaceholder')}
         value={searchQuery}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
         className="h-8"
@@ -240,7 +242,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
             className="h-6 text-xs px-2"
             onClick={() => handleSelectGroup(prefix)}
           >
-            {prefix}-Lines
+            {t('busRoutes.groupLines', { prefix })}
           </Button>
         ))}
         {hasSelection && (
@@ -250,7 +252,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
             className="h-6 text-xs px-2 ml-auto"
             onClick={handleClear}
           >
-            Clear
+            {t('lineGrid.clear')}
           </Button>
         )}
       </div>
@@ -259,15 +261,19 @@ export function BusRouteList({ className }: BusRouteListProps) {
       {hasSelection && (
         <div className="px-3 py-2 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md text-xs">
           <span className="font-medium">
-            {networkHighlight.highlightMode === 'isolate' ? 'Isolated: ' : 'Highlighted: '}
+            {networkHighlight.highlightMode === 'isolate'
+              ? `${t('lineGrid.isolated')}: `
+              : `${t('lineGrid.highlighted')}: `}
           </span>
-          {networkHighlight.selectedLineIds.length} routes
+          {t('busRoutes.routeCount', { count: networkHighlight.selectedLineIds.length })}
         </div>
       )}
 
       {/* Route count */}
       <div className="text-xs text-muted-foreground">
-        {filteredRoutes.length} routes {searchQuery && `matching "${searchQuery}"`}
+        {searchQuery
+          ? t('busRoutes.routeCountFiltered', { count: filteredRoutes.length, query: searchQuery })
+          : t('busRoutes.routeCount', { count: filteredRoutes.length })}
       </div>
 
       {/* Virtualized route list */}
@@ -312,7 +318,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
                     highlighted && 'bg-yellow-50 dark:bg-yellow-950',
                     dimmed && 'opacity-20'
                   )}
-                  title="Click to highlight, hold to isolate"
+                  title={t('lineGrid.lineTitle')}
                 >
                   <span
                     className="w-8 h-6 flex items-center justify-center rounded text-xs font-semibold text-white"

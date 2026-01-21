@@ -41,11 +41,20 @@
     "legendLearning": "Learning",
     "legendDeveloping": "Developing",
     "legendEstablished": "Established",
+    "statusLearning": "learning",
+    "statusDeveloping": "developing",
+    "statusEstablished": "established",
     "timeSlots": "Time slots:",
+    "slotsCount": "{{mature}} / {{total}} mature",
     "coverage": "Coverage:",
     "maturity": "Maturity:",
-    "totalSamples": "Total samples:",
-    "matureSuffix": "mature"
+    "totalSamples": "Total samples:"
+  },
+  "freshness": {
+    "loading": "Loading...",
+    "error": "Error",
+    "noData": "No data",
+    "notAvailable": "N/A"
   },
   "footer": {
     "lastUpdated": "Last updated: {{time}}",
