@@ -26,6 +26,7 @@ import { NetworkTabContent } from './components/NetworkTabContent';
 import { VehicleListView } from './components/VehicleListView';
 import { PanelModeToggle } from './components/PanelModeToggle';
 import { DataSourceBadge } from './components/DataSourceBadge';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 interface ControlPanelMobileProps {
   rodaliesTrains?: TrainPosition[];
@@ -91,7 +92,7 @@ export function ControlPanelMobile({
         <SheetHeader className="pb-2 shrink-0">
           <SheetTitle className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <span>{isControlMode ? 'Transit Control' : 'Vehicle List'}</span>
+              <LanguageToggle />
               <DataSourceBadge source={dataSource} />
             </div>
             <PanelModeToggle />

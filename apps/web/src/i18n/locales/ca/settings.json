@@ -1,0 +1,11 @@
+{
+  "title": "Configuració",
+  "hideSettings": "Amagar configuració",
+  "showSettings": "Mostrar configuració",
+  "openSettings": "Obrir Configuració",
+  "enhanceVisibility": {
+    "label": "Millorar Visibilitat de Línies",
+    "description": "Fer les línies de tren més gruixudes i fàcils de veure"
+  },
+  "comingSoon": "Més configuracions pròximament..."
+}

@@ -1,0 +1,29 @@
+{
+  "service": {
+    "rateLimit": {
+      "title": "Service Temporarily Unavailable",
+      "description": "The map service has reached its usage limit for this period. This is a free service and usage is limited to ensure availability for everyone.",
+      "suggestion": "Please try again later or check back tomorrow when limits reset."
+    },
+    "auth": {
+      "title": "Map Service Error",
+      "description": "There was an authentication issue with the map service. This may be a temporary issue.",
+      "suggestion": "Please try refreshing the page."
+    },
+    "network": {
+      "title": "Connection Error",
+      "description": "Unable to connect to the map service. Please check your internet connection.",
+      "suggestion": "Make sure you have a stable internet connection and try again."
+    },
+    "unknown": {
+      "title": "Something Went Wrong",
+      "description": "An unexpected error occurred while loading the map.",
+      "suggestion": "Please try refreshing the page."
+    }
+  },
+  "buttons": {
+    "tryAgain": "Try Again",
+    "retrying": "Retrying..."
+  },
+  "footer": "MiniBarcelona3D"
+}

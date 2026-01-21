@@ -1,0 +1,11 @@
+{
+  "title": "Ajustes",
+  "hideSettings": "Ocultar ajustes",
+  "showSettings": "Mostrar ajustes",
+  "openSettings": "Abrir Ajustes",
+  "enhanceVisibility": {
+    "label": "Mejorar Visibilidad de Líneas",
+    "description": "Hacer las líneas de tren más gruesas y fáciles de ver"
+  },
+  "comingSoon": "Más ajustes próximamente..."
+}

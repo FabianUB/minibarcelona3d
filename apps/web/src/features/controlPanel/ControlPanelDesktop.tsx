@@ -19,6 +19,7 @@ import { NetworkTabs } from './components/NetworkTabs';
 import { NetworkTabContent } from './components/NetworkTabContent';
 import { VehicleListView } from './components/VehicleListView';
 import { DataSourceBadge } from './components/DataSourceBadge';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 interface ControlPanelDesktopProps {
   rodaliesTrains?: TrainPosition[];
@@ -68,8 +69,9 @@ export function ControlPanelDesktop({
 
   return (
     <Card className="fixed top-4 left-4 w-80 shadow-xl z-10 max-h-[calc(100vh-2rem)] flex flex-col border-0 bg-background/95 backdrop-blur-sm">
-      {/* Data source indicator */}
-      <div className="px-4 pt-3 pb-1 shrink-0 flex justify-end">
+      {/* Header row: Language toggle + Data source indicator */}
+      <div className="px-3 pt-2.5 pb-1 shrink-0 flex items-center justify-between">
+        <LanguageToggle />
         <DataSourceBadge source={dataSource} />
       </div>
 

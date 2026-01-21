@@ -1,0 +1,16 @@
+{
+  "panel": {
+    "loading": "Loading station...",
+    "selectStation": "Select a station",
+    "closePanel": "Close station panel",
+    "selectPrompt": "Select a station marker on the map to view its details.",
+    "selectPromptMobile": "Select a station marker on the map."
+  },
+  "info": {
+    "stationCode": "Station code",
+    "servingLines": "Serving lines",
+    "servingLinesCount_one": "Serving {{count}} line",
+    "servingLinesCount_other": "Serving {{count}} lines",
+    "noLineData": "No line data available."
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "modes": {
+    "controls": "Controls",
+    "vehicles": "Vehicles"
+  },
+  "panel": {
+    "open": "Open control panel",
+    "transitControl": "Transit Control",
+    "vehicleList": "Vehicle List"
+  },
+  "tabs": {
+    "rodalies": "Rodalies",
+    "metro": "Metro",
+    "bus": "Bus",
+    "tram": "Tram",
+    "fgc": "FGC"
+  },
+  "vehicleList": {
+    "title": "Vehicles",
+    "titleWithCount": "Vehicles ({{count}})",
+    "showVehicleList": "Show vehicle list",
+    "backToControls": "Back to controls",
+    "networkDisabled": "Network disabled",
+    "enableNetwork": "Enable {{network}} to see vehicles",
+    "noActiveVehicles": "No active vehicles",
+    "clickToCenter": "Click on a vehicle to center the map"
+  },
+  "lineGrid": {
+    "loading": "Loading...",
+    "noLines": "No lines available",
+    "failedToLoad": "Failed to load lines",
+    "isolated": "Isolated: ",
+    "highlighted": "Highlighted: "
+  },
+  "busRoutes": {
+    "loading": "Loading bus routes...",
+    "noRoutes": "No routes found for this network",
+    "failedToLoad": "Failed to load bus routes"
+  },
+  "modelSize": {
+    "label": "Model Size"
+  },
+  "settings": {
+    "showStations": "Show Stations",
+    "showStationsDescription": "Display station markers on map"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "page": {
+    "title": "Estado de MiniBarcelona3D",
+    "subtitle": "Estado en tiempo real de los servicios de datos de tránsito de Barcelona"
+  },
+  "overall": {
+    "operational": "Todos los Sistemas Operativos",
+    "degraded": "Interrupción Parcial del Sistema",
+    "outage": "Interrupción Mayor del Sistema",
+    "unknown": "Estado Desconocido"
+  },
+  "sections": {
+    "networkStatus": "Estado de la Red",
+    "mlBaseline": "Aprendizaje de Línea Base ML",
+    "systemMetrics": "Métricas del Sistema"
+  },
+  "metrics": {
+    "uptime": "Tiempo Activo (24h)",
+    "activeIncidents": "Incidentes Activos",
+    "networks": "Redes",
+    "healthScore": "Puntuación de Salud"
+  },
+  "network": {
+    "healthScore": "Puntuación de Salud",
+    "freshness": "Frescura",
+    "quality": "Calidad",
+    "activeVehicles": "Vehículos Activos",
+    "expected": "/ {{count}} esperados",
+    "anomalyDetected_one": "{{count}} anomalía activa detectada",
+    "anomalyDetected_other": "{{count}} anomalías activas detectadas",
+    "confidence": "confianza {{level}}",
+    "dataSourceGps": "GPS en tiempo real",
+    "dataSourceInterpolation": "Interpolación de horario",
+    "dataSourceStatic": "Horario estático"
+  },
+  "baseline": {
+    "title": "Aprendizaje de Línea Base",
+    "mature": "{{percentage}}% maduro",
+    "description": "El sistema aprende conteos típicos de vehículos para cada hora/día. Mayor madurez significa detección de anomalías más confiable.",
+    "empty": "Sin datos de línea base aún. Vuelve en unos minutos.",
+    "legendLearning": "Aprendiendo",
+    "legendDeveloping": "Desarrollando",
+    "legendEstablished": "Establecido",
+    "timeSlots": "Franjas horarias:",
+    "coverage": "Cobertura:",
+    "maturity": "Madurez:",
+    "totalSamples": "Muestras totales:",
+    "matureSuffix": "maduro"
+  },
+  "footer": {
+    "lastUpdated": "Última actualización: {{time}}",
+    "autoRefresh": "Se actualiza automáticamente cada 30 segundos"
+  },
+  "error": {
+    "unableToLoad": "No se puede cargar el estado",
+    "failedToLoad": "Error al cargar el estado"
+  }
+}

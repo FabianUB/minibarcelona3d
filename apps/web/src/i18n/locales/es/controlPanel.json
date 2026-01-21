@@ -1,0 +1,47 @@
+{
+  "modes": {
+    "controls": "Controles",
+    "vehicles": "Vehículos"
+  },
+  "panel": {
+    "open": "Abrir panel de control",
+    "transitControl": "Control de Tránsito",
+    "vehicleList": "Lista de Vehículos"
+  },
+  "tabs": {
+    "rodalies": "Rodalies",
+    "metro": "Metro",
+    "bus": "Bus",
+    "tram": "Tram",
+    "fgc": "FGC"
+  },
+  "vehicleList": {
+    "title": "Vehículos",
+    "titleWithCount": "Vehículos ({{count}})",
+    "showVehicleList": "Mostrar lista de vehículos",
+    "backToControls": "Volver a controles",
+    "networkDisabled": "Red desactivada",
+    "enableNetwork": "Activa {{network}} para ver vehículos",
+    "noActiveVehicles": "Sin vehículos activos",
+    "clickToCenter": "Haz clic en un vehículo para centrar el mapa"
+  },
+  "lineGrid": {
+    "loading": "Cargando...",
+    "noLines": "No hay líneas disponibles",
+    "failedToLoad": "Error al cargar líneas",
+    "isolated": "Aislado: ",
+    "highlighted": "Resaltado: "
+  },
+  "busRoutes": {
+    "loading": "Cargando rutas de bus...",
+    "noRoutes": "No se encontraron rutas para esta red",
+    "failedToLoad": "Error al cargar rutas de bus"
+  },
+  "modelSize": {
+    "label": "Tamaño del Modelo"
+  },
+  "settings": {
+    "showStations": "Mostrar Estaciones",
+    "showStationsDescription": "Mostrar marcadores de estación en el mapa"
+  }
+}

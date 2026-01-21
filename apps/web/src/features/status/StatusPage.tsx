@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ import { BaselineMaturity } from './BaselineMaturity';
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
 export function StatusPage() {
+  const { t } = useTranslation('status');
   const [overall, setOverall] = useState<OverallHealth | null>(null);
   const [networks, setNetworks] = useState<NetworkHealth[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,11 +41,11 @@ export function StatusPage() {
       setError(null);
       setLastRefresh(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load status');
+      setError(err instanceof Error ? err.message : t('error.failedToLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadHealth();
@@ -54,13 +56,13 @@ export function StatusPage() {
   const getOverallStatusText = (status: string) => {
     switch (status) {
       case 'operational':
-        return 'All Systems Operational';
+        return t('overall.operational');
       case 'degraded':
-        return 'Partial System Outage';
+        return t('overall.degraded');
       case 'outage':
-        return 'Major System Outage';
+        return t('overall.outage');
       default:
-        return 'Status Unknown';
+        return t('overall.unknown');
     }
   };
 
@@ -69,7 +71,7 @@ export function StatusPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-          <p className="text-muted-foreground">Loading status...</p>
+          <p className="text-muted-foreground">{t('common:loading.status')}</p>
         </div>
       </div>
     );
@@ -80,12 +82,12 @@ export function StatusPage() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-destructive">Unable to load status</CardTitle>
+            <CardTitle className="text-destructive">{t('error.unableToLoad')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">{error}</p>
             <Button onClick={loadHealth} variant="default">
-              Retry
+              {t('common:buttons.retry')}
             </Button>
           </CardContent>
         </Card>
@@ -98,9 +100,9 @@ export function StatusPage() {
       <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
         {/* Header */}
         <header className="text-center space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold">MiniBarcelona3D Status</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('page.title')}</h1>
           <p className="text-muted-foreground">
-            Real-time status of Barcelona transit data services
+            {t('page.subtitle')}
           </p>
         </header>
 
@@ -122,7 +124,7 @@ export function StatusPage() {
 
         {/* Network Cards */}
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold">Network Status</h2>
+          <h2 className="text-lg font-semibold">{t('sections.networkStatus')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {networks.map((network) => (
               <NetworkCard key={network.network} network={network} />
@@ -132,7 +134,7 @@ export function StatusPage() {
 
         {/* Baseline Learning Section */}
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold">ML Baseline Learning</h2>
+          <h2 className="text-lg font-semibold">{t('sections.mlBaseline')}</h2>
           <BaselineMaturity />
         </section>
 
@@ -140,27 +142,27 @@ export function StatusPage() {
 
         {/* Metrics Section */}
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold">System Metrics</h2>
+          <h2 className="text-lg font-semibold">{t('sections.systemMetrics')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {overall && (
               <>
                 <MetricCard
-                  label="Uptime (24h)"
+                  label={t('metrics.uptime')}
                   value={`${overall.uptimePercent.toFixed(1)}%`}
                   status={overall.uptimePercent >= 99 ? 'healthy' : overall.uptimePercent >= 95 ? 'degraded' : 'unhealthy'}
                 />
                 <MetricCard
-                  label="Active Incidents"
+                  label={t('metrics.activeIncidents')}
                   value={overall.activeIncidents.toString()}
                   status={overall.activeIncidents === 0 ? 'healthy' : 'degraded'}
                 />
                 <MetricCard
-                  label="Networks"
+                  label={t('metrics.networks')}
                   value={networks.length.toString()}
                   status="healthy"
                 />
                 <MetricCard
-                  label="Health Score"
+                  label={t('metrics.healthScore')}
                   value={`${overall.healthScore}%`}
                   status={overall.healthScore >= 80 ? 'healthy' : overall.healthScore >= 50 ? 'degraded' : 'unhealthy'}
                 />
@@ -172,12 +174,12 @@ export function StatusPage() {
         {/* Footer */}
         <footer className="text-center space-y-3 pt-4 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            Last updated: {lastRefresh ? lastRefresh.toLocaleTimeString() : 'Never'}
+            {t('footer.lastUpdated', { time: lastRefresh ? lastRefresh.toLocaleTimeString() : 'Never' })}
             {' · '}
-            Auto-refreshes every 30 seconds
+            {t('footer.autoRefresh')}
           </p>
           <Button variant="outline" size="sm" asChild>
-            <a href="/">← Back to Map</a>
+            <a href="/">{t('common:buttons.backToMap')}</a>
           </Button>
         </footer>
       </div>
@@ -187,6 +189,7 @@ export function StatusPage() {
 
 // Network Card Component
 function NetworkCard({ network }: { network: NetworkHealth }) {
+  const { t } = useTranslation('status');
   const isRealTime = network.network === 'rodalies' || network.network === 'metro';
 
   const getStatusColor = (status: HealthStatus): string => {
@@ -218,11 +221,11 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
   const getDataSourceLabel = (): string => {
     switch (network.network) {
       case 'rodalies':
-        return 'Real-time GPS';
+        return t('network.dataSourceGps');
       case 'metro':
-        return 'Schedule interpolation';
+        return t('network.dataSourceInterpolation');
       default:
-        return 'Static schedule';
+        return t('network.dataSourceStatic');
     }
   };
 
@@ -243,7 +246,7 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
         {/* Health Score Bar with Sparkline */}
         <div className="space-y-1">
           <div className="flex justify-between items-center text-xs text-muted-foreground">
-            <span>Health Score</span>
+            <span>{t('network.healthScore')}</span>
             <div className="flex items-center gap-2">
               <HealthSparkline network={network.network} width={80} height={20} hours={2} />
               <span className="font-medium text-foreground">{network.healthScore}%</span>
@@ -263,11 +266,11 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
           {isRealTime && (
             <>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Freshness</span>
+                <span className="text-muted-foreground">{t('network.freshness')}</span>
                 <span>{network.dataFreshness}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Quality</span>
+                <span className="text-muted-foreground">{t('network.quality')}</span>
                 <span>{network.dataQuality}%</span>
               </div>
             </>
@@ -275,12 +278,12 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
           {/* Active Vehicles for all networks */}
           {network.vehicleCount >= 0 && (
             <div className="flex justify-between col-span-2">
-              <span className="text-muted-foreground">Active Vehicles</span>
+              <span className="text-muted-foreground">{t('network.activeVehicles')}</span>
               <span>
                 {network.vehicleCount}
                 {network.expectedCount !== undefined && (
                   <span className="text-muted-foreground/60 ml-1">
-                    / {network.expectedCount} expected
+                    {t('network.expected', { count: network.expectedCount })}
                   </span>
                 )}
               </span>
@@ -291,7 +294,7 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
         {/* Anomaly Warning */}
         {network.activeAnomalies > 0 && (
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded px-2 py-1 text-xs text-yellow-400">
-            {network.activeAnomalies} active anomal{network.activeAnomalies === 1 ? 'y' : 'ies'} detected
+            {t('network.anomalyDetected', { count: network.activeAnomalies })}
           </div>
         )}
 
@@ -300,7 +303,7 @@ function NetworkCard({ network }: { network: NetworkHealth }) {
         {/* Confidence & Data Source */}
         <div className="flex items-center justify-between gap-2">
           <Badge variant="outline" className={`text-xs ${getConfidenceBadgeClass(network.confidenceLevel)}`}>
-            {network.confidenceLevel} confidence
+            {t('network.confidence', { level: network.confidenceLevel })}
           </Badge>
           <span className="text-xs text-muted-foreground">{getDataSourceLabel()}</span>
         </div>

@@ -1,0 +1,11 @@
+{
+  "title": "Settings",
+  "hideSettings": "Hide settings",
+  "showSettings": "Show settings",
+  "openSettings": "Open Settings",
+  "enhanceVisibility": {
+    "label": "Enhance Line Visibility",
+    "description": "Make train lines thicker and easier to see"
+  },
+  "comingSoon": "More settings coming soon..."
+}
