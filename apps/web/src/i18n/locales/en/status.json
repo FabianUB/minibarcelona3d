@@ -1,0 +1,58 @@
+{
+  "page": {
+    "title": "MiniBarcelona3D Status",
+    "subtitle": "Real-time status of Barcelona transit data services"
+  },
+  "overall": {
+    "operational": "All Systems Operational",
+    "degraded": "Partial System Outage",
+    "outage": "Major System Outage",
+    "unknown": "Status Unknown"
+  },
+  "sections": {
+    "networkStatus": "Network Status",
+    "mlBaseline": "ML Baseline Learning",
+    "systemMetrics": "System Metrics"
+  },
+  "metrics": {
+    "uptime": "Uptime (24h)",
+    "activeIncidents": "Active Incidents",
+    "networks": "Networks",
+    "healthScore": "Health Score"
+  },
+  "network": {
+    "healthScore": "Health Score",
+    "freshness": "Freshness",
+    "quality": "Quality",
+    "activeVehicles": "Active Vehicles",
+    "expected": "/ {{count}} expected",
+    "anomalyDetected_one": "{{count}} active anomaly detected",
+    "anomalyDetected_other": "{{count}} active anomalies detected",
+    "confidence": "{{level}} confidence",
+    "dataSourceGps": "Real-time GPS",
+    "dataSourceInterpolation": "Schedule interpolation",
+    "dataSourceStatic": "Static schedule"
+  },
+  "baseline": {
+    "title": "Baseline Learning",
+    "mature": "{{percentage}}% mature",
+    "description": "The system learns typical vehicle counts for each hour/day. Higher maturity means more reliable anomaly detection.",
+    "empty": "No baseline data yet. Check back in a few minutes.",
+    "legendLearning": "Learning",
+    "legendDeveloping": "Developing",
+    "legendEstablished": "Established",
+    "timeSlots": "Time slots:",
+    "coverage": "Coverage:",
+    "maturity": "Maturity:",
+    "totalSamples": "Total samples:",
+    "matureSuffix": "mature"
+  },
+  "footer": {
+    "lastUpdated": "Last updated: {{time}}",
+    "autoRefresh": "Auto-refreshes every 30 seconds"
+  },
+  "error": {
+    "unableToLoad": "Unable to load status",
+    "failedToLoad": "Failed to load status"
+  }
+}

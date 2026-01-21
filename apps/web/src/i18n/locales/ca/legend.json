@@ -1,0 +1,17 @@
+{
+  "panel": {
+    "title": "Línies de Rodalies",
+    "loading": "Carregant línies...",
+    "instructions": "Clic per ressaltar, mantenir per aïllar",
+    "instructionsMobile": "Toca per ressaltar, manté per aïllar",
+    "clear": "Netejar",
+    "clearSelection": "Netejar Selecció",
+    "hideLegend": "Amagar llegenda",
+    "showLegend": "Mostrar llegenda",
+    "showLegendTooltip": "Mostrar llegenda de línies de Rodalies",
+    "selected": "Seleccionat: {{lines}}",
+    "linesCount": "Línies ({{count}})",
+    "lineAriaLabel": "{{lineId}}: {{lineName}} (mantenir per aïllar)",
+    "lineTooltip": "{{lineName}} (mantenir per aïllar)"
+  }
+}

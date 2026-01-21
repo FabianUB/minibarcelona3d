@@ -1,0 +1,16 @@
+{
+  "panel": {
+    "loading": "Cargando estación...",
+    "selectStation": "Selecciona una estación",
+    "closePanel": "Cerrar panel de estación",
+    "selectPrompt": "Selecciona un marcador de estación en el mapa para ver sus detalles.",
+    "selectPromptMobile": "Selecciona un marcador de estación en el mapa."
+  },
+  "info": {
+    "stationCode": "Código de estación",
+    "servingLines": "Líneas que sirven",
+    "servingLinesCount_one": "Sirviendo {{count}} línea",
+    "servingLinesCount_other": "Sirviendo {{count}} líneas",
+    "noLineData": "No hay datos de línea disponibles."
+  }
+}

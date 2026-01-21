@@ -1,0 +1,58 @@
+{
+  "page": {
+    "title": "Estat de MiniBarcelona3D",
+    "subtitle": "Estat en temps real dels serveis de dades de trànsit de Barcelona"
+  },
+  "overall": {
+    "operational": "Tots els Sistemes Operatius",
+    "degraded": "Interrupció Parcial del Sistema",
+    "outage": "Interrupció Major del Sistema",
+    "unknown": "Estat Desconegut"
+  },
+  "sections": {
+    "networkStatus": "Estat de la Xarxa",
+    "mlBaseline": "Aprenentatge de Línia Base ML",
+    "systemMetrics": "Mètriques del Sistema"
+  },
+  "metrics": {
+    "uptime": "Temps Actiu (24h)",
+    "activeIncidents": "Incidents Actius",
+    "networks": "Xarxes",
+    "healthScore": "Puntuació de Salut"
+  },
+  "network": {
+    "healthScore": "Puntuació de Salut",
+    "freshness": "Frescor",
+    "quality": "Qualitat",
+    "activeVehicles": "Vehicles Actius",
+    "expected": "/ {{count}} esperats",
+    "anomalyDetected_one": "{{count}} anomalia activa detectada",
+    "anomalyDetected_other": "{{count}} anomalies actives detectades",
+    "confidence": "confiança {{level}}",
+    "dataSourceGps": "GPS en temps real",
+    "dataSourceInterpolation": "Interpolació d'horari",
+    "dataSourceStatic": "Horari estàtic"
+  },
+  "baseline": {
+    "title": "Aprenentatge de Línia Base",
+    "mature": "{{percentage}}% madur",
+    "description": "El sistema aprèn comptes típics de vehicles per a cada hora/dia. Més maduresa significa detecció d'anomalies més fiable.",
+    "empty": "Sense dades de línia base encara. Torna en uns minuts.",
+    "legendLearning": "Aprenent",
+    "legendDeveloping": "Desenvolupant",
+    "legendEstablished": "Establert",
+    "timeSlots": "Franges horàries:",
+    "coverage": "Cobertura:",
+    "maturity": "Maduresa:",
+    "totalSamples": "Mostres totals:",
+    "matureSuffix": "madur"
+  },
+  "footer": {
+    "lastUpdated": "Última actualització: {{time}}",
+    "autoRefresh": "S'actualitza automàticament cada 30 segons"
+  },
+  "error": {
+    "unableToLoad": "No es pot carregar l'estat",
+    "failedToLoad": "Error en carregar l'estat"
+  }
+}

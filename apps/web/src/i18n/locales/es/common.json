@@ -1,0 +1,40 @@
+{
+  "app": {
+    "title": "MiniBarcelona3D",
+    "subtitle": "Transporte Público de Barcelona"
+  },
+  "buttons": {
+    "close": "Cerrar",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "clear": "Limpiar",
+    "reset": "Restablecer",
+    "backToMap": "Volver al Mapa"
+  },
+  "loading": {
+    "generic": "Cargando...",
+    "lines": "Cargando líneas...",
+    "station": "Cargando estación...",
+    "routes": "Cargando rutas de bus...",
+    "status": "Cargando estado..."
+  },
+  "networks": {
+    "rodalies": "Rodalies de Catalunya",
+    "metro": "Metro de Barcelona",
+    "bus": "Bus TMB",
+    "tram": "Trambaix & Trambesòs",
+    "fgc": "FGC"
+  },
+  "dataSource": {
+    "realTime": "Tiempo real",
+    "realTimeTitle": "Posiciones de vehículos desde datos API en tiempo real",
+    "schedule": "Horario",
+    "scheduleTitle": "Posiciones de vehículos simuladas desde datos de horario"
+  },
+  "time": {
+    "secondsAgo": "hace {{count}}s",
+    "minutesAgo": "hace {{count}}m",
+    "hoursAgo": "hace {{count}}h",
+    "minutes": "{{count}} min"
+  }
+}

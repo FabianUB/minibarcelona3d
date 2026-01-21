@@ -6,6 +6,7 @@
  */
 
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { useMapState, useMapActions } from '@/state/map';
@@ -17,6 +18,8 @@ interface ModelSizeSliderProps {
 }
 
 export function ModelSizeSlider({ network, className }: ModelSizeSliderProps) {
+  const { t } = useTranslation('controlPanel');
+  const { t: tCommon } = useTranslation('common');
   const { ui } = useMapState();
   const { setModelSize } = useMapActions();
 
@@ -38,7 +41,7 @@ export function ModelSizeSlider({ network, className }: ModelSizeSliderProps) {
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-foreground">Model Size</label>
+        <label className="text-sm font-medium text-foreground">{t('modelSize.label')}</label>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground w-12 text-right">
             {percentage}%
@@ -48,7 +51,7 @@ export function ModelSizeSlider({ network, className }: ModelSizeSliderProps) {
               onClick={handleReset}
               className="text-xs text-muted-foreground hover:text-foreground underline"
             >
-              Reset
+              {tCommon('buttons.reset')}
             </button>
           )}
         </div>

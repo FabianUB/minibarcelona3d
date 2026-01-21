@@ -1,0 +1,29 @@
+{
+  "service": {
+    "rateLimit": {
+      "title": "Servei Temporalment No Disponible",
+      "description": "El servei de mapes ha assolit el seu límit d'ús per aquest període. És un servei gratuït i l'ús està limitat per garantir la disponibilitat per a tothom.",
+      "suggestion": "Si us plau, intenta-ho més tard o torna demà quan es restableixen els límits."
+    },
+    "auth": {
+      "title": "Error del Servei de Mapes",
+      "description": "Hi ha hagut un problema d'autenticació amb el servei de mapes. Pot ser un problema temporal.",
+      "suggestion": "Si us plau, intenta refrescar la pàgina."
+    },
+    "network": {
+      "title": "Error de Connexió",
+      "description": "No es pot connectar al servei de mapes. Si us plau, verifica la teva connexió a Internet.",
+      "suggestion": "Assegura't de tenir una connexió a Internet estable i intenta-ho de nou."
+    },
+    "unknown": {
+      "title": "Alguna Cosa Ha Anat Malament",
+      "description": "S'ha produït un error inesperat en carregar el mapa.",
+      "suggestion": "Si us plau, intenta refrescar la pàgina."
+    }
+  },
+  "buttons": {
+    "tryAgain": "Intentar de Nou",
+    "retrying": "Reintentant..."
+  },
+  "footer": "MiniBarcelona3D"
+}

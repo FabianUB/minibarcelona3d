@@ -5,6 +5,7 @@
  * Shows network name header, line selection grid, model size slider, and settings.
  */
 
+import { useTranslation } from 'react-i18next';
 import { List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -20,18 +21,12 @@ interface NetworkTabContentProps {
   network: TransportType;
 }
 
-const NETWORK_LABELS: Record<TransportType, string> = {
-  rodalies: 'Rodalies de Catalunya',
-  metro: 'Metro de Barcelona',
-  bus: 'Bus TMB',
-  tram: 'Trambaix & Trambesòs',
-  fgc: 'FGC',
-};
-
 export function NetworkTabContent({ network }: NetworkTabContentProps) {
+  const { t } = useTranslation('controlPanel');
+  const { t: tCommon } = useTranslation('common');
   const { setControlPanelMode } = useMapActions();
-  const networkTab = NETWORK_TABS.find((t) => t.type === network);
-  const networkLabel = NETWORK_LABELS[network];
+  const networkTab = NETWORK_TABS.find((tab) => tab.type === network);
+  const networkLabel = tCommon(`networks.${network}`);
 
   return (
     <div className="space-y-3">
@@ -46,10 +41,10 @@ export function NetworkTabContent({ network }: NetworkTabContentProps) {
           size="sm"
           onClick={() => setControlPanelMode('vehicles')}
           className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-          title="Show vehicle list"
+          title={t('vehicleList.showVehicleList')}
         >
           <List className="h-4 w-4 mr-1" />
-          Vehicles
+          {t('modes.vehicles')}
         </Button>
       </div>
 

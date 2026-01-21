@@ -1,0 +1,47 @@
+{
+  "modes": {
+    "controls": "Controls",
+    "vehicles": "Vehicles"
+  },
+  "panel": {
+    "open": "Obrir panell de control",
+    "transitControl": "Control de Trànsit",
+    "vehicleList": "Llista de Vehicles"
+  },
+  "tabs": {
+    "rodalies": "Rodalies",
+    "metro": "Metro",
+    "bus": "Bus",
+    "tram": "Tram",
+    "fgc": "FGC"
+  },
+  "vehicleList": {
+    "title": "Vehicles",
+    "titleWithCount": "Vehicles ({{count}})",
+    "showVehicleList": "Mostrar llista de vehicles",
+    "backToControls": "Tornar a controls",
+    "networkDisabled": "Xarxa desactivada",
+    "enableNetwork": "Activa {{network}} per veure vehicles",
+    "noActiveVehicles": "Sense vehicles actius",
+    "clickToCenter": "Fes clic en un vehicle per centrar el mapa"
+  },
+  "lineGrid": {
+    "loading": "Carregant...",
+    "noLines": "No hi ha línies disponibles",
+    "failedToLoad": "Error en carregar línies",
+    "isolated": "Aïllat: ",
+    "highlighted": "Ressaltat: "
+  },
+  "busRoutes": {
+    "loading": "Carregant rutes de bus...",
+    "noRoutes": "No s'han trobat rutes per aquesta xarxa",
+    "failedToLoad": "Error en carregar rutes de bus"
+  },
+  "modelSize": {
+    "label": "Mida del Model"
+  },
+  "settings": {
+    "showStations": "Mostrar Estacions",
+    "showStationsDescription": "Mostrar marcadors d'estació al mapa"
+  }
+}

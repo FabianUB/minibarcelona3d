@@ -1,0 +1,16 @@
+{
+  "panel": {
+    "loading": "Carregant estació...",
+    "selectStation": "Selecciona una estació",
+    "closePanel": "Tancar panell d'estació",
+    "selectPrompt": "Selecciona un marcador d'estació al mapa per veure els seus detalls.",
+    "selectPromptMobile": "Selecciona un marcador d'estació al mapa."
+  },
+  "info": {
+    "stationCode": "Codi d'estació",
+    "servingLines": "Línies que serveixen",
+    "servingLinesCount_one": "Servint {{count}} línia",
+    "servingLinesCount_other": "Servint {{count}} línies",
+    "noLineData": "No hi ha dades de línia disponibles."
+  }
+}

@@ -5,6 +5,7 @@
  * are from real-time data or schedule-based simulation.
  */
 
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { DataSourceType } from '@/state/transit';
 
@@ -13,37 +14,47 @@ interface DataSourceBadgeProps {
   className?: string;
 }
 
-const SOURCE_CONFIG: Record<DataSourceType, { label: string; className: string; title: string }> = {
-  realtime: {
-    label: 'Real-time',
-    className: 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30',
-    title: 'Vehicle positions from real-time API data',
-  },
-  schedule: {
-    label: 'Schedule',
-    className: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    title: 'Vehicle positions simulated from schedule data',
-  },
-  unknown: {
-    label: 'Loading...',
-    className: 'bg-gray-500/20 text-gray-500 border-gray-500/30',
-    title: 'Determining data source...',
-  },
+const SOURCE_STYLES: Record<DataSourceType, string> = {
+  realtime: 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30',
+  schedule: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30',
+  unknown: 'bg-gray-500/20 text-gray-500 border-gray-500/30',
 };
 
 export function DataSourceBadge({ source, className }: DataSourceBadgeProps) {
-  const config = SOURCE_CONFIG[source];
+  const { t } = useTranslation('common');
+
+  const getLabel = (): string => {
+    switch (source) {
+      case 'realtime':
+        return t('dataSource.realTime');
+      case 'schedule':
+        return t('dataSource.schedule');
+      default:
+        return t('loading.generic');
+    }
+  };
+
+  const getTitle = (): string => {
+    switch (source) {
+      case 'realtime':
+        return t('dataSource.realTimeTitle');
+      case 'schedule':
+        return t('dataSource.scheduleTitle');
+      default:
+        return '';
+    }
+  };
 
   return (
     <span
       className={cn(
         'inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded border',
-        config.className,
+        SOURCE_STYLES[source],
         className
       )}
-      title={config.title}
+      title={getTitle()}
     >
-      {config.label}
+      {getLabel()}
     </span>
   );
 }
