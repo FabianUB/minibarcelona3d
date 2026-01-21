@@ -11,7 +11,7 @@
   },
   "sections": {
     "networkStatus": "Estado de la Red",
-    "mlBaseline": "Aprendizaje de Línea Base ML",
+    "mlBaseline": "Aprendizaje ML de Baseline",
     "systemMetrics": "Métricas del Sistema"
   },
   "metrics": {
@@ -34,18 +34,27 @@
     "dataSourceStatic": "Horario estático"
   },
   "baseline": {
-    "title": "Aprendizaje de Línea Base",
+    "title": "Aprendizaje de ML de baseline",
     "mature": "{{percentage}}% maduro",
     "description": "El sistema aprende conteos típicos de vehículos para cada hora/día. Mayor madurez significa detección de anomalías más confiable.",
     "empty": "Sin datos de línea base aún. Vuelve en unos minutos.",
     "legendLearning": "Aprendiendo",
     "legendDeveloping": "Desarrollando",
     "legendEstablished": "Establecido",
+    "statusLearning": "aprendiendo",
+    "statusDeveloping": "desarrollando",
+    "statusEstablished": "establecido",
     "timeSlots": "Franjas horarias:",
+    "slotsCount": "{{mature}} / {{total}} maduros",
     "coverage": "Cobertura:",
     "maturity": "Madurez:",
-    "totalSamples": "Muestras totales:",
-    "matureSuffix": "maduro"
+    "totalSamples": "Muestras totales:"
+  },
+  "freshness": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "noData": "Sin datos",
+    "notAvailable": "N/D"
   },
   "footer": {
     "lastUpdated": "Última actualización: {{time}}",

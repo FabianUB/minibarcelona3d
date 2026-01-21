@@ -1,24 +1,26 @@
 /**
  * LanguageToggle Component
  *
- * A toggle button for switching between English, Spanish, and Catalan.
+ * A dropdown menu for switching between English, Spanish, and Catalan.
  * Uses SVG flags for consistent cross-platform display.
- * Click to cycle through languages: ENG → ESP → CAT → ENG
  */
 
 import { useTranslation } from 'react-i18next';
-import { useCallback, useMemo } from 'react';
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../i18n';
+import { useCallback, useMemo, useState } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import type { SupportedLanguage } from '../i18n';
 
 interface LanguageConfig {
   code: SupportedLanguage;
   label: string;
+  name: string;
 }
 
 const LANGUAGES: LanguageConfig[] = [
-  { code: 'en', label: 'EN' },
-  { code: 'es', label: 'ES' },
-  { code: 'ca', label: 'CA' },
+  { code: 'en', label: 'EN', name: 'English' },
+  { code: 'es', label: 'ES', name: 'Español' },
+  { code: 'ca', label: 'CA', name: 'Català' },
 ];
 
 /** UK flag (Union Jack) for English */
@@ -66,8 +68,8 @@ function FlagCatalonia({ className }: { className?: string }) {
   );
 }
 
-function getFlag(code: SupportedLanguage) {
-  const flagClass = 'w-5 h-3.5 rounded-[2px] shadow-sm object-cover';
+function getFlag(code: SupportedLanguage, className?: string) {
+  const flagClass = className ?? 'w-5 h-3.5 rounded-[2px] shadow-sm';
   switch (code) {
     case 'en':
       return <FlagUK className={flagClass} />;
@@ -84,6 +86,7 @@ interface LanguageToggleProps {
 
 export function LanguageToggle({ className }: LanguageToggleProps) {
   const { i18n } = useTranslation();
+  const [open, setOpen] = useState(false);
 
   const currentLanguage = useMemo(() => {
     const normalizedLang = i18n.language?.split('-')[0] as SupportedLanguage;
@@ -94,28 +97,56 @@ export function LanguageToggle({ className }: LanguageToggleProps) {
     );
   }, [i18n.language]);
 
-  const cycleLanguage = useCallback(() => {
-    const normalizedLang = i18n.language?.split('-')[0];
-    const currentIndex = SUPPORTED_LANGUAGES.indexOf(
-      normalizedLang as SupportedLanguage
-    );
-    const nextIndex =
-      currentIndex === -1 ? 0 : (currentIndex + 1) % SUPPORTED_LANGUAGES.length;
-    const nextLanguage = SUPPORTED_LANGUAGES[nextIndex];
-    i18n.changeLanguage(nextLanguage);
-  }, [i18n]);
+  const selectLanguage = useCallback(
+    (code: SupportedLanguage) => {
+      i18n.changeLanguage(code);
+      setOpen(false);
+    },
+    [i18n]
+  );
 
   return (
-    <button
-      onClick={cycleLanguage}
-      className={`flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors group ${className ?? ''}`}
-      aria-label={`Current language: ${currentLanguage.label}. Click to change language.`}
-      title="Change language"
-    >
-      {getFlag(currentLanguage.code)}
-      <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-        {currentLanguage.label}
-      </span>
-    </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors group ${className ?? ''}`}
+          aria-label={`Current language: ${currentLanguage.name}. Click to change language.`}
+        >
+          {getFlag(currentLanguage.code)}
+          <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+            {currentLanguage.label}
+          </span>
+          <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-36 p-1"
+        align="start"
+        sideOffset={8}
+      >
+        <div className="flex flex-col">
+          {LANGUAGES.map((lang) => {
+            const isSelected = lang.code === currentLanguage.code;
+            return (
+              <button
+                key={lang.code}
+                onClick={() => selectLanguage(lang.code)}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors ${
+                  isSelected
+                    ? 'bg-accent text-accent-foreground'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                {getFlag(lang.code, 'w-5 h-3.5 rounded-[2px] shadow-sm')}
+                <span className="text-xs font-medium flex-1">{lang.name}</span>
+                {isSelected && (
+                  <Check className="h-3.5 w-3.5 text-foreground" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

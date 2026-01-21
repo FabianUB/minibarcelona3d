@@ -6,14 +6,20 @@
   "panel": {
     "open": "Open control panel",
     "transitControl": "Transit Control",
-    "vehicleList": "Vehicle List"
+    "vehicleList": "Vehicle List",
+    "showVehicleList": "Show Vehicle List",
+    "showControls": "Show Controls"
   },
   "tabs": {
     "rodalies": "Rodalies",
     "metro": "Metro",
     "bus": "Bus",
     "tram": "Tram",
-    "fgc": "FGC"
+    "fgc": "FGC",
+    "ariaLabel": "Transit networks",
+    "enabled": "(enabled)",
+    "disabled": "(disabled)",
+    "clickToSelect": "Click to select, Ctrl+click to toggle"
   },
   "vehicleList": {
     "title": "Vehicles",
@@ -26,16 +32,24 @@
     "clickToCenter": "Click on a vehicle to center the map"
   },
   "lineGrid": {
-    "loading": "Loading...",
+    "loading": "Loading lines...",
     "noLines": "No lines available",
     "failedToLoad": "Failed to load lines",
-    "isolated": "Isolated: ",
-    "highlighted": "Highlighted: "
+    "isolated": "Isolated",
+    "highlighted": "Highlighted",
+    "clear": "Clear",
+    "helpText": "Click to highlight • Hold to isolate",
+    "lineTitle": "Click to highlight, hold to isolate"
   },
   "busRoutes": {
     "loading": "Loading bus routes...",
     "noRoutes": "No routes found for this network",
-    "failedToLoad": "Failed to load bus routes"
+    "failedToLoad": "Failed to load bus routes",
+    "showOnlyTop": "Show only top {{count}} lines",
+    "searchPlaceholder": "Search routes...",
+    "groupLines": "{{prefix}}-Lines",
+    "routeCount": "{{count}} routes",
+    "routeCountFiltered": "{{count}} routes matching \"{{query}}\""
   },
   "modelSize": {
     "label": "Model Size"
