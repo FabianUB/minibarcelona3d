@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -21,6 +22,7 @@ interface BaselineMaturityProps {
 }
 
 export function BaselineMaturity({ refreshInterval = 60000 }: BaselineMaturityProps) {
+  const { t } = useTranslation('status');
   const [summaries, setSummaries] = useState<BaselineSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +33,11 @@ export function BaselineMaturity({ refreshInterval = 60000 }: BaselineMaturityPr
       setSummaries(response.networks);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
+      setError(err instanceof Error ? err.message : t('error.failedToLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadSummary();
@@ -48,7 +50,7 @@ export function BaselineMaturity({ refreshInterval = 60000 }: BaselineMaturityPr
       <Card className="bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            Baseline Learning
+            {t('baseline.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -65,7 +67,7 @@ export function BaselineMaturity({ refreshInterval = 60000 }: BaselineMaturityPr
       <Card className="bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            Baseline Learning
+            {t('baseline.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -85,20 +87,20 @@ export function BaselineMaturity({ refreshInterval = 60000 }: BaselineMaturityPr
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            Baseline Learning
+            {t('baseline.title')}
           </CardTitle>
           <Badge variant="outline" className="text-xs">
-            {overallMaturity.toFixed(0)}% mature
+            {t('baseline.mature', { percentage: overallMaturity.toFixed(0) })}
           </Badge>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          The system learns typical vehicle counts for each hour/day. Higher maturity means more reliable anomaly detection.
+          {t('baseline.description')}
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
         {summaries.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center">
-            No baseline data yet. Check back in a few minutes.
+            {t('baseline.empty')}
           </p>
         ) : (
           <div className="space-y-2">
@@ -112,15 +114,15 @@ export function BaselineMaturity({ refreshInterval = 60000 }: BaselineMaturityPr
         <div className="flex items-center justify-center gap-4 pt-2 border-t border-border text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span>Learning</span>
+            <span>{t('baseline.legendLearning')}</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-yellow-500" />
-            <span>Developing</span>
+            <span>{t('baseline.legendDeveloping')}</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span>Established</span>
+            <span>{t('baseline.legendEstablished')}</span>
           </div>
         </div>
       </CardContent>
@@ -129,7 +131,21 @@ export function BaselineMaturity({ refreshInterval = 60000 }: BaselineMaturityPr
 }
 
 function NetworkMaturityRow({ summary }: { summary: BaselineSummary }) {
+  const { t } = useTranslation('status');
   const [expanded, setExpanded] = useState(false);
+
+  const getStatusTranslation = (status: string): string => {
+    switch (status) {
+      case 'established':
+        return t('baseline.statusEstablished');
+      case 'developing':
+        return t('baseline.statusDeveloping');
+      case 'learning':
+        return t('baseline.statusLearning');
+      default:
+        return status;
+    }
+  };
 
   const getStatusColor = (status: string): string => {
     switch (status) {
@@ -192,7 +208,7 @@ function NetworkMaturityRow({ summary }: { summary: BaselineSummary }) {
           variant="outline"
           className={`text-[10px] px-1.5 capitalize ${getStatusBadgeClass(summary.status)}`}
         >
-          {summary.status}
+          {getStatusTranslation(summary.status)}
         </Badge>
 
         {/* Expand indicator */}
@@ -204,15 +220,15 @@ function NetworkMaturityRow({ summary }: { summary: BaselineSummary }) {
       {/* Expanded details */}
       {expanded && (
         <div className="ml-[70px] pl-2 text-xs text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5 border-l border-border">
-          <span>Time slots:</span>
+          <span>{t('baseline.timeSlots')}</span>
           <span className="text-foreground">
-            {summary.matureSlots} / {summary.totalSlots} mature
+            {t('baseline.slotsCount', { mature: summary.matureSlots, total: summary.totalSlots })}
           </span>
-          <span>Coverage:</span>
+          <span>{t('baseline.coverage')}</span>
           <span className="text-foreground">{summary.coveragePercent.toFixed(0)}%</span>
-          <span>Maturity:</span>
+          <span>{t('baseline.maturity')}</span>
           <span className="text-foreground">{summary.maturityPercent.toFixed(0)}%</span>
-          <span>Total samples:</span>
+          <span>{t('baseline.totalSamples')}</span>
           <span className="text-foreground">{summary.totalSamples.toLocaleString()}</span>
         </div>
       )}

@@ -1,0 +1,61 @@
+{
+  "modes": {
+    "controls": "Controles",
+    "vehicles": "Vehículos"
+  },
+  "panel": {
+    "open": "Abrir panel de control",
+    "transitControl": "Control de Tránsito",
+    "vehicleList": "Lista de Vehículos",
+    "showVehicleList": "Mostrar lista de vehículos",
+    "showControls": "Mostrar controles"
+  },
+  "tabs": {
+    "rodalies": "Rodalies",
+    "metro": "Metro",
+    "bus": "Bus",
+    "tram": "Tram",
+    "fgc": "FGC",
+    "ariaLabel": "Redes de transporte",
+    "enabled": "(activada)",
+    "disabled": "(desactivada)",
+    "clickToSelect": "Clic para seleccionar, Ctrl+clic para alternar"
+  },
+  "vehicleList": {
+    "title": "Vehículos",
+    "titleWithCount": "Vehículos ({{count}})",
+    "showVehicleList": "Mostrar lista de vehículos",
+    "backToControls": "Volver a controles",
+    "networkDisabled": "Red desactivada",
+    "enableNetwork": "Activa {{network}} para ver vehículos",
+    "noActiveVehicles": "Sin vehículos activos",
+    "clickToCenter": "Haz clic en un vehículo para centrar el mapa"
+  },
+  "lineGrid": {
+    "loading": "Cargando líneas...",
+    "noLines": "No hay líneas disponibles",
+    "failedToLoad": "Error al cargar líneas",
+    "isolated": "Aislado",
+    "highlighted": "Resaltado",
+    "clear": "Limpiar",
+    "helpText": "Clic para resaltar • Mantener para aislar",
+    "lineTitle": "Clic para resaltar, mantener para aislar"
+  },
+  "busRoutes": {
+    "loading": "Cargando rutas de bus...",
+    "noRoutes": "No se encontraron rutas para esta red",
+    "failedToLoad": "Error al cargar rutas de bus",
+    "showOnlyTop": "Mostrar solo las {{count}} líneas principales",
+    "searchPlaceholder": "Buscar rutas...",
+    "groupLines": "Líneas {{prefix}}",
+    "routeCount": "{{count}} rutas",
+    "routeCountFiltered": "{{count}} rutas con \"{{query}}\""
+  },
+  "modelSize": {
+    "label": "Tamaño del Modelo"
+  },
+  "settings": {
+    "showStations": "Mostrar Estaciones",
+    "showStationsDescription": "Mostrar marcadores de estación en el mapa"
+  }
+}

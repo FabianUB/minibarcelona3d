@@ -1,0 +1,17 @@
+{
+  "panel": {
+    "title": "Rodalies Lines",
+    "loading": "Loading lines...",
+    "instructions": "Click to highlight, hold to isolate",
+    "instructionsMobile": "Tap to highlight, hold to isolate",
+    "clear": "Clear",
+    "clearSelection": "Clear Selection",
+    "hideLegend": "Hide legend",
+    "showLegend": "Show legend",
+    "showLegendTooltip": "Show Rodalies Lines legend",
+    "selected": "Selected: {{lines}}",
+    "linesCount": "Lines ({{count}})",
+    "lineAriaLabel": "{{lineId}}: {{lineName}} (hold to isolate)",
+    "lineTooltip": "{{lineName}} (hold to isolate)"
+  }
+}

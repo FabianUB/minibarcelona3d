@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useMapState, useMapActions } from '@/state/map';
@@ -19,6 +20,7 @@ interface NetworkLineGridProps {
 }
 
 export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
+  const { t } = useTranslation('controlPanel');
   const { ui } = useMapState();
   const { setNetworkHighlight, toggleNetworkLine, clearNetworkHighlight } = useMapActions();
   const { lines, isLoading, error } = useNetworkLines(network);
@@ -81,7 +83,7 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
   if (isLoading) {
     return (
       <div className={cn('py-4 text-center text-muted-foreground', className)}>
-        Loading lines...
+        {t('lineGrid.loading')}
       </div>
     );
   }
@@ -89,7 +91,7 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
   if (error) {
     return (
       <div className={cn('py-4 text-center text-destructive', className)}>
-        {error}
+        {t('lineGrid.failedToLoad')}
       </div>
     );
   }
@@ -97,7 +99,7 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
   if (lines.length === 0) {
     return (
       <div className={cn('py-4 text-center text-muted-foreground', className)}>
-        No lines available
+        {t('lineGrid.noLines')}
       </div>
     );
   }
@@ -113,7 +115,9 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
         >
           <span>
             <span className="font-medium">
-              {networkHighlight.highlightMode === 'isolate' ? 'Isolated: ' : 'Highlighted: '}
+              {networkHighlight.highlightMode === 'isolate'
+                ? `${t('lineGrid.isolated')}: `
+                : `${t('lineGrid.highlighted')}: `}
             </span>
             {networkHighlight.selectedLineIds.join(', ')}
           </span>
@@ -123,7 +127,7 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
             onClick={handleClear}
             className="h-5 text-xs px-1.5 hover:bg-amber-100 dark:hover:bg-amber-900"
           >
-            Clear
+            {t('lineGrid.clear')}
           </Button>
         </div>
       )}
@@ -159,7 +163,7 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
                 color: '#ffffff',
                 textShadow: '0 1px 2px rgba(0,0,0,0.3)',
               }}
-              title={`${line.name}\nClick to highlight, hold to isolate`}
+              title={`${line.name}\n${t('lineGrid.lineTitle')}`}
             >
               {line.code}
             </button>
@@ -169,7 +173,7 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
 
       {/* Help text */}
       <p className="text-[10px] text-muted-foreground text-center pt-1">
-        Click to highlight • Hold to isolate
+        {t('lineGrid.helpText')}
       </p>
     </div>
   );

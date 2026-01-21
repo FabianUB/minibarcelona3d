@@ -6,6 +6,7 @@
  */
 
 import { useMemo, useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,7 @@ export function VehicleListView({
   getMeshPosition,
   className,
 }: VehicleListViewProps) {
+  const { t } = useTranslation('controlPanel');
   const { ui } = useMapState();
   const { setControlPanelMode } = useMapActions();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -130,27 +132,27 @@ export function VehicleListView({
 
     switch (network) {
       case 'rodalies':
-        vehicleList = rodaliesTrains.map((t) => {
+        vehicleList = rodaliesTrains.map((train) => {
           let arrivalMinutes: number | null = null;
-          if (t.predictedArrivalUtc) {
-            const arrivalTime = new Date(t.predictedArrivalUtc).getTime();
+          if (train.predictedArrivalUtc) {
+            const arrivalTime = new Date(train.predictedArrivalUtc).getTime();
             const now = Date.now();
             const diffMs = arrivalTime - now;
             if (diffMs > 0) {
               arrivalMinutes = Math.ceil(diffMs / 60000);
             }
           }
-          const lineCode = t.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A';
+          const lineCode = train.routeId?.match(/R[GLT]?\d+[NS]?$/i)?.[0]?.toUpperCase() || 'N/A';
           return {
-            id: t.vehicleKey,
-            displayId: t.vehicleKey, // Rodalies keys are already short
+            id: train.vehicleKey,
+            displayId: train.vehicleKey, // Rodalies keys are already short
             lineCode,
-            destination: t.nextStopId
-              ? stationNames.get(t.nextStopId) || t.nextStopId
+            destination: train.nextStopId
+              ? stationNames.get(train.nextStopId) || train.nextStopId
               : '-',
             arrivalMinutes,
-            lat: t.latitude,
-            lng: t.longitude,
+            lat: train.latitude,
+            lng: train.longitude,
           };
         });
         break;
@@ -224,8 +226,8 @@ export function VehicleListView({
   if (!ui.transportFilters[network]) {
     return (
       <div className={cn('py-8 text-center text-muted-foreground', className)}>
-        <p className="text-sm">Network disabled</p>
-        <p className="text-xs mt-1">Enable {network} to see vehicles</p>
+        <p className="text-sm">{t('vehicleList.networkDisabled')}</p>
+        <p className="text-xs mt-1">{t('vehicleList.enableNetwork', { network })}</p>
       </div>
     );
   }
@@ -233,7 +235,7 @@ export function VehicleListView({
   if (vehicles.length === 0) {
     return (
       <div className={cn('py-8 text-center text-muted-foreground', className)}>
-        <p className="text-sm">No active vehicles</p>
+        <p className="text-sm">{t('vehicleList.noActiveVehicles')}</p>
       </div>
     );
   }
@@ -244,7 +246,7 @@ export function VehicleListView({
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="text-lg">{networkTab?.icon}</span>
-          <span className="font-semibold text-sm">Vehicles</span>
+          <span className="font-semibold text-sm">{t('vehicleList.title')}</span>
           <span className="text-xs text-muted-foreground">
             ({vehicles.length})
           </span>
@@ -254,10 +256,10 @@ export function VehicleListView({
           size="sm"
           onClick={() => setControlPanelMode('controls')}
           className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-          title="Back to controls"
+          title={t('vehicleList.backToControls')}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Controls
+          {t('modes.controls')}
         </Button>
       </div>
 
@@ -343,7 +345,7 @@ export function VehicleListView({
                       <span>→ {vehicle.destination}</span>
                       {vehicle.arrivalMinutes !== null && (
                         <span className="text-xs text-muted-foreground">
-                          ({vehicle.arrivalMinutes} min)
+                          ({t('common:time.minutes', { count: vehicle.arrivalMinutes })})
                         </span>
                       )}
                     </div>
@@ -356,7 +358,7 @@ export function VehicleListView({
       </div>
 
       <div className="text-xs text-muted-foreground text-center">
-        Click on a vehicle to center the map
+        {t('vehicleList.clickToCenter')}
       </div>
     </div>
   );
