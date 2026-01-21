@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface ServiceUnavailableProps {
   /** Error type that triggered this page */
@@ -15,6 +16,7 @@ export interface ServiceUnavailableProps {
 }
 
 export function ServiceUnavailable({ errorType, onRetry }: ServiceUnavailableProps) {
+  const { t } = useTranslation('errors');
   const [isRetrying, setIsRetrying] = useState(false);
 
   const handleRetry = useCallback(() => {
@@ -35,31 +37,27 @@ export function ServiceUnavailable({ errorType, onRetry }: ServiceUnavailablePro
     switch (errorType) {
       case 'rate-limit':
         return {
-          title: 'Service Temporarily Unavailable',
-          description:
-            'The map service has reached its usage limit for this period. This is a free service and usage is limited to ensure availability for everyone.',
-          suggestion: 'Please try again later or check back tomorrow when limits reset.',
+          title: t('service.rateLimit.title'),
+          description: t('service.rateLimit.description'),
+          suggestion: t('service.rateLimit.suggestion'),
         };
       case 'auth':
         return {
-          title: 'Map Service Error',
-          description:
-            'There was an authentication issue with the map service. This may be a temporary issue.',
-          suggestion: 'Please try refreshing the page.',
+          title: t('service.auth.title'),
+          description: t('service.auth.description'),
+          suggestion: t('service.auth.suggestion'),
         };
       case 'network':
         return {
-          title: 'Connection Error',
-          description:
-            'Unable to connect to the map service. Please check your internet connection.',
-          suggestion: 'Make sure you have a stable internet connection and try again.',
+          title: t('service.network.title'),
+          description: t('service.network.description'),
+          suggestion: t('service.network.suggestion'),
         };
       default:
         return {
-          title: 'Something Went Wrong',
-          description:
-            'An unexpected error occurred while loading the map.',
-          suggestion: 'Please try refreshing the page.',
+          title: t('service.unknown.title'),
+          description: t('service.unknown.description'),
+          suggestion: t('service.unknown.suggestion'),
         };
     }
   };
@@ -102,12 +100,12 @@ export function ServiceUnavailable({ errorType, onRetry }: ServiceUnavailablePro
           disabled={isRetrying}
           className="service-unavailable__retry-button"
         >
-          {isRetrying ? 'Retrying...' : 'Try Again'}
+          {isRetrying ? t('buttons.retrying') : t('buttons.tryAgain')}
         </button>
 
         {/* Footer */}
         <p className="service-unavailable__footer">
-          MiniBarcelona3D
+          {t('footer')}
         </p>
       </div>
 

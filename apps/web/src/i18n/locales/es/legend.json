@@ -1,0 +1,17 @@
+{
+  "panel": {
+    "title": "Líneas de Rodalies",
+    "loading": "Cargando líneas...",
+    "instructions": "Clic para resaltar, mantener para aislar",
+    "instructionsMobile": "Toca para resaltar, mantén para aislar",
+    "clear": "Limpiar",
+    "clearSelection": "Limpiar Selección",
+    "hideLegend": "Ocultar leyenda",
+    "showLegend": "Mostrar leyenda",
+    "showLegendTooltip": "Mostrar leyenda de líneas de Rodalies",
+    "selected": "Seleccionado: {{lines}}",
+    "linesCount": "Líneas ({{count}})",
+    "lineAriaLabel": "{{lineId}}: {{lineName}} (mantener para aislar)",
+    "lineTooltip": "{{lineName}} (mantener para aislar)"
+  }
+}

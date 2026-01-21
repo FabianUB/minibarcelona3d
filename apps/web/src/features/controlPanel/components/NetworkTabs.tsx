@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useMapState, useMapActions } from '@/state/map';
 import type { TransportType } from '@/types/rodalies';
@@ -18,6 +19,7 @@ interface NetworkTabsProps {
 }
 
 export function NetworkTabs({ className }: NetworkTabsProps) {
+  const { t } = useTranslation('controlPanel');
   const { ui } = useMapState();
   const { setExclusiveNetwork, toggleNetworkMulti } = useMapActions();
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -72,7 +74,7 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
         className
       )}
       role="tablist"
-      aria-label="Transit networks"
+      aria-label={t('tabs.ariaLabel')}
     >
       {NETWORK_TABS.map((tab: NetworkTabConfig) => {
         const isActive = ui.activeControlTab === tab.type;
@@ -83,7 +85,7 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
             key={tab.type}
             role="tab"
             aria-selected={isActive}
-            aria-label={`${tab.label} ${isEnabled ? '(enabled)' : '(disabled)'}`}
+            aria-label={`${tab.label} ${isEnabled ? t('tabs.enabled') : t('tabs.disabled')}`}
             onClick={(e) => handleClick(tab.type, e)}
             onTouchStart={() => handleTouchStart(tab.type)}
             onTouchEnd={() => handleTouchEnd(tab.type)}
@@ -97,7 +99,7 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/60 hover:scale-102',
               !isEnabled && 'opacity-40 grayscale'
             )}
-            title={`${tab.label} - Click to select, Ctrl+click to toggle`}
+            title={`${tab.label} - ${t('tabs.clickToSelect')}`}
           >
             <span aria-hidden="true">{tab.icon}</span>
             {/* Active indicator dot */}

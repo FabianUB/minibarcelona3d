@@ -5,6 +5,7 @@
  * Contains a toggle for showing/hiding station markers and names.
  */
 
+import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { useMapState, useMapActions } from '@/state/map';
@@ -15,6 +16,7 @@ interface SettingsSectionProps {
 }
 
 export function SettingsSection({ className }: SettingsSectionProps) {
+  const { t } = useTranslation('controlPanel');
   const { ui } = useMapState();
   const { toggleShowStations } = useMapActions();
 
@@ -29,10 +31,10 @@ export function SettingsSection({ className }: SettingsSectionProps) {
               htmlFor="show-stations"
               className="text-sm font-medium"
             >
-              Show Stations
+              {t('settings.showStations')}
             </label>
             <p className="text-xs text-muted-foreground">
-              Display station markers on map
+              {t('settings.showStationsDescription')}
             </p>
           </div>
         </div>
@@ -40,7 +42,7 @@ export function SettingsSection({ className }: SettingsSectionProps) {
           id="show-stations"
           checked={ui.showStations}
           onCheckedChange={toggleShowStations}
-          aria-label="Toggle station markers visibility"
+          aria-label={t('settings.showStations')}
         />
       </div>
     </div>

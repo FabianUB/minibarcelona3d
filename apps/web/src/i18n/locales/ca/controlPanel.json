@@ -1,0 +1,61 @@
+{
+  "modes": {
+    "controls": "Controls",
+    "vehicles": "Vehicles"
+  },
+  "panel": {
+    "open": "Obrir panell de control",
+    "transitControl": "Control de Trànsit",
+    "vehicleList": "Llista de Vehicles",
+    "showVehicleList": "Mostrar llista de vehicles",
+    "showControls": "Mostrar controls"
+  },
+  "tabs": {
+    "rodalies": "Rodalies",
+    "metro": "Metro",
+    "bus": "Bus",
+    "tram": "Tram",
+    "fgc": "FGC",
+    "ariaLabel": "Xarxes de transport",
+    "enabled": "(activada)",
+    "disabled": "(desactivada)",
+    "clickToSelect": "Clic per seleccionar, Ctrl+clic per alternar"
+  },
+  "vehicleList": {
+    "title": "Vehicles",
+    "titleWithCount": "Vehicles ({{count}})",
+    "showVehicleList": "Mostrar llista de vehicles",
+    "backToControls": "Tornar a controls",
+    "networkDisabled": "Xarxa desactivada",
+    "enableNetwork": "Activa {{network}} per veure vehicles",
+    "noActiveVehicles": "Sense vehicles actius",
+    "clickToCenter": "Fes clic en un vehicle per centrar el mapa"
+  },
+  "lineGrid": {
+    "loading": "Carregant línies...",
+    "noLines": "No hi ha línies disponibles",
+    "failedToLoad": "Error en carregar línies",
+    "isolated": "Aïllat",
+    "highlighted": "Ressaltat",
+    "clear": "Netejar",
+    "helpText": "Clic per ressaltar • Mantenir per aïllar",
+    "lineTitle": "Clic per ressaltar, mantenir per aïllar"
+  },
+  "busRoutes": {
+    "loading": "Carregant rutes de bus...",
+    "noRoutes": "No s'han trobat rutes per aquesta xarxa",
+    "failedToLoad": "Error en carregar rutes de bus",
+    "showOnlyTop": "Mostrar només les {{count}} línies principals",
+    "searchPlaceholder": "Cercar rutes...",
+    "groupLines": "Línies {{prefix}}",
+    "routeCount": "{{count}} rutes",
+    "routeCountFiltered": "{{count}} rutes amb \"{{query}}\""
+  },
+  "modelSize": {
+    "label": "Mida del Model"
+  },
+  "settings": {
+    "showStations": "Mostrar Estacions",
+    "showStationsDescription": "Mostrar marcadors d'estació al mapa"
+  }
+}
