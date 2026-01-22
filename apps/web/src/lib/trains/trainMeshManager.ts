@@ -1051,10 +1051,10 @@ export class TrainMeshManager {
           cloned.depthWrite = true;
           // Polygon offset shifts depth values to prevent z-fighting with Mapbox layers
           // Negative values push geometry "closer" to camera in depth buffer
-          // Using aggressive values (-4) to ensure trains render above railway lines on all GPUs
+          // Note: Using -1 (same as transit) - larger values like -4 cause issues on some GPU drivers
           cloned.polygonOffset = true;
-          cloned.polygonOffsetFactor = -4;
-          cloned.polygonOffsetUnits = -4;
+          cloned.polygonOffsetFactor = -1;
+          cloned.polygonOffsetUnits = -1;
           return cloned;
         };
 
