@@ -114,4 +114,4 @@ data/gtfs/*
 !data/gtfs/tram_tbs_gtfs.zip
 !data/gtfs/tram_tbx_gtfs.zip
 
-apps/poller/data/
+apps/poller/data/*.har
