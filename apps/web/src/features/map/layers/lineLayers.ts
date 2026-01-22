@@ -129,7 +129,9 @@ export function getLinePaintProperties(config: LineLayerStyleConfig) {
     'line-color': ['coalesce', ['get', 'brand_color'], '#f97316'] as Expression,
     'line-width': getLineWidthExpression(config),
     'line-opacity': getLineOpacityExpression(config),
-    'line-emissive-strength': 1, // Make line colors bright and visible (Mini Tokyo 3D style)
+    // NOTE: line-emissive-strength removed - was causing z-fighting with 3D train models
+    // on some WebGL environments. The emissive property affects how lines render in 3D
+    // space and can interfere with custom layer depth buffer.
   };
 }
 
