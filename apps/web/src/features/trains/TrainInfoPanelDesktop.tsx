@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import type { TripDetails } from '@/types/trains';
 import { StopList } from './StopList';
 
 export function TrainInfoPanelDesktop() {
+  const { t } = useTranslation('vehicles');
   const { setActivePanel } = useMapActions();
   const { selectedTrain } = useTrainState();
   const { clearSelection } = useTrainActions();
@@ -93,34 +95,38 @@ export function TrainInfoPanelDesktop() {
   // Get delay for next stop from GTFS-RT feed data
   const calculateScheduleDelay = (): { text: string; status: 'on-time' | 'delayed' | 'early' | 'unknown' } => {
     if (!tripDetails || !selectedTrain.nextStopId) {
-      return { text: 'Unknown', status: 'unknown' };
+      return { text: t('delay.unknown'), status: 'unknown' };
     }
 
     const nextStop = tripDetails.stopTimes.find(st => st.stopId === selectedTrain.nextStopId);
     if (!nextStop) {
-      return { text: 'Unknown', status: 'unknown' };
+      return { text: t('delay.unknown'), status: 'unknown' };
     }
 
     // Use real-time delay from GTFS-RT feed (already calculated)
     const delaySeconds = nextStop.arrivalDelaySeconds ?? nextStop.departureDelaySeconds;
 
     if (delaySeconds === null || delaySeconds === undefined) {
-      return { text: 'Unknown', status: 'unknown' };
+      return { text: t('delay.unknown'), status: 'unknown' };
     }
 
     if (delaySeconds === 0) {
-      return { text: 'On time', status: 'on-time' };
+      return { text: t('delay.onTime'), status: 'on-time' };
     }
 
     if (delaySeconds > 0) {
       const delayMinutes = Math.floor(delaySeconds / 60);
-      const text = delayMinutes > 0 ? `${delayMinutes} min late` : `${delaySeconds}s late`;
+      const text = delayMinutes > 0
+        ? t('delay.minLate', { count: delayMinutes })
+        : t('delay.secLate', { count: delaySeconds });
       return { text, status: 'delayed' };
     }
 
     // Negative delay = early
     const delayMinutes = Math.floor(Math.abs(delaySeconds) / 60);
-    const text = delayMinutes > 0 ? `${delayMinutes} min early` : `${Math.abs(delaySeconds)}s early`;
+    const text = delayMinutes > 0
+      ? t('delay.minEarly', { count: delayMinutes })
+      : t('delay.secEarly', { count: Math.abs(delaySeconds) });
     return { text, status: 'early' };
   };
 
@@ -161,7 +167,7 @@ export function TrainInfoPanelDesktop() {
             size="sm"
             onClick={handleClose}
             className="h-7 w-7 p-0 hover:bg-accent"
-            aria-label="Close train info"
+            aria-label={t('train.closePanel')}
           >
             ✕
           </Button>
@@ -173,7 +179,7 @@ export function TrainInfoPanelDesktop() {
           <>
             <div className="px-3 py-2 rounded-md text-sm font-medium bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center gap-2">
               <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full" />
-              <span className="text-gray-600 dark:text-gray-400">Loading trip details...</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('train.loadingTrip')}</span>
             </div>
             <Separator />
           </>
@@ -217,7 +223,7 @@ export function TrainInfoPanelDesktop() {
         <Separator />
 
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-foreground">Stops</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t('train.stops')}</h3>
           <StopList
             tripId={selectedTrain.tripId}
             currentStopId={selectedTrain.currentStopId}
