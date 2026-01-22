@@ -1559,16 +1559,23 @@ export function TrainLayer3D({
         layerAddedRef.current = true;
 
         // Debug: Log layer order to diagnose z-fighting issues
-        const allLayers = map.getStyle().layers?.map(l => l.id) ?? [];
-        const trainLayerIndex = allLayers.indexOf(LAYER_ID);
-        const rodaliesLineIndex = allLayers.indexOf('rodalies-lines');
-        console.log('🔍🚂 [TrainLayer3D] Layer order diagnostic:', {
-          trainLayerIndex,
-          rodaliesLineIndex,
-          trainAboveRodalies: trainLayerIndex > rodaliesLineIndex,
-          totalLayers: allLayers.length,
-          last5Layers: allLayers.slice(-5),
-        });
+        const logLayerDiagnostic = (label: string) => {
+          const allLayers = map.getStyle().layers?.map(l => l.id) ?? [];
+          const trainLayerIndex = allLayers.indexOf(LAYER_ID);
+          const rodaliesLineIndex = allLayers.indexOf('rodalies-lines-outline');
+          const rodaliesRelated = allLayers.filter(id => id.includes('rodalies') || id.includes('train'));
+          console.log(`🔍🚂 [TrainLayer3D] Layer order diagnostic (${label}):`, {
+            trainLayerIndex,
+            rodaliesLineIndex,
+            trainAboveRodalies: trainLayerIndex > rodaliesLineIndex,
+            totalLayers: allLayers.length,
+            rodaliesRelatedLayers: rodaliesRelated,
+            last10Layers: allLayers.slice(-10),
+          });
+        };
+        logLayerDiagnostic('immediate');
+        // Also log after a delay to catch final state
+        setTimeout(() => logLayerDiagnostic('after 500ms'), 500);
 
         console.log(
           `TrainLayer3D: Custom layer added to map${beforeId ? ` before ${beforeId}` : ''}`
