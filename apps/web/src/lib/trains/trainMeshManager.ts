@@ -230,7 +230,7 @@ export class TrainMeshManager {
    * Prevents z-fighting with map surface
    * Based on Mini Tokyo 3D: 0.44 * scale
    */
-  private readonly Z_OFFSET_FACTOR = 0.44;
+  private readonly Z_OFFSET_FACTOR = 0.5;
 
   constructor(
     scene: THREE.Scene,
@@ -1051,9 +1051,10 @@ export class TrainMeshManager {
           cloned.depthWrite = true;
           // Polygon offset shifts depth values to prevent z-fighting with Mapbox layers
           // Negative values push geometry "closer" to camera in depth buffer
+          // Using aggressive values (-4) to ensure trains render above railway lines on all GPUs
           cloned.polygonOffset = true;
-          cloned.polygonOffsetFactor = -1;
-          cloned.polygonOffsetUnits = -1;
+          cloned.polygonOffsetFactor = -4;
+          cloned.polygonOffsetUnits = -4;
           return cloned;
         };
 
