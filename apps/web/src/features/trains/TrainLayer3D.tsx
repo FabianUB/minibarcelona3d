@@ -1038,6 +1038,16 @@ export function TrainLayer3D({
      * Task: T046 - Initialize mesh manager
      */
     onAdd(map: mapboxgl.Map, gl: WebGLRenderingContext) {
+      // Debug: Log WebGL capabilities for diagnosing z-fighting across different GPUs
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      console.log('🔍🚂 [TrainLayer3D] WebGL Debug Info:', {
+        renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown',
+        vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'unknown',
+        depthBits: gl.getParameter(gl.DEPTH_BITS),
+        maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+        version: gl.getParameter(gl.VERSION),
+      });
+
       // Create Three.js scene
       const scene = new THREE.Scene();
       sceneRef.current = scene;
