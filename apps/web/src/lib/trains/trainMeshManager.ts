@@ -232,6 +232,9 @@ export class TrainMeshManager {
    */
   private readonly Z_OFFSET_FACTOR = 0.5;
 
+  /** Debug flag to log material settings only once */
+  private hasLoggedMaterialSettings = false;
+
   constructor(
     scene: THREE.Scene,
     stations: Station[],
@@ -1055,6 +1058,18 @@ export class TrainMeshManager {
           cloned.polygonOffset = true;
           cloned.polygonOffsetFactor = -2;
           cloned.polygonOffsetUnits = -2;
+          // Debug: Log material settings once per model to verify they're applied
+          if (!this.hasLoggedMaterialSettings) {
+            console.log('🔧 [TrainMeshManager] Material settings applied:', {
+              depthTest: cloned.depthTest,
+              depthWrite: cloned.depthWrite,
+              polygonOffset: cloned.polygonOffset,
+              polygonOffsetFactor: cloned.polygonOffsetFactor,
+              polygonOffsetUnits: cloned.polygonOffsetUnits,
+              zOffsetFactor: this.Z_OFFSET_FACTOR,
+            });
+            this.hasLoggedMaterialSettings = true;
+          }
           return cloned;
         };
 

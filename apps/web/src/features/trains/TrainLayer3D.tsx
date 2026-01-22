@@ -1558,6 +1558,18 @@ export function TrainLayer3D({
         map.addLayer(customLayer, beforeId);
         layerAddedRef.current = true;
 
+        // Debug: Log layer order to diagnose z-fighting issues
+        const allLayers = map.getStyle().layers?.map(l => l.id) ?? [];
+        const trainLayerIndex = allLayers.indexOf(LAYER_ID);
+        const rodaliesLineIndex = allLayers.indexOf('rodalies-lines');
+        console.log('🔍🚂 [TrainLayer3D] Layer order diagnostic:', {
+          trainLayerIndex,
+          rodaliesLineIndex,
+          trainAboveRodalies: trainLayerIndex > rodaliesLineIndex,
+          totalLayers: allLayers.length,
+          last5Layers: allLayers.slice(-5),
+        });
+
         console.log(
           `TrainLayer3D: Custom layer added to map${beforeId ? ` before ${beforeId}` : ''}`
         );
