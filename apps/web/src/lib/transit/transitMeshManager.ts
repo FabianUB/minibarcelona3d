@@ -659,6 +659,11 @@ export class TransitMeshManager {
           // This fixes z-fighting issues that occur on some GPUs/drivers
           cloned.depthTest = true;
           cloned.depthWrite = true;
+          // Polygon offset shifts depth values to prevent z-fighting with Mapbox layers
+          // Negative values push geometry "closer" to camera in depth buffer
+          cloned.polygonOffset = true;
+          cloned.polygonOffsetFactor = -1;
+          cloned.polygonOffsetUnits = -1;
           return cloned;
         };
 
