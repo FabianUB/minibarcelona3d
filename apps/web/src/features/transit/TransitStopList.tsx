@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { fetchTripDetailsCached } from '@/lib/api/transit';
@@ -64,6 +65,7 @@ export function TransitStopList({
   status,
   networkType,
 }: TransitStopListProps) {
+  const { t } = useTranslation('vehicles');
   const vehicleIcon = getVehicleIcon(networkType);
   const isStoppedAtStation = status === 'STOPPED_AT';
 
@@ -85,7 +87,7 @@ export function TransitStopList({
         })
         .catch((err) => {
           console.error('Failed to fetch trip details:', err);
-          setError('Failed to load stops');
+          setError(t('stops.failedToLoad'));
         })
         .finally(() => {
           setIsLoading(false);
@@ -116,12 +118,12 @@ export function TransitStopList({
           <div className="flex items-center justify-center gap-2">
             <div className="text-2xl">{vehicleIcon}</div>
             <span className="text-sm text-muted-foreground">
-              In service
+              {t('stops.inService')}
             </span>
           </div>
         </div>
         <div className="px-3 py-2 bg-muted/50 rounded-md text-xs text-muted-foreground text-center">
-          Stop information not available for simulated positions
+          {t('stops.simulatedPosition')}
         </div>
       </div>
     );
@@ -132,20 +134,20 @@ export function TransitStopList({
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-semibold text-muted-foreground">All Stops</h4>
+          <h4 className="text-xs font-semibold text-muted-foreground">{t('stops.allStops')}</h4>
           <Button
             variant="ghost"
             size="sm"
             className="h-6 text-xs"
             onClick={() => setIsExpanded(false)}
           >
-            Collapse
+            {t('stops.collapse')}
           </Button>
         </div>
 
         {isLoading && (
           <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-            Loading stops...
+            {t('stops.loading')}
           </div>
         )}
 
@@ -157,7 +159,7 @@ export function TransitStopList({
 
         {!isLoading && !error && stopTimes.length === 0 && (
           <div className="px-3 py-4 bg-muted/50 rounded-md text-sm text-muted-foreground text-center">
-            No stop information available
+            {t('stops.noInfo')}
           </div>
         )}
 
@@ -241,7 +243,7 @@ export function TransitStopList({
             <div className="flex-1 flex flex-col items-start gap-1">
               <div
                 className="text-2xl self-center -mt-2"
-                title={`${networkType} stopped at station`}
+                title={t('stops.stoppedAtStation', { network: networkType })}
               >
                 {vehicleIcon}
               </div>
@@ -249,7 +251,7 @@ export function TransitStopList({
                 className="text-xs text-center font-medium max-w-[120px] line-clamp-3 w-full"
                 title={nextStopName}
               >
-                At: {nextStopName}
+                {t('stops.atStation', { station: nextStopName })}
               </span>
             </div>
 
@@ -258,7 +260,7 @@ export function TransitStopList({
             <div className="flex-1 flex flex-col items-start gap-1">
               <div className="w-3 h-3 rounded-full border-2 bg-primary border-primary self-center" />
               <span className="text-xs text-center text-muted-foreground max-w-[120px] line-clamp-3 w-full">
-                Next...
+                {t('stops.next')}
               </span>
             </div>
           </div>
@@ -271,7 +273,7 @@ export function TransitStopList({
             className="w-full"
             onClick={() => setIsExpanded(true)}
           >
-            Show all stops
+            {t('stops.showAll')}
           </Button>
         )}
       </div>
@@ -304,7 +306,7 @@ export function TransitStopList({
 
           <div className="flex-1 flex items-center gap-1 -mt-1">
             <div className="flex-1 h-0.5 bg-muted" />
-            <div className="text-lg" title={networkType}>
+            <div className="text-lg" title={t(`network.${networkType}`)}>
               {vehicleIcon}
             </div>
             <div className="flex-1 h-0.5 bg-muted" />
@@ -336,7 +338,7 @@ export function TransitStopList({
           className="w-full"
           onClick={() => setIsExpanded(true)}
         >
-          Show all stops
+          {t('stops.showAll')}
         </Button>
       )}
     </div>
