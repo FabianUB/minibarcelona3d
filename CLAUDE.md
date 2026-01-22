@@ -87,14 +87,21 @@ The application uses a **Context + Reducer pattern** for global map state:
 ### Feature Organization
 
 ```
-apps/web/src/features/
-  map/           # Mapbox canvas, controls, ServiceUnavailable page
-  trains/        # Rodalies train visualization (3D)
-  transit/       # Generic transit vehicle layer (Metro, Bus, Tram, FGC)
-  stations/      # Station markers and info panels
-  controlPanel/  # Network selection UI
-  status/        # Health monitoring and observability (/status page)
-  metro/, bus/, tram/, fgc/  # Network-specific layers
+apps/web/src/
+  features/
+    map/           # Mapbox canvas, controls, ServiceUnavailable page
+    trains/        # Rodalies train visualization (3D)
+    transit/       # Generic transit vehicle layer (Metro, Bus, Tram, FGC)
+    stations/      # Station markers and info panels
+    controlPanel/  # Network selection UI
+    status/        # Health monitoring and observability (/status page)
+    metro/, bus/, tram/, fgc/  # Network-specific layers
+  i18n/
+    index.ts       # i18n configuration
+    locales/
+      en/          # English translations
+      es/          # Spanish translations
+      ca/          # Catalan translations
 ```
 
 ## Environment Variables
@@ -186,6 +193,12 @@ const snapState = snapToRailwayLine(trainPosition, nextStopPosition, line);
 meshManager.applyRailwayBearing(mesh, snapState.bearing, reversed);
 ```
 
+**Important:** Materials cloned from GLB models must have explicit depth settings for consistent rendering across GPUs:
+```typescript
+clonedMaterial.depthTest = true;
+clonedMaterial.depthWrite = true;
+```
+
 ### Hit Detection (OBR)
 
 ```typescript
@@ -195,6 +208,27 @@ import { MapboxRaycaster } from '../lib/map/MapboxRaycaster';
 const raycaster = new MapboxRaycaster(map);
 raycaster.onClick((vehicleKey) => selectVehicle(vehicleKey));
 ```
+
+### Internationalization (i18n)
+
+The app supports English, Spanish, and Catalan using react-i18next:
+
+```typescript
+import { useTranslation } from 'react-i18next';
+
+// Use namespace for component-specific translations
+const { t } = useTranslation('controlPanel');
+<span>{t('tabs.ariaLabel')}</span>
+
+// With interpolation
+{t('delay.minLate', { count: 5 })}  // "5 min late"
+```
+
+**Namespaces:** `common`, `controlPanel`, `status`, `vehicles`, `stations`, `settings`, `errors`, `legend`
+
+**Language detection:** Browser language → localStorage (`rodalies-language`) → fallback to English
+
+**Adding translations:** Add keys to all three locale files (`en/`, `es/`, `ca/`) in `apps/web/src/i18n/locales/`
 
 ## Testing Strategy
 
@@ -229,12 +263,14 @@ const routeTrains = trains.filter(t => t.routeId === selectedRoute);
 | Frontend | React 19, TypeScript 5.9, Vite 7 |
 | 3D | Three.js 0.180, Mapbox GL JS 3.4 |
 | UI | ShadCN UI, Radix UI, Tailwind CSS 4 |
+| i18n | react-i18next, i18next-browser-languagedetector |
 | Backend | Go 1.23, SQLite |
 | Testing | Vitest 2.1, Playwright 1.48 |
 | Deploy | Docker, Caddy, GitHub Actions |
 
 ## Recent Changes
 
+- **012-internationalization**: Multi-language support (EN/ES/CA) with react-i18next, language toggle in control panel, translations for all UI components
 - **011-observability-reliability**: Health monitoring `/status` page, baseline learning with Welford's algorithm, anomaly detection, uptime tracking
 - **010-deployment-preparation**: Production deployment config, error handling with circuit breaker
 - **009-obr-hit-detection**: Oriented Bounding Rectangle for accurate 3D model clicking

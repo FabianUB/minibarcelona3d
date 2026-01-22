@@ -1,0 +1,46 @@
+{
+  "train": {
+    "closePanel": "Close train info",
+    "loadingTrip": "Loading trip details...",
+    "description": "Train information and schedule",
+    "stops": "Stops"
+  },
+  "transit": {
+    "closePanel": "Close panel",
+    "vehicleInfo": "Vehicle information",
+    "stops": "Stops",
+    "positionMetro": "Position from iMetro / simulation",
+    "positionSchedule": "Position estimated from schedule"
+  },
+  "network": {
+    "metro": "Metro",
+    "tram": "Tram",
+    "fgc": "FGC",
+    "bus": "Bus",
+    "transit": "Transit"
+  },
+  "delay": {
+    "unknown": "Unknown",
+    "onTime": "On time",
+    "minLate": "{{count}} min late",
+    "secLate": "{{count}}s late",
+    "minEarly": "{{count}} min early",
+    "secEarly": "{{count}}s early"
+  },
+  "stops": {
+    "allStops": "All Stops",
+    "showAll": "Show all stops",
+    "collapse": "Collapse",
+    "loading": "Loading stops...",
+    "failedToLoad": "Failed to load stops",
+    "noInfo": "No stop information available",
+    "journeyUnavailable": "Journey information unavailable",
+    "inService": "In service",
+    "simulatedPosition": "Stop information not available for simulated positions",
+    "atStation": "At: {{station}}",
+    "next": "Next...",
+    "trainStopped": "Train stopped at station",
+    "train": "Train",
+    "stoppedAtStation": "{{network}} stopped at station"
+  }
+}

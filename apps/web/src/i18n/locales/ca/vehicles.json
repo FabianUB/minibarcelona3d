@@ -1,0 +1,46 @@
+{
+  "train": {
+    "closePanel": "Tancar info del tren",
+    "loadingTrip": "Carregant detalls del viatge...",
+    "description": "Informació i horari del tren",
+    "stops": "Parades"
+  },
+  "transit": {
+    "closePanel": "Tancar panell",
+    "vehicleInfo": "Informació del vehicle",
+    "stops": "Parades",
+    "positionMetro": "Posició d'iMetro / simulació",
+    "positionSchedule": "Posició estimada de l'horari"
+  },
+  "network": {
+    "metro": "Metro",
+    "tram": "Tram",
+    "fgc": "FGC",
+    "bus": "Bus",
+    "transit": "Transport"
+  },
+  "delay": {
+    "unknown": "Desconegut",
+    "onTime": "Puntual",
+    "minLate": "{{count}} min de retard",
+    "secLate": "{{count}}s de retard",
+    "minEarly": "{{count}} min avançat",
+    "secEarly": "{{count}}s avançat"
+  },
+  "stops": {
+    "allStops": "Totes les parades",
+    "showAll": "Veure totes les parades",
+    "collapse": "Contraure",
+    "loading": "Carregant parades...",
+    "failedToLoad": "Error en carregar parades",
+    "noInfo": "Sense informació de parades disponible",
+    "journeyUnavailable": "Informació del trajecte no disponible",
+    "inService": "En servei",
+    "simulatedPosition": "Sense informació de parades per a posicions simulades",
+    "atStation": "A: {{station}}",
+    "next": "Següent...",
+    "trainStopped": "Tren aturat a l'estació",
+    "train": "Tren",
+    "stoppedAtStation": "{{network}} aturat a l'estació"
+  }
+}

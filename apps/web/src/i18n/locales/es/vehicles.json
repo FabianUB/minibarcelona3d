@@ -1,0 +1,46 @@
+{
+  "train": {
+    "closePanel": "Cerrar info del tren",
+    "loadingTrip": "Cargando detalles del viaje...",
+    "description": "Información y horario del tren",
+    "stops": "Paradas"
+  },
+  "transit": {
+    "closePanel": "Cerrar panel",
+    "vehicleInfo": "Información del vehículo",
+    "stops": "Paradas",
+    "positionMetro": "Posición de iMetro / simulación",
+    "positionSchedule": "Posición estimada del horario"
+  },
+  "network": {
+    "metro": "Metro",
+    "tram": "Tram",
+    "fgc": "FGC",
+    "bus": "Bus",
+    "transit": "Transporte"
+  },
+  "delay": {
+    "unknown": "Desconocido",
+    "onTime": "Puntual",
+    "minLate": "{{count}} min de retraso",
+    "secLate": "{{count}}s de retraso",
+    "minEarly": "{{count}} min adelantado",
+    "secEarly": "{{count}}s adelantado"
+  },
+  "stops": {
+    "allStops": "Todas las paradas",
+    "showAll": "Ver todas las paradas",
+    "collapse": "Contraer",
+    "loading": "Cargando paradas...",
+    "failedToLoad": "Error al cargar paradas",
+    "noInfo": "Sin información de paradas disponible",
+    "journeyUnavailable": "Información del trayecto no disponible",
+    "inService": "En servicio",
+    "simulatedPosition": "Sin información de paradas para posiciones simuladas",
+    "atStation": "En: {{station}}",
+    "next": "Siguiente...",
+    "trainStopped": "Tren parado en estación",
+    "train": "Tren",
+    "stoppedAtStation": "{{network}} parado en estación"
+  }
+}

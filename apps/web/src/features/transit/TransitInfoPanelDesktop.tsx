@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,29 +42,28 @@ function getTransitLineConfig(
   }
 }
 
-/**
- * Get network label for display
- */
-function getNetworkLabel(networkType: TransportType): string {
-  switch (networkType) {
-    case 'metro':
-      return 'Metro';
-    case 'tram':
-      return 'Tram';
-    case 'fgc':
-      return 'FGC';
-    case 'bus':
-      return 'Bus';
-    default:
-      return 'Transit';
-  }
-}
-
 export function TransitInfoPanelDesktop() {
+  const { t } = useTranslation('vehicles');
   const { setActivePanel } = useMapActions();
   const { selectedVehicle } = useTransitState();
   const { clearSelection } = useTransitActions();
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Get network label for display using translations
+  const getNetworkLabel = (networkType: TransportType): string => {
+    switch (networkType) {
+      case 'metro':
+        return t('network.metro');
+      case 'tram':
+        return t('network.tram');
+      case 'fgc':
+        return t('network.fgc');
+      case 'bus':
+        return t('network.bus');
+      default:
+        return t('network.transit');
+    }
+  };
 
   const handleClose = useCallback(() => {
     clearSelection();
@@ -130,7 +130,7 @@ export function TransitInfoPanelDesktop() {
             size="sm"
             onClick={handleClose}
             className="h-7 w-7 p-0 hover:bg-accent"
-            aria-label="Close panel"
+            aria-label={t('transit.closePanel')}
           >
             ✕
           </Button>
@@ -159,7 +159,7 @@ export function TransitInfoPanelDesktop() {
 
         {/* Stops section */}
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-foreground">Stops</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t('transit.stops')}</h3>
           <TransitStopList
             vehicleKey={selectedVehicle.vehicleKey}
             tripId={selectedVehicle.tripId}
@@ -177,8 +177,8 @@ export function TransitInfoPanelDesktop() {
         <Separator />
         <div className="text-xs text-muted-foreground text-center">
           {selectedVehicle.networkType === 'metro'
-            ? 'Position from iMetro / simulation'
-            : 'Position estimated from schedule'}
+            ? t('transit.positionMetro')
+            : t('transit.positionSchedule')}
         </div>
       </CardContent>
     </Card>

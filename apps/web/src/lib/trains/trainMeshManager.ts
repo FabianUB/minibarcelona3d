@@ -1039,14 +1039,24 @@ export class TrainMeshManager {
     // Clone materials for each mesh to ensure independent opacity control.
     // This prevents trains sharing the same model type (e.g., R1 and R2 both using 'civia')
     // from sharing material references - setting opacity on one would affect the other.
+    // Also ensures explicit depth buffer settings for consistent rendering across GPUs.
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
+        const configureMaterial = (m: THREE.Material): THREE.Material => {
+          const cloned = m.clone();
+          // Explicit depth settings to ensure trains render on top of map layers
+          // This fixes z-fighting issues that occur on some GPUs/drivers
+          cloned.depthTest = true;
+          cloned.depthWrite = true;
+          return cloned;
+        };
+
         if (Array.isArray(child.material)) {
-          child.material = child.material.map(m => m.clone());
+          child.material = child.material.map(configureMaterial);
           cachedMaterials.push(...child.material);
         } else if (child.material) {
-          child.material = child.material.clone();
+          child.material = configureMaterial(child.material);
           cachedMaterials.push(child.material);
         }
       }
