@@ -1570,7 +1570,8 @@ export function TrainLayer3D({
           const trainLayerExists = !!map.getLayer(LAYER_ID);
 
           // Find any custom layers (type === 'custom')
-          const customLayers = styleLayers.filter(l => l.type === 'custom').map(l => l.id);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const customLayers = styleLayers.filter(l => (l as any).type === 'custom').map(l => l.id);
 
           console.log(`🔍🚂 [TrainLayer3D] Layer order diagnostic (${label}):`, {
             LAYER_ID,
