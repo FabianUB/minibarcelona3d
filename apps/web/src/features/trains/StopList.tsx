@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { fetchTripDetails } from '@/lib/api/trains';
@@ -22,6 +23,7 @@ export function StopList({
   nextStopName,
   isStoppedAtStation,
 }: StopListProps) {
+  const { t } = useTranslation('vehicles');
   const [isExpanded, setIsExpanded] = useState(false);
   const [stopTimes, setStopTimes] = useState<StopTime[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +40,7 @@ export function StopList({
         })
         .catch((err) => {
           console.error('Failed to fetch trip details:', err);
-          setError('Failed to load stops');
+          setError(t('stops.failedToLoad'));
         })
         .finally(() => {
           setIsLoading(false);
@@ -94,7 +96,7 @@ export function StopList({
   if (!tripId) {
     return (
       <div className="px-3 py-4 bg-muted/50 rounded-md text-sm text-muted-foreground text-center">
-        Journey information unavailable
+        {t('stops.journeyUnavailable')}
       </div>
     );
   }
@@ -121,7 +123,7 @@ export function StopList({
               )}
 
               <div className="flex-1 flex flex-col items-start gap-1">
-                <div className="text-2xl self-center -mt-2" style={{ transform: 'scaleX(-1)' }} title="Train stopped at station">🚂</div>
+                <div className="text-2xl self-center -mt-2" style={{ transform: 'scaleX(-1)' }} title={t('stops.trainStopped')}>🚂</div>
                 <span
                   className="text-xs text-center font-medium max-w-[120px] line-clamp-3 w-full"
                   title={currentStopName}
@@ -166,7 +168,7 @@ export function StopList({
 
               <div className="flex-1 flex items-center gap-1 -mt-1">
                 <div className="flex-1 h-0.5 bg-muted" />
-                <div className="text-lg" style={{ transform: 'scaleX(-1)' }} title="Train">🚂</div>
+                <div className="text-lg" style={{ transform: 'scaleX(-1)' }} title={t('stops.train')}>🚂</div>
                 <div className="flex-1 h-0.5 bg-muted" />
               </div>
 
@@ -188,7 +190,7 @@ export function StopList({
           </div>
         ) : (
           <div className="px-3 py-4 bg-muted/50 rounded-md text-sm text-muted-foreground text-center">
-            Journey information unavailable
+            {t('stops.journeyUnavailable')}
           </div>
         )}
 
@@ -198,7 +200,7 @@ export function StopList({
           className="w-full"
           onClick={() => setIsExpanded(true)}
         >
-          Show all stops
+          {t('stops.showAll')}
         </Button>
       </div>
     );
@@ -207,20 +209,20 @@ export function StopList({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-muted-foreground">All Stops</h4>
+        <h4 className="text-xs font-semibold text-muted-foreground">{t('stops.allStops')}</h4>
         <Button
           variant="ghost"
           size="sm"
           className="h-6 text-xs"
           onClick={() => setIsExpanded(false)}
         >
-          Collapse
+          {t('stops.collapse')}
         </Button>
       </div>
 
       {isLoading && (
         <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-          Loading stops...
+          {t('stops.loading')}
         </div>
       )}
 
@@ -232,7 +234,7 @@ export function StopList({
 
       {!isLoading && !error && stopTimes.length === 0 && (
         <div className="px-3 py-4 bg-muted/50 rounded-md text-sm text-muted-foreground text-center">
-          No stop information available
+          {t('stops.noInfo')}
         </div>
       )}
 

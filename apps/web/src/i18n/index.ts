@@ -10,6 +10,7 @@ import enStations from './locales/en/stations.json';
 import enSettings from './locales/en/settings.json';
 import enErrors from './locales/en/errors.json';
 import enLegend from './locales/en/legend.json';
+import enVehicles from './locales/en/vehicles.json';
 
 // Import Spanish translations
 import esCommon from './locales/es/common.json';
@@ -19,6 +20,7 @@ import esStations from './locales/es/stations.json';
 import esSettings from './locales/es/settings.json';
 import esErrors from './locales/es/errors.json';
 import esLegend from './locales/es/legend.json';
+import esVehicles from './locales/es/vehicles.json';
 
 // Import Catalan translations
 import caCommon from './locales/ca/common.json';
@@ -28,6 +30,7 @@ import caStations from './locales/ca/stations.json';
 import caSettings from './locales/ca/settings.json';
 import caErrors from './locales/ca/errors.json';
 import caLegend from './locales/ca/legend.json';
+import caVehicles from './locales/ca/vehicles.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'es', 'ca'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -41,6 +44,7 @@ const resources = {
     settings: enSettings,
     errors: enErrors,
     legend: enLegend,
+    vehicles: enVehicles,
   },
   es: {
     common: esCommon,
@@ -50,6 +54,7 @@ const resources = {
     settings: esSettings,
     errors: esErrors,
     legend: esLegend,
+    vehicles: esVehicles,
   },
   ca: {
     common: caCommon,
@@ -59,6 +64,7 @@ const resources = {
     settings: caSettings,
     errors: caErrors,
     legend: caLegend,
+    vehicles: caVehicles,
   },
 };
 
@@ -69,7 +75,7 @@ i18n
     resources,
     fallbackLng: 'en',
     defaultNS: 'common',
-    ns: ['common', 'status', 'controlPanel', 'stations', 'settings', 'errors', 'legend'],
+    ns: ['common', 'status', 'controlPanel', 'stations', 'settings', 'errors', 'legend', 'vehicles'],
 
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
