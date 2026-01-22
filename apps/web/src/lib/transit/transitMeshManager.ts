@@ -661,9 +661,10 @@ export class TransitMeshManager {
           cloned.depthWrite = true;
           // Polygon offset shifts depth values to prevent z-fighting with Mapbox layers
           // Negative values push geometry "closer" to camera in depth buffer
+          // Using -2 as middle ground: -1 wasn't enough on some GPUs, -4 caused visual issues
           cloned.polygonOffset = true;
-          cloned.polygonOffsetFactor = -1;
-          cloned.polygonOffsetUnits = -1;
+          cloned.polygonOffsetFactor = -2;
+          cloned.polygonOffsetUnits = -2;
           return cloned;
         };
 
