@@ -1560,17 +1560,29 @@ export function TrainLayer3D({
 
         // Debug: Log layer order to diagnose z-fighting issues
         const logLayerDiagnostic = (label: string) => {
-          const allLayers = map.getStyle().layers?.map(l => l.id) ?? [];
-          const trainLayerIndex = allLayers.indexOf(LAYER_ID);
-          const rodaliesLineIndex = allLayers.indexOf('rodalies-lines-outline');
-          const rodaliesRelated = allLayers.filter(id => id.includes('rodalies') || id.includes('train'));
+          const styleLayers = map.getStyle().layers ?? [];
+          const allLayerIds = styleLayers.map(l => l.id);
+          const trainLayerIndex = allLayerIds.indexOf(LAYER_ID);
+          const rodaliesLineIndex = allLayerIds.indexOf('rodalies-lines-outline');
+          const rodaliesRelated = allLayerIds.filter(id => id.includes('rodalies') || id.includes('train'));
+
+          // Check if layer actually exists via getLayer
+          const trainLayerExists = !!map.getLayer(LAYER_ID);
+
+          // Find any custom layers (type === 'custom')
+          const customLayers = styleLayers.filter(l => l.type === 'custom').map(l => l.id);
+
           console.log(`🔍🚂 [TrainLayer3D] Layer order diagnostic (${label}):`, {
+            LAYER_ID,
+            beforeId: beforeId ?? '(none - should be on top)',
+            trainLayerExists,
             trainLayerIndex,
             rodaliesLineIndex,
             trainAboveRodalies: trainLayerIndex > rodaliesLineIndex,
-            totalLayers: allLayers.length,
+            totalLayers: allLayerIds.length,
+            customLayers,
             rodaliesRelatedLayers: rodaliesRelated,
-            last10Layers: allLayers.slice(-10),
+            last10Layers: allLayerIds.slice(-10),
           });
         };
         logLayerDiagnostic('immediate');
