@@ -2196,8 +2196,11 @@ export class TrainMeshManager {
    *
    * NOTE: This method is called every frame, so we track state to avoid
    * recalculating/reapplying unnecessarily.
+   *
+   * @param enableParking - If false, won't start new parking animations but will still
+   *                        process ongoing animations (for smooth un-parking transitions)
    */
-  public applyParkingVisuals(): void {
+  public applyParkingVisuals(enableParking: boolean = true): void {
     const now = Date.now();
 
     const easeInOutCubic = (t: number): number =>
@@ -2237,9 +2240,9 @@ export class TrainMeshManager {
         }
       }
 
-      // Only trigger parking rotation when transitioning into STOPPED_AT
+      // Only trigger parking rotation when transitioning into STOPPED_AT (and parking is enabled)
       const justStopped = desiredMode === 'hard' && meshData.prevStatus !== 'STOPPED_AT';
-      if (justStopped && !meshData.parkingRotationAnim) {
+      if (justStopped && !meshData.parkingRotationAnim && enableParking) {
         // Train just stopped - calculate parking position
         const stationId = meshData.stoppedAtStationId;
         let parkingApplied = false;
@@ -2400,6 +2403,42 @@ export class TrainMeshManager {
 
       // Track soft park state in prevStatus proxy to avoid retriggers
       meshData.prevStatus = shouldBePerpendicular ? 'STOPPED_AT' : meshData.status;
+    });
+  }
+
+  /**
+   * Reset all parking visuals - animate parked trains back to track-aligned rotation
+   * Called when the train parking toggle is disabled
+   */
+  public resetParkingVisuals(): void {
+    const now = Date.now();
+
+    this.trainMeshes.forEach((meshData) => {
+      const isParked = meshData.isParkingRotationApplied === true;
+      const hasOngoingParkingAnim = meshData.parkingRotationAnim?.targetIsPerpendicular === true;
+
+      // Skip trains that aren't parked and don't have parking animations
+      if (!isParked && !hasOngoingParkingAnim && !meshData.parkingPosition) {
+        return;
+      }
+
+      // Calculate the track-aligned rotation to return to
+      const baseRotation =
+        (meshData.targetSnap?.bearing ?? meshData.currentSnap?.bearing ?? 0) * -Math.PI / 180 +
+        this.MODEL_FORWARD_OFFSET;
+
+      // Clear parking data
+      meshData.parkingPosition = undefined;
+
+      // Start animation back to track bearing
+      meshData.parkingRotationAnim = {
+        start: meshData.mesh.rotation.z,
+        target: baseRotation,
+        startedAt: now,
+        duration: this.PARKING_ROTATION_DURATION_MS,
+        targetIsPerpendicular: false,
+      };
+      meshData.isParkingRotationApplied = false;
     });
   }
 }
