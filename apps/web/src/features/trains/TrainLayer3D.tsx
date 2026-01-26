@@ -215,6 +215,8 @@ export function TrainLayer3D({
   const meshManagerRef = useRef<TrainMeshManager | null>(null);
   // Ref to hold current enableTrainParking value for use in render callback
   const enableTrainParkingRef = useRef(ui.enableTrainParking);
+  // Ref to track previous enableTrainParking value for detecting toggle-off
+  const prevEnableTrainParkingRef = useRef(ui.enableTrainParking);
   const previousPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
   const lastPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
   const loggedDistinctPreviousRef = useRef(false);
@@ -723,6 +725,19 @@ export function TrainLayer3D({
     debugEnabledRef.current = areDebugToolsEnabled;
   }, [areDebugToolsEnabled]);
 
+  // Detect when train parking is toggled off and reset parked trains
+  useEffect(() => {
+    const wasEnabled = prevEnableTrainParkingRef.current;
+    const isEnabled = ui.enableTrainParking;
+
+    if (wasEnabled && !isEnabled && meshManagerRef.current) {
+      // Parking was just disabled - animate parked trains back to normal
+      meshManagerRef.current.resetParkingVisuals();
+    }
+
+    prevEnableTrainParkingRef.current = isEnabled;
+  }, [ui.enableTrainParking]);
+
   useEffect(() => {
     if (!debugEnabledRef.current) {
       // Cleanup any existing overlay and RAF when disabling
@@ -1158,9 +1173,9 @@ export function TrainLayer3D({
       if (meshManagerRef.current) {
         meshManagerRef.current.animatePositions();
         // Phase 2: Apply parking visuals to stopped trains (rotate 90°)
-        if (enableTrainParkingRef.current) {
-          meshManagerRef.current.applyParkingVisuals();
-        }
+        // Always call to process ongoing animations (including un-parking)
+        // The enableParking flag controls whether NEW parking animations start
+        meshManagerRef.current.applyParkingVisuals(enableTrainParkingRef.current);
       }
 
       // Reuse matrix instances for performance (avoid allocations per frame)
