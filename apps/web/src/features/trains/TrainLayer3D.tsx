@@ -31,7 +31,7 @@ import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
-import { useMapActions } from '../../state/map';
+import { useMapActions, useMapState } from '../../state/map';
 import { useTransitActions } from '../../state/transit';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
@@ -172,6 +172,7 @@ export function TrainLayer3D({
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
   const { setDataSource } = useTransitActions();
+  const { ui } = useMapState();
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -212,6 +213,8 @@ export function TrainLayer3D({
 
   // Reference for train mesh manager (T046, T047)
   const meshManagerRef = useRef<TrainMeshManager | null>(null);
+  // Ref to hold current enableTrainParking value for use in render callback
+  const enableTrainParkingRef = useRef(ui.enableTrainParking);
   const previousPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
   const lastPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
   const loggedDistinctPreviousRef = useRef(false);
@@ -228,6 +231,8 @@ export function TrainLayer3D({
   const retryCountRef = useRef(0);
   // Keep retry count ref in sync with state for stable closure access
   retryCountRef.current = retryCount;
+  // Keep enableTrainParking ref in sync for use in render callback
+  enableTrainParkingRef.current = ui.enableTrainParking;
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
@@ -1153,7 +1158,9 @@ export function TrainLayer3D({
       if (meshManagerRef.current) {
         meshManagerRef.current.animatePositions();
         // Phase 2: Apply parking visuals to stopped trains (rotate 90°)
-        meshManagerRef.current.applyParkingVisuals();
+        if (enableTrainParkingRef.current) {
+          meshManagerRef.current.applyParkingVisuals();
+        }
       }
 
       // Reuse matrix instances for performance (avoid allocations per frame)

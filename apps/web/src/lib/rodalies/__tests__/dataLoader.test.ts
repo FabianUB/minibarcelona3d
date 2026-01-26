@@ -200,6 +200,7 @@ describe('rodalies dataLoader', () => {
       },
       activeControlTab: 'rodalies',
       controlPanelMode: 'controls',
+      enableTrainParking: true,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
 });
@@ -256,6 +257,7 @@ it('normalises remote Map UI state defaults and invalid highlight modes', async 
       },
       activeControlTab: 'rodalies',
       controlPanelMode: 'controls',
+      enableTrainParking: true,
     });
 });
 

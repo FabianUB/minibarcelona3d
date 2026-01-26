@@ -56,6 +56,8 @@
   },
   "settings": {
     "showStations": "Show Stations",
-    "showStationsDescription": "Display station markers on map"
+    "showStationsDescription": "Display station markers on map",
+    "trainParking": "Train Parking",
+    "trainParkingDescription": "Rotate stopped trains perpendicular to track"
   }
 }

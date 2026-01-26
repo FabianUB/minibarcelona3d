@@ -56,6 +56,8 @@
   },
   "settings": {
     "showStations": "Mostrar Estacions",
-    "showStationsDescription": "Mostrar marcadors d'estació al mapa"
+    "showStationsDescription": "Mostrar marcadors d'estació al mapa",
+    "trainParking": "Aparcament de Trens",
+    "trainParkingDescription": "Rotar trens aturats perpendicular a la via"
   }
 }

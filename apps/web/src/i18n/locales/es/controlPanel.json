@@ -56,6 +56,8 @@
   },
   "settings": {
     "showStations": "Mostrar Estaciones",
-    "showStationsDescription": "Mostrar marcadores de estación en el mapa"
+    "showStationsDescription": "Mostrar marcadores de estación en el mapa",
+    "trainParking": "Aparcamiento de Trenes",
+    "trainParkingDescription": "Rotar trenes detenidos perpendicular a la vía"
   }
 }
