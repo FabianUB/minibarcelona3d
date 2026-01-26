@@ -175,6 +175,7 @@ export interface MapUIState {
   transportFilters: TransportFilterState; // Visibility filters for transport types
   showStations: boolean; // Show/hide station markers and names
   showOnlyTopBusLines: boolean; // Show only top 10 most used bus lines (default: true)
+  enableTrainParking: boolean; // Rotate stopped trains perpendicular to track
   // Control panel state
   networkHighlights: NetworkHighlightMap; // Per-network highlight/isolate state
   modelSizes: ModelSizeMap; // Per-network 3D model scale

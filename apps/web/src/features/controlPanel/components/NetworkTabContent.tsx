@@ -63,7 +63,7 @@ export function NetworkTabContent({ network }: NetworkTabContentProps) {
       <Separator className="my-3" />
 
       {/* Settings */}
-      <SettingsSection />
+      <SettingsSection showRodaliesSettings={network === 'rodalies'} />
     </div>
   );
 }

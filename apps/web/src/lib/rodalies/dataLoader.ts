@@ -266,6 +266,7 @@ export async function loadMapUiState(
           controlPanelMode: 'controls',
           showStations: true,
           showOnlyTopBusLines: true,
+          enableTrainParking: true,
         };
       }
       const url = resolveManifestAssetUrl(path);
@@ -510,6 +511,7 @@ function normaliseMapUiState(
     controlPanelMode: 'controls',
     showStations: candidate?.showStations ?? true,
     showOnlyTopBusLines: candidate?.showOnlyTopBusLines ?? true,
+    enableTrainParking: candidate?.enableTrainParking ?? true,
   };
 }
 

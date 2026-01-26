@@ -27,6 +27,7 @@ export interface MapPreferences {
   activeControlTab?: TransportType;
   showStations?: boolean;
   showOnlyTopBusLines?: boolean;
+  enableTrainParking?: boolean;
   // Future preferences can be added here
   [key: string]: unknown;
 }

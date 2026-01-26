@@ -50,6 +50,8 @@ export interface MapActions {
   setShowStations(show: boolean): void;
   toggleShowOnlyTopBusLines(): void;
   setShowOnlyTopBusLines(show: boolean): void;
+  toggleEnableTrainParking(): void;
+  setEnableTrainParking(enable: boolean): void;
 }
 
 export interface MapHighlightSelectors {

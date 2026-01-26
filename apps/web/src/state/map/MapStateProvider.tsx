@@ -77,7 +77,9 @@ type MapAction =
   | { type: 'toggle-show-stations' }
   | { type: 'set-show-stations'; payload: boolean }
   | { type: 'toggle-show-only-top-bus-lines' }
-  | { type: 'set-show-only-top-bus-lines'; payload: boolean };
+  | { type: 'set-show-only-top-bus-lines'; payload: boolean }
+  | { type: 'toggle-enable-train-parking' }
+  | { type: 'set-enable-train-parking'; payload: boolean };
 
 /**
  * Create initial UI state with preferences loaded from localStorage
@@ -136,6 +138,7 @@ function createInitialUiState(): MapUIState {
     transportFilters,
     showStations: getPreference('showStations', true), // Show stations by default
     showOnlyTopBusLines: getPreference('showOnlyTopBusLines', true), // Show only top 10 bus lines by default
+    enableTrainParking: getPreference('enableTrainParking', true), // Rotate stopped trains perpendicular by default
     // Control panel state
     networkHighlights,
     modelSizes,
@@ -428,6 +431,22 @@ function mapReducer(state: MapState, action: MapAction): MapState {
           showOnlyTopBusLines: action.payload,
         },
       };
+    case 'toggle-enable-train-parking':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          enableTrainParking: !state.ui.enableTrainParking,
+        },
+      };
+    case 'set-enable-train-parking':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          enableTrainParking: action.payload,
+        },
+      };
     default:
       return state;
   }
@@ -455,6 +474,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         activeControlTab: state.ui.activeControlTab,
         showStations: state.ui.showStations,
         showOnlyTopBusLines: state.ui.showOnlyTopBusLines,
+        enableTrainParking: state.ui.enableTrainParking,
       });
     }, 500);
 
@@ -463,7 +483,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab, state.ui.showStations, state.ui.showOnlyTopBusLines]);
+  }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab, state.ui.showStations, state.ui.showOnlyTopBusLines, state.ui.enableTrainParking]);
 
   const actions = useMemo<MapActions>(
     () => ({
@@ -569,6 +589,12 @@ export function MapStateProvider({ children }: PropsWithChildren) {
       },
       setShowOnlyTopBusLines(show) {
         dispatch({ type: 'set-show-only-top-bus-lines', payload: show });
+      },
+      toggleEnableTrainParking() {
+        dispatch({ type: 'toggle-enable-train-parking' });
+      },
+      setEnableTrainParking(enable) {
+        dispatch({ type: 'set-enable-train-parking', payload: enable });
       },
     }),
     [dispatch],
