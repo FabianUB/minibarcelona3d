@@ -53,6 +53,8 @@ export interface LineLayerConfig {
   casingLayerId: string;
   /** GeoJSON property name for line/route code */
   lineCodeProperty: string;
+  /** GeoJSON property name for line color (default: 'color') */
+  colorProperty?: string;
   /** Line width configuration */
   lineWidth: LineWidthConfig;
   /** Casing width configuration */
@@ -136,5 +138,26 @@ export const FGC_LINE_CONFIG: LineLayerConfig = {
   lineCodeProperty: 'line_code',
   lineWidth: DEFAULT_LINE_WIDTH,
   casingWidth: DEFAULT_CASING_WIDTH,
+  opacity: DEFAULT_OPACITY,
+};
+
+export const RODALIES_LINE_CONFIG: LineLayerConfig = {
+  sourceId: 'rodalies-lines',
+  lineLayerId: 'rodalies-lines-outline',
+  casingLayerId: 'rodalies-lines-casing',
+  lineCodeProperty: 'id',
+  colorProperty: 'brand_color',
+  lineWidth: {
+    zoom10: 2,
+    zoom13: 4,
+    zoom15: 6,
+    zoom18: 10,
+  },
+  casingWidth: {
+    zoom10: 3,
+    zoom13: 6,
+    zoom15: 9,
+    zoom18: 14,
+  },
   opacity: DEFAULT_OPACITY,
 };

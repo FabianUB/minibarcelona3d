@@ -341,8 +341,8 @@
       },
       "properties": {
         "colors": [
-          "#F58220",
-          "#00A9E0"
+          "#00A9E0",
+          "#F58220"
         ],
         "id": "1.933",
         "lines": [
@@ -350,7 +350,7 @@
           "L9N"
         ],
         "name": "Bon Pastor",
-        "primary_color": "#F58220",
+        "primary_color": "#00A9E0",
         "stop_code": "933"
       }
     },
@@ -2153,8 +2153,8 @@
       },
       "properties": {
         "colors": [
-          "#F58220",
-          "#00A9E0"
+          "#00A9E0",
+          "#F58220"
         ],
         "id": "1.932",
         "lines": [
@@ -2162,7 +2162,7 @@
           "L9N"
         ],
         "name": "Onze de Setembre",
-        "primary_color": "#F58220",
+        "primary_color": "#00A9E0",
         "stop_code": "932"
       }
     },

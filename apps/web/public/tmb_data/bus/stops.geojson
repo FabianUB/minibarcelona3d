@@ -89,7 +89,8 @@
         "id": "2.8.674595",
         "lines": [
           "13",
-          "150"
+          "150",
+          "X3"
         ],
         "name": "Pl de Carles Buïgas",
         "stop_code": "8"
@@ -973,6 +974,24 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.079326,
+          41.30415
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.80.692816",
+        "lines": [
+          "46"
+        ],
+        "name": "Aeroport T2B - Arribades",
+        "stop_code": "80"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.081875,
           41.305032
         ],
@@ -1174,6 +1193,24 @@
         ],
         "name": "Diagonal - Balmes",
         "stop_code": "94"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.165804,
+          41.387854
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.95.690105",
+        "lines": [
+          "H12"
+        ],
+        "name": "Gran Via - Balmes",
+        "stop_code": "95"
       }
     },
     {
@@ -1398,7 +1435,7 @@
       "properties": {
         "id": "2.111.675592",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Pl del Bosc",
@@ -1417,7 +1454,7 @@
       "properties": {
         "id": "2.112.690452",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Bifurcació - del Molí",
@@ -1436,7 +1473,7 @@
       "properties": {
         "id": "2.113.676689",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Bifurcació - Pl Sant Joan",
@@ -1455,7 +1492,7 @@
       "properties": {
         "id": "2.114.685237",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Bifurcació - Ctra C-17",
@@ -1474,7 +1511,7 @@
       "properties": {
         "id": "2.115.686598",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Ctra C-17 - Bifurcació",
@@ -1493,7 +1530,7 @@
       "properties": {
         "id": "2.116.675590",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Vinyes - Pont",
@@ -1512,7 +1549,7 @@
       "properties": {
         "id": "2.117.686036",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Av de la Ribera - Pl de la Ribera",
@@ -2573,27 +2610,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.156056,
-          41.376577
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.204.690547",
-        "lines": [
-          "13",
-          "55",
-          "91",
-          "H16"
-        ],
-        "name": "Floridablanca - Av Mistral",
-        "stop_code": "204"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.157088,
           41.378211
         ],
@@ -2943,13 +2959,13 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.183325,
-          41.397652
+          2.184323,
+          41.396903
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.227.679033",
+        "id": "2.227.700442",
         "lines": [
           "6",
           "V21"
@@ -3531,7 +3547,8 @@
         "id": "2.264.674565",
         "lines": [
           "13",
-          "150"
+          "150",
+          "X3"
         ],
         "name": "Av Ferrer i Guàrdia - Mèxic",
         "stop_code": "264"
@@ -4927,6 +4944,7 @@
       "properties": {
         "id": "2.372.695806",
         "lines": [
+          "137",
           "96"
         ],
         "name": "Av Catalunya - Àngel Guimerà",
@@ -5197,6 +5215,24 @@
         ],
         "name": "Saldes",
         "stop_code": "388"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.148575,
+          41.374291
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.389.675716",
+        "lines": [
+          "H12"
+        ],
+        "name": "Pl Espanya - FGC",
+        "stop_code": "389"
       }
     },
     {
@@ -6937,26 +6973,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.131277,
-          41.403153
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.527.692480",
-        "lines": [
-          "70",
-          "V11",
-          "V13"
-        ],
-        "name": "Ganduxer - Emancipació",
-        "stop_code": "527"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.133682,
           41.397699
         ],
@@ -7785,6 +7801,7 @@
       "properties": {
         "id": "2.594.675575",
         "lines": [
+          "138",
           "96"
         ],
         "name": "Av Catalunya - Puigcerdà",
@@ -8331,7 +8348,7 @@
       "properties": {
         "id": "2.638.686050",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Av de la Ribera - Mercat Municipal",
@@ -8350,7 +8367,7 @@
       "properties": {
         "id": "2.639.675743",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Av Mossèn Joaquim Castellví - Rbla Països Catalans",
@@ -9791,7 +9808,7 @@
       "properties": {
         "id": "2.742.675580",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Av de la Ribera - Pg Rocamora",
@@ -9810,7 +9827,6 @@
       "properties": {
         "id": "2.743.675581",
         "lines": [
-          "155",
           "96"
         ],
         "name": "Bogatell - Jaume I",
@@ -9848,6 +9864,7 @@
       "properties": {
         "id": "2.747.675746",
         "lines": [
+          "137",
           "96"
         ],
         "name": "Av Catalunya - Sol",
@@ -10438,24 +10455,6 @@
         ],
         "name": "Pg de l'Exposició - Santa Madrona",
         "stop_code": "789"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.184059,
-          41.490737
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.791.687485",
-        "lines": [
-          "155"
-        ],
-        "name": "Ctra C-17 - Pl Espanya",
-        "stop_code": "791"
       }
     },
     {
@@ -12995,7 +12994,7 @@
       "properties": {
         "id": "2.979.677974",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Av Riera de Sant Cugat - Pere de Montcada",
         "stop_code": "979"
@@ -13013,7 +13012,7 @@
       "properties": {
         "id": "2.985.677972",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Av Riera de Sant Cugat - Huc de Montcada",
         "stop_code": "985"
@@ -14032,26 +14031,6 @@
         ],
         "name": "Constitució - Mossèn Amadeu Oller",
         "stop_code": "1057"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.16144,
-          41.376481
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1058.674804",
-        "lines": [
-          "D50",
-          "V11",
-          "V9"
-        ],
-        "name": "Viladomat - Manso",
-        "stop_code": "1058"
       }
     },
     {
@@ -15159,7 +15138,7 @@
       "properties": {
         "id": "2.1145.686054",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Jaume I - Pl Lluís Companys",
@@ -16095,6 +16074,7 @@
       "properties": {
         "id": "2.1213.685295",
         "lines": [
+          "138",
           "96"
         ],
         "name": "Anselm Clavé - Av Catalunya",
@@ -17773,7 +17753,8 @@
       "properties": {
         "id": "2.1349.675779",
         "lines": [
-          "155",
+          "137",
+          "138",
           "62",
           "76"
         ],
@@ -17793,7 +17774,8 @@
       "properties": {
         "id": "2.1350.675780",
         "lines": [
-          "155",
+          "137",
+          "138",
           "62",
           "76"
         ],
@@ -18474,24 +18456,6 @@
         ],
         "name": "Muntaner - Via Augusta",
         "stop_code": "1392"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.145728,
-          41.396893
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1393.681495",
-        "lines": [
-          "V13"
-        ],
-        "name": "Muntaner - Laforja",
-        "stop_code": "1393"
       }
     },
     {
@@ -19293,6 +19257,7 @@
       "properties": {
         "id": "2.1452.675576",
         "lines": [
+          "138",
           "96"
         ],
         "name": "Av Catalunya - Serra d'Or",
@@ -19389,7 +19354,7 @@
       "properties": {
         "id": "2.1457.690456",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Mina - Molí",
@@ -20278,25 +20243,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.152365,
-          41.39781
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1525.674629",
-        "lines": [
-          "27",
-          "D40"
-        ],
-        "name": "Trav de Gràcia - Balmes",
-        "stop_code": "1525"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.140766,
           41.39806
         ],
@@ -20670,7 +20616,7 @@
       "properties": {
         "id": "2.1552.682118",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Av de la Ribera - Llevant",
@@ -22347,7 +22293,8 @@
         "id": "2.1696.675786",
         "lines": [
           "104",
-          "155"
+          "137",
+          "138"
         ],
         "name": "Fusters - Ctra Nacional 150",
         "stop_code": "1696"
@@ -22403,7 +22350,8 @@
         "id": "2.1701.696936",
         "lines": [
           "104",
-          "155"
+          "137",
+          "138"
         ],
         "name": "Fusters - Ctra Nacional 150",
         "stop_code": "1701"
@@ -22683,7 +22631,7 @@
       "properties": {
         "id": "2.1715.675740",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Av Mossèn Joaquim Castellví - Barcelona",
@@ -22702,7 +22650,7 @@
       "properties": {
         "id": "2.1716.680869",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Rambla dels Països Catalans - Torras i Bages",
@@ -22739,7 +22687,7 @@
       "properties": {
         "id": "2.1718.675582",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Av Riera de Sant Cugat - Ptge de la Pintura",
         "stop_code": "1718"
@@ -22757,6 +22705,7 @@
       "properties": {
         "id": "2.1719.676586",
         "lines": [
+          "137",
           "96"
         ],
         "name": "Anselm Clavé - Pl Espanya",
@@ -22888,24 +22837,6 @@
         ],
         "name": "Av Maresme - Av de la Fama",
         "stop_code": "1728"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.183832,
-          41.491228
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1729.686720",
-        "lines": [
-          "155"
-        ],
-        "name": "Pl Espanya - Sant Tomàs",
-        "stop_code": "1729"
       }
     },
     {
@@ -23873,6 +23804,24 @@
       },
       "properties": {
         "id": "2.1803.675662",
+        "lines": [
+          "111"
+        ],
+        "name": "Funicular de Vallvidrera",
+        "stop_code": "1803"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.105515,
+          41.414422
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.1803.700435",
         "lines": [
           "111"
         ],
@@ -27739,7 +27688,8 @@
       "properties": {
         "id": "2.2146.691133",
         "lines": [
-          "155",
+          "137",
+          "138",
           "62",
           "76"
         ],
@@ -27759,7 +27709,8 @@
       "properties": {
         "id": "2.2147.691131",
         "lines": [
-          "155",
+          "137",
+          "138",
           "62",
           "76"
         ],
@@ -27779,7 +27730,8 @@
       "properties": {
         "id": "2.2148.676182",
         "lines": [
-          "155",
+          "137",
+          "138",
           "62",
           "76"
         ],
@@ -30494,24 +30446,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.181306,
-          41.491588
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2407.676379",
-        "lines": [
-          "155"
-        ],
-        "name": "Narcís Monturiol - Beat Oriol",
-        "stop_code": "2407"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.178036,
           41.49322
         ],
@@ -30520,7 +30454,8 @@
       "properties": {
         "id": "2.2408.685045",
         "lines": [
-          "155",
+          "137",
+          "138",
           "96"
         ],
         "name": "Ctra BV 1411 - Pau Casals",
@@ -30539,7 +30474,7 @@
       "properties": {
         "id": "2.2409.691288",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Bach - Ctra BV 1411",
         "stop_code": "2409"
@@ -30557,7 +30492,7 @@
       "properties": {
         "id": "2.2410.676388",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Av Ferreria - Química",
         "stop_code": "2410"
@@ -30575,28 +30510,10 @@
       "properties": {
         "id": "2.2412.676384",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Bach - Beat Oriol",
         "stop_code": "2412"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.181227,
-          41.491793
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2414.676380",
-        "lines": [
-          "155"
-        ],
-        "name": "Narcís Monturiol - Indústria",
-        "stop_code": "2414"
       }
     },
     {
@@ -31628,7 +31545,8 @@
       "properties": {
         "id": "2.2513.696347",
         "lines": [
-          "127"
+          "127",
+          "134"
         ],
         "name": "Mina de la Ciutat - Pla de Fornells",
         "stop_code": "2513"
@@ -32636,7 +32554,6 @@
       "properties": {
         "id": "2.2623.676678",
         "lines": [
-          "155",
           "76"
         ],
         "name": "Petúnies - Circumval·lació",
@@ -33405,7 +33322,7 @@
       "properties": {
         "id": "2.2705.695861",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Av Riera de Sant Cugat - Ptge de la Pintura",
         "stop_code": "2705"
@@ -33536,7 +33453,7 @@
       "properties": {
         "id": "2.2722.678663",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Vapor - Treball",
         "stop_code": "2722"
@@ -34617,7 +34534,8 @@
       "properties": {
         "id": "2.2806.679815",
         "lines": [
-          "155",
+          "137",
+          "138",
           "96"
         ],
         "name": "Pg Sant Jordi - Pau Casals",
@@ -35853,7 +35771,8 @@
       "properties": {
         "id": "2.2916.680781",
         "lines": [
-          "115"
+          "115",
+          "V3"
         ],
         "name": "Rambla de Badal - Constitució",
         "stop_code": "2916"
@@ -36052,7 +35971,7 @@
       "properties": {
         "id": "2.2935.681462",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Camí Font Freda - València",
         "stop_code": "2935"
@@ -36070,7 +35989,7 @@
       "properties": {
         "id": "2.2936.680855",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Castelló - Rigola",
         "stop_code": "2936"
@@ -36088,7 +36007,7 @@
       "properties": {
         "id": "2.2943.680856",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Castelló - Eivissa",
         "stop_code": "2943"
@@ -36098,15 +36017,15 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.189317,
-          41.493575
+          2.189269,
+          41.493761
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.2944.681769",
+        "id": "2.2944.700411",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Castelló - Camí Font Freda (Origen-Final)",
         "stop_code": "2944"
@@ -36514,7 +36433,7 @@
           "102",
           "V25"
         ],
-        "name": "Tanatori de la Vall d'Hebron",
+        "name": "Tanatori Ronda de Dalt",
         "stop_code": "2974"
       }
     },
@@ -38777,6 +38696,7 @@
       "properties": {
         "id": "2.3147.685416",
         "lines": [
+          "138",
           "96"
         ],
         "name": "Av Catalunya - Estanislau Abadal",
@@ -38831,7 +38751,7 @@
       "properties": {
         "id": "2.3153.691058",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Ferrer i Guàrdia - Puigcerdà",
         "stop_code": "3153"
@@ -38849,7 +38769,7 @@
       "properties": {
         "id": "2.3154.685063",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Pla de Matabous - Alacant",
         "stop_code": "3154"
@@ -38867,7 +38787,8 @@
       "properties": {
         "id": "2.3155.696672",
         "lines": [
-          "155",
+          "137",
+          "138",
           "96"
         ],
         "name": "Ctra BV 1411 - Tagamanent",
@@ -38886,7 +38807,6 @@
       "properties": {
         "id": "2.3157.687428",
         "lines": [
-          "155",
           "96"
         ],
         "name": "Bach - Pg St Jordi",
@@ -39015,6 +38935,8 @@
       "properties": {
         "id": "2.3173.693431",
         "lines": [
+          "137",
+          "138",
           "62"
         ],
         "name": "Petúnies - Circumval·lació",
@@ -39160,6 +39082,7 @@
       "properties": {
         "id": "2.3182.685437",
         "lines": [
+          "137",
           "96"
         ],
         "name": "Av Catalunya - Frederic Mompou",
@@ -39943,6 +39866,24 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.182001,
+          41.39871
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3262.700444",
+        "lines": [
+          "V21"
+        ],
+        "name": "Marina - Monumental",
+        "stop_code": "3262"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.114582,
           41.403922
         ],
@@ -40115,7 +40056,8 @@
       "properties": {
         "id": "2.3272.687094",
         "lines": [
-          "155",
+          "137",
+          "138",
           "96"
         ],
         "name": "Pg de St Jordi - Tagamanent",
@@ -40206,6 +40148,7 @@
       "properties": {
         "id": "2.3277.691286",
         "lines": [
+          "138",
           "96"
         ],
         "name": "Joan Miró - Consell de Cent",
@@ -41973,7 +41916,7 @@
       "properties": {
         "id": "2.3412.691655",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Camí Font Freda - Girona",
         "stop_code": "3412"
@@ -41991,7 +41934,7 @@
       "properties": {
         "id": "2.3413.691651",
         "lines": [
-          "155",
+          "137",
           "96"
         ],
         "name": "Provença - Larramendi",
@@ -42010,7 +41953,7 @@
       "properties": {
         "id": "2.3414.691649",
         "lines": [
-          "155",
+          "138",
           "96"
         ],
         "name": "Av de la Ribera - Larramendi",
@@ -42083,7 +42026,7 @@
       "properties": {
         "id": "2.3421.694927",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Química - Av Ferreria",
         "stop_code": "3421"
@@ -42521,24 +42464,6 @@
         ],
         "name": "Rambla Marina - Av Carrilet",
         "stop_code": "3462"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.174026,
-          41.485813
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3464.694929",
-        "lines": [
-          "155"
-        ],
-        "name": "Av Ferreria - Física",
-        "stop_code": "3464"
       }
     },
     {
@@ -44201,7 +44126,8 @@
       "properties": {
         "id": "2.3589.694059",
         "lines": [
-          "141"
+          "D50",
+          "V11"
         ],
         "name": "Manso - Comte Borrell",
         "stop_code": "3589"
@@ -45650,60 +45576,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.171564,
-          41.484961
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3691.694934",
-        "lines": [
-          "155"
-        ],
-        "name": "Mecànica - Progrés",
-        "stop_code": "3691"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.176316,
-          41.483847
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3692.694936",
-        "lines": [
-          "155"
-        ],
-        "name": "Química - Progrés",
-        "stop_code": "3692"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.177909,
-          41.48504
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3693.694942",
-        "lines": [
-          "155"
-        ],
-        "name": "Av Ferreria - Progrés",
-        "stop_code": "3693"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.164787,
           41.403301
         ],
@@ -46437,24 +46309,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.148569,
-          41.376572
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3764.696734",
-        "lines": [
-          "V7"
-        ],
-        "name": "Diputació - Tarragona",
-        "stop_code": "3764"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.129826,
           41.410147
         ],
@@ -46639,24 +46493,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.177542,
-          41.492853
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3777.697070",
-        "lines": [
-          "155"
-        ],
-        "name": "Bach - Ctra Ripollet",
-        "stop_code": "3777"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.181043,
           41.499214
         ],
@@ -46665,6 +46501,7 @@
       "properties": {
         "id": "2.3778.697072",
         "lines": [
+          "138",
           "96"
         ],
         "name": "Av Europa - Victòria dels Àngels",
@@ -47298,7 +47135,7 @@
       "properties": {
         "id": "2.3839.698185",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Escola Mitja Costa",
         "stop_code": "3839"
@@ -47316,7 +47153,7 @@
       "properties": {
         "id": "2.3840.698191",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Antoni Pujades - Parc de Ca n'Oller",
         "stop_code": "3840"
@@ -47334,28 +47171,10 @@
       "properties": {
         "id": "2.3841.698183",
         "lines": [
-          "155"
+          "138"
         ],
         "name": "Estació Rodalies Montcada i Reixac - Santa Maria",
         "stop_code": "3841"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.165292,
-          41.480852
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3842.698193",
-        "lines": [
-          "155"
-        ],
-        "name": "Ctra Nacional 150 - La Molina",
-        "stop_code": "3842"
       }
     },
     {
@@ -47370,7 +47189,7 @@
       "properties": {
         "id": "2.3843.698195",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Av Terra Nostra - Alzina",
         "stop_code": "3843"
@@ -47388,7 +47207,7 @@
       "properties": {
         "id": "2.3844.698189",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Av Terra Nostra - Llorer",
         "stop_code": "3844"
@@ -47406,7 +47225,7 @@
       "properties": {
         "id": "2.3845.698187",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Parc del Mitja Costa",
         "stop_code": "3845"
@@ -47983,7 +47802,7 @@
       "properties": {
         "id": "2.3892.699593",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Parc Salvador Allende",
         "stop_code": "3892"
@@ -48001,7 +47820,7 @@
       "properties": {
         "id": "2.3893.699591",
         "lines": [
-          "155"
+          "137"
         ],
         "name": "Girona - Francesc Layret",
         "stop_code": "3893"
@@ -48041,25 +47860,6 @@
         ],
         "name": "Casal Can Rectoret",
         "stop_code": "3904"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.166858,
-          41.403797
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3907.699730",
-        "lines": [
-          "47",
-          "H8"
-        ],
-        "name": "Indústria - Grassot",
-        "stop_code": "3907"
       }
     },
     {
@@ -48228,6 +48028,186 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.169295,
+          41.468296
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3919.700168",
+        "lines": [
+          "137"
+        ],
+        "name": "Ctra Nacional 150 - Carrer Núm 36",
+        "stop_code": "3919"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.166461,
+          41.47406
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3920.700140",
+        "lines": [
+          "137"
+        ],
+        "name": "Ctra Nacional 150 - Ctra del Cementiri",
+        "stop_code": "3920"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.166833,
+          41.479713
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3921.700135",
+        "lines": [
+          "137"
+        ],
+        "name": "Ctra Nacional 150 - Reixac",
+        "stop_code": "3921"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.179666,
+          41.496668
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3922.700124",
+        "lines": [
+          "137"
+        ],
+        "name": "Av Europa - Salvador Dalí",
+        "stop_code": "3922"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.181267,
+          41.499293
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3923.700139",
+        "lines": [
+          "137"
+        ],
+        "name": "Av Europa - Victòria dels Àngels",
+        "stop_code": "3923"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.189106,
+          41.482408
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3925.700133",
+        "lines": [
+          "138"
+        ],
+        "name": "Jaume I - Clavell",
+        "stop_code": "3925"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.179696,
+          41.496924
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3926.700129",
+        "lines": [
+          "138"
+        ],
+        "name": "Av Europa - Salvador Dalí",
+        "stop_code": "3926"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.166912,
+          41.479464
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3928.700187",
+        "lines": [
+          "138"
+        ],
+        "name": "Ctra Nacional 150 -  Pins",
+        "stop_code": "3928"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.166252,
+          41.473958
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3929.700142",
+        "lines": [
+          "138"
+        ],
+        "name": "Ctra Nacional 150 - Ctra del Cementiri",
+        "stop_code": "3929"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.169443,
+          41.468053
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3930.700166",
+        "lines": [
+          "138"
+        ],
+        "name": "Ctra Nacional 150 - Carrer Núm 36",
+        "stop_code": "3930"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.180607,
           41.447523
         ],
@@ -48282,6 +48262,24 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.188017,
+          41.403097
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3934.700231",
+        "lines": [
+          "H12"
+        ],
+        "name": "Pl Glòries",
+        "stop_code": "3934"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.150956,
           41.374905
         ],
@@ -48302,6 +48300,24 @@
         ],
         "name": "Paral·lel - Pl Espanya",
         "stop_code": "3935"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.134602,
+          41.362972
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3936.700227",
+        "lines": [
+          "H12"
+        ],
+        "name": "Radi - Gran Via",
+        "stop_code": "3936"
       }
     },
     {
@@ -48358,6 +48374,24 @@
         ],
         "name": "Gran Via/Balmes",
         "stop_code": "8085"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.160601,
+          41.377104
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.8158.700440",
+        "lines": [
+          "V9"
+        ],
+        "name": "Viladomat, 45",
+        "stop_code": "8158"
       }
     },
     {
@@ -48497,6 +48531,44 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.182318,
+          41.449069
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.8657.683955",
+        "lines": [
+          "134"
+        ],
+        "name": "Metro Trinitat Nova",
+        "stop_code": "8657"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.131003,
+          41.403506
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.8672.700298",
+        "lines": [
+          "70",
+          "V11",
+          "V13"
+        ],
+        "name": "Ganduxer, 132",
+        "stop_code": "8672"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.151729,
           41.397401
         ],
@@ -48582,6 +48654,25 @@
         ],
         "name": "Vilamarí - Diputació",
         "stop_code": "9196"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.166207,
+          41.403298
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9294.690260",
+        "lines": [
+          "47",
+          "H8"
+        ],
+        "name": "Indústria, 26",
+        "stop_code": "9294"
       }
     },
     {
@@ -48681,24 +48772,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.132807,
-          41.401174
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.9543.694077",
-        "lines": [
-          "V13"
-        ],
-        "name": "Ganduxer, 110",
-        "stop_code": "9543"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.136074,
           41.351922
         ],
@@ -48755,18 +48828,38 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.173129,
-          41.486247
+          2.16144,
+          41.377385
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.9890.698903",
+        "id": "2.9789.700438",
         "lines": [
-          "155"
+          "141"
         ],
-        "name": "Física, 3-10",
-        "stop_code": "9890"
+        "name": "Manso, 45",
+        "stop_code": "9789"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.201431,
+          41.426592
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9798.700428",
+        "lines": [
+          "136",
+          "33",
+          "V31"
+        ],
+        "name": "Ca n'Oliva, 94-96",
+        "stop_code": "9798"
       }
     },
     {
