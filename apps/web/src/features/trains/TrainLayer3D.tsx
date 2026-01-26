@@ -1558,6 +1558,16 @@ export function TrainLayer3D({
         map.addLayer(customLayer, beforeId);
         layerAddedRef.current = true;
 
+        // Ensure train layer is on top of line layers by moving it after a delay
+        // This handles race conditions where line layers might be added after this layer
+        setTimeout(() => {
+          if (map.getLayer(LAYER_ID)) {
+            // moveLayer without second arg moves to top of stack
+            map.moveLayer(LAYER_ID);
+            console.log('TrainLayer3D: Moved layer to top of stack');
+          }
+        }, 500);
+
         // Debug: Log layer order to diagnose z-fighting issues
         const logLayerDiagnostic = (label: string) => {
           const styleLayers = map.getStyle().layers ?? [];

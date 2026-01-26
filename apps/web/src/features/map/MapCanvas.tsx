@@ -1,20 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import type { FeatureCollection } from 'geojson';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '../../styles/map.css';
 
 import { useMapActions, useMapHighlightSelectors, useMapState } from '../../state/map';
-import { loadLineGeometryCollection } from '../../lib/rodalies/dataLoader';
 import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
 import { ServiceUnavailable } from './ServiceUnavailable';
-import { getLinePaintProperties } from './layers/lineLayers';
 import type { MapViewport } from '../../types/rodalies';
 import { startMetric, endMetric } from '../../lib/analytics/perf';
 // import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
+import { RodaliesLineLayer } from '../trains/RodaliesLineLayer';
 import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
 import { ControlPanel } from '../controlPanel';
 import type { TrainPosition } from '../../types/trains';
@@ -36,8 +34,6 @@ const MAPBOX_TOKEN =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_MAPBOX_TOKEN) ||
   '';
 
-const RODALIES_LINE_SOURCE_ID = 'rodalies-lines';
-const RODALIES_LINE_LAYER_ID = 'rodalies-lines-outline';
 const SHOW_CAMERA_DEBUG = false;
 const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
 
@@ -48,26 +44,6 @@ type MapboxWindow = Window & {
 
 function getGlobalWindow(): MapboxWindow {
   return window as MapboxWindow;
-}
-
-function normaliseHexColor(value: unknown): string | undefined {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-  if (trimmed.startsWith('#')) {
-    return trimmed.length === 4 || trimmed.length === 7
-      ? trimmed
-      : undefined;
-  }
-  const hexPattern = /^[0-9a-f]{6}$/i;
-  if (hexPattern.test(trimmed)) {
-    return `#${trimmed}`;
-  }
-  return undefined;
 }
 
 function getViewportFromMap(map: mapboxgl.Map, base: MapViewport): MapViewport {
@@ -416,75 +392,8 @@ export function MapCanvas() {
     setMapLoaded(false);
     updateCameraSnapshot();
 
-    const attachLineGeometry = async () => {
-      try {
-        startMetric('geometry-load');
-
-        // Load original line geometry (no offsets, Mini Tokyo 3D approach)
-        const collection = await loadLineGeometryCollection();
-
-        const normalisedCollection: FeatureCollection = {
-          type: 'FeatureCollection',
-          features: collection.features.map((feature) => {
-            const properties = feature.properties ?? {};
-            const normalisedColor = normaliseHexColor(properties.brand_color);
-
-            return {
-              ...feature,
-              properties: {
-                ...properties,
-                ...(normalisedColor ? { brand_color: normalisedColor } : {}),
-              },
-            } as typeof feature;
-          }),
-        };
-
-        const existingSource = map.getSource(
-          RODALIES_LINE_SOURCE_ID,
-        ) as mapboxgl.GeoJSONSource | undefined;
-
-        if (existingSource) {
-          existingSource.setData(normalisedCollection);
-        } else {
-          map.addSource(RODALIES_LINE_SOURCE_ID, {
-            type: 'geojson',
-            data: normalisedCollection,
-          });
-
-          // Add single line layer for all lines (Mini Tokyo 3D style)
-          map.addLayer({
-            id: RODALIES_LINE_LAYER_ID,
-            type: 'line',
-            source: RODALIES_LINE_SOURCE_ID,
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round',
-              'visibility': transportFiltersRef.current.rodalies ? 'visible' : 'none',
-            },
-            paint: getLinePaintProperties({
-              highlightMode: 'none',
-              highlightedLineId: null,
-              highlightedLineIds: [],
-              isHighContrast,
-            }),
-          });
-        }
-        endMetric('geometry-load', {
-          featureCount: normalisedCollection.features.length,
-        });
-        setGeometryWarning(null);
-      } catch (err) {
-        endMetric('geometry-load', { error: true });
-        setGeometryWarning(
-          'Rodalies line geometry failed to load. Base map shown only.',
-        );
-        if (typeof console !== 'undefined') {
-          console.error('Failed loading Rodalies line geometry', err);
-        }
-      } finally {
-        setStatusMessage(null);
-      }
-    };
+    // NOTE: Rodalies line geometry is now loaded by RodaliesLineLayer component
+    // which uses GenericLineLayer for consistency with other transit networks.
 
     const handleLoad = () => {
       endMetric('initial-render');
@@ -581,8 +490,7 @@ export function MapCanvas() {
         map.setPaintProperty(buildingLayerId, 'fill-extrusion-opacity', 0.45);
       }
 
-      setStatusMessage('Loading Rodalies network…');
-      void attachLineGeometry();
+      // Rodalies line geometry is now loaded by RodaliesLineLayer component
       const baseViewport =
         initialViewportRef.current ?? effectiveViewport;
       setViewport(getViewportFromMap(map, baseViewport));
@@ -644,14 +552,7 @@ export function MapCanvas() {
       map.off('load', handleLoad);
       map.off('moveend', updateCameraSnapshot);
 
-      // Remove line layer
-      if (map.getLayer(RODALIES_LINE_LAYER_ID)) {
-        map.removeLayer(RODALIES_LINE_LAYER_ID);
-      }
-
-      if (map.getSource(RODALIES_LINE_SOURCE_ID)) {
-        map.removeSource(RODALIES_LINE_SOURCE_ID);
-      }
+      // NOTE: Rodalies line layer cleanup is now handled by RodaliesLineLayer component
       if (recenterControlRef.current) {
         map.removeControl(recenterControlRef.current);
         recenterControlRef.current = null;
@@ -721,48 +622,8 @@ export function MapCanvas() {
     };
   }, [effectiveViewport, setViewport, updateCameraSnapshot]);
 
-  // Update line layer styling when highlight state or contrast mode changes
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.getLayer(RODALIES_LINE_LAYER_ID)) {
-      return;
-    }
-
-    // Use networkHighlights.rodalies for the new control panel system
-    const rodaliesHighlight = networkHighlights.rodalies;
-    const effectiveHighlightMode = rodaliesHighlight.selectedLineIds.length > 0
-      ? rodaliesHighlight.highlightMode
-      : 'none';
-
-    // Get dynamic paint properties based on current highlight state
-    const paintProperties = getLinePaintProperties({
-      highlightMode: effectiveHighlightMode,
-      highlightedLineId: rodaliesHighlight.selectedLineIds[0] || null,
-      highlightedLineIds: rodaliesHighlight.selectedLineIds,
-      isHighContrast,
-    });
-
-    // Update line layer
-    Object.entries(paintProperties).forEach(([property, value]) => {
-      // TypeScript doesn't recognize dynamic property names from Object.entries
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      map.setPaintProperty(RODALIES_LINE_LAYER_ID, property as any, value);
-    });
-  }, [networkHighlights.rodalies, isHighContrast]);
-
-  // Control Rodalies line layer visibility based on transport filter
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.getLayer(RODALIES_LINE_LAYER_ID)) {
-      return;
-    }
-
-    map.setLayoutProperty(
-      RODALIES_LINE_LAYER_ID,
-      'visibility',
-      transportFilters.rodalies ? 'visible' : 'none'
-    );
-  }, [transportFilters.rodalies]);
+  // NOTE: Rodalies line layer styling and visibility are now handled by RodaliesLineLayer
+  // component via GenericLineLayer, which receives highlightedLines, isolateMode, and visible props.
 
   const handleRetryTiles = () => {
     const map = mapRef.current;
@@ -1050,6 +911,15 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.fgc.selectedLineIds}
           isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleFgcMeshPositionGetterReady}
+        />
+      ) : null}
+      {/* Rodalies line geometries */}
+      {mapInstance && isMapLoaded ? (
+        <RodaliesLineLayer
+          map={mapInstance}
+          visible={transportFilters.rodalies}
+          highlightedLines={networkHighlights.rodalies.selectedLineIds}
+          isolateMode={networkHighlights.rodalies.highlightMode === 'isolate'}
         />
       ) : null}
       {/* Rodalies station markers layer */}

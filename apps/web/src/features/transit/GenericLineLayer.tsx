@@ -98,7 +98,7 @@ export function GenericLineLayer({
   const [layersReady, setLayersReady] = useState(false);
   const styleReady = useMapStyleReady(map);
 
-  const { sourceId, lineLayerId, casingLayerId, lineCodeProperty, lineWidth, casingWidth, opacity } =
+  const { sourceId, lineLayerId, casingLayerId, lineCodeProperty, colorProperty = 'color', lineWidth, casingWidth, opacity } =
     config;
 
   // Apply optional filtering to GeoJSON
@@ -184,7 +184,7 @@ export function GenericLineLayer({
           'line-cap': 'round',
         },
         paint: {
-          'line-color': ['get', 'color'],
+          'line-color': ['coalesce', ['get', colorProperty], '#f97316'],
           'line-width': createWidthExpression(lineWidth),
           'line-opacity': 0, // Start hidden
         },
