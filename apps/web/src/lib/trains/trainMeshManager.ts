@@ -2441,4 +2441,27 @@ export class TrainMeshManager {
       meshData.isParkingRotationApplied = false;
     });
   }
+
+  /**
+   * Apply parking to all currently stopped trains
+   * Called when the train parking toggle is enabled to park trains already at stations
+   */
+  public applyParkingToStoppedTrains(): void {
+    this.trainMeshes.forEach((meshData) => {
+      // Only apply to trains that are stopped but not yet parked
+      if (meshData.status !== 'STOPPED_AT') {
+        return;
+      }
+      if (meshData.isParkingRotationApplied === true) {
+        return;
+      }
+      if (meshData.parkingRotationAnim) {
+        return;
+      }
+
+      // Temporarily clear prevStatus to trick applyParkingVisuals into thinking
+      // this train just stopped (triggering parking calculation)
+      meshData.prevStatus = undefined;
+    });
+  }
 }

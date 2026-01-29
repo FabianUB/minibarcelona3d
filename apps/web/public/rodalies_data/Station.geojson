@@ -337,7 +337,6 @@
         "code": null,
         "lines": [
           "R14",
-          "R2S",
           "RT1"
         ]
       },
@@ -1739,6 +1738,7 @@
         "code": null,
         "lines": [
           "C1",
+          "C4",
           "C5"
         ]
       },
@@ -2783,7 +2783,8 @@
         "name": "Cantaelgallo",
         "code": null,
         "lines": [
-          "C1"
+          "C1",
+          "C4"
         ]
       },
       "geometry": {
@@ -4137,6 +4138,7 @@
         "code": null,
         "lines": [
           "C1",
+          "C4",
           "C5"
         ]
       },
@@ -6047,6 +6049,7 @@
         "code": null,
         "lines": [
           "C1",
+          "C4",
           "C5"
         ]
       },
@@ -6258,8 +6261,7 @@
         "code": null,
         "lines": [
           "R13",
-          "R14",
-          "R2S"
+          "R14"
         ]
       },
       "geometry": {
@@ -6877,7 +6879,6 @@
         "lines": [
           "R13",
           "R14",
-          "R2S",
           "RT1"
         ]
       },
@@ -6916,6 +6917,7 @@
         "name": "La Puebla De Híjar",
         "code": null,
         "lines": [
+          "R15",
           "R2S"
         ]
       },
@@ -6955,8 +6957,7 @@
         "code": null,
         "lines": [
           "R13",
-          "R14",
-          "R2S"
+          "R14"
         ]
       },
       "geometry": {
@@ -7015,7 +7016,6 @@
         "code": null,
         "lines": [
           "R14",
-          "R2S",
           "RT1"
         ]
       },
@@ -7092,6 +7092,7 @@
         "name": "La Zaida-Sástago",
         "code": null,
         "lines": [
+          "R15",
           "R2S"
         ]
       },
@@ -8890,7 +8891,8 @@
           "R1",
           "R11",
           "R2",
-          "R2N"
+          "R2N",
+          "RG1"
         ]
       },
       "geometry": {
@@ -9220,8 +9222,7 @@
         "code": null,
         "lines": [
           "R13",
-          "R14",
-          "R2S"
+          "R14"
         ]
       },
       "geometry": {
@@ -11444,6 +11445,7 @@
         "name": "Quinto",
         "code": null,
         "lines": [
+          "R15",
           "R2S"
         ]
       },
@@ -11796,7 +11798,6 @@
         "name": "Robledo De Chavela",
         "code": null,
         "lines": [
-          "C8",
           "C8A"
         ]
       },
@@ -12199,6 +12200,7 @@
         "name": "Samper",
         "code": null,
         "lines": [
+          "R15",
           "R2S"
         ]
       },
@@ -13306,7 +13308,6 @@
         "name": "Santa María De La Alameda-Peguerinos",
         "code": null,
         "lines": [
-          "C8",
           "C8A"
         ]
       },
@@ -15091,7 +15092,8 @@
         "name": "Utrera",
         "code": null,
         "lines": [
-          "C1"
+          "C1",
+          "C4"
         ]
       },
       "geometry": {
@@ -15914,8 +15916,7 @@
         "code": null,
         "lines": [
           "R13",
-          "R14",
-          "R2S"
+          "R14"
         ]
       },
       "geometry": {
@@ -16128,8 +16129,7 @@
         "code": null,
         "lines": [
           "R13",
-          "R14",
-          "R2S"
+          "R14"
         ]
       },
       "geometry": {
@@ -16149,8 +16149,7 @@
         "code": null,
         "lines": [
           "R13",
-          "R14",
-          "R2S"
+          "R14"
         ]
       },
       "geometry": {
@@ -16514,7 +16513,6 @@
         "name": "Zarzalejo",
         "code": null,
         "lines": [
-          "C8",
           "C8A"
         ]
       },
