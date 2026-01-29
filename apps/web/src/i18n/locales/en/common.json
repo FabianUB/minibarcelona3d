@@ -16,7 +16,13 @@
     "lines": "Loading lines...",
     "station": "Loading station...",
     "routes": "Loading bus routes...",
-    "status": "Loading status..."
+    "status": "Loading status...",
+    "stages": {
+      "title": "Loading...",
+      "map": "Map",
+      "models": "3D models",
+      "trains": "Train positions"
+    }
   },
   "networks": {
     "rodalies": "Rodalies de Catalunya",
