@@ -725,7 +725,7 @@ export function TrainLayer3D({
     debugEnabledRef.current = areDebugToolsEnabled;
   }, [areDebugToolsEnabled]);
 
-  // Detect when train parking is toggled off and reset parked trains
+  // Detect when train parking is toggled and animate accordingly
   useEffect(() => {
     const wasEnabled = prevEnableTrainParkingRef.current;
     const isEnabled = ui.enableTrainParking;
@@ -733,6 +733,9 @@ export function TrainLayer3D({
     if (wasEnabled && !isEnabled && meshManagerRef.current) {
       // Parking was just disabled - animate parked trains back to normal
       meshManagerRef.current.resetParkingVisuals();
+    } else if (!wasEnabled && isEnabled && meshManagerRef.current) {
+      // Parking was just enabled - apply parking to trains already at stations
+      meshManagerRef.current.applyParkingToStoppedTrains();
     }
 
     prevEnableTrainParkingRef.current = isEnabled;
