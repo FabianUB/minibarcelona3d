@@ -16,7 +16,13 @@
     "lines": "Carregant línies...",
     "station": "Carregant estació...",
     "routes": "Carregant rutes de bus...",
-    "status": "Carregant estat..."
+    "status": "Carregant estat...",
+    "stages": {
+      "title": "Carregant...",
+      "map": "Mapa",
+      "models": "Models 3D",
+      "trains": "Posicions de trens"
+    }
   },
   "networks": {
     "rodalies": "Rodalies de Catalunya",

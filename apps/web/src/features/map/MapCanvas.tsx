@@ -8,12 +8,12 @@ import { useMapActions, useMapHighlightSelectors, useMapState } from '../../stat
 import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
 import { ServiceUnavailable } from './ServiceUnavailable';
+import { LoadingOverlay, type LoadingStages } from './LoadingOverlay';
 import type { MapViewport } from '../../types/rodalies';
 import { startMetric, endMetric } from '../../lib/analytics/perf';
 // import { TrainMarkers } from '../trains/TrainMarkers'; // Phase B - replaced by TrainLayer3D
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { RodaliesLineLayer } from '../trains/RodaliesLineLayer';
-import { TrainLoadingSkeleton } from '../trains/TrainLoadingSkeleton';
 import { ControlPanel } from '../controlPanel';
 import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
@@ -81,9 +81,13 @@ export function MapCanvas() {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const copyFeedbackTimeoutRef = useRef<number | null>(null);
   const [raycastDebugInfo, setRaycastDebugInfo] = useState<RaycastDebugInfo | null>(null);
-  const [isTrainDataLoading, setIsTrainDataLoading] = useState(true);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
   const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
+  const [loadingStages, setLoadingStages] = useState<LoadingStages>({
+    map: false,
+    models: false,
+    trains: false,
+  });
 
   // Mesh position getters from each layer (for VehicleListView click-to-zoom)
   const meshPositionGettersRef = useRef<Map<string, (vehicleKey: string) => [number, number] | null>>(new Map());
@@ -160,6 +164,18 @@ export function MapCanvas() {
   const handleFgcMeshPositionGetterReady = useCallback(
     (getter: (vehicleKey: string) => [number, number] | null) => {
       meshPositionGettersRef.current.set('fgc', getter);
+    },
+    []
+  );
+
+  // Callback for TrainLayer3D loading stage changes
+  const handleTrainLoadingStageChange = useCallback(
+    (stages: { models: boolean; trains: boolean }) => {
+      setLoadingStages((prev) => ({
+        ...prev,
+        models: stages.models,
+        trains: stages.trains,
+      }));
     },
     []
   );
@@ -398,6 +414,8 @@ export function MapCanvas() {
     const handleLoad = () => {
       endMetric('initial-render');
       setMapLoaded(true);
+      // Update loading stages for the loading overlay
+      setLoadingStages((prev) => ({ ...prev, map: true }));
 
       // Initialize model origin for Three.js coordinate system (T052e)
       // MUST be called before any 3D objects are positioned
@@ -777,8 +795,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
         data-testid="map-canvas"
         aria-hidden={Boolean(error)}
       />
-      {/* T099: Show skeleton UI while initial train data is loading */}
-      {isTrainDataLoading && mapInstance && isMapLoaded ? <TrainLoadingSkeleton /> : null}
+      {/* Loading overlay - covers app until essential assets are loaded */}
+      <LoadingOverlay stages={loadingStages} />
       {/* Metro line geometries (below stations) */}
       {mapInstance && isMapLoaded ? (
         <MetroLineLayer
@@ -938,7 +956,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
         <TrainLayer3D
           map={mapInstance}
           onRaycastResult={debugToolsEnabled ? setRaycastDebugInfo : undefined}
-          onLoadingChange={setIsTrainDataLoading}
+          onLoadingStageChange={handleTrainLoadingStageChange}
           onTrainsChange={setTrainPositions}
           visible={transportFilters.rodalies}
           highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
