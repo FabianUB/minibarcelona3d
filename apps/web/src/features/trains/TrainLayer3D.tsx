@@ -65,6 +65,12 @@ export interface TrainLayer3DProps {
   onLoadingChange?: (isLoading: boolean) => void;
 
   /**
+   * Callback invoked when loading stages change
+   * Task: T013 - Expose detailed loading stages for loading overlay
+   */
+  onLoadingStageChange?: (stages: { models: boolean; trains: boolean }) => void;
+
+  /**
    * Callback invoked when train data changes
    * Used to expose train list to parent component (MapCanvas)
    * to avoid re-render issues with StationLayer
@@ -162,6 +168,7 @@ export function TrainLayer3D({
   beforeId,
   onRaycastResult,
   onLoadingChange,
+  onLoadingStageChange,
   onTrainsChange,
   onMeshPositionGetterReady,
   visible = true,
@@ -1382,6 +1389,17 @@ export function TrainLayer3D({
   useEffect(() => {
     onLoadingChange?.(isLoading && trains.length === 0);
   }, [isLoading, trains.length, onLoadingChange]);
+
+  /**
+   * Effect: Notify parent of detailed loading stages
+   * Task: T013 - Expose loading stages for loading overlay
+   */
+  useEffect(() => {
+    onLoadingStageChange?.({
+      models: modelsLoaded,
+      trains: trains.length > 0,
+    });
+  }, [modelsLoaded, trains.length, onLoadingStageChange]);
 
   /**
    * Effect: Update transit state with Rodalies data source
