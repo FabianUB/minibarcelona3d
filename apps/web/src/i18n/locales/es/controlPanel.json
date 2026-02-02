@@ -52,12 +52,21 @@
     "routeCountFiltered": "{{count}} rutas con \"{{query}}\""
   },
   "modelSize": {
-    "label": "Tamaño del Modelo"
+    "label": "Tamaño del Modelo",
+    "small": "Pequeño",
+    "medium": "Medium",
+    "large": "Grande"
   },
   "settings": {
     "showStations": "Mostrar Estaciones",
     "showStationsDescription": "Mostrar marcadores de estación en el mapa",
     "trainParking": "Aparcamiento de Trenes",
     "trainParkingDescription": "Rotar trenes detenidos perpendicular a la vía"
+  },
+  "statusAlert": {
+    "unavailableTitle": "No se pueden cargar posiciones",
+    "unavailableDescription": "Los datos en tiempo real no están disponibles. Inténtalo de nuevo más tarde.",
+    "scheduleTitle": "Usando datos de horario",
+    "scheduleDescription": "Posiciones en tiempo real no disponibles. Mostrando posiciones estimadas según horarios."
   }
 }

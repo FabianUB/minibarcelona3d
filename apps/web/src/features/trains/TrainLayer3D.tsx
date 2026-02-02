@@ -1397,19 +1397,23 @@ export function TrainLayer3D({
   useEffect(() => {
     onLoadingStageChange?.({
       models: modelsLoaded,
-      trains: trains.length > 0,
+      trains: !isLoading, // Ready when API has responded, even if no trains
     });
-  }, [modelsLoaded, trains.length, onLoadingStageChange]);
+  }, [modelsLoaded, isLoading, onLoadingStageChange]);
 
   /**
    * Effect: Update transit state with Rodalies data source
    * Rodalies always uses real-time API data (no simulation fallback)
+   * When API fails or returns no trains, status is 'unavailable'
    */
   useEffect(() => {
     if (trains.length > 0 && !error) {
       setDataSource('rodalies', 'realtime');
+    } else if (!isLoading && (error || trains.length === 0)) {
+      // API has responded but either errored or returned no trains
+      setDataSource('rodalies', 'unavailable');
     }
-  }, [trains.length, error, setDataSource]);
+  }, [trains.length, error, isLoading, setDataSource]);
 
   /**
    * Effect: Notify parent of train data changes

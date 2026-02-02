@@ -35,7 +35,9 @@
     "realTime": "Temps real",
     "realTimeTitle": "Posicions de vehicles des de dades API en temps real",
     "schedule": "Horari",
-    "scheduleTitle": "Posicions de vehicles simulades des de dades d'horari"
+    "scheduleTitle": "Posicions de vehicles simulades des de dades d'horari",
+    "unavailable": "No disponible",
+    "unavailableTitle": "Dades en temps real no disponibles actualment"
   },
   "time": {
     "secondsAgo": "fa {{count}}s",

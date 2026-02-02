@@ -52,12 +52,21 @@
     "routeCountFiltered": "{{count}} rutes amb \"{{query}}\""
   },
   "modelSize": {
-    "label": "Mida del Model"
+    "label": "Mida del Model",
+    "small": "Petit",
+    "medium": "Medium",
+    "large": "Gran"
   },
   "settings": {
     "showStations": "Mostrar Estacions",
     "showStationsDescription": "Mostrar marcadors d'estació al mapa",
     "trainParking": "Aparcament de Trens",
     "trainParkingDescription": "Rotar trens aturats perpendicular a la via"
+  },
+  "statusAlert": {
+    "unavailableTitle": "No es poden carregar posicions",
+    "unavailableDescription": "Les dades en temps real no estan disponibles. Torna-ho a provar més tard.",
+    "scheduleTitle": "Usant dades d'horari",
+    "scheduleDescription": "Posicions en temps real no disponibles. Mostrant posicions estimades segons horaris."
   }
 }

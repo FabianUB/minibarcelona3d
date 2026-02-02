@@ -1,13 +1,1402 @@
 {
-  "bus": {
-    "routes": "bus/routes/",
-    "stops": "bus/stops.geojson"
-  },
-  "generated_at": "2026-01-24T12:28:03Z",
-  "gtfs_checksum": "78a9c4026efc05eadd88d9f0d5d2b39efc48be6770ead400fba1955a1d9aeef1",
-  "metro": {
-    "lines": "metro/lines/",
-    "stations": "metro/stations.geojson"
-  },
-  "version": "1.0"
+  "version": "1.0",
+  "generated_at": "2026-02-02T17:46:28.569Z",
+  "files": [
+    {
+      "type": "metro_stations",
+      "path": "metro/stations.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "FM",
+      "path": "metro/lines/FM.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L1",
+      "path": "metro/lines/L1.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L10N",
+      "path": "metro/lines/L10N.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L10S",
+      "path": "metro/lines/L10S.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L11",
+      "path": "metro/lines/L11.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L2",
+      "path": "metro/lines/L2.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L3",
+      "path": "metro/lines/L3.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L4",
+      "path": "metro/lines/L4.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L5",
+      "path": "metro/lines/L5.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L9N",
+      "path": "metro/lines/L9N.geojson"
+    },
+    {
+      "type": "metro_line",
+      "line_code": "L9S",
+      "path": "metro/lines/L9S.geojson"
+    },
+    {
+      "type": "bus_stops",
+      "path": "bus/stops.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "102",
+      "path": "bus/routes/102.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "104",
+      "path": "bus/routes/104.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "107",
+      "path": "bus/routes/107.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "109",
+      "path": "bus/routes/109.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "111",
+      "path": "bus/routes/111.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "112",
+      "path": "bus/routes/112.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "113",
+      "path": "bus/routes/113.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "114",
+      "path": "bus/routes/114.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "115",
+      "path": "bus/routes/115.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "117",
+      "path": "bus/routes/117.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "118",
+      "path": "bus/routes/118.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "119",
+      "path": "bus/routes/119.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "120",
+      "path": "bus/routes/120.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "121",
+      "path": "bus/routes/121.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "122",
+      "path": "bus/routes/122.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "123",
+      "path": "bus/routes/123.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "124",
+      "path": "bus/routes/124.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "125",
+      "path": "bus/routes/125.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "126",
+      "path": "bus/routes/126.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "127",
+      "path": "bus/routes/127.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "128",
+      "path": "bus/routes/128.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "129",
+      "path": "bus/routes/129.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "13",
+      "path": "bus/routes/13.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "130",
+      "path": "bus/routes/130.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "131",
+      "path": "bus/routes/131.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "132",
+      "path": "bus/routes/132.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "133",
+      "path": "bus/routes/133.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "134",
+      "path": "bus/routes/134.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "136",
+      "path": "bus/routes/136.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "137",
+      "path": "bus/routes/137.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "138",
+      "path": "bus/routes/138.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "141",
+      "path": "bus/routes/141.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "150",
+      "path": "bus/routes/150.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "155",
+      "path": "bus/routes/155.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "157",
+      "path": "bus/routes/157.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "175",
+      "path": "bus/routes/175.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "180",
+      "path": "bus/routes/180.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "182",
+      "path": "bus/routes/182.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "183",
+      "path": "bus/routes/183.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "185",
+      "path": "bus/routes/185.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "19",
+      "path": "bus/routes/19.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "191",
+      "path": "bus/routes/191.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "192",
+      "path": "bus/routes/192.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "196",
+      "path": "bus/routes/196.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "21",
+      "path": "bus/routes/21.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "22",
+      "path": "bus/routes/22.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "23",
+      "path": "bus/routes/23.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "24",
+      "path": "bus/routes/24.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "27",
+      "path": "bus/routes/27.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "33",
+      "path": "bus/routes/33.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "34",
+      "path": "bus/routes/34.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "381",
+      "path": "bus/routes/381.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "382",
+      "path": "bus/routes/382.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "39",
+      "path": "bus/routes/39.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "46",
+      "path": "bus/routes/46.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "47",
+      "path": "bus/routes/47.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "52",
+      "path": "bus/routes/52.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "54",
+      "path": "bus/routes/54.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "55",
+      "path": "bus/routes/55.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "59",
+      "path": "bus/routes/59.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "6",
+      "path": "bus/routes/6.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "60",
+      "path": "bus/routes/60.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "62",
+      "path": "bus/routes/62.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "63",
+      "path": "bus/routes/63.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "65",
+      "path": "bus/routes/65.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "67",
+      "path": "bus/routes/67.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "68",
+      "path": "bus/routes/68.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "7",
+      "path": "bus/routes/7.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "70",
+      "path": "bus/routes/70.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "76",
+      "path": "bus/routes/76.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "78",
+      "path": "bus/routes/78.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "86",
+      "path": "bus/routes/86.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "87",
+      "path": "bus/routes/87.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "88",
+      "path": "bus/routes/88.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "89",
+      "path": "bus/routes/89.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "91",
+      "path": "bus/routes/91.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "94",
+      "path": "bus/routes/94.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "95",
+      "path": "bus/routes/95.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "96",
+      "path": "bus/routes/96.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "97",
+      "path": "bus/routes/97.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "983",
+      "path": "bus/routes/983.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "A1",
+      "path": "bus/routes/A1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "A2",
+      "path": "bus/routes/A2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B12",
+      "path": "bus/routes/B12.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B14",
+      "path": "bus/routes/B14.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B15",
+      "path": "bus/routes/B15.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B18",
+      "path": "bus/routes/B18.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B2",
+      "path": "bus/routes/B2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B20",
+      "path": "bus/routes/B20.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B21",
+      "path": "bus/routes/B21.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B23",
+      "path": "bus/routes/B23.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B24",
+      "path": "bus/routes/B24.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B25",
+      "path": "bus/routes/B25.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B29",
+      "path": "bus/routes/B29.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B3",
+      "path": "bus/routes/B3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B34",
+      "path": "bus/routes/B34.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B35",
+      "path": "bus/routes/B35.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B4",
+      "path": "bus/routes/B4.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B5",
+      "path": "bus/routes/B5.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B7",
+      "path": "bus/routes/B7.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B8",
+      "path": "bus/routes/B8.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B80",
+      "path": "bus/routes/B80.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B81",
+      "path": "bus/routes/B81.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "B82",
+      "path": "bus/routes/B82.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "CF1",
+      "path": "bus/routes/CF1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "CF2",
+      "path": "bus/routes/CF2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "CS1",
+      "path": "bus/routes/CS1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "CS2",
+      "path": "bus/routes/CS2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "CS3",
+      "path": "bus/routes/CS3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "CS4",
+      "path": "bus/routes/CS4.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "D20",
+      "path": "bus/routes/D20.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "D40",
+      "path": "bus/routes/D40.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "D50",
+      "path": "bus/routes/D50.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "EP1",
+      "path": "bus/routes/EP1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "EP2",
+      "path": "bus/routes/EP2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "ESC",
+      "path": "bus/routes/ESC.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "GA1",
+      "path": "bus/routes/GA1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "GA2",
+      "path": "bus/routes/GA2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H10",
+      "path": "bus/routes/H10.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H12",
+      "path": "bus/routes/H12.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H14",
+      "path": "bus/routes/H14.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H16",
+      "path": "bus/routes/H16.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H2",
+      "path": "bus/routes/H2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H4",
+      "path": "bus/routes/H4.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H6",
+      "path": "bus/routes/H6.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "H8",
+      "path": "bus/routes/H8.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "JM",
+      "path": "bus/routes/JM.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "JT",
+      "path": "bus/routes/JT.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L16",
+      "path": "bus/routes/L16.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L20",
+      "path": "bus/routes/L20.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L21",
+      "path": "bus/routes/L21.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L46",
+      "path": "bus/routes/L46.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L52",
+      "path": "bus/routes/L52.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L70",
+      "path": "bus/routes/L70.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L72",
+      "path": "bus/routes/L72.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L74",
+      "path": "bus/routes/L74.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L76",
+      "path": "bus/routes/L76.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L77",
+      "path": "bus/routes/L77.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L78",
+      "path": "bus/routes/L78.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L80",
+      "path": "bus/routes/L80.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L82",
+      "path": "bus/routes/L82.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L85",
+      "path": "bus/routes/L85.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L86",
+      "path": "bus/routes/L86.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L88",
+      "path": "bus/routes/L88.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L94",
+      "path": "bus/routes/L94.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L95",
+      "path": "bus/routes/L95.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L96",
+      "path": "bus/routes/L96.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L97",
+      "path": "bus/routes/L97.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "L99",
+      "path": "bus/routes/L99.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "LH1",
+      "path": "bus/routes/LH1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "LH2",
+      "path": "bus/routes/LH2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M1",
+      "path": "bus/routes/M1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M12",
+      "path": "bus/routes/M12.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M14",
+      "path": "bus/routes/M14.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M19",
+      "path": "bus/routes/M19.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M26",
+      "path": "bus/routes/M26.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M27",
+      "path": "bus/routes/M27.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M28",
+      "path": "bus/routes/M28.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M30",
+      "path": "bus/routes/M30.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M5",
+      "path": "bus/routes/M5.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M6",
+      "path": "bus/routes/M6.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "M75",
+      "path": "bus/routes/M75.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "MB1",
+      "path": "bus/routes/MB1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "MB2",
+      "path": "bus/routes/MB2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "MB3",
+      "path": "bus/routes/MB3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N0",
+      "path": "bus/routes/N0.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N1",
+      "path": "bus/routes/N1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N11",
+      "path": "bus/routes/N11.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N12",
+      "path": "bus/routes/N12.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N13",
+      "path": "bus/routes/N13.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N14",
+      "path": "bus/routes/N14.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N15",
+      "path": "bus/routes/N15.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N16",
+      "path": "bus/routes/N16.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N17",
+      "path": "bus/routes/N17.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N18",
+      "path": "bus/routes/N18.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N19",
+      "path": "bus/routes/N19.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N2",
+      "path": "bus/routes/N2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N20",
+      "path": "bus/routes/N20.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N23",
+      "path": "bus/routes/N23.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N24",
+      "path": "bus/routes/N24.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N28",
+      "path": "bus/routes/N28.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N3",
+      "path": "bus/routes/N3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N4",
+      "path": "bus/routes/N4.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N5",
+      "path": "bus/routes/N5.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N6",
+      "path": "bus/routes/N6.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N7",
+      "path": "bus/routes/N7.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N8",
+      "path": "bus/routes/N8.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "N9",
+      "path": "bus/routes/N9.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PA1",
+      "path": "bus/routes/PA1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PA2",
+      "path": "bus/routes/PA2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PF1",
+      "path": "bus/routes/PF1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PF2",
+      "path": "bus/routes/PF2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PR1",
+      "path": "bus/routes/PR1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PR2",
+      "path": "bus/routes/PR2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PR3",
+      "path": "bus/routes/PR3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PR4",
+      "path": "bus/routes/PR4.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "PR5",
+      "path": "bus/routes/PR5.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SB1",
+      "path": "bus/routes/SB1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SB2",
+      "path": "bus/routes/SB2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SB3",
+      "path": "bus/routes/SB3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SF1",
+      "path": "bus/routes/SF1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SF2",
+      "path": "bus/routes/SF2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SF3",
+      "path": "bus/routes/SF3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SV1",
+      "path": "bus/routes/SV1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SV2",
+      "path": "bus/routes/SV2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SV3",
+      "path": "bus/routes/SV3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "SV4",
+      "path": "bus/routes/SV4.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V1",
+      "path": "bus/routes/V1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V11",
+      "path": "bus/routes/V11.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V13",
+      "path": "bus/routes/V13.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V15",
+      "path": "bus/routes/V15.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V17",
+      "path": "bus/routes/V17.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V19",
+      "path": "bus/routes/V19.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V21",
+      "path": "bus/routes/V21.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V23",
+      "path": "bus/routes/V23.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V25",
+      "path": "bus/routes/V25.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V27",
+      "path": "bus/routes/V27.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V29",
+      "path": "bus/routes/V29.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V3",
+      "path": "bus/routes/V3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V31",
+      "path": "bus/routes/V31.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V33",
+      "path": "bus/routes/V33.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V5",
+      "path": "bus/routes/V5.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V7",
+      "path": "bus/routes/V7.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "V9",
+      "path": "bus/routes/V9.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "VB1",
+      "path": "bus/routes/VB1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "VB2",
+      "path": "bus/routes/VB2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X1",
+      "path": "bus/routes/X1.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X2",
+      "path": "bus/routes/X2.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X3",
+      "path": "bus/routes/X3.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X30",
+      "path": "bus/routes/X30.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X43",
+      "path": "bus/routes/X43.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X70",
+      "path": "bus/routes/X70.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X79",
+      "path": "bus/routes/X79.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X80",
+      "path": "bus/routes/X80.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X83",
+      "path": "bus/routes/X83.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X84",
+      "path": "bus/routes/X84.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X86",
+      "path": "bus/routes/X86.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X95",
+      "path": "bus/routes/X95.geojson"
+    },
+    {
+      "type": "bus_route",
+      "route_code": "X97",
+      "path": "bus/routes/X97.geojson"
+    },
+    {
+      "type": "tram_stations",
+      "path": "tram/stations.geojson"
+    },
+    {
+      "type": "tram_line",
+      "line_code": "T1",
+      "path": "tram/lines/T1.geojson"
+    },
+    {
+      "type": "tram_line",
+      "line_code": "T2",
+      "path": "tram/lines/T2.geojson"
+    },
+    {
+      "type": "tram_line",
+      "line_code": "T3",
+      "path": "tram/lines/T3.geojson"
+    },
+    {
+      "type": "tram_line",
+      "line_code": "T4",
+      "path": "tram/lines/T4.geojson"
+    },
+    {
+      "type": "tram_line",
+      "line_code": "T5",
+      "path": "tram/lines/T5.geojson"
+    },
+    {
+      "type": "tram_line",
+      "line_code": "T6",
+      "path": "tram/lines/T6.geojson"
+    },
+    {
+      "type": "fgc_stations",
+      "path": "fgc/stations.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "FV",
+      "path": "fgc/lines/FV.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "L12",
+      "path": "fgc/lines/L12.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "L6",
+      "path": "fgc/lines/L6.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "L7",
+      "path": "fgc/lines/L7.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "L8",
+      "path": "fgc/lines/L8.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "MM",
+      "path": "fgc/lines/MM.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "R5",
+      "path": "fgc/lines/R5.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "R50",
+      "path": "fgc/lines/R50.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "R53",
+      "path": "fgc/lines/R53.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "R6",
+      "path": "fgc/lines/R6.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "R60",
+      "path": "fgc/lines/R60.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "R63",
+      "path": "fgc/lines/R63.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "RL1",
+      "path": "fgc/lines/RL1.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "RL2",
+      "path": "fgc/lines/RL2.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "S1",
+      "path": "fgc/lines/S1.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "S2",
+      "path": "fgc/lines/S2.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "S3",
+      "path": "fgc/lines/S3.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "S4",
+      "path": "fgc/lines/S4.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "S8",
+      "path": "fgc/lines/S8.geojson"
+    },
+    {
+      "type": "fgc_line",
+      "line_code": "S9",
+      "path": "fgc/lines/S9.geojson"
+    }
+  ]
 }

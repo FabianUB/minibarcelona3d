@@ -225,17 +225,37 @@ export function VehicleListView({
 
   if (!ui.transportFilters[network]) {
     return (
-      <div className={cn('py-8 text-center text-muted-foreground', className)}>
-        <p className="text-sm">{t('vehicleList.networkDisabled')}</p>
-        <p className="text-xs mt-1">{t('vehicleList.enableNetwork', { network })}</p>
+      <div className={cn('py-8 text-center text-muted-foreground space-y-4', className)}>
+        <div>
+          <p className="text-sm">{t('vehicleList.networkDisabled')}</p>
+          <p className="text-xs mt-1">{t('vehicleList.enableNetwork', { network })}</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setControlPanelMode('controls')}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t('modes.controls')}
+        </Button>
       </div>
     );
   }
 
   if (vehicles.length === 0) {
     return (
-      <div className={cn('py-8 text-center text-muted-foreground', className)}>
+      <div className={cn('py-8 text-center text-muted-foreground space-y-4', className)}>
         <p className="text-sm">{t('vehicleList.noActiveVehicles')}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setControlPanelMode('controls')}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t('modes.controls')}
+        </Button>
       </div>
     );
   }
