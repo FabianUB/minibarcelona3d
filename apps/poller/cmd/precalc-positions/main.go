@@ -447,18 +447,33 @@ func calculatePositionAtTime(trip TripInfo, stopTimes []StopTime, currentSeconds
 	}
 
 	elapsed := currentSeconds - prevStop.DepartureSeconds
-	fraction := float64(elapsed) / float64(segmentDuration)
-	if fraction < 0 {
-		fraction = 0
+	segmentFraction := float64(elapsed) / float64(segmentDuration)
+	if segmentFraction < 0 {
+		segmentFraction = 0
 	}
-	if fraction > 1 {
-		fraction = 1
+	if segmentFraction > 1 {
+		segmentFraction = 1
 	}
 
-	lat := prevStop.StopLat + (nextStop.StopLat-prevStop.StopLat)*fraction
-	lon := prevStop.StopLon + (nextStop.StopLon-prevStop.StopLon)*fraction
+	lat := prevStop.StopLat + (nextStop.StopLat-prevStop.StopLat)*segmentFraction
+	lon := prevStop.StopLon + (nextStop.StopLon-prevStop.StopLon)*segmentFraction
 
 	bearing := calculateBearing(prevStop.StopLat, prevStop.StopLon, nextStop.StopLat, nextStop.StopLon)
+
+	// Calculate progress fraction along the ENTIRE route (not just current segment)
+	// This is used by the frontend to position vehicles along the line geometry
+	totalDuration := lastArrival - firstDeparture
+	if totalDuration <= 0 {
+		totalDuration = 1
+	}
+	elapsedFromStart := currentSeconds - firstDeparture
+	progressFraction := float64(elapsedFromStart) / float64(totalDuration)
+	if progressFraction < 0 {
+		progressFraction = 0
+	}
+	if progressFraction > 1 {
+		progressFraction = 1
+	}
 
 	route := routeInfo[trip.RouteID]
 
@@ -477,7 +492,7 @@ func calculatePositionAtTime(trip TripInfo, stopTimes []StopTime, currentSeconds
 		NextStopID:       nextStop.StopID,
 		PrevStopName:     prevStop.StopName,
 		NextStopName:     nextStop.StopName,
-		ProgressFraction: fraction,
+		ProgressFraction: progressFraction,
 		ScheduledArrival: formatTimeOfDay(nextStop.ArrivalSeconds),
 	}
 }

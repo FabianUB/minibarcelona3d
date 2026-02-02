@@ -1397,9 +1397,9 @@ export function TrainLayer3D({
   useEffect(() => {
     onLoadingStageChange?.({
       models: modelsLoaded,
-      trains: trains.length > 0,
+      trains: !isLoading, // Ready when API has responded, even if no trains
     });
-  }, [modelsLoaded, trains.length, onLoadingStageChange]);
+  }, [modelsLoaded, isLoading, onLoadingStageChange]);
 
   /**
    * Effect: Update transit state with Rodalies data source
