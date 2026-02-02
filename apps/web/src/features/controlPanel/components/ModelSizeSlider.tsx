@@ -1,13 +1,12 @@
 /**
- * ModelSizeSlider Component
+ * ModelSizeSelector Component
  *
- * Slider control for adjusting 3D model size per network.
- * Range: 50% to 200% (stored as 0.5 to 2.0)
+ * Discrete button control for adjusting 3D model size per network.
+ * Options: Small (70%), Normal (100%), Large (150%)
  */
 
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { useMapState, useMapActions } from '@/state/map';
 import type { TransportType } from '@/types/rodalies';
@@ -17,57 +16,46 @@ interface ModelSizeSliderProps {
   className?: string;
 }
 
+const SIZE_OPTIONS = [
+  { key: 'small', value: 0.7 },
+  { key: 'medium', value: 1.0 },
+  { key: 'large', value: 1.5 },
+] as const;
+
 export function ModelSizeSlider({ network, className }: ModelSizeSliderProps) {
   const { t } = useTranslation('controlPanel');
-  const { t: tCommon } = useTranslation('common');
   const { ui } = useMapState();
   const { setModelSize } = useMapActions();
 
   const currentSize = ui.modelSizes[network];
-  const percentage = Math.round(currentSize * 100);
 
-  const handleValueChange = useCallback(
-    (values: number[]) => {
-      const newSize = values[0] / 100;
-      setModelSize(network, newSize);
+  const handleSelect = useCallback(
+    (value: number) => {
+      setModelSize(network, value);
     },
     [network, setModelSize]
   );
 
-  const handleReset = useCallback(() => {
-    setModelSize(network, 1.0);
-  }, [network, setModelSize]);
-
   return (
     <div className={cn('space-y-2', className)}>
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-foreground">{t('modelSize.label')}</label>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground w-12 text-right">
-            {percentage}%
-          </span>
-          {percentage !== 100 && (
-            <button
-              onClick={handleReset}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              {tCommon('buttons.reset')}
-            </button>
-          )}
-        </div>
-      </div>
-      <Slider
-        value={[percentage]}
-        min={50}
-        max={200}
-        step={10}
-        onValueChange={handleValueChange}
-        aria-label={`${network} model size`}
-      />
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>50%</span>
-        <span>100%</span>
-        <span>200%</span>
+      <label className="text-sm font-medium text-foreground">{t('modelSize.label')}</label>
+      <div className="flex gap-2">
+        {SIZE_OPTIONS.map(({ key, value }) => (
+          <button
+            key={key}
+            onClick={() => handleSelect(value)}
+            className={cn(
+              'flex-1 px-3 py-1.5 text-sm rounded-md transition-colors',
+              'border border-border',
+              currentSize === value
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-background text-foreground hover:bg-muted'
+            )}
+            aria-pressed={currentSize === value}
+          >
+            {t(`modelSize.${key}`)}
+          </button>
+        ))}
       </div>
     </div>
   );

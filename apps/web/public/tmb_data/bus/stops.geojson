@@ -2610,6 +2610,27 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.156056,
+          41.376577
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.204.690547",
+        "lines": [
+          "13",
+          "55",
+          "91",
+          "H16"
+        ],
+        "name": "Floridablanca - Av Mistral",
+        "stop_code": "204"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.157088,
           41.378211
         ],
@@ -3568,8 +3589,7 @@
         "lines": [
           "13",
           "150",
-          "23",
-          "X3"
+          "23"
         ],
         "name": "Poble Espanyol",
         "stop_code": "265"
@@ -5286,6 +5306,8 @@
         "id": "2.393.697164",
         "lines": [
           "13",
+          "381",
+          "382",
           "X3"
         ],
         "name": "Av Reina Maria Cristina - Pl Espanya",
@@ -6568,24 +6590,6 @@
         ],
         "name": "Alcántara - Garigliano",
         "stop_code": "497"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.190612,
-          41.406165
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.498.700237",
-        "lines": [
-          "H12"
-        ],
-        "name": "Glòries",
-        "stop_code": "498"
       }
     },
     {
@@ -9924,7 +9928,6 @@
         "id": "2.752.674407",
         "lines": [
           "127",
-          "134",
           "180",
           "76",
           "D50",
@@ -12544,8 +12547,7 @@
         "lines": [
           "13",
           "150",
-          "23",
-          "X3"
+          "23"
         ],
         "name": "Poble Espanyol",
         "stop_code": "945"
@@ -12860,26 +12862,6 @@
         ],
         "name": "Pg Enric Sanchis - Santander",
         "stop_code": "970"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.201282,
-          41.425273
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.971.694011",
-        "lines": [
-          "136",
-          "33",
-          "V31"
-        ],
-        "name": "Rambla Prim - Santander",
-        "stop_code": "971"
       }
     },
     {
@@ -15702,24 +15684,6 @@
         ],
         "name": "Jorge Manrique - Can Travi",
         "stop_code": "1193"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.132776,
-          41.368597
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1194.675168",
-        "lines": [
-          "V3"
-        ],
-        "name": "Badal - Constitució",
-        "stop_code": "1194"
       }
     },
     {
@@ -23797,24 +23761,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.105831,
-          41.414226
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1803.675662",
-        "lines": [
-          "111"
-        ],
-        "name": "Funicular de Vallvidrera",
-        "stop_code": "1803"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.105515,
           41.414422
         ],
@@ -24725,6 +24671,7 @@
         "id": "2.1880.675931",
         "lines": [
           "7",
+          "H12",
           "V25"
         ],
         "name": "Diagonal - Roc Boronat",
@@ -25720,24 +25667,6 @@
         ],
         "name": "Pl de les Roquetes",
         "stop_code": "1959"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.176443,
-          41.448563
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1960.696351",
-        "lines": [
-          "134"
-        ],
-        "name": "Parc del Pla de Fornells",
-        "stop_code": "1960"
       }
     },
     {
@@ -33390,6 +33319,24 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.130744,
+          41.350808
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.2714.678607",
+        "lines": [
+          "X3"
+        ],
+        "name": "Av Joan Carles I - Botànica",
+        "stop_code": "2714"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.111525,
           41.386067
         ],
@@ -33512,6 +33459,24 @@
         ],
         "name": "Pl Karl Marx - Ronda Guineueta Vella",
         "stop_code": "2728"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.18811,
+          41.403039
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.2729.700225",
+        "lines": [
+          "H12"
+        ],
+        "name": "Plaça de les Glòries - Final de trajecte",
+        "stop_code": "2729"
       }
     },
     {
@@ -35963,13 +35928,13 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.189429,
-          41.493156
+          2.189497,
+          41.493658
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.2935.681462",
+        "id": "2.2935.700413",
         "lines": [
           "138"
         ],
@@ -39842,24 +39807,6 @@
         ],
         "name": "Llacuna - Pallars",
         "stop_code": "3258"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.180795,
-          41.399574
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3262.687948",
-        "lines": [
-          "V21"
-        ],
-        "name": "Marina - Monumental",
-        "stop_code": "3262"
       }
     },
     {
@@ -48342,6 +48289,60 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.149695,
+          41.373933
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.7002.689403",
+        "lines": [
+          "382"
+        ],
+        "name": "Alternativa per Fires - Pl Espanya",
+        "stop_code": "7002"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.149981,
+          41.373506
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.7002.699747",
+        "lines": [
+          "381"
+        ],
+        "name": "Alternativa per Fires - Pl Espanya",
+        "stop_code": "7002"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.126922,
+          41.354489
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.7018.687831",
+        "lines": [
+          "381"
+        ],
+        "name": "Av Joan Carles I - Ciències",
+        "stop_code": "7018"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.136337,
           41.376065
         ],
@@ -48354,6 +48355,42 @@
         ],
         "name": "Sant antoni - Pl de Sants",
         "stop_code": "7019"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.136031,
+          41.354911
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.7023.681550",
+        "lines": [
+          "382"
+        ],
+        "name": "Alumini - Alts Forns",
+        "stop_code": "7023"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.129785,
+          41.351957
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.7026.695779",
+        "lines": [
+          "V1"
+        ],
+        "name": "Joan Carles I - Ciències",
+        "stop_code": "7026"
       }
     },
     {
@@ -48410,6 +48447,24 @@
         ],
         "name": "Paral·lel - Nou de La Rambla",
         "stop_code": "8233"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.133789,
+          41.363772
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.8280.700241",
+        "lines": [
+          "H12"
+        ],
+        "name": "Ciutat de la Justícia - Final de trajecte",
+        "stop_code": "8280"
       }
     },
     {
