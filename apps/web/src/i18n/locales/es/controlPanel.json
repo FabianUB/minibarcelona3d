@@ -52,7 +52,10 @@
     "routeCountFiltered": "{{count}} rutas con \"{{query}}\""
   },
   "modelSize": {
-    "label": "Tamaño del Modelo"
+    "label": "Tamaño del Modelo",
+    "small": "Pequeño",
+    "medium": "Medium",
+    "large": "Grande"
   },
   "settings": {
     "showStations": "Mostrar Estaciones",

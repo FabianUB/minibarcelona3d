@@ -52,7 +52,10 @@
     "routeCountFiltered": "{{count}} rutes amb \"{{query}}\""
   },
   "modelSize": {
-    "label": "Mida del Model"
+    "label": "Mida del Model",
+    "small": "Petit",
+    "medium": "Medium",
+    "large": "Gran"
   },
   "settings": {
     "showStations": "Mostrar Estacions",

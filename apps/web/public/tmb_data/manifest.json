@@ -3,8 +3,8 @@
     "routes": "bus/routes/",
     "stops": "bus/stops.geojson"
   },
-  "generated_at": "2026-01-24T12:28:03Z",
-  "gtfs_checksum": "78a9c4026efc05eadd88d9f0d5d2b39efc48be6770ead400fba1955a1d9aeef1",
+  "generated_at": "2026-02-02T17:35:30Z",
+  "gtfs_checksum": "5b002295af3415b7c4d3cfdb4a8715312e535b0a241287350b1df6545ef75d86",
   "metro": {
     "lines": "metro/lines/",
     "stations": "metro/stations.geojson"
