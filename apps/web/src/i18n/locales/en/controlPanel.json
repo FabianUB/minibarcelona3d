@@ -62,5 +62,11 @@
     "showStationsDescription": "Display station markers on map",
     "trainParking": "Train Parking",
     "trainParkingDescription": "Rotate stopped trains perpendicular to track"
+  },
+  "statusAlert": {
+    "unavailableTitle": "Unable to load positions",
+    "unavailableDescription": "Real-time data is currently unavailable. Please try again later.",
+    "scheduleTitle": "Using schedule data",
+    "scheduleDescription": "Real-time positions unavailable. Showing estimated positions based on schedules."
   }
 }
