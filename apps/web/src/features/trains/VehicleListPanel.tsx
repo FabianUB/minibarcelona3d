@@ -361,223 +361,243 @@ export function VehicleListPanel({
           <CardContent className="flex-1 overflow-auto p-0">
             {/* Rodalies Tab */}
             {activeTab === 'rodalies' && (
-              <table className="w-full text-sm">
-                <thead className="bg-muted sticky top-0">
-                  <tr>
-                    <SortableHeader
-                      field="vehicleKey"
-                      label="Vehicle"
-                      sortField={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                    <SortableHeader
-                      field="line"
-                      label="Line"
-                      sortField={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                    <SortableHeader
-                      field="status"
-                      label="Status"
-                      sortField={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                    <th className="px-3 py-2 text-left font-medium">Next Stop</th>
-                    <th className="px-3 py-2 text-left font-medium">Position</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTrains.map((train) => (
-                    <tr
-                      key={train.vehicleKey}
-                      onClick={() =>
-                        train.longitude &&
-                        train.latitude &&
-                        handleRowClick(train.longitude, train.latitude, 'rodalies', train.vehicleKey)
-                      }
-                      className="border-b cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <td className="px-3 py-2 font-mono text-xs">{train.vehicleKey}</td>
-                      <td className="px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-xs font-bold text-white"
-                          style={{ backgroundColor: getLineColor(getLineCodeFromRouteId(train.routeId)) }}
-                        >
-                          {getLineCodeFromRouteId(train.routeId)}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <StatusBadge status={train.status} />
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {train.nextStopId
-                          ? stationMap.get(train.nextStopId)?.name || train.nextStopId
-                          : '-'}
-                      </td>
-                      <td className="px-3 py-2 font-mono text-xs">
-                        {train.longitude && train.latitude
-                          ? `${train.latitude.toFixed(4)}, ${train.longitude.toFixed(4)}`
-                          : 'N/A'}
-                      </td>
+              filteredTrains.length === 0 ? (
+                <EmptyState transportName="Rodalies trains" onClose={onClose} />
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted sticky top-0">
+                    <tr>
+                      <SortableHeader
+                        field="vehicleKey"
+                        label="Vehicle"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                      <SortableHeader
+                        field="line"
+                        label="Line"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                      <SortableHeader
+                        field="status"
+                        label="Status"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                      <th className="px-3 py-2 text-left font-medium">Next Stop</th>
+                      <th className="px-3 py-2 text-left font-medium">Position</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredTrains.map((train) => (
+                      <tr
+                        key={train.vehicleKey}
+                        onClick={() =>
+                          train.longitude &&
+                          train.latitude &&
+                          handleRowClick(train.longitude, train.latitude, 'rodalies', train.vehicleKey)
+                        }
+                        className="border-b cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <td className="px-3 py-2 font-mono text-xs">{train.vehicleKey}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                            style={{ backgroundColor: getLineColor(getLineCodeFromRouteId(train.routeId)) }}
+                          >
+                            {getLineCodeFromRouteId(train.routeId)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <StatusBadge status={train.status} />
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {train.nextStopId
+                            ? stationMap.get(train.nextStopId)?.name || train.nextStopId
+                            : '-'}
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs">
+                          {train.longitude && train.latitude
+                            ? `${train.latitude.toFixed(4)}, ${train.longitude.toFixed(4)}`
+                            : 'N/A'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
             {/* Metro Tab */}
             {activeTab === 'metro' && (
-              <table className="w-full text-sm">
-                <thead className="bg-muted sticky top-0">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">Line</th>
-                    <th className="px-3 py-2 text-left font-medium">Previous Stop</th>
-                    <th className="px-3 py-2 text-left font-medium">Next Stop</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMetro.map((vehicle) => (
-                    <tr
-                      key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'metro')}
-                      className="border-b cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <td className="px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-xs font-bold text-white"
-                          style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
-                        >
-                          {vehicle.lineCode}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.previousStopName || '-'}
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.nextStopName || '-'}
-                      </td>
+              filteredMetro.length === 0 ? (
+                <EmptyState transportName="Metro vehicles" onClose={onClose} />
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">Line</th>
+                      <th className="px-3 py-2 text-left font-medium">Previous Stop</th>
+                      <th className="px-3 py-2 text-left font-medium">Next Stop</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredMetro.map((vehicle) => (
+                      <tr
+                        key={vehicle.vehicleKey}
+                        onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'metro')}
+                        className="border-b cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <td className="px-3 py-2">
+                          <span
+                            className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                            style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
+                          >
+                            {vehicle.lineCode}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.previousStopName || '-'}
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.nextStopName || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
             {/* Bus Tab */}
             {activeTab === 'bus' && (
-              <table className="w-full text-sm">
-                <thead className="bg-muted sticky top-0">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">Route</th>
-                    <th className="px-3 py-2 text-left font-medium">Previous Stop</th>
-                    <th className="px-3 py-2 text-left font-medium">Next Stop</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredBus.map((vehicle) => (
-                    <tr
-                      key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'bus')}
-                      className="border-b cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <td className="px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-xs font-bold text-white"
-                          style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
-                        >
-                          {vehicle.lineCode}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.previousStopName || '-'}
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.nextStopName || '-'}
-                      </td>
+              filteredBus.length === 0 ? (
+                <EmptyState transportName="Bus vehicles" onClose={onClose} />
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">Route</th>
+                      <th className="px-3 py-2 text-left font-medium">Previous Stop</th>
+                      <th className="px-3 py-2 text-left font-medium">Next Stop</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredBus.map((vehicle) => (
+                      <tr
+                        key={vehicle.vehicleKey}
+                        onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'bus')}
+                        className="border-b cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <td className="px-3 py-2">
+                          <span
+                            className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                            style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
+                          >
+                            {vehicle.lineCode}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.previousStopName || '-'}
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.nextStopName || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
             {/* TRAM Tab */}
             {activeTab === 'tram' && (
-              <table className="w-full text-sm">
-                <thead className="bg-muted sticky top-0">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">Line</th>
-                    <th className="px-3 py-2 text-left font-medium">Direction</th>
-                    <th className="px-3 py-2 text-left font-medium">Progress</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTram.map((vehicle) => (
-                    <tr
-                      key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'tram')}
-                      className="border-b cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <td className="px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-xs font-bold text-white"
-                          style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
-                        >
-                          {vehicle.lineCode}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.direction === 0 ? 'Outbound' : 'Inbound'}
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.progressFraction !== undefined
-                          ? `${(vehicle.progressFraction * 100).toFixed(0)}%`
-                          : '-'}
-                      </td>
+              filteredTram.length === 0 ? (
+                <EmptyState transportName="TRAM vehicles" onClose={onClose} />
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">Line</th>
+                      <th className="px-3 py-2 text-left font-medium">Direction</th>
+                      <th className="px-3 py-2 text-left font-medium">Progress</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredTram.map((vehicle) => (
+                      <tr
+                        key={vehicle.vehicleKey}
+                        onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'tram')}
+                        className="border-b cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <td className="px-3 py-2">
+                          <span
+                            className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                            style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
+                          >
+                            {vehicle.lineCode}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.direction === 0 ? 'Outbound' : 'Inbound'}
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.progressFraction !== undefined
+                            ? `${(vehicle.progressFraction * 100).toFixed(0)}%`
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
 
             {/* FGC Tab */}
             {activeTab === 'fgc' && (
-              <table className="w-full text-sm">
-                <thead className="bg-muted sticky top-0">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">Line</th>
-                    <th className="px-3 py-2 text-left font-medium">Direction</th>
-                    <th className="px-3 py-2 text-left font-medium">Progress</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFgc.map((vehicle) => (
-                    <tr
-                      key={vehicle.vehicleKey}
-                      onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'fgc')}
-                      className="border-b cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <td className="px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-xs font-bold text-white"
-                          style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
-                        >
-                          {vehicle.lineCode}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.direction === 0 ? 'Outbound' : 'Inbound'}
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {vehicle.progressFraction !== undefined
-                          ? `${(vehicle.progressFraction * 100).toFixed(0)}%`
-                          : '-'}
-                      </td>
+              filteredFgc.length === 0 ? (
+                <EmptyState transportName="FGC vehicles" onClose={onClose} />
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium">Line</th>
+                      <th className="px-3 py-2 text-left font-medium">Direction</th>
+                      <th className="px-3 py-2 text-left font-medium">Progress</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredFgc.map((vehicle) => (
+                      <tr
+                        key={vehicle.vehicleKey}
+                        onClick={() => handleRowClick(vehicle.longitude, vehicle.latitude, 'fgc')}
+                        className="border-b cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <td className="px-3 py-2">
+                          <span
+                            className="px-2 py-0.5 rounded text-xs font-bold text-white"
+                            style={{ backgroundColor: getLineColor(vehicle.lineCode) }}
+                          >
+                            {vehicle.lineCode}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.direction === 0 ? 'Outbound' : 'Inbound'}
+                        </td>
+                        <td className="px-3 py-2 text-xs">
+                          {vehicle.progressFraction !== undefined
+                            ? `${(vehicle.progressFraction * 100).toFixed(0)}%`
+                            : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
             )}
           </CardContent>
         </div>
@@ -609,6 +629,30 @@ function SortableHeader({ field, label, sortField, sortDirection, onSort }: Sort
       {label}
       {isActive && <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span>}
     </th>
+  );
+}
+
+function EmptyState({ transportName, onClose }: { transportName: string; onClose: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4 text-center p-8">
+      <div className="text-6xl opacity-30">
+        {transportName.includes('train') || transportName.includes('Rodalies') ? '🚆' :
+         transportName.includes('Metro') ? '🚇' :
+         transportName.includes('Bus') ? '🚌' :
+         transportName.includes('TRAM') ? '🚊' : '🚃'}
+      </div>
+      <div className="text-muted-foreground">
+        <p className="text-lg font-medium">No active {transportName}</p>
+        <p className="text-sm mt-1">There are no vehicles currently running on this network.</p>
+      </div>
+      <Button
+        variant="outline"
+        onClick={onClose}
+        className="mt-4"
+      >
+        Close Panel
+      </Button>
+    </div>
   );
 }
 

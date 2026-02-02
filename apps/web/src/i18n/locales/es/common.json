@@ -35,7 +35,9 @@
     "realTime": "Tiempo real",
     "realTimeTitle": "Posiciones de vehículos desde datos API en tiempo real",
     "schedule": "Horario",
-    "scheduleTitle": "Posiciones de vehículos simuladas desde datos de horario"
+    "scheduleTitle": "Posiciones de vehículos simuladas desde datos de horario",
+    "unavailable": "No disponible",
+    "unavailableTitle": "Datos en tiempo real no disponibles actualmente"
   },
   "time": {
     "secondsAgo": "hace {{count}}s",

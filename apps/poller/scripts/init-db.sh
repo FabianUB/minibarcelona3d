@@ -19,41 +19,44 @@ else
     echo "Warning: schema.sql not found at $SCHEMA_FILE"
 fi
 
-# Check if pre_schedule_positions table has data (indicates full init was done)
-if sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM pre_schedule_positions LIMIT 1;" 2>/dev/null | grep -q "^[1-9]"; then
-    echo "Database already initialized with pre-calculated positions"
-    exit 0
+# Check if GTFS data has been imported (dim_trips table has data)
+GTFS_IMPORTED=false
+if sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM dim_trips LIMIT 1;" 2>/dev/null | grep -q "^[1-9]"; then
+    echo "GTFS data already imported, skipping import step"
+    GTFS_IMPORTED=true
 fi
 
-echo "Database needs initialization..."
+if [ "$GTFS_IMPORTED" = false ]; then
+    echo "Importing GTFS data..."
 
-# Create download directory (writable)
-mkdir -p "$GTFS_DOWNLOAD_DIR"
+    # Create download directory (writable)
+    mkdir -p "$GTFS_DOWNLOAD_DIR"
 
-# Download Rodalies GTFS (not included in mounted gtfs folder)
-RODALIES_GTFS="$GTFS_DOWNLOAD_DIR/fomento_transit.zip"
-echo "Downloading Rodalies GTFS from Renfe..."
-wget -q -O "$RODALIES_GTFS" "$RODALIES_GTFS_URL" || {
-    echo "ERROR: Failed to download Rodalies GTFS"
-    exit 1
-}
-echo "Downloaded: $RODALIES_GTFS"
+    # Download Rodalies GTFS (not included in mounted gtfs folder)
+    RODALIES_GTFS="$GTFS_DOWNLOAD_DIR/fomento_transit.zip"
+    echo "Downloading Rodalies GTFS from Renfe..."
+    wget -q -O "$RODALIES_GTFS" "$RODALIES_GTFS_URL" || {
+        echo "ERROR: Failed to download Rodalies GTFS"
+        exit 1
+    }
+    echo "Downloaded: $RODALIES_GTFS"
 
-# Import GTFS data from both directories
-echo "Step 1/2: Importing GTFS data..."
+    # Import GTFS data from both directories
+    echo "Step 1/2: Importing GTFS data..."
 
-# First import the mounted GTFS files (FGC, TRAM, Bus)
-./import-gtfs -db "$DB_PATH" -gtfs-dir "$GTFS_DIR"
+    # First import the mounted GTFS files (FGC, TRAM, Bus)
+    ./import-gtfs -db "$DB_PATH" -gtfs-dir "$GTFS_DIR"
 
-# Then import the downloaded Rodalies GTFS
-./import-gtfs -db "$DB_PATH" -gtfs-dir "$GTFS_DOWNLOAD_DIR"
+    # Then import the downloaded Rodalies GTFS
+    ./import-gtfs -db "$DB_PATH" -gtfs-dir "$GTFS_DOWNLOAD_DIR"
 
-# Pre-calculate positions for schedule-based networks (FGC, TRAM, Bus)
-# Note: Rodalies uses real-time GTFS-RT, so no pre-calculation needed
-echo "Step 2/2: Pre-calculating schedule positions..."
+    # Cleanup downloaded files
+    rm -rf "$GTFS_DOWNLOAD_DIR"
+fi
+
+# Always re-run precalc to ensure latest algorithm is applied
+# This clears and regenerates pre_schedule_positions table
+echo "Pre-calculating schedule positions (always runs to apply latest algorithm)..."
 ./precalc-positions -db "$DB_PATH"
-
-# Cleanup downloaded files
-rm -rf "$GTFS_DOWNLOAD_DIR"
 
 echo "Database initialization complete!"

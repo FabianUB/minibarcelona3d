@@ -4,10 +4,11 @@ import type { TransportType } from '../../types/rodalies';
 /**
  * Data source type for each network
  * - 'realtime': Real-time data from API (GPS or arrival predictions)
- * - 'schedule': Schedule-based simulation
+ * - 'schedule': Schedule-based simulation (fallback when real-time unavailable)
+ * - 'unavailable': No data available (API down, no fallback possible)
  * - 'unknown': Not yet determined
  */
-export type DataSourceType = 'realtime' | 'schedule' | 'unknown';
+export type DataSourceType = 'realtime' | 'schedule' | 'unavailable' | 'unknown';
 
 /**
  * Data source status for all transit networks

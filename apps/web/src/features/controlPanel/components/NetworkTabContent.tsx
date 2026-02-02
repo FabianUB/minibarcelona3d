@@ -10,11 +10,13 @@ import { List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useMapActions } from '@/state/map';
+import { useTransitState } from '@/state/transit';
 import type { TransportType } from '@/types/rodalies';
 import { NetworkLineGrid } from './NetworkLineGrid';
 import { BusRouteList } from './BusRouteList';
 import { ModelSizeSlider } from './ModelSizeSlider';
 import { SettingsSection } from './SettingsSection';
+import { NetworkStatusAlert } from './NetworkStatusAlert';
 import { NETWORK_TABS } from '../types';
 
 interface NetworkTabContentProps {
@@ -25,8 +27,10 @@ export function NetworkTabContent({ network }: NetworkTabContentProps) {
   const { t } = useTranslation('controlPanel');
   const { t: tCommon } = useTranslation('common');
   const { setControlPanelMode } = useMapActions();
+  const { dataSourceStatus } = useTransitState();
   const networkTab = NETWORK_TABS.find((tab) => tab.type === network);
   const networkLabel = tCommon(`networks.${network}`);
+  const dataSource = dataSourceStatus[network];
 
   return (
     <div className="space-y-3">
@@ -47,6 +51,9 @@ export function NetworkTabContent({ network }: NetworkTabContentProps) {
           {t('modes.vehicles')}
         </Button>
       </div>
+
+      {/* Status alert for data issues */}
+      <NetworkStatusAlert source={dataSource} />
 
       {/* Line selection - Bus uses special virtualized list */}
       {network === 'bus' ? (

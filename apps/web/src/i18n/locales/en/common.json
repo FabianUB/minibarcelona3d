@@ -35,7 +35,9 @@
     "realTime": "Real-time",
     "realTimeTitle": "Vehicle positions from real-time API data",
     "schedule": "Schedule",
-    "scheduleTitle": "Vehicle positions simulated from schedule data"
+    "scheduleTitle": "Vehicle positions simulated from schedule data",
+    "unavailable": "Unavailable",
+    "unavailableTitle": "Real-time data currently unavailable"
   },
   "time": {
     "secondsAgo": "{{count}}s ago",

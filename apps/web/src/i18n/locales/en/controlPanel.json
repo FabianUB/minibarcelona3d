@@ -52,12 +52,21 @@
     "routeCountFiltered": "{{count}} routes matching \"{{query}}\""
   },
   "modelSize": {
-    "label": "Model Size"
+    "label": "Model Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large"
   },
   "settings": {
     "showStations": "Show Stations",
     "showStationsDescription": "Display station markers on map",
     "trainParking": "Train Parking",
     "trainParkingDescription": "Rotate stopped trains perpendicular to track"
+  },
+  "statusAlert": {
+    "unavailableTitle": "Unable to load positions",
+    "unavailableDescription": "Real-time data is currently unavailable. Please try again later.",
+    "scheduleTitle": "Using schedule data",
+    "scheduleDescription": "Real-time positions unavailable. Showing estimated positions based on schedules."
   }
 }
