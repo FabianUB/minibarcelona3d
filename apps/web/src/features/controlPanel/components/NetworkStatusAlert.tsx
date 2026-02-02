@@ -3,24 +3,38 @@
  *
  * Displays inline warning alerts when a network has data issues:
  * - Rodalies: "Unable to load positions" when API is completely unavailable
- * - Metro/etc: "Using schedule-based positions" when real-time is unavailable
+ * - Metro: "Using schedule-based positions" when real-time is unavailable
+ *
+ * Note: Bus, TRAM, and FGC are schedule-only networks, so no warning is shown
+ * for them even when source is 'schedule' - that's their normal state.
  */
 
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { DataSourceType } from '@/state/transit';
+import type { TransportType } from '@/types/rodalies';
+
+// Networks that have real-time data available (show warning when falling back to schedule)
+const REALTIME_NETWORKS: TransportType[] = ['rodalies', 'metro'];
 
 interface NetworkStatusAlertProps {
   source: DataSourceType;
+  network: TransportType;
   className?: string;
 }
 
-export function NetworkStatusAlert({ source, className }: NetworkStatusAlertProps) {
+export function NetworkStatusAlert({ source, network, className }: NetworkStatusAlertProps) {
   const { t } = useTranslation('controlPanel');
 
   // Only show alert for problematic states
   if (source === 'realtime' || source === 'unknown') {
+    return null;
+  }
+
+  // Don't show "schedule" warning for networks that are always schedule-based
+  // (Bus, TRAM, FGC don't have real-time APIs)
+  if (source === 'schedule' && !REALTIME_NETWORKS.includes(network)) {
     return null;
   }
 

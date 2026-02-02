@@ -53,7 +53,7 @@ export function NetworkTabContent({ network }: NetworkTabContentProps) {
       </div>
 
       {/* Status alert for data issues */}
-      <NetworkStatusAlert source={dataSource} />
+      <NetworkStatusAlert source={dataSource} network={network} />
 
       {/* Line selection - Bus uses special virtualized list */}
       {network === 'bus' ? (
