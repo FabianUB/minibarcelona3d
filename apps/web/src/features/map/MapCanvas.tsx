@@ -369,6 +369,10 @@ export function MapCanvas() {
     // Start tracking initial map render time
     startMetric('initial-render', { viewport: initialViewportRef.current });
 
+    // Use minimum 2x pixel ratio for crisp rendering on all displays
+    // This improves quality on lower DPI monitors at slight GPU cost
+    const pixelRatio = Math.max(window.devicePixelRatio, 2);
+
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: MAPBOX_STYLE_URL,
@@ -384,7 +388,8 @@ export function MapCanvas() {
       maxZoom: 16.5,
       maxPitch: 60,
       attributionControl: true,
-    });
+      pixelRatio, // Valid option, not in types
+    } as mapboxgl.MapOptions);
 
     map.addControl(
       new mapboxgl.NavigationControl({
