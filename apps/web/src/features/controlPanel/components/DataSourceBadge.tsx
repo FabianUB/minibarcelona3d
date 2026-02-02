@@ -17,6 +17,7 @@ interface DataSourceBadgeProps {
 const SOURCE_STYLES: Record<DataSourceType, string> = {
   realtime: 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30',
   schedule: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30',
+  unavailable: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30',
   unknown: 'bg-gray-500/20 text-gray-500 border-gray-500/30',
 };
 
@@ -29,6 +30,8 @@ export function DataSourceBadge({ source, className }: DataSourceBadgeProps) {
         return t('dataSource.realTime');
       case 'schedule':
         return t('dataSource.schedule');
+      case 'unavailable':
+        return t('dataSource.unavailable');
       default:
         return t('loading.generic');
     }
@@ -40,6 +43,8 @@ export function DataSourceBadge({ source, className }: DataSourceBadgeProps) {
         return t('dataSource.realTimeTitle');
       case 'schedule':
         return t('dataSource.scheduleTitle');
+      case 'unavailable':
+        return t('dataSource.unavailableTitle');
       default:
         return '';
     }
