@@ -23,6 +23,7 @@ type Config struct {
 	// Rodalies (real-time)
 	GTFSVehiclePositionsURL string
 	GTFSTripUpdatesURL      string
+	GTFSAlertsURL           string
 
 	// Rodalies (static)
 	RenfeGTFSURL string
@@ -53,6 +54,7 @@ func Load() *Config {
 		// Rodalies (real-time)
 		GTFSVehiclePositionsURL: getEnv("GTFS_VEHICLE_POSITIONS_URL", "https://gtfsrt.renfe.com/vehicle_positions.pb"),
 		GTFSTripUpdatesURL:      getEnv("GTFS_TRIP_UPDATES_URL", "https://gtfsrt.renfe.com/trip_updates.pb"),
+		GTFSAlertsURL:           getEnv("GTFS_ALERTS_URL", "https://gtfsrt.renfe.com/alerts.pb"),
 
 		// Rodalies (static)
 		RenfeGTFSURL: getEnv("RENFE_GTFS_URL", "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip"),
