@@ -366,3 +366,61 @@ CREATE INDEX IF NOT EXISTS idx_health_history_lookup
 
 CREATE INDEX IF NOT EXISTS idx_health_history_cleanup
     ON metrics_health_history(recorded_at);
+
+
+-- =============================================================================
+-- REAL-TIME ALERTS (Rodalies service alerts / avisos)
+-- =============================================================================
+
+-- Active and recent service alerts from GTFS-RT alerts feed
+CREATE TABLE IF NOT EXISTS rt_alerts (
+    alert_id TEXT PRIMARY KEY,
+    cause TEXT,
+    effect TEXT,
+    description_es TEXT,
+    description_ca TEXT,
+    description_en TEXT,
+    active_period_start TEXT,
+    active_period_end TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    first_seen_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerts_active
+    ON rt_alerts(is_active);
+
+-- Routes/stops/trips affected by each alert
+CREATE TABLE IF NOT EXISTS rt_alert_entities (
+    alert_id TEXT NOT NULL REFERENCES rt_alerts(alert_id) ON DELETE CASCADE,
+    route_id TEXT,
+    stop_id TEXT,
+    trip_id TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_alert_entities_alert
+    ON rt_alert_entities(alert_id);
+CREATE INDEX IF NOT EXISTS idx_alert_entities_route
+    ON rt_alert_entities(route_id);
+
+
+-- =============================================================================
+-- DELAY STATISTICS (hourly aggregation per route)
+-- =============================================================================
+
+-- Hourly delay stats using Welford's online algorithm for incremental mean/variance
+CREATE TABLE IF NOT EXISTS stats_delay_hourly (
+    route_id TEXT NOT NULL,
+    hour_bucket TEXT NOT NULL,          -- ISO8601 truncated to hour (e.g. "2026-02-06T14:00:00Z")
+    observation_count INTEGER NOT NULL DEFAULT 0,
+    delay_mean_seconds REAL NOT NULL DEFAULT 0,
+    delay_m2 REAL NOT NULL DEFAULT 0,   -- Welford M2 for variance computation
+    delayed_count INTEGER NOT NULL DEFAULT 0,   -- delay > 300s (5 min)
+    on_time_count INTEGER NOT NULL DEFAULT 0,
+    max_delay_seconds INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (route_id, hour_bucket)
+);
+
+CREATE INDEX IF NOT EXISTS idx_delay_hourly_bucket
+    ON stats_delay_hourly(hour_bucket DESC);
