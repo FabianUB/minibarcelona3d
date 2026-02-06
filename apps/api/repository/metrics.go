@@ -5,10 +5,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"math"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/you/myapp/apps/api/models"
 )
+
+// rodaliesLineCodeRe extracts Rodalies line codes (R1, R2N, RL4, etc.) from GTFS route IDs.
+var rodaliesLineCodeRe = regexp.MustCompile(`(R\d+[NS]?|RG\d|RL\d|RT\d)`)
 
 // MetricsRepository handles health and metrics queries
 type MetricsRepository struct {
@@ -648,16 +653,23 @@ func (r *MetricsRepository) GetActiveAlerts(ctx context.Context, routeID string,
 			}
 		}
 
-		// Fetch affected routes for this alert
+		// Fetch affected routes and extract clean Rodalies line codes
 		routeRows, err := r.db.QueryContext(ctx,
 			"SELECT DISTINCT route_id FROM rt_alert_entities WHERE alert_id = ? AND route_id != ''",
 			a.AlertID,
 		)
 		if err == nil {
+			seen := make(map[string]bool)
 			for routeRows.Next() {
 				var rid string
 				if routeRows.Scan(&rid) == nil {
-					a.AffectedRoutes = append(a.AffectedRoutes, rid)
+					if m := rodaliesLineCodeRe.FindString(rid); m != "" {
+						code := strings.ToUpper(m)
+						if !seen[code] {
+							seen[code] = true
+							a.AffectedRoutes = append(a.AffectedRoutes, code)
+						}
+					}
 				}
 			}
 			routeRows.Close()
