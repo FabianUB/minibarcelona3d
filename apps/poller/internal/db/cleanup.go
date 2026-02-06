@@ -34,6 +34,14 @@ func (db *DB) Cleanup(ctx context.Context, retention time.Duration) error {
 			name:  "snapshots",
 			query: fmt.Sprintf("DELETE FROM rt_snapshots WHERE datetime(polled_at_utc) < datetime('now', '-%d hours')", hours),
 		},
+		{
+			name:  "delay_stats",
+			query: "DELETE FROM stats_delay_hourly WHERE datetime(hour_bucket) < datetime('now', '-30 days')",
+		},
+		{
+			name:  "resolved_alerts",
+			query: "DELETE FROM rt_alerts WHERE is_active = 0 AND datetime(resolved_at) < datetime('now', '-30 days')",
+		},
 	}
 
 	totalDeleted := 0
