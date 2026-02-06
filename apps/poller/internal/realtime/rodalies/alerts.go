@@ -141,6 +141,10 @@ func (p *Poller) fetchAlerts(ctx context.Context) ([]ParsedAlert, error) {
 			if ie.RouteId != nil {
 				entity.RouteID = *ie.RouteId
 			}
+			// Also capture route_id from the nested TripDescriptor
+			if entity.RouteID == "" && ie.Trip != nil && ie.Trip.RouteId != nil {
+				entity.RouteID = *ie.Trip.RouteId
+			}
 			if ie.StopId != nil {
 				entity.StopID = *ie.StopId
 			}
