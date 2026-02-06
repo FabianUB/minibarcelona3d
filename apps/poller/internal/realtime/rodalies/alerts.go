@@ -3,10 +3,15 @@ package rodalies
 import (
 	"context"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/mini-rodalies-3d/poller/internal/db"
 )
+
+// rodaliesRouteRegex matches Rodalies/Cercanías line codes anywhere in a route ID.
+// GTFS route IDs from Renfe embed the line code (e.g. "51T0048RL4", "300R4", "R2N").
+var rodaliesRouteRegex = regexp.MustCompile(`(?i)(R\d+[NS]?|RG\d|RL\d|RT\d)`)
 
 // ParsedAlert represents a service alert extracted from GTFS-RT
 type ParsedAlert struct {
@@ -145,10 +150,23 @@ func (p *Poller) fetchAlerts(ctx context.Context) ([]ParsedAlert, error) {
 			parsed.Entities = append(parsed.Entities, entity)
 		}
 
-		alerts = append(alerts, parsed)
+		// Only keep alerts that affect at least one Rodalies route
+		if isRodaliesAlert(parsed) {
+			alerts = append(alerts, parsed)
+		}
 	}
 
 	return alerts, nil
+}
+
+// isRodaliesAlert returns true if any informed entity references a Rodalies route.
+func isRodaliesAlert(a ParsedAlert) bool {
+	for _, e := range a.Entities {
+		if e.RouteID != "" && rodaliesRouteRegex.MatchString(e.RouteID) {
+			return true
+		}
+	}
+	return false
 }
 
 // pollAlerts fetches alerts and stores them in the database
