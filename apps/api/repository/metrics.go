@@ -654,20 +654,25 @@ func (r *MetricsRepository) GetActiveAlerts(ctx context.Context, routeID string,
 		}
 
 		// Fetch affected routes and extract clean Rodalies line codes
+		// Check route_id and trip_id since the line code can appear in either
 		routeRows, err := r.db.QueryContext(ctx,
-			"SELECT DISTINCT route_id FROM rt_alert_entities WHERE alert_id = ? AND route_id != ''",
+			`SELECT DISTINCT route_id, trip_id FROM rt_alert_entities
+			 WHERE alert_id = ? AND (route_id != '' OR trip_id != '')`,
 			a.AlertID,
 		)
 		if err == nil {
 			seen := make(map[string]bool)
 			for routeRows.Next() {
-				var rid string
-				if routeRows.Scan(&rid) == nil {
-					if m := rodaliesLineCodeRe.FindString(rid); m != "" {
-						code := strings.ToUpper(m)
-						if !seen[code] {
-							seen[code] = true
-							a.AffectedRoutes = append(a.AffectedRoutes, code)
+				var rid, tid string
+				if routeRows.Scan(&rid, &tid) == nil {
+					// Try route_id first, then trip_id
+					for _, field := range []string{rid, tid} {
+						if m := rodaliesLineCodeRe.FindString(field); m != "" {
+							code := strings.ToUpper(m)
+							if !seen[code] {
+								seen[code] = true
+								a.AffectedRoutes = append(a.AffectedRoutes, code)
+							}
 						}
 					}
 				}
