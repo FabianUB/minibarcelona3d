@@ -42,7 +42,11 @@ export function RouteBreakdownTable({ hourlyStats }: RouteBreakdownTableProps) {
   const { t } = useTranslation('delays');
 
   const routeAggregates = useMemo(() => {
+    // Seed every known route so all appear even with 0 observations
     const byRoute = new Map<string, { totalObs: number; delaySum: number; maxDelay: number }>();
+    for (const routeId of ROUTE_ORDER) {
+      byRoute.set(routeId, { totalObs: 0, delaySum: 0, maxDelay: 0 });
+    }
 
     for (const stat of hourlyStats) {
       const existing = byRoute.get(stat.routeId) ?? { totalObs: 0, delaySum: 0, maxDelay: 0 };
