@@ -1,0 +1,74 @@
+{
+  "page": {
+    "title": "Rodalies Delay Statistics",
+    "subtitle": "Real-time delay tracking and service alerts"
+  },
+  "snapshot": {
+    "title": "Live Snapshot",
+    "onTimePercent": "On Time",
+    "avgDelay": "Avg Delay",
+    "delayedTrains": "Delayed",
+    "worstRoute": "Worst Route",
+    "seconds": "{{count}}s",
+    "noData": "No delay data available"
+  },
+  "alerts": {
+    "title": "Active Service Alerts",
+    "noAlerts": "No active service alerts",
+    "since": "Since {{time}}",
+    "affectedRoutes": "Affected routes",
+    "cause": {
+      "UNKNOWN_CAUSE": "Unknown",
+      "OTHER_CAUSE": "Other",
+      "TECHNICAL_PROBLEM": "Technical Problem",
+      "STRIKE": "Strike",
+      "DEMONSTRATION": "Demonstration",
+      "ACCIDENT": "Accident",
+      "HOLIDAY": "Holiday",
+      "WEATHER": "Weather",
+      "MAINTENANCE": "Maintenance",
+      "CONSTRUCTION": "Construction",
+      "POLICE_ACTIVITY": "Police Activity",
+      "MEDICAL_EMERGENCY": "Medical Emergency"
+    },
+    "effect": {
+      "NO_SERVICE": "No Service",
+      "REDUCED_SERVICE": "Reduced Service",
+      "SIGNIFICANT_DELAYS": "Significant Delays",
+      "DETOUR": "Detour",
+      "ADDITIONAL_SERVICE": "Additional Service",
+      "MODIFIED_SERVICE": "Modified Service",
+      "OTHER_EFFECT": "Other",
+      "UNKNOWN_EFFECT": "Unknown",
+      "STOP_MOVED": "Stop Moved",
+      "NO_EFFECT": "No Effect",
+      "ACCESSIBILITY_ISSUE": "Accessibility Issue"
+    }
+  },
+  "routes": {
+    "title": "Route Breakdown",
+    "route": "Route",
+    "observations": "Obs.",
+    "avgDelay": "Avg Delay",
+    "onTime": "On Time %",
+    "maxDelay": "Max Delay"
+  },
+  "chart": {
+    "title": "On-Time % (Last {{hours}}h)",
+    "onTimePercent": "On-time %"
+  },
+  "period": {
+    "24h": "24 hours",
+    "48h": "48 hours",
+    "7d": "7 days"
+  },
+  "error": {
+    "failedToLoad": "Failed to load delay data",
+    "unableToLoad": "Unable to Load"
+  },
+  "footer": {
+    "lastUpdated": "Last updated: {{time}}",
+    "autoRefresh": "Auto-refreshes every 30s",
+    "threshold": "Delay threshold: 5 min (300s)"
+  }
+}
