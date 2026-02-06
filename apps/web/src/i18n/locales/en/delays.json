@@ -4,12 +4,12 @@
     "subtitle": "Real-time delay tracking and service alerts"
   },
   "snapshot": {
-    "title": "Live Snapshot",
-    "onTimePercent": "On Time",
-    "avgDelay": "Avg Delay",
-    "delayedTrains": "Delayed",
-    "worstRoute": "Worst Route",
-    "seconds": "{{count}}s",
+    "title": "Delayed Trains",
+    "allOnTime": "All {{total}} trains on time",
+    "delayedCount": "{{delayed}} of {{total}} delayed",
+    "delay": "Delay",
+    "prevStop": "From",
+    "nextStop": "Next stop",
     "noData": "No delay data available"
   },
   "alerts": {

@@ -14,6 +14,7 @@ import (
 type DelayRepository interface {
 	GetActiveAlerts(ctx context.Context, routeID string, lang string) ([]models.ServiceAlert, error)
 	GetCurrentDelaySummary(ctx context.Context) (*models.DelaySummary, error)
+	GetDelayedTrains(ctx context.Context) ([]models.DelayedTrain, error)
 	GetHourlyDelayStats(ctx context.Context, routeID string, hours int) ([]models.DelayHourlyStat, error)
 }
 
@@ -91,6 +92,17 @@ func (h *DelayHandler) GetDelayStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get currently delayed trains
+	delayedTrains, err := h.repo.GetDelayedTrains(ctx)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Error: "Failed to get delayed trains",
+		})
+		return
+	}
+
 	// Get hourly historical stats
 	hourlyStats, err := h.repo.GetHourlyDelayStats(ctx, routeID, hours)
 	if err != nil {
@@ -103,9 +115,10 @@ func (h *DelayHandler) GetDelayStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := models.DelayStatsResponse{
-		Summary:     *summary,
-		HourlyStats: hourlyStats,
-		LastChecked: time.Now().UTC(),
+		Summary:       *summary,
+		DelayedTrains: delayedTrains,
+		HourlyStats:   hourlyStats,
+		LastChecked:   time.Now().UTC(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

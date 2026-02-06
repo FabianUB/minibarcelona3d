@@ -37,11 +37,22 @@ type DelayHourlyStat struct {
 	MaxDelaySeconds  int     `json:"maxDelaySeconds"`
 }
 
+// DelayedTrain represents a currently delayed train with context
+type DelayedTrain struct {
+	VehicleLabel string `json:"vehicleLabel"`
+	LineCode     string `json:"lineCode"`
+	DelaySeconds int    `json:"delaySeconds"`
+	PrevStopName string `json:"prevStopName,omitempty"`
+	NextStopName string `json:"nextStopName,omitempty"`
+	Status       string `json:"status"`
+}
+
 // DelayStatsResponse is the response for GET /api/delays/stats
 type DelayStatsResponse struct {
-	Summary     DelaySummary      `json:"summary"`
-	HourlyStats []DelayHourlyStat `json:"hourlyStats"`
-	LastChecked time.Time         `json:"lastChecked"`
+	Summary       DelaySummary      `json:"summary"`
+	DelayedTrains []DelayedTrain    `json:"delayedTrains"`
+	HourlyStats   []DelayHourlyStat `json:"hourlyStats"`
+	LastChecked   time.Time         `json:"lastChecked"`
 }
 
 // AlertsResponse is the response for GET /api/alerts

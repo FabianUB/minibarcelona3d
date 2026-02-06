@@ -42,8 +42,18 @@ export interface DelayHourlyStat {
   maxDelaySeconds: number;
 }
 
+export interface DelayedTrain {
+  vehicleLabel: string;
+  lineCode: string;
+  delaySeconds: number;
+  prevStopName: string;
+  nextStopName: string;
+  status: string;
+}
+
 export interface DelayStatsResponse {
   summary: DelaySummary;
+  delayedTrains: DelayedTrain[];
   hourlyStats: DelayHourlyStat[];
   lastChecked: string;
 }
