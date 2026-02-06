@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,19 @@ import {
 } from '@/components/ui/collapsible';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ServiceAlert } from '../../lib/api/delays';
+
+// Display order matching the legend panel
+const ROUTE_ORDER: string[] = [
+  'R1', 'R2', 'R2N', 'R2S', 'R3', 'R4', 'R8',
+  'R11', 'R13', 'R14', 'R15', 'R16', 'R17', 'RT1',
+];
+
+function getRouteIndex(alert: ServiceAlert): number {
+  const route = alert.affectedRoutes[0];
+  if (!route) return ROUTE_ORDER.length;
+  const idx = ROUTE_ORDER.indexOf(route);
+  return idx === -1 ? ROUTE_ORDER.length : idx;
+}
 
 // Brand colors from RodaliesLine.json — matches the legend and control panel
 const RODALIES_LINE_COLORS: Record<string, string> = {
@@ -41,6 +54,11 @@ interface AlertsListProps {
 export function AlertsList({ alerts }: AlertsListProps) {
   const { t } = useTranslation('delays');
 
+  const sorted = useMemo(
+    () => [...alerts].sort((a, b) => getRouteIndex(a) - getRouteIndex(b)),
+    [alerts],
+  );
+
   if (alerts.length === 0) {
     return (
       <Card className="bg-card/50 backdrop-blur-sm">
@@ -53,7 +71,7 @@ export function AlertsList({ alerts }: AlertsListProps) {
 
   return (
     <div className="space-y-2">
-      {alerts.map((alert) => (
+      {sorted.map((alert) => (
         <AlertCard key={alert.alertId} alert={alert} />
       ))}
     </div>
