@@ -9,7 +9,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
   fetchDelayStats,
   fetchAlerts,
@@ -97,7 +96,7 @@ export function DelaysPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
+      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
         {/* Header */}
         <header className="text-center space-y-2">
           <h1 className="text-2xl md:text-3xl font-bold">{t('page.title')}</h1>
@@ -106,35 +105,28 @@ export function DelaysPage() {
 
         {/* Live Delayed Trains */}
         {summary && (
-          <section className="space-y-4">
-            <DelayedTrainsList trains={delayedTrains} totalTrains={summary.totalTrains} />
-          </section>
+          <DelayedTrainsList trains={delayedTrains} totalTrains={summary.totalTrains} />
         )}
 
         {/* Service Alerts */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold">{t('alerts.title')}</h2>
-          <AlertsList alerts={alerts} />
-        </section>
+        <AlertsList alerts={alerts} />
 
-        <Separator />
-
-        {/* Period Selector */}
-        <div className="flex items-center gap-2 justify-center">
-          {(['24h', '48h', '168h'] as Period[]).map((p) => (
-            <Button
-              key={p}
-              variant={period === p ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setPeriod(p)}
-            >
-              {t(`period.${p === '168h' ? '7d' : p}`)}
-            </Button>
-          ))}
-        </div>
-
-        {/* On-Time Chart */}
-        <OnTimeChart hourlyStats={hourlyStats} hours={periodHours} />
+        {/* Historical Section — period selector + chart + breakdown */}
+        <OnTimeChart hourlyStats={hourlyStats} hours={periodHours} periodSelector={
+          <div className="flex items-center gap-1.5">
+            {(['24h', '48h', '168h'] as Period[]).map((p) => (
+              <Button
+                key={p}
+                variant={period === p ? 'default' : 'outline'}
+                size="sm"
+                className="h-7 text-xs px-2.5"
+                onClick={() => setPeriod(p)}
+              >
+                {t(`period.${p === '168h' ? '7d' : p}`)}
+              </Button>
+            ))}
+          </div>
+        } />
 
         {/* Route Breakdown */}
         <RouteBreakdownTable hourlyStats={hourlyStats} />

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DelayHourlyStat } from '../../lib/api/delays';
@@ -6,6 +6,7 @@ import type { DelayHourlyStat } from '../../lib/api/delays';
 interface OnTimeChartProps {
   hourlyStats: DelayHourlyStat[];
   hours: number;
+  periodSelector?: ReactNode;
 }
 
 interface HourlyPoint {
@@ -13,7 +14,7 @@ interface HourlyPoint {
   onTimePercent: number;
 }
 
-export function OnTimeChart({ hourlyStats, hours }: OnTimeChartProps) {
+export function OnTimeChart({ hourlyStats, hours, periodSelector }: OnTimeChartProps) {
   const { t } = useTranslation('delays');
 
   // Aggregate all routes into overall on-time % per hour bucket
@@ -86,7 +87,10 @@ export function OnTimeChart({ hourlyStats, hours }: OnTimeChartProps) {
   return (
     <Card className="bg-card/50 backdrop-blur-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">{t('chart.title', { hours })}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">{t('chart.title', { hours })}</CardTitle>
+          {periodSelector}
+        </div>
       </CardHeader>
       <CardContent>
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="xMidYMid meet">
