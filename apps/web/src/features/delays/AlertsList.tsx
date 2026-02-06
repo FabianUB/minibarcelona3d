@@ -3,6 +3,30 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { ServiceAlert } from '../../lib/api/delays';
 
+// Brand colors from RodaliesLine.json — matches the legend and control panel
+const RODALIES_LINE_COLORS: Record<string, string> = {
+  R1: '#7DBCEC',
+  R2: '#26A741',
+  R2N: '#D0DF00',
+  R2S: '#146520',
+  R3: '#EB4128',
+  R4: '#F7A30D',
+  R8: '#88016A',
+  R11: '#0069AA',
+  R13: '#E52E87',
+  R14: '#6C60A8',
+  R15: '#978571',
+  R16: '#B52B46',
+  R17: '#F3B12E',
+  RT1: '#35BDB2',
+  RG1: '#888888',
+  RL1: '#888888',
+  RL2: '#888888',
+  RL3: '#888888',
+  RL4: '#888888',
+  RT2: '#888888',
+};
+
 interface AlertsListProps {
   alerts: ServiceAlert[];
 }
@@ -77,9 +101,16 @@ function AlertCard({ alert }: { alert: ServiceAlert }) {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-muted-foreground">{t('alerts.affectedRoutes')}:</span>
             {alert.affectedRoutes.map((route) => (
-              <Badge key={route} variant="secondary" className="text-xs">
+              <span
+                key={route}
+                className="rounded-md px-2.5 py-1 text-xs font-bold text-white shadow-sm"
+                style={{
+                  backgroundColor: RODALIES_LINE_COLORS[route] ?? '#888888',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                }}
+              >
                 {route}
-              </Badge>
+              </span>
             ))}
           </div>
         )}
