@@ -132,6 +132,13 @@ export function StatusPage() {
           </div>
         </section>
 
+        {/* Delay Dashboard Link */}
+        <div className="text-center">
+          <Button variant="outline" size="sm" asChild>
+            <a href="/delays">{t('delays.viewDelays', { defaultValue: 'View Rodalies Delay Stats' })}</a>
+          </Button>
+        </div>
+
         {/* Baseline Learning Section */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">{t('sections.mlBaseline')}</h2>
