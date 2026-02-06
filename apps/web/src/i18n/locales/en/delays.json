@@ -62,6 +62,14 @@
     "48h": "48 hours",
     "7d": "7 days"
   },
+  "metrics": {
+    "onTime": "On-Time %",
+    "delayed": "Delayed",
+    "avgDelay": "Avg Delay",
+    "maxDelay": "Max Delay",
+    "delayedOf": "{{delayed}} / {{total}}",
+    "min": "{{value}} min"
+  },
   "error": {
     "failedToLoad": "Failed to load delay data",
     "unableToLoad": "Unable to Load"

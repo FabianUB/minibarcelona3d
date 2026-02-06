@@ -96,20 +96,66 @@ export function DelaysPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
+      <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-4">
         {/* Header */}
         <header className="text-center space-y-2">
           <h1 className="text-2xl md:text-3xl font-bold">{t('page.title')}</h1>
           <p className="text-muted-foreground">{t('page.subtitle')}</p>
         </header>
 
-        {/* Live Delayed Trains */}
+        {/* KPI Metric Cards */}
         {summary && (
-          <DelayedTrainsList trains={delayedTrains} totalTrains={summary.totalTrains} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-xs text-muted-foreground">{t('metrics.onTime')}</p>
+                <p className={`text-2xl font-bold ${
+                  summary.onTimePercent >= 90 ? 'text-green-500' :
+                  summary.onTimePercent >= 75 ? 'text-yellow-500' : 'text-red-500'
+                }`}>
+                  {summary.onTimePercent.toFixed(1)}%
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-xs text-muted-foreground">{t('metrics.delayed')}</p>
+                <p className={`text-2xl font-bold ${
+                  summary.delayedTrains === 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {t('metrics.delayedOf', { delayed: summary.delayedTrains, total: summary.totalTrains })}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-xs text-muted-foreground">{t('metrics.avgDelay')}</p>
+                <p className={`text-2xl font-bold ${
+                  summary.avgDelaySeconds <= 60 ? 'text-green-500' :
+                  summary.avgDelaySeconds <= 300 ? 'text-yellow-500' : 'text-red-500'
+                }`}>
+                  {t('metrics.min', { value: (summary.avgDelaySeconds / 60).toFixed(1) })}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-3 px-4">
+                <p className="text-xs text-muted-foreground">{t('metrics.maxDelay')}</p>
+                <p className="text-2xl font-bold">
+                  {t('metrics.min', { value: Math.round(summary.maxDelaySeconds / 60) })}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
-        {/* Service Alerts */}
-        <AlertsList alerts={alerts} />
+        {/* Delayed Trains + Alerts side-by-side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {summary && (
+            <DelayedTrainsList trains={delayedTrains} totalTrains={summary.totalTrains} />
+          )}
+          <AlertsList alerts={alerts} />
+        </div>
 
         {/* Historical Section — period selector + chart + breakdown */}
         <OnTimeChart hourlyStats={hourlyStats} hours={periodHours} periodSelector={
