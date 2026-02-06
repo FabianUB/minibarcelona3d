@@ -62,6 +62,14 @@
     "48h": "48 horas",
     "7d": "7 días"
   },
+  "metrics": {
+    "onTime": "Puntualidad %",
+    "delayed": "Con retraso",
+    "avgDelay": "Retraso medio",
+    "maxDelay": "Máx. retraso",
+    "delayedOf": "{{delayed}} / {{total}}",
+    "min": "{{value}} min"
+  },
   "error": {
     "failedToLoad": "Error al cargar datos de retraso",
     "unableToLoad": "No se pudo cargar"

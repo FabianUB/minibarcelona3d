@@ -62,6 +62,14 @@
     "48h": "48 hores",
     "7d": "7 dies"
   },
+  "metrics": {
+    "onTime": "Puntualitat %",
+    "delayed": "Amb retard",
+    "avgDelay": "Retard mitjà",
+    "maxDelay": "Màx. retard",
+    "delayedOf": "{{delayed}} / {{total}}",
+    "min": "{{value}} min"
+  },
   "error": {
     "failedToLoad": "Error en carregar les dades de retard",
     "unableToLoad": "No s'ha pogut carregar"
