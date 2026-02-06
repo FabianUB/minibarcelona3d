@@ -1,6 +1,13 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Card, CardContent } from '@/components/ui/card';
 import type { ServiceAlert } from '../../lib/api/delays';
 
 // Brand colors from RodaliesLine.json — matches the legend and control panel
@@ -45,7 +52,7 @@ export function AlertsList({ alerts }: AlertsListProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {alerts.map((alert) => (
         <AlertCard key={alert.alertId} alert={alert} />
       ))}
@@ -55,6 +62,7 @@ export function AlertsList({ alerts }: AlertsListProps) {
 
 function AlertCard({ alert }: { alert: ServiceAlert }) {
   const { t } = useTranslation('delays');
+  const [open, setOpen] = useState(false);
 
   const getEffectColor = (effect: string): string => {
     switch (effect) {
@@ -72,38 +80,17 @@ function AlertCard({ alert }: { alert: ServiceAlert }) {
   };
 
   const effectKey = `alerts.effect.${alert.effect}` as const;
-  const causeKey = `alerts.cause.${alert.cause}` as const;
 
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-l-4 border-l-yellow-500">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            {alert.effect && (
-              <Badge variant="outline" className={`text-xs ${getEffectColor(alert.effect)}`}>
-                {t(effectKey, { defaultValue: alert.effect })}
-              </Badge>
-            )}
-            {alert.cause && (
-              <Badge variant="outline" className="text-xs">
-                {t(causeKey, { defaultValue: alert.cause })}
-              </Badge>
-            )}
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {t('alerts.since', { time: new Date(alert.firstSeenAt).toLocaleString() })}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <p className="text-sm">{alert.descriptionText}</p>
-        {alert.affectedRoutes.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-muted-foreground">{t('alerts.affectedRoutes')}:</span>
-            {alert.affectedRoutes.map((route) => (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="rounded-lg border bg-card/50 backdrop-blur-sm overflow-hidden">
+        <CollapsibleTrigger className="w-full text-left">
+          <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
+            {/* Line badge */}
+            {alert.affectedRoutes.length > 0 && alert.affectedRoutes.map((route) => (
               <span
                 key={route}
-                className="rounded-md px-2.5 py-1 text-xs font-bold text-white shadow-sm"
+                className="rounded-md px-2 py-0.5 text-xs font-bold text-white shrink-0"
                 style={{
                   backgroundColor: RODALIES_LINE_COLORS[route] ?? '#888888',
                   textShadow: '0 1px 2px rgba(0,0,0,0.3)',
@@ -112,9 +99,31 @@ function AlertCard({ alert }: { alert: ServiceAlert }) {
                 {route}
               </span>
             ))}
+            {/* Effect badge */}
+            {alert.effect && (
+              <Badge variant="outline" className={`text-xs shrink-0 ${getEffectColor(alert.effect)}`}>
+                {t(effectKey, { defaultValue: alert.effect })}
+              </Badge>
+            )}
+            {/* Truncated description preview */}
+            <span className="text-xs text-muted-foreground truncate min-w-0 flex-1">
+              {alert.descriptionText}
+            </span>
+            {/* Chevron */}
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            />
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-2">
+            <p className="text-sm text-foreground">{alert.descriptionText}</p>
+            <span className="text-xs text-muted-foreground">
+              {t('alerts.since', { time: new Date(alert.firstSeenAt).toLocaleString() })}
+            </span>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }
