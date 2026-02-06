@@ -7,7 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ServiceAlert } from '../../lib/api/delays';
 
 // Display order matching the legend panel
@@ -59,26 +59,36 @@ export function AlertsList({ alerts }: AlertsListProps) {
     [alerts],
   );
 
-  if (alerts.length === 0) {
-    return (
-      <Card className="bg-card/50 backdrop-blur-sm">
-        <CardContent className="py-6 text-center text-muted-foreground">
-          {t('alerts.noAlerts')}
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-2">
-      {sorted.map((alert) => (
-        <AlertCard key={alert.alertId} alert={alert} />
-      ))}
-    </div>
+    <Card className="bg-card/50 backdrop-blur-sm">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">{t('alerts.title')}</CardTitle>
+          {alerts.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {alerts.length}
+            </span>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {alerts.length === 0 ? (
+          <p className="px-4 py-4 text-center text-sm text-muted-foreground">
+            {t('alerts.noAlerts')}
+          </p>
+        ) : (
+          <div className="divide-y divide-border/50">
+            {sorted.map((alert) => (
+              <AlertRow key={alert.alertId} alert={alert} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
-function AlertCard({ alert }: { alert: ServiceAlert }) {
+function AlertRow({ alert }: { alert: ServiceAlert }) {
   const { t } = useTranslation('delays');
   const [open, setOpen] = useState(false);
 
@@ -101,47 +111,45 @@ function AlertCard({ alert }: { alert: ServiceAlert }) {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="rounded-lg border bg-card/50 backdrop-blur-sm overflow-hidden">
-        <CollapsibleTrigger className="w-full text-left">
-          <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
-            {/* Line badge */}
-            {alert.affectedRoutes.length > 0 && alert.affectedRoutes.map((route) => (
-              <span
-                key={route}
-                className="rounded-md px-2 py-0.5 text-xs font-bold text-white shrink-0"
-                style={{
-                  backgroundColor: RODALIES_LINE_COLORS[route] ?? '#888888',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                }}
-              >
-                {route}
-              </span>
-            ))}
-            {/* Effect badge */}
-            {alert.effect && (
-              <Badge variant="outline" className={`text-xs shrink-0 ${getEffectColor(alert.effect)}`}>
-                {t(effectKey, { defaultValue: alert.effect })}
-              </Badge>
-            )}
-            {/* Truncated description preview */}
-            <span className="text-xs text-muted-foreground truncate min-w-0 flex-1">
-              {alert.descriptionText}
+      <CollapsibleTrigger className="w-full text-left">
+        <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/30 transition-colors">
+          {/* Line badge */}
+          {alert.affectedRoutes.length > 0 && alert.affectedRoutes.map((route) => (
+            <span
+              key={route}
+              className="rounded-md px-2 py-0.5 text-xs font-bold text-white shrink-0"
+              style={{
+                backgroundColor: RODALIES_LINE_COLORS[route] ?? '#888888',
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              }}
+            >
+              {route}
             </span>
-            {/* Chevron */}
-            <ChevronDown
-              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-            />
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-2">
-            <p className="text-sm text-foreground">{alert.descriptionText}</p>
-            <span className="text-xs text-muted-foreground">
-              {t('alerts.since', { time: new Date(alert.firstSeenAt).toLocaleString() })}
-            </span>
-          </div>
-        </CollapsibleContent>
-      </div>
+          ))}
+          {/* Effect badge */}
+          {alert.effect && (
+            <Badge variant="outline" className={`text-xs shrink-0 ${getEffectColor(alert.effect)}`}>
+              {t(effectKey, { defaultValue: alert.effect })}
+            </Badge>
+          )}
+          {/* Truncated description preview */}
+          <span className="text-xs text-muted-foreground truncate min-w-0 flex-1">
+            {alert.descriptionText}
+          </span>
+          {/* Chevron */}
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-2">
+          <p className="text-sm text-foreground">{alert.descriptionText}</p>
+          <span className="text-xs text-muted-foreground">
+            {t('alerts.since', { time: new Date(alert.firstSeenAt).toLocaleString() })}
+          </span>
+        </div>
+      </CollapsibleContent>
     </Collapsible>
   );
 }
