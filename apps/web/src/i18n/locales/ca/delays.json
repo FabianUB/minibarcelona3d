@@ -4,12 +4,12 @@
     "subtitle": "Seguiment de retards en temps real i avisos de servei"
   },
   "snapshot": {
-    "title": "Estat Actual",
-    "onTimePercent": "Puntualitat",
-    "avgDelay": "Retard Mitjà",
-    "delayedTrains": "Amb Retard",
-    "worstRoute": "Pitjor Línia",
-    "seconds": "{{count}}s",
+    "title": "Trens amb Retard",
+    "allOnTime": "Els {{total}} trens van puntuals",
+    "delayedCount": "{{delayed}} de {{total}} amb retard",
+    "delay": "Retard",
+    "prevStop": "Des de",
+    "nextStop": "Propera parada",
     "noData": "Sense dades de retard disponibles"
   },
   "alerts": {

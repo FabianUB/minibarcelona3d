@@ -4,12 +4,12 @@
     "subtitle": "Seguimiento de retrasos en tiempo real y avisos de servicio"
   },
   "snapshot": {
-    "title": "Estado Actual",
-    "onTimePercent": "Puntualidad",
-    "avgDelay": "Retraso Medio",
-    "delayedTrains": "Con Retraso",
-    "worstRoute": "Peor Línea",
-    "seconds": "{{count}}s",
+    "title": "Trenes con Retraso",
+    "allOnTime": "Los {{total}} trenes van puntuales",
+    "delayedCount": "{{delayed}} de {{total}} con retraso",
+    "delay": "Retraso",
+    "prevStop": "Desde",
+    "nextStop": "Próxima parada",
     "noData": "Sin datos de retraso disponibles"
   },
   "alerts": {

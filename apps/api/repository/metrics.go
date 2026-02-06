@@ -818,3 +818,60 @@ func (r *MetricsRepository) GetHourlyDelayStats(ctx context.Context, routeID str
 
 	return stats, nil
 }
+
+// GetDelayedTrains returns trains currently delayed more than 5 minutes with stop context
+func (r *MetricsRepository) GetDelayedTrains(ctx context.Context) ([]models.DelayedTrain, error) {
+	query := `
+		SELECT
+			v.vehicle_label,
+			COALESCE(v.route_id, ''),
+			v.arrival_delay_seconds,
+			COALESCE(ps.stop_name, ''),
+			COALESCE(ns.stop_name, ''),
+			COALESCE(v.status, '')
+		FROM rt_rodalies_vehicle_current v
+		LEFT JOIN dim_stops ps ON v.previous_stop_id = ps.stop_id AND ps.network = 'rodalies'
+		LEFT JOIN dim_stops ns ON v.next_stop_id = ns.stop_id AND ns.network = 'rodalies'
+		WHERE v.updated_at > datetime('now', '-10 minutes')
+			AND v.arrival_delay_seconds IS NOT NULL
+			AND ABS(v.arrival_delay_seconds) > 300
+		ORDER BY v.arrival_delay_seconds DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var trains []models.DelayedTrain
+	for rows.Next() {
+		var t models.DelayedTrain
+		var routeID string
+		var delaySec int
+
+		if err := rows.Scan(
+			&t.VehicleLabel, &routeID, &delaySec,
+			&t.PrevStopName, &t.NextStopName, &t.Status,
+		); err != nil {
+			continue
+		}
+
+		t.DelaySeconds = delaySec
+
+		// Extract clean line code from vehicle_label (e.g. "R4-77626-PLATF.(1)" → "R4")
+		if m := rodaliesLineCodeRe.FindString(t.VehicleLabel); m != "" {
+			t.LineCode = strings.ToUpper(m)
+		} else if m := rodaliesLineCodeRe.FindString(routeID); m != "" {
+			t.LineCode = strings.ToUpper(m)
+		}
+
+		trains = append(trains, t)
+	}
+
+	if trains == nil {
+		trains = []models.DelayedTrain{}
+	}
+
+	return trains, nil
+}

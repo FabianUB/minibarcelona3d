@@ -14,10 +14,11 @@ import {
   fetchDelayStats,
   fetchAlerts,
   type DelaySummary,
+  type DelayedTrain,
   type DelayHourlyStat,
   type ServiceAlert,
 } from '../../lib/api/delays';
-import { DelaySummaryCards } from './DelaySummaryCards';
+import { DelayedTrainsList } from './DelaySummaryCards';
 import { AlertsList } from './AlertsList';
 import { RouteBreakdownTable } from './RouteBreakdownTable';
 import { OnTimeChart } from './OnTimeChart';
@@ -29,6 +30,7 @@ type Period = '24h' | '48h' | '168h';
 export function DelaysPage() {
   const { t, i18n } = useTranslation('delays');
   const [summary, setSummary] = useState<DelaySummary | null>(null);
+  const [delayedTrains, setDelayedTrains] = useState<DelayedTrain[]>([]);
   const [hourlyStats, setHourlyStats] = useState<DelayHourlyStat[]>([]);
   const [alerts, setAlerts] = useState<ServiceAlert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +46,7 @@ export function DelaysPage() {
       ]);
 
       setSummary(statsResponse.summary);
+      setDelayedTrains(statsResponse.delayedTrains);
       setHourlyStats(statsResponse.hourlyStats);
       setAlerts(alertsResponse.alerts);
       setError(null);
@@ -101,11 +104,10 @@ export function DelaysPage() {
           <p className="text-muted-foreground">{t('page.subtitle')}</p>
         </header>
 
-        {/* Live Snapshot */}
+        {/* Live Delayed Trains */}
         {summary && (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">{t('snapshot.title')}</h2>
-            <DelaySummaryCards summary={summary} />
+            <DelayedTrainsList trains={delayedTrains} totalTrains={summary.totalTrains} />
           </section>
         )}
 
