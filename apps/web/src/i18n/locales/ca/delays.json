@@ -1,0 +1,74 @@
+{
+  "page": {
+    "title": "Estadístiques de Retards de Rodalies",
+    "subtitle": "Seguiment de retards en temps real i avisos de servei"
+  },
+  "snapshot": {
+    "title": "Estat Actual",
+    "onTimePercent": "Puntualitat",
+    "avgDelay": "Retard Mitjà",
+    "delayedTrains": "Amb Retard",
+    "worstRoute": "Pitjor Línia",
+    "seconds": "{{count}}s",
+    "noData": "Sense dades de retard disponibles"
+  },
+  "alerts": {
+    "title": "Avisos de Servei Actius",
+    "noAlerts": "No hi ha avisos de servei actius",
+    "since": "Des de {{time}}",
+    "affectedRoutes": "Línies afectades",
+    "cause": {
+      "UNKNOWN_CAUSE": "Desconeguda",
+      "OTHER_CAUSE": "Altra",
+      "TECHNICAL_PROBLEM": "Problema Tècnic",
+      "STRIKE": "Vaga",
+      "DEMONSTRATION": "Manifestació",
+      "ACCIDENT": "Accident",
+      "HOLIDAY": "Festiu",
+      "WEATHER": "Meteorologia",
+      "MAINTENANCE": "Manteniment",
+      "CONSTRUCTION": "Obres",
+      "POLICE_ACTIVITY": "Activitat Policial",
+      "MEDICAL_EMERGENCY": "Emergència Mèdica"
+    },
+    "effect": {
+      "NO_SERVICE": "Sense Servei",
+      "REDUCED_SERVICE": "Servei Reduït",
+      "SIGNIFICANT_DELAYS": "Retards Significatius",
+      "DETOUR": "Desviament",
+      "ADDITIONAL_SERVICE": "Servei Addicional",
+      "MODIFIED_SERVICE": "Servei Modificat",
+      "OTHER_EFFECT": "Altre",
+      "UNKNOWN_EFFECT": "Desconegut",
+      "STOP_MOVED": "Parada Moguda",
+      "NO_EFFECT": "Sense Efecte",
+      "ACCESSIBILITY_ISSUE": "Problema d'Accessibilitat"
+    }
+  },
+  "routes": {
+    "title": "Desglossament per Línia",
+    "route": "Línia",
+    "observations": "Obs.",
+    "avgDelay": "Retard Mitjà",
+    "onTime": "Puntualitat %",
+    "maxDelay": "Màxim"
+  },
+  "chart": {
+    "title": "Puntualitat % (Últimes {{hours}}h)",
+    "onTimePercent": "Puntualitat %"
+  },
+  "period": {
+    "24h": "24 hores",
+    "48h": "48 hores",
+    "7d": "7 dies"
+  },
+  "error": {
+    "failedToLoad": "Error en carregar les dades de retard",
+    "unableToLoad": "No s'ha pogut carregar"
+  },
+  "footer": {
+    "lastUpdated": "Última actualització: {{time}}",
+    "autoRefresh": "S'actualitza automàticament cada 30s",
+    "threshold": "Llindar de retard: 5 min (300s)"
+  }
+}
