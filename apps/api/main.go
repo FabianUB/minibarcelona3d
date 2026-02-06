@@ -55,6 +55,9 @@ func main() {
 	metricsRepo := repository.NewMetricsRepository(sqliteDB.GetDB())
 	healthHandler := handlers.NewHealthHandler(metricsRepo)
 
+	// Create Delay handler (reuses metrics repository)
+	delayHandler := handlers.NewDelayHandler(metricsRepo)
+
 	// Setup router
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -117,6 +120,10 @@ func main() {
 	// Schedule-based transit API routes (TRAM, FGC, Bus)
 	r.Get("/api/transit/schedule", scheduleHandler.GetAllSchedulePositions)
 
+	// Delay and alert API routes
+	r.Get("/api/alerts", delayHandler.GetAlerts)
+	r.Get("/api/delays/stats", delayHandler.GetDelayStats)
+
 	// Health and metrics API routes
 	r.Get("/api/health/data", healthHandler.GetDataFreshness)
 	r.Get("/api/health/networks", healthHandler.GetNetworkHealth)
@@ -149,6 +156,9 @@ func main() {
 	log.Println("  GET /api/metro/lines/{lineCode}")
 	log.Println("Schedule-based endpoints (TRAM, FGC, Bus):")
 	log.Println("  GET /api/transit/schedule")
+	log.Println("Delay & Alerts:")
+	log.Println("  GET /api/alerts")
+	log.Println("  GET /api/delays/stats")
 	log.Println("Health & Metrics:")
 	log.Println("  GET /health (database connectivity)")
 	log.Println("  GET /api/health/data (data freshness)")
