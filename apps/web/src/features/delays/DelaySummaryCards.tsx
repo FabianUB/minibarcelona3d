@@ -82,9 +82,9 @@ export function DelayedTrainsList({ trains, totalTrains }: DelayedTrainsListProp
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[400px]">
           <table className="w-full text-sm">
-            <thead className="bg-muted">
+            <thead className="bg-muted sticky top-0 z-10">
               <tr>
                 <th className="px-3 py-2 text-left font-medium">{t('routes.route')}</th>
                 <th className="px-3 py-2 text-right font-medium">{t('snapshot.delay', { defaultValue: 'Delay' })}</th>
