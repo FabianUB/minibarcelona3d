@@ -25,6 +25,7 @@ import { FGCLineLayer, FGCStationLayer } from '../fgc';
 // TransportFilterButton replaced by ControlPanel
 import { TransitVehicleLayer3D } from '../transit';
 import { DataFreshnessIndicator } from '../status';
+import { AlertBadge } from './AlertBadge';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
@@ -982,6 +983,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           />
         </div>
       ) : null}
+      {/* Alert badge - top right */}
+      {mapInstance && isMapLoaded ? <AlertBadge /> : null}
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
           <button
