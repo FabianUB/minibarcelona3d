@@ -80,8 +80,8 @@ export function RouteBreakdownTable({ hourlyStats }: RouteBreakdownTableProps) {
 
   const formatDelay = (seconds: number): string => {
     const absSeconds = Math.abs(seconds);
-    if (absSeconds < 60) return `${Math.round(seconds)}s`;
-    return `${(seconds / 60).toFixed(1)}m`;
+    if (absSeconds < 60) return t('routes.seconds', { value: Math.round(seconds) });
+    return t('routes.minutes', { value: (seconds / 60).toFixed(1) });
   };
 
   return (

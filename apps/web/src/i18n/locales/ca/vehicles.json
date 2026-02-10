@@ -27,6 +27,20 @@
     "minEarly": "{{count}} min avançat",
     "secEarly": "{{count}}s avançat"
   },
+  "trainList": {
+    "title": "Llista de Trens ({{filtered}}/{{total}})",
+    "filter": "Filtrar trens...",
+    "closeAriaLabel": "Tancar llista de trens",
+    "hint": "Fes clic en una fila per enfocar la càmera en aquell tren",
+    "columns": {
+      "vehicle": "Vehicle",
+      "line": "Línia",
+      "status": "Estat",
+      "nextStop": "Propera Parada",
+      "position": "Posició",
+      "lastUpdate": "Última Actualització"
+    }
+  },
   "stops": {
     "allStops": "Totes les parades",
     "showAll": "Veure totes les parades",

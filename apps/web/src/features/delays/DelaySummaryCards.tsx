@@ -50,8 +50,8 @@ export function DelayedTrainsList({ trains, totalTrains }: DelayedTrainsListProp
 
   const formatDelay = (seconds: number): string => {
     const mins = Math.round(Math.abs(seconds) / 60);
-    if (mins < 1) return '<1 min';
-    return `${mins} min`;
+    if (mins < 1) return t('snapshot.lessThanOneMin');
+    return t('snapshot.minuteDelay', { count: mins });
   };
 
   if (trains.length === 0) {

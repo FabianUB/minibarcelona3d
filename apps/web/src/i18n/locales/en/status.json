@@ -60,6 +60,13 @@
     "lastUpdated": "Last updated: {{time}}",
     "autoRefresh": "Auto-refreshes every 30 seconds"
   },
+  "sparkline": {
+    "noData": "No data",
+    "failedToLoad": "Failed to load",
+    "stable": "Stable at {{score}}%",
+    "range": "{{min}}% - {{max}}% (now {{current}}%)",
+    "ariaLabel": "Health trend for {{network}}: currently {{score}}%"
+  },
   "error": {
     "unableToLoad": "Unable to load status",
     "failedToLoad": "Failed to load status"

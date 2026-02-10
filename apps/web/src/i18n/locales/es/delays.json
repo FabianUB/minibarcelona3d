@@ -10,11 +10,15 @@
     "delay": "Retraso",
     "prevStop": "Desde",
     "nextStop": "Próxima parada",
-    "noData": "Sin datos de retraso disponibles"
+    "noData": "Sin datos de retraso disponibles",
+    "lessThanOneMin": "<1 min",
+    "minuteDelay": "{{count}} min"
   },
   "alerts": {
     "title": "Avisos de Servicio Activos",
     "noAlerts": "No hay avisos de servicio activos",
+    "badge_one": "{{count}} aviso",
+    "badge_other": "{{count}} avisos",
     "since": "Desde {{time}}",
     "affectedRoutes": "Líneas afectadas",
     "cause": {
@@ -51,7 +55,9 @@
     "observations": "Obs.",
     "avgDelay": "Retraso Medio",
     "onTime": "Puntualidad %",
-    "maxDelay": "Máximo"
+    "maxDelay": "Máximo",
+    "seconds": "{{value}}s",
+    "minutes": "{{value}}m"
   },
   "chart": {
     "title": "Puntualidad % (Últimas {{hours}}h)",

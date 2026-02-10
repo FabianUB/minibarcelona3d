@@ -7,14 +7,15 @@
  * Task: T096 - User-friendly error messages for train data failures
  */
 
+import { useTranslation } from 'react-i18next';
+
 interface TrainErrorDisplayProps {
   error: string;
   onRetry?: () => void;
 }
 
 export function TrainErrorDisplay({ error, onRetry }: TrainErrorDisplayProps) {
-  // Don't show error during initial loading or if trains are already visible
-  // Only show persistent errors that affect user experience
+  const { t } = useTranslation('errors');
 
   return (
     <div
@@ -38,13 +39,13 @@ export function TrainErrorDisplay({ error, onRetry }: TrainErrorDisplayProps) {
       }}
     >
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600, marginBottom: '4px' }}>Unable to load trains</div>
+        <div style={{ fontWeight: 600, marginBottom: '4px' }}>{t('trains.title')}</div>
         <div style={{ fontSize: '13px', opacity: 0.9 }}>
           {error.includes('fetch') || error.includes('network')
-            ? 'Network connection issue. Please check your internet connection.'
+            ? t('trains.network')
             : error.includes('Failed to load')
-            ? 'Train data temporarily unavailable. Retrying automatically...'
-            : 'An error occurred while loading train data.'}
+            ? t('trains.unavailable')
+            : t('trains.generic')}
         </div>
       </div>
       {onRetry && (
@@ -62,7 +63,7 @@ export function TrainErrorDisplay({ error, onRetry }: TrainErrorDisplayProps) {
             whiteSpace: 'nowrap',
           }}
         >
-          Retry
+          {t('common:buttons.retry')}
         </button>
       )}
     </div>
