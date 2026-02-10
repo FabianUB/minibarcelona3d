@@ -171,7 +171,40 @@ func (p *Poller) Poll(ctx context.Context) error {
 	}
 
 	log.Printf("Rodalies: polled %d vehicles", len(dbPositions))
+
+	// Fetch and store service alerts (non-fatal)
+	if err := p.pollAlerts(ctx); err != nil {
+		log.Printf("Rodalies: failed to poll alerts (continuing): %v", err)
+	}
+
+	// Aggregate delay stats from current positions (non-fatal)
+	p.aggregateDelayStats(ctx, dbPositions)
+
 	return nil
+}
+
+// aggregateDelayStats extracts delay observations from positions and updates hourly stats
+func (p *Poller) aggregateDelayStats(ctx context.Context, positions []db.RodaliesPosition) {
+	var observations []db.DelayObservation
+	for _, pos := range positions {
+		if pos.RouteID == nil || pos.ArrivalDelaySeconds == nil {
+			continue
+		}
+		observations = append(observations, db.DelayObservation{
+			RouteID:      *pos.RouteID,
+			DelaySeconds: *pos.ArrivalDelaySeconds,
+		})
+	}
+
+	if len(observations) == 0 {
+		return
+	}
+
+	if err := p.db.UpdateDelayStats(ctx, observations); err != nil {
+		log.Printf("Rodalies: failed to update delay stats (continuing): %v", err)
+	} else {
+		log.Printf("Rodalies: delay stats updated for %d observations", len(observations))
+	}
 }
 
 // fetchVehiclePositions fetches and parses the vehicle positions feed

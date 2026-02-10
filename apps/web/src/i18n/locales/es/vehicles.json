@@ -27,6 +27,20 @@
     "minEarly": "{{count}} min adelantado",
     "secEarly": "{{count}}s adelantado"
   },
+  "trainList": {
+    "title": "Lista de Trenes ({{filtered}}/{{total}})",
+    "filter": "Filtrar trenes...",
+    "closeAriaLabel": "Cerrar lista de trenes",
+    "hint": "Haz clic en una fila para enfocar la cámara en ese tren",
+    "columns": {
+      "vehicle": "Vehículo",
+      "line": "Línea",
+      "status": "Estado",
+      "nextStop": "Próxima Parada",
+      "position": "Posición",
+      "lastUpdate": "Última Actualización"
+    }
+  },
   "stops": {
     "allStops": "Todas las paradas",
     "showAll": "Ver todas las paradas",

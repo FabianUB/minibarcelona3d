@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -18,6 +19,7 @@ import { ContrastToggle } from '../accessibility/ContrastToggle';
  */
 
 export function SettingsSheet() {
+  const { t } = useTranslation('settings');
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -27,7 +29,7 @@ export function SettingsSheet() {
           variant="secondary"
           size="icon"
           className="fixed bottom-4 right-4 z-10 shadow-lg w-12 h-12"
-          aria-label="Open settings"
+          aria-label={t('openSettings')}
           data-testid="settings-trigger"
         >
           <Settings className="h-5 w-5" />
@@ -35,7 +37,7 @@ export function SettingsSheet() {
       </SheetTrigger>
       <SheetContent side="bottom" className="h-auto max-h-[80vh]">
         <SheetHeader>
-          <SheetTitle>Settings</SheetTitle>
+          <SheetTitle>{t('title')}</SheetTitle>
         </SheetHeader>
         <Separator className="my-3" />
         <div className="pb-6 px-2">
@@ -43,9 +45,9 @@ export function SettingsSheet() {
             {/* Line Visibility Enhancement Setting */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <label className="text-sm font-medium">Enhance Line Visibility</label>
+                <label className="text-sm font-medium">{t('enhanceVisibility.label')}</label>
                 <p className="text-xs text-muted-foreground">
-                  Make train lines thicker and easier to see
+                  {t('enhanceVisibility.description')}
                 </p>
               </div>
               <ContrastToggle />
@@ -55,7 +57,7 @@ export function SettingsSheet() {
 
             {/* Future settings can be added here */}
             <div className="text-xs text-muted-foreground text-center py-2">
-              More settings coming soon...
+              {t('comingSoon')}
             </div>
           </div>
         </div>

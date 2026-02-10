@@ -4,10 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"math"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/you/myapp/apps/api/models"
 )
+
+// rodaliesLineCodeRe extracts Rodalies line codes (R1, R2N, RL4, etc.) from GTFS route IDs.
+var rodaliesLineCodeRe = regexp.MustCompile(`(R\d+[NS]?|RG\d|RL\d|RT\d)`)
 
 // MetricsRepository handles health and metrics queries
 type MetricsRepository struct {
@@ -572,4 +578,300 @@ func (r *MetricsRepository) GetHealthHistory(ctx context.Context, network string
 	}
 
 	return points, nil
+}
+
+// =============================================================================
+// ALERTS METHODS
+// =============================================================================
+
+// GetActiveAlerts returns active service alerts, optionally filtered by route and language
+func (r *MetricsRepository) GetActiveAlerts(ctx context.Context, routeID string, lang string) ([]models.ServiceAlert, error) {
+	var query string
+	var args []interface{}
+
+	if routeID != "" {
+		query = `
+			SELECT DISTINCT a.alert_id, a.cause, a.effect,
+				a.description_es, a.description_ca, a.description_en,
+				a.is_active, a.first_seen_at, a.active_period_start, a.active_period_end, a.resolved_at
+			FROM rt_alerts a
+			JOIN rt_alert_entities e ON e.alert_id = a.alert_id
+			WHERE a.is_active = 1 AND e.route_id = ?
+			ORDER BY a.first_seen_at DESC
+		`
+		args = []interface{}{routeID}
+	} else {
+		query = `
+			SELECT a.alert_id, a.cause, a.effect,
+				a.description_es, a.description_ca, a.description_en,
+				a.is_active, a.first_seen_at, a.active_period_start, a.active_period_end, a.resolved_at
+			FROM rt_alerts a
+			WHERE a.is_active = 1
+			ORDER BY a.first_seen_at DESC
+		`
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var alerts []models.ServiceAlert
+	for rows.Next() {
+		var a models.ServiceAlert
+		var descES, descCA, descEN sql.NullString
+		var isActive int
+
+		if err := rows.Scan(
+			&a.AlertID, &a.Cause, &a.Effect,
+			&descES, &descCA, &descEN,
+			&isActive, &a.FirstSeenAt, &a.ActivePeriodStart, &a.ActivePeriodEnd, &a.ResolvedAt,
+		); err != nil {
+			continue
+		}
+
+		a.IsActive = isActive == 1
+
+		// Select description by language with fallback to Spanish
+		switch lang {
+		case "ca":
+			if descCA.Valid && descCA.String != "" {
+				a.DescriptionText = descCA.String
+			} else if descES.Valid {
+				a.DescriptionText = descES.String
+			}
+		case "en":
+			if descEN.Valid && descEN.String != "" {
+				a.DescriptionText = descEN.String
+			} else if descES.Valid {
+				a.DescriptionText = descES.String
+			}
+		default:
+			if descES.Valid {
+				a.DescriptionText = descES.String
+			}
+		}
+
+		// Fetch affected routes and extract clean Rodalies line codes
+		// Check route_id and trip_id since the line code can appear in either
+		routeRows, err := r.db.QueryContext(ctx,
+			`SELECT DISTINCT route_id, trip_id FROM rt_alert_entities
+			 WHERE alert_id = ? AND (route_id != '' OR trip_id != '')`,
+			a.AlertID,
+		)
+		if err == nil {
+			seen := make(map[string]bool)
+			for routeRows.Next() {
+				var rid, tid string
+				if routeRows.Scan(&rid, &tid) == nil {
+					// Try route_id first, then trip_id
+					for _, field := range []string{rid, tid} {
+						if m := rodaliesLineCodeRe.FindString(field); m != "" {
+							code := strings.ToUpper(m)
+							if !seen[code] {
+								seen[code] = true
+								a.AffectedRoutes = append(a.AffectedRoutes, code)
+							}
+						}
+					}
+				}
+			}
+			routeRows.Close()
+		}
+		if a.AffectedRoutes == nil {
+			a.AffectedRoutes = []string{}
+		}
+
+		alerts = append(alerts, a)
+	}
+
+	if alerts == nil {
+		alerts = []models.ServiceAlert{}
+	}
+
+	return alerts, nil
+}
+
+// =============================================================================
+// DELAY STATS METHODS
+// =============================================================================
+
+// GetCurrentDelaySummary returns a live delay snapshot from current vehicle data
+func (r *MetricsRepository) GetCurrentDelaySummary(ctx context.Context) (*models.DelaySummary, error) {
+	query := `
+		SELECT
+			COUNT(*) as total,
+			COUNT(CASE WHEN ABS(arrival_delay_seconds) > 300 THEN 1 END) as delayed,
+			COALESCE(AVG(CASE WHEN arrival_delay_seconds IS NOT NULL THEN arrival_delay_seconds END), 0) as avg_delay,
+			COALESCE(MAX(ABS(CASE WHEN arrival_delay_seconds IS NOT NULL THEN arrival_delay_seconds END)), 0) as max_delay
+		FROM rt_rodalies_vehicle_current
+		WHERE updated_at > datetime('now', '-10 minutes')
+			AND arrival_delay_seconds IS NOT NULL
+	`
+
+	var total, delayed, maxDelay int
+	var avgDelay float64
+
+	err := r.db.QueryRowContext(ctx, query).Scan(&total, &delayed, &avgDelay, &maxDelay)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := &models.DelaySummary{
+		TotalTrains:     total,
+		DelayedTrains:   delayed,
+		AvgDelaySeconds: avgDelay,
+		MaxDelaySeconds: maxDelay,
+	}
+
+	if total > 0 {
+		summary.OnTimePercent = float64(total-delayed) / float64(total) * 100
+	} else {
+		summary.OnTimePercent = 100
+	}
+
+	// Find worst route
+	worstQuery := `
+		SELECT route_id, AVG(ABS(arrival_delay_seconds)) as avg_delay
+		FROM rt_rodalies_vehicle_current
+		WHERE updated_at > datetime('now', '-10 minutes')
+			AND arrival_delay_seconds IS NOT NULL
+			AND route_id IS NOT NULL
+		GROUP BY route_id
+		ORDER BY avg_delay DESC
+		LIMIT 1
+	`
+	var worstRoute sql.NullString
+	var worstAvg float64
+	if r.db.QueryRowContext(ctx, worstQuery).Scan(&worstRoute, &worstAvg) == nil && worstRoute.Valid {
+		summary.WorstRoute = worstRoute.String
+	}
+
+	return summary, nil
+}
+
+// GetHourlyDelayStats returns hourly delay statistics, optionally filtered by route
+func (r *MetricsRepository) GetHourlyDelayStats(ctx context.Context, routeID string, hours int) ([]models.DelayHourlyStat, error) {
+	var query string
+	var args []interface{}
+
+	if routeID != "" {
+		query = `
+			SELECT route_id, hour_bucket, observation_count,
+				delay_mean_seconds, delay_m2, delayed_count, on_time_count, max_delay_seconds
+			FROM stats_delay_hourly
+			WHERE route_id = ? AND datetime(hour_bucket) >= datetime('now', '-' || ? || ' hours')
+			ORDER BY hour_bucket ASC
+		`
+		args = []interface{}{routeID, hours}
+	} else {
+		query = `
+			SELECT route_id, hour_bucket, observation_count,
+				delay_mean_seconds, delay_m2, delayed_count, on_time_count, max_delay_seconds
+			FROM stats_delay_hourly
+			WHERE datetime(hour_bucket) >= datetime('now', '-' || ? || ' hours')
+			ORDER BY hour_bucket ASC
+		`
+		args = []interface{}{hours}
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []models.DelayHourlyStat
+	for rows.Next() {
+		var s models.DelayHourlyStat
+		var m2 float64
+		var delayedCount, onTimeCount int
+
+		if err := rows.Scan(
+			&s.RouteID, &s.HourBucket, &s.ObservationCount,
+			&s.MeanDelaySeconds, &m2, &delayedCount, &onTimeCount, &s.MaxDelaySeconds,
+		); err != nil {
+			continue
+		}
+
+		// Compute standard deviation from M2
+		if s.ObservationCount >= 2 {
+			variance := m2 / float64(s.ObservationCount)
+			s.StdDevSeconds = math.Sqrt(variance)
+		}
+
+		// Compute on-time percentage
+		total := delayedCount + onTimeCount
+		if total > 0 {
+			s.OnTimePercent = float64(onTimeCount) / float64(total) * 100
+		} else {
+			s.OnTimePercent = 100
+		}
+
+		stats = append(stats, s)
+	}
+
+	if stats == nil {
+		stats = []models.DelayHourlyStat{}
+	}
+
+	return stats, nil
+}
+
+// GetDelayedTrains returns trains currently delayed more than 5 minutes with stop context
+func (r *MetricsRepository) GetDelayedTrains(ctx context.Context) ([]models.DelayedTrain, error) {
+	query := `
+		SELECT
+			v.vehicle_label,
+			COALESCE(v.route_id, ''),
+			v.arrival_delay_seconds,
+			COALESCE(ps.stop_name, ''),
+			COALESCE(ns.stop_name, ''),
+			COALESCE(v.status, '')
+		FROM rt_rodalies_vehicle_current v
+		LEFT JOIN dim_stops ps ON v.previous_stop_id = ps.stop_id AND ps.network = 'rodalies'
+		LEFT JOIN dim_stops ns ON v.next_stop_id = ns.stop_id AND ns.network = 'rodalies'
+		WHERE v.updated_at > datetime('now', '-10 minutes')
+			AND v.arrival_delay_seconds IS NOT NULL
+			AND ABS(v.arrival_delay_seconds) > 300
+		ORDER BY v.arrival_delay_seconds DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var trains []models.DelayedTrain
+	for rows.Next() {
+		var t models.DelayedTrain
+		var routeID string
+		var delaySec int
+
+		if err := rows.Scan(
+			&t.VehicleLabel, &routeID, &delaySec,
+			&t.PrevStopName, &t.NextStopName, &t.Status,
+		); err != nil {
+			continue
+		}
+
+		t.DelaySeconds = delaySec
+
+		// Extract clean line code from vehicle_label (e.g. "R4-77626-PLATF.(1)" → "R4")
+		if m := rodaliesLineCodeRe.FindString(t.VehicleLabel); m != "" {
+			t.LineCode = strings.ToUpper(m)
+		} else if m := rodaliesLineCodeRe.FindString(routeID); m != "" {
+			t.LineCode = strings.ToUpper(m)
+		}
+
+		trains = append(trains, t)
+	}
+
+	if trains == nil {
+		trains = []models.DelayedTrain{}
+	}
+
+	return trains, nil
 }

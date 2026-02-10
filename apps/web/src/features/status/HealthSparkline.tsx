@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   fetchHealthHistory,
   type HealthHistoryPoint,
@@ -32,6 +33,7 @@ export function HealthSparkline({
   hours = 2,
   refreshInterval = 60000,
 }: HealthSparklineProps) {
+  const { t } = useTranslation('status');
   const [points, setPoints] = useState<HealthHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,7 +153,7 @@ export function HealthSparkline({
         className="flex items-center justify-center text-xs text-muted-foreground bg-muted/30 rounded"
         style={{ width, height }}
       >
-        No data
+        {t('sparkline.noData')}
       </div>
     );
   }
@@ -162,7 +164,7 @@ export function HealthSparkline({
         width={width}
         height={height}
         className="overflow-visible"
-        aria-label={`Health trend for ${network}: currently ${currentScore}%`}
+        aria-label={t('sparkline.ariaLabel', { network, score: currentScore })}
       >
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
@@ -205,8 +207,8 @@ export function HealthSparkline({
       {/* Tooltip on hover */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
         {minScore === maxScore
-          ? `Stable at ${currentScore}%`
-          : `${minScore}% - ${maxScore}% (now ${currentScore}%)`}
+          ? t('sparkline.stable', { score: currentScore })
+          : t('sparkline.range', { min: minScore, max: maxScore, current: currentScore })}
       </div>
     </div>
   );

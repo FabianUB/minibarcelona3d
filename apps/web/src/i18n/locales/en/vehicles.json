@@ -27,6 +27,20 @@
     "minEarly": "{{count}} min early",
     "secEarly": "{{count}}s early"
   },
+  "trainList": {
+    "title": "Train List ({{filtered}}/{{total}})",
+    "filter": "Filter trains...",
+    "closeAriaLabel": "Close train list",
+    "hint": "Click on a row to focus the camera on that train",
+    "columns": {
+      "vehicle": "Vehicle",
+      "line": "Line",
+      "status": "Status",
+      "nextStop": "Next Stop",
+      "position": "Position",
+      "lastUpdate": "Last Update"
+    }
+  },
   "stops": {
     "allStops": "All Stops",
     "showAll": "Show all stops",

@@ -60,6 +60,13 @@
     "lastUpdated": "Última actualización: {{time}}",
     "autoRefresh": "Se actualiza automáticamente cada 30 segundos"
   },
+  "sparkline": {
+    "noData": "Sin datos",
+    "failedToLoad": "Error al cargar",
+    "stable": "Estable al {{score}}%",
+    "range": "{{min}}% - {{max}}% (ahora {{current}}%)",
+    "ariaLabel": "Tendencia de salud para {{network}}: actualmente {{score}}%"
+  },
   "error": {
     "unableToLoad": "No se puede cargar el estado",
     "failedToLoad": "Error al cargar el estado"

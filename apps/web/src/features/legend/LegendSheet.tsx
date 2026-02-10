@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
@@ -39,6 +40,7 @@ export function LegendSheet({
   onLinePress,
   onClearSelection,
 }: LegendSheetProps) {
+  const { t } = useTranslation('legend');
   const [isOpen, setIsOpen] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -80,14 +82,14 @@ export function LegendSheet({
           size="lg"
           className="fixed bottom-4 left-1/2 -translate-x-1/2 z-10 shadow-lg"
         >
-          Lines ({items.length})
+          {t('panel.linesCount', { count: items.length })}
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-auto max-h-[80vh] flex flex-col">
         <SheetHeader>
-          <SheetTitle>Rodalies Lines</SheetTitle>
+          <SheetTitle>{t('panel.title')}</SheetTitle>
           <SheetDescription>
-            Tap to highlight, hold to isolate
+            {t('panel.instructionsMobile')}
           </SheetDescription>
         </SheetHeader>
         <Separator className="my-3" />
@@ -99,7 +101,7 @@ export function LegendSheet({
               role="status"
               aria-live="polite"
             >
-              <span className="font-medium">Selected:</span> {selectionText}
+              <span className="font-medium">{t('panel.selected', { lines: selectionText })}</span>
             </div>
           )}
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2">
@@ -113,7 +115,7 @@ export function LegendSheet({
                   data-testid={`legend-entry-${item.lineId}`}
                   data-line-id={item.lineId}
                   aria-pressed={isActive}
-                  aria-label={`${item.lineId}: ${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')}`}
+                  aria-label={t('panel.lineAriaLabel', { lineId: item.lineId, lineName: item.label.replace(/^[A-Z0-9]+\s*-\s*/, '') })}
                   onMouseDown={() => handleMouseDown(item.lineId)}
                   onMouseUp={() => handleMouseUp(item.lineId)}
                   onMouseLeave={handleMouseLeave}
@@ -131,7 +133,7 @@ export function LegendSheet({
                     backgroundColor: item.brandColor,
                     color: '#ffffff',
                   }}
-                  title={`${item.label.replace(/^[A-Z0-9]+\s*-\s*/, '')} (hold to isolate)`}
+                  title={t('panel.lineTooltip', { lineName: item.label.replace(/^[A-Z0-9]+\s*-\s*/, '') })}
                 >
                   {item.lineId}
                 </button>
@@ -146,7 +148,7 @@ export function LegendSheet({
               size="sm"
               onClick={onClearSelection}
             >
-              Clear Selection
+              {t('panel.clearSelection')}
             </Button>
           </div>
         )}

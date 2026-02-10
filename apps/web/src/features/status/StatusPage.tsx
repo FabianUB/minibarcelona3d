@@ -22,6 +22,7 @@ import {
 } from '../../lib/api/health';
 import { HealthSparkline } from './HealthSparkline';
 import { BaselineMaturity } from './BaselineMaturity';
+import { LanguageToggle } from '../../components/LanguageToggle';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
@@ -99,11 +100,16 @@ export function StatusPage() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
         {/* Header */}
-        <header className="text-center space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold">{t('page.title')}</h1>
-          <p className="text-muted-foreground">
-            {t('page.subtitle')}
-          </p>
+        <header className="space-y-2">
+          <div className="flex justify-start">
+            <LanguageToggle />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl md:text-3xl font-bold">{t('page.title')}</h1>
+            <p className="text-muted-foreground">
+              {t('page.subtitle')}
+            </p>
+          </div>
         </header>
 
         {/* Overall Status Banner */}
@@ -131,6 +137,13 @@ export function StatusPage() {
             ))}
           </div>
         </section>
+
+        {/* Delay Dashboard Link */}
+        <div className="text-center">
+          <Button variant="outline" size="sm" asChild>
+            <a href="/delays">{t('delays.viewDelays', { defaultValue: 'View Rodalies Delay Stats' })}</a>
+          </Button>
+        </div>
 
         {/* Baseline Learning Section */}
         <section className="space-y-4">
