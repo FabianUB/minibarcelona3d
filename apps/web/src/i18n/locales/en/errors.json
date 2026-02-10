@@ -21,6 +21,12 @@
       "suggestion": "Please try refreshing the page."
     }
   },
+  "trains": {
+    "title": "Unable to load trains",
+    "network": "Network connection issue. Please check your internet connection.",
+    "unavailable": "Train data temporarily unavailable. Retrying automatically...",
+    "generic": "An error occurred while loading train data."
+  },
   "buttons": {
     "tryAgain": "Try Again",
     "retrying": "Retrying..."

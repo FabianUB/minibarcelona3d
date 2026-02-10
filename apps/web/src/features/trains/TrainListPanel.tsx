@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ interface TrainListPanelProps {
 }
 
 export function TrainListPanel({ trains, map, isOpen, onClose, getMeshPosition }: TrainListPanelProps) {
+  const { t } = useTranslation('vehicles');
   const [sortField, setSortField] = useState<keyof TrainPosition | 'line'>('line');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filter, setFilter] = useState('');
@@ -164,10 +166,10 @@ export function TrainListPanel({ trains, map, isOpen, onClose, getMeshPosition }
         <CardHeader className="pb-2 border-b">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span>Train List ({sortedTrains.length}/{trains.length})</span>
+              <span>{t('trainList.title', { filtered: sortedTrains.length, total: trains.length })}</span>
               <input
                 type="text"
-                placeholder="Filter trains..."
+                placeholder={t('trainList.filter')}
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="w-48 h-8 px-3 rounded-md border border-input bg-background text-sm"
@@ -178,7 +180,7 @@ export function TrainListPanel({ trains, map, isOpen, onClose, getMeshPosition }
               size="sm"
               onClick={onClose}
               className="h-8 w-8 p-0"
-              aria-label="Close train list"
+              aria-label={t('trainList.closeAriaLabel')}
             >
               ✕
             </Button>
@@ -189,12 +191,12 @@ export function TrainListPanel({ trains, map, isOpen, onClose, getMeshPosition }
           <table className="w-full text-sm">
             <thead className="bg-muted sticky top-0">
               <tr>
-                <SortableHeader field="vehicleKey" label="Vehicle" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                <SortableHeader field="line" label="Line" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-              <SortableHeader field="status" label="Status" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                <SortableHeader field="nextStopId" label="Next Stop" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-3 py-2 text-left font-medium">Position</th>
-                <SortableHeader field="polledAtUtc" label="Last Update" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader field="vehicleKey" label={t('trainList.columns.vehicle')} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader field="line" label={t('trainList.columns.line')} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader field="status" label={t('trainList.columns.status')} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader field="nextStopId" label={t('trainList.columns.nextStop')} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-3 py-2 text-left font-medium">{t('trainList.columns.position')}</th>
+                <SortableHeader field="polledAtUtc" label={t('trainList.columns.lastUpdate')} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
               </tr>
             </thead>
             <tbody>
@@ -232,7 +234,7 @@ export function TrainListPanel({ trains, map, isOpen, onClose, getMeshPosition }
         </CardContent>
 
         <div className="px-4 py-2 border-t bg-muted text-xs text-muted-foreground">
-          Click on a row to focus the camera on that train
+          {t('trainList.hint')}
         </div>
       </Card>
     </>,

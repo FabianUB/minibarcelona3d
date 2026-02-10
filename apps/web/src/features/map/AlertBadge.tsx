@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { fetchAlerts } from '../../lib/api/delays';
 
 const POLL_INTERVAL = 60000; // 60 seconds
 
 export function AlertBadge() {
+  const { t } = useTranslation('delays');
   const [alertCount, setAlertCount] = useState(0);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export function AlertBadge() {
         backgroundColor: 'white',
         animation: 'pulse 2s infinite',
       }} />
-      {alertCount} {alertCount === 1 ? 'alert' : 'alerts'}
+      {t('alerts.badge', { count: alertCount })}
     </a>
   );
 }

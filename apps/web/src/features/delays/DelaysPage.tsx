@@ -21,6 +21,7 @@ import { DelayedTrainsList } from './DelaySummaryCards';
 import { AlertsList } from './AlertsList';
 import { RouteBreakdownTable } from './RouteBreakdownTable';
 import { OnTimeChart } from './OnTimeChart';
+import { LanguageToggle } from '../../components/LanguageToggle';
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
@@ -98,9 +99,14 @@ export function DelaysPage() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-4">
         {/* Header */}
-        <header className="text-center space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold">{t('page.title')}</h1>
-          <p className="text-muted-foreground">{t('page.subtitle')}</p>
+        <header className="space-y-2">
+          <div className="flex justify-start">
+            <LanguageToggle />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl md:text-3xl font-bold">{t('page.title')}</h1>
+            <p className="text-muted-foreground">{t('page.subtitle')}</p>
+          </div>
         </header>
 
         {/* KPI Metric Cards */}

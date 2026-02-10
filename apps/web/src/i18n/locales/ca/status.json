@@ -60,6 +60,13 @@
     "lastUpdated": "Última actualització: {{time}}",
     "autoRefresh": "S'actualitza automàticament cada 30 segons"
   },
+  "sparkline": {
+    "noData": "Sense dades",
+    "failedToLoad": "Error en carregar",
+    "stable": "Estable al {{score}}%",
+    "range": "{{min}}% - {{max}}% (ara {{current}}%)",
+    "ariaLabel": "Tendència de salut per {{network}}: actualment {{score}}%"
+  },
   "error": {
     "unableToLoad": "No es pot carregar l'estat",
     "failedToLoad": "Error en carregar l'estat"

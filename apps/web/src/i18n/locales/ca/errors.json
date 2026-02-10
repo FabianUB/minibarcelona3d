@@ -21,6 +21,12 @@
       "suggestion": "Si us plau, intenta refrescar la pàgina."
     }
   },
+  "trains": {
+    "title": "No s'han pogut carregar els trens",
+    "network": "Problema de connexió de xarxa. Comprova la teva connexió a Internet.",
+    "unavailable": "Dades de trens temporalment no disponibles. Reintentant automàticament...",
+    "generic": "S'ha produït un error en carregar les dades de trens."
+  },
   "buttons": {
     "tryAgain": "Intentar de Nou",
     "retrying": "Reintentant..."

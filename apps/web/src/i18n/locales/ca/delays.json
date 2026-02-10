@@ -10,11 +10,15 @@
     "delay": "Retard",
     "prevStop": "Des de",
     "nextStop": "Propera parada",
-    "noData": "Sense dades de retard disponibles"
+    "noData": "Sense dades de retard disponibles",
+    "lessThanOneMin": "<1 min",
+    "minuteDelay": "{{count}} min"
   },
   "alerts": {
     "title": "Avisos de Servei Actius",
     "noAlerts": "No hi ha avisos de servei actius",
+    "badge_one": "{{count}} avís",
+    "badge_other": "{{count}} avisos",
     "since": "Des de {{time}}",
     "affectedRoutes": "Línies afectades",
     "cause": {
@@ -51,7 +55,9 @@
     "observations": "Obs.",
     "avgDelay": "Retard Mitjà",
     "onTime": "Puntualitat %",
-    "maxDelay": "Màxim"
+    "maxDelay": "Màxim",
+    "seconds": "{{value}}s",
+    "minutes": "{{value}}m"
   },
   "chart": {
     "title": "Puntualitat % (Últimes {{hours}}h)",

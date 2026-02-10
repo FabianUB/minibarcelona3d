@@ -21,6 +21,12 @@
       "suggestion": "Por favor, intenta refrescar la página."
     }
   },
+  "trains": {
+    "title": "No se pudieron cargar los trenes",
+    "network": "Problema de conexión de red. Comprueba tu conexión a Internet.",
+    "unavailable": "Datos de trenes temporalmente no disponibles. Reintentando automáticamente...",
+    "generic": "Se produjo un error al cargar los datos de trenes."
+  },
   "buttons": {
     "tryAgain": "Intentar de Nuevo",
     "retrying": "Reintentando..."

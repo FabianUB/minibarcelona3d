@@ -10,11 +10,15 @@
     "delay": "Delay",
     "prevStop": "From",
     "nextStop": "Next stop",
-    "noData": "No delay data available"
+    "noData": "No delay data available",
+    "lessThanOneMin": "<1 min",
+    "minuteDelay": "{{count}} min"
   },
   "alerts": {
     "title": "Active Service Alerts",
     "noAlerts": "No active service alerts",
+    "badge_one": "{{count}} alert",
+    "badge_other": "{{count}} alerts",
     "since": "Since {{time}}",
     "affectedRoutes": "Affected routes",
     "cause": {
@@ -51,7 +55,9 @@
     "observations": "Obs.",
     "avgDelay": "Avg Delay",
     "onTime": "On Time %",
-    "maxDelay": "Max Delay"
+    "maxDelay": "Max Delay",
+    "seconds": "{{value}}s",
+    "minutes": "{{value}}m"
   },
   "chart": {
     "title": "On-Time % (Last {{hours}}h)",
