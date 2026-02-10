@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Estadísticas de Retrasos de Rodalies",
+    "subtitle": "Seguimiento de retrasos en tiempo real y avisos de servicio"
+  },
+  "snapshot": {
+    "title": "Trenes con Retraso",
+    "allOnTime": "Los {{total}} trenes van puntuales",
+    "delayedCount": "{{delayed}} de {{total}} con retraso",
+    "delay": "Retraso",
+    "prevStop": "Desde",
+    "nextStop": "Próxima parada",
+    "noData": "Sin datos de retraso disponibles",
+    "lessThanOneMin": "<1 min",
+    "minuteDelay": "{{count}} min"
+  },
+  "alerts": {
+    "title": "Avisos de Servicio Activos",
+    "noAlerts": "No hay avisos de servicio activos",
+    "badge_one": "{{count}} aviso",
+    "badge_other": "{{count}} avisos",
+    "since": "Desde {{time}}",
+    "affectedRoutes": "Líneas afectadas",
+    "cause": {
+      "UNKNOWN_CAUSE": "Desconocida",
+      "OTHER_CAUSE": "Otra",
+      "TECHNICAL_PROBLEM": "Problema Técnico",
+      "STRIKE": "Huelga",
+      "DEMONSTRATION": "Manifestación",
+      "ACCIDENT": "Accidente",
+      "HOLIDAY": "Festivo",
+      "WEATHER": "Meteorología",
+      "MAINTENANCE": "Mantenimiento",
+      "CONSTRUCTION": "Obras",
+      "POLICE_ACTIVITY": "Actividad Policial",
+      "MEDICAL_EMERGENCY": "Emergencia Médica"
+    },
+    "effect": {
+      "NO_SERVICE": "Sin Servicio",
+      "REDUCED_SERVICE": "Servicio Reducido",
+      "SIGNIFICANT_DELAYS": "Retrasos Significativos",
+      "DETOUR": "Desvío",
+      "ADDITIONAL_SERVICE": "Servicio Adicional",
+      "MODIFIED_SERVICE": "Servicio Modificado",
+      "OTHER_EFFECT": "Otro",
+      "UNKNOWN_EFFECT": "Desconocido",
+      "STOP_MOVED": "Parada Movida",
+      "NO_EFFECT": "Sin Efecto",
+      "ACCESSIBILITY_ISSUE": "Problema de Accesibilidad"
+    }
+  },
+  "routes": {
+    "title": "Desglose por Línea",
+    "route": "Línea",
+    "observations": "Obs.",
+    "avgDelay": "Retraso Medio",
+    "onTime": "Puntualidad %",
+    "maxDelay": "Máximo",
+    "seconds": "{{value}}s",
+    "minutes": "{{value}}m"
+  },
+  "chart": {
+    "title": "Puntualidad % (Últimas {{hours}}h)",
+    "onTimePercent": "Puntualidad %"
+  },
+  "period": {
+    "24h": "24 horas",
+    "48h": "48 horas",
+    "7d": "7 días"
+  },
+  "metrics": {
+    "onTime": "Puntualidad %",
+    "delayed": "Con retraso",
+    "avgDelay": "Retraso medio",
+    "maxDelay": "Máx. retraso",
+    "delayedOf": "{{delayed}} / {{total}}",
+    "min": "{{value}} min"
+  },
+  "error": {
+    "failedToLoad": "Error al cargar datos de retraso",
+    "unableToLoad": "No se pudo cargar"
+  },
+  "footer": {
+    "lastUpdated": "Última actualización: {{time}}",
+    "autoRefresh": "Se actualiza automáticamente cada 30s",
+    "threshold": "Umbral de retraso: 5 min (300s)"
+  }
+}
