@@ -36,7 +36,7 @@ export function AlertBadge() {
       style={{
         position: 'fixed',
         top: '1rem',
-        right: '1rem',
+        right: '3.5rem',
         zIndex: 40,
         display: 'flex',
         alignItems: 'center',
