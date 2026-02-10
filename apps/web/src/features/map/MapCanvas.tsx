@@ -983,8 +983,8 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           />
         </div>
       ) : null}
-      {/* Alert badge - top right */}
-      {mapInstance && isMapLoaded ? <AlertBadge /> : null}
+      {/* Alert badge - top right, only on Rodalies tab */}
+      {mapInstance && isMapLoaded && ui.activeControlTab === 'rodalies' ? <AlertBadge /> : null}
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
           <button

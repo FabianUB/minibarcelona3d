@@ -1738,7 +1738,6 @@
         "code": null,
         "lines": [
           "C1",
-          "C4",
           "C5"
         ]
       },
@@ -2783,8 +2782,7 @@
         "name": "Cantaelgallo",
         "code": null,
         "lines": [
-          "C1",
-          "C4"
+          "C1"
         ]
       },
       "geometry": {
@@ -4138,7 +4136,6 @@
         "code": null,
         "lines": [
           "C1",
-          "C4",
           "C5"
         ]
       },
@@ -4374,7 +4371,6 @@
         "name": "El Goloso",
         "code": null,
         "lines": [
-          "C4",
           "C4B"
         ]
       },
@@ -4997,7 +4993,6 @@
         "name": "Fuencarral",
         "code": null,
         "lines": [
-          "C4",
           "C4A",
           "C4B"
         ]
@@ -6049,7 +6044,6 @@
         "code": null,
         "lines": [
           "C1",
-          "C4",
           "C5"
         ]
       },
@@ -14651,7 +14645,6 @@
         "name": "Tres Cantos",
         "code": null,
         "lines": [
-          "C4",
           "C4B"
         ]
       },
@@ -14957,7 +14950,6 @@
         "name": "Universidad-Cantoblanco",
         "code": null,
         "lines": [
-          "C4",
           "C4A",
           "C4B"
         ]
@@ -15092,8 +15084,7 @@
         "name": "Utrera",
         "code": null,
         "lines": [
-          "C1",
-          "C4"
+          "C1"
         ]
       },
       "geometry": {
