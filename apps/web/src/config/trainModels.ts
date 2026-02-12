@@ -44,38 +44,6 @@ export const TRAIN_MODELS: Record<TrainModelType, TrainModelConfig> = {
 };
 
 /**
- * Line-to-model mapping based on rolling stock composition
- *
- * Lines with 100% 447: R3, R4, R7
- * Lines with mixed stock (447 + Civia): R1, R2, R8, R11 → use Civia
- * Regional lines with 470: R13, R14, R15, R16, R17, RG1, RT1, RT2
- */
-const LINE_TO_MODEL_MAP: Record<string, TrainModelType> = {
-  // 100% Series 447
-  'R3': '447',
-  'R4': '447',
-  'R7': '447',
-
-  // Mixed 447 + Civia (use Civia for these lines)
-  'R1': 'civia',
-  'R2': 'civia',
-  'R2N': 'civia',  // R2 Nord
-  'R2S': 'civia',  // R2 Sud
-  'R8': 'civia',
-  'R11': 'civia',
-
-  // Regional lines (448/470 series - use 470 model)
-  'R13': '470',
-  'R14': '470',
-  'R15': '470',
-  'R16': '470',
-  'R17': '470',
-  'RG1': '470',
-  'RT1': '470',
-  'RT2': '470',
-};
-
-/**
  * Extract line identifier from route ID
  * Route IDs follow pattern: "51T0093R11" where R11 is the line
  *
@@ -95,6 +63,7 @@ export function extractLineFromRouteId(routeId: string | null): string | null {
  * @param routeId - Route ID from train data (e.g., "51T0093R11"), can be null
  * @returns Model type identifier
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getModelTypeForRoute(_routeId: string | null): TrainModelType {
   // Use Civia for all Rodalies trains for visual consistency
   return 'civia';
