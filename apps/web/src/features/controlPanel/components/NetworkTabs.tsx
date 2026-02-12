@@ -97,7 +97,7 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
               isActive
                 ? 'bg-background text-foreground shadow-md scale-105'
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/60 hover:scale-102',
-              !isEnabled && 'opacity-40 grayscale'
+              !isEnabled && 'opacity-50 grayscale-[60%]'
             )}
             title={`${tab.label} - ${t('tabs.clickToSelect')}`}
           >
