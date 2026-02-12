@@ -33,6 +33,7 @@ import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
 import { useMapActions, useMapState } from '../../state/map';
 import { useTransitActions } from '../../state/transit';
+import type { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
 import { trainDebug } from '../../lib/trains/debugLogger';
@@ -108,6 +109,13 @@ export interface TrainLayer3DProps {
    * Range: 0.5 to 2.0, default 1.0
    */
   modelScale?: number;
+
+  /**
+   * Shared click coordinator for cross-layer hit resolution.
+   * When provided, this layer registers its hit resolver with the coordinator
+   * instead of attaching its own click handler to the canvas.
+   */
+  clickCoordinator?: VehicleClickCoordinator;
 }
 
 export interface RaycastDebugInfo {
@@ -175,6 +183,7 @@ export function TrainLayer3D({
   highlightedLineIds = [],
   isolateMode = false,
   modelScale = 1.0,
+  clickCoordinator,
 }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
@@ -245,6 +254,8 @@ export function TrainLayer3D({
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
+  // Store styledata listener for cleanup
+  const ensureOnTopRef = useRef<(() => void) | null>(null);
 
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
@@ -1010,44 +1021,7 @@ export function TrainLayer3D({
     meshManagerRef.current?.setHighlightedTrain(undefined);
   }, []);
 
-  const handlePointerClick = useCallback(
-    async (event: MouseEvent) => {
-      const canvas = map.getCanvas();
-      const rect = canvas.getBoundingClientRect();
-      const point = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
-
-      const hit = resolveScreenHit(point, 4);
-
-      if (hit) {
-        console.log(`🎯 Train clicked: ${hit.vehicleKey} (route: ${hit.routeId})`);
-        onRaycastResult?.({
-          hit: true,
-          vehicleKey: hit.vehicleKey,
-          routeId: hit.routeId ?? undefined,
-          objectsHit: 1,
-          timestamp: Date.now(),
-        });
-
-        try {
-          const trainData = await fetchTrainByKey(hit.vehicleKey);
-          selectTrain(trainData);
-          setActivePanel('trainInfo');
-        } catch (error) {
-          console.error('Failed to fetch train details:', error);
-        }
-      } else {
-        onRaycastResult?.({
-          hit: false,
-          objectsHit: 0,
-          timestamp: Date.now(),
-        });
-      }
-    },
-    [map, onRaycastResult, resolveScreenHit, selectTrain, setActivePanel]
-  );
+  // Click handling is now done via VehicleClickCoordinator (see registration effect below)
 
   /**
    * Mapbox Custom Layer Interface Implementation
@@ -1605,47 +1579,19 @@ export function TrainLayer3D({
         map.addLayer(customLayer, beforeId);
         layerAddedRef.current = true;
 
-        // Ensure train layer is on top of line layers by moving it after a delay
-        // This handles race conditions where line layers might be added after this layer
-        setTimeout(() => {
-          if (map.getLayer(LAYER_ID)) {
-            // moveLayer without second arg moves to top of stack
+        // Keep train layer on top whenever new layers are added (e.g. async Rodalies lines).
+        // The styledata event fires when any layer/source is added or changed.
+        const ensureOnTop = () => {
+          if (!map.getLayer(LAYER_ID)) return;
+          const layers = map.getStyle().layers ?? [];
+          const lastLayer = layers[layers.length - 1];
+          if (lastLayer && lastLayer.id !== LAYER_ID) {
             map.moveLayer(LAYER_ID);
-            console.log('TrainLayer3D: Moved layer to top of stack');
           }
-        }, 500);
-
-        // Debug: Log layer order to diagnose z-fighting issues
-        const logLayerDiagnostic = (label: string) => {
-          const styleLayers = map.getStyle().layers ?? [];
-          const allLayerIds = styleLayers.map(l => l.id);
-          const trainLayerIndex = allLayerIds.indexOf(LAYER_ID);
-          const rodaliesLineIndex = allLayerIds.indexOf('rodalies-lines-outline');
-          const rodaliesRelated = allLayerIds.filter(id => id.includes('rodalies') || id.includes('train'));
-
-          // Check if layer actually exists via getLayer
-          const trainLayerExists = !!map.getLayer(LAYER_ID);
-
-          // Find any custom layers (type === 'custom')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const customLayers = styleLayers.filter(l => (l as any).type === 'custom').map(l => l.id);
-
-          console.log(`🔍🚂 [TrainLayer3D] Layer order diagnostic (${label}):`, {
-            LAYER_ID,
-            beforeId: beforeId ?? '(none - should be on top)',
-            trainLayerExists,
-            trainLayerIndex,
-            rodaliesLineIndex,
-            trainAboveRodalies: trainLayerIndex > rodaliesLineIndex,
-            totalLayers: allLayerIds.length,
-            customLayers,
-            rodaliesRelatedLayers: rodaliesRelated,
-            last10Layers: allLayerIds.slice(-10),
-          });
         };
-        logLayerDiagnostic('immediate');
-        // Also log after a delay to catch final state
-        setTimeout(() => logLayerDiagnostic('after 500ms'), 500);
+        ensureOnTopRef.current = ensureOnTop;
+        ensureOnTop();
+        map.on('styledata', ensureOnTop);
 
         console.log(
           `TrainLayer3D: Custom layer added to map${beforeId ? ` before ${beforeId}` : ''}`
@@ -1666,6 +1612,11 @@ export function TrainLayer3D({
     // Cleanup: remove layer on unmount and clear timer
     return () => {
       clearTimeout(timer);
+
+      if (ensureOnTopRef.current) {
+        map.off('styledata', ensureOnTopRef.current);
+        ensureOnTopRef.current = null;
+      }
 
       if (layerAddedRef.current) {
         try {
@@ -1832,21 +1783,70 @@ export function TrainLayer3D({
   }, [modelScale]);
 
   /**
-   * Effect: Handle pointer hover/click using screen-space distance
+   * Effect: Handle pointer hover using screen-space distance
    */
   useEffect(() => {
     const canvas = map.getCanvas();
 
     canvas.addEventListener('mousemove', handlePointerMove);
     canvas.addEventListener('mouseleave', handlePointerLeave);
-    canvas.addEventListener('click', handlePointerClick);
 
     return () => {
       canvas.removeEventListener('mousemove', handlePointerMove);
       canvas.removeEventListener('mouseleave', handlePointerLeave);
-      canvas.removeEventListener('click', handlePointerClick);
     };
-  }, [map, handlePointerMove, handlePointerLeave, handlePointerClick]);
+  }, [map, handlePointerMove, handlePointerLeave]);
+
+  /**
+   * Effect: Register with VehicleClickCoordinator for coordinated click handling.
+   * Hidden Rodalies trains are excluded by checking the visible prop.
+   */
+  useEffect(() => {
+    if (!clickCoordinator) return;
+
+    clickCoordinator.register(
+      'rodalies',
+      (point, paddingPx) => {
+        const hit = resolveScreenHit(point, paddingPx);
+        if (!hit) return null;
+        return {
+          vehicleKey: hit.vehicleKey,
+          distance: hit.distance,
+          metadata: { routeId: hit.routeId },
+        };
+      },
+      async (hit) => {
+        onRaycastResult?.({
+          hit: true,
+          vehicleKey: hit.vehicleKey,
+          routeId: (hit.metadata?.routeId as string) ?? undefined,
+          objectsHit: 1,
+          timestamp: Date.now(),
+        });
+        try {
+          const trainData = await fetchTrainByKey(hit.vehicleKey);
+          selectTrain(trainData);
+          setActivePanel('trainInfo');
+        } catch (error) {
+          console.error('Failed to fetch train details:', error);
+        }
+      },
+      visible,
+    );
+
+    return () => {
+      clickCoordinator.unregister('rodalies');
+    };
+  }, [clickCoordinator, resolveScreenHit, visible, onRaycastResult, selectTrain, setActivePanel]);
+
+  /**
+   * Effect: Sync visibility with coordinator
+   */
+  useEffect(() => {
+    if (clickCoordinator) {
+      clickCoordinator.setLayerVisible('rodalies', visible);
+    }
+  }, [clickCoordinator, visible]);
 
   // T096: Display user-friendly error message when API unavailable
   // Only show error if we have no trains to display (don't disrupt working state)

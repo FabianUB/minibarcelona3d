@@ -27,6 +27,7 @@ import { TransitVehicleLayer3D } from '../transit';
 import { DataFreshnessIndicator } from '../status';
 import { AlertBadge } from './AlertBadge';
 import type { MapActions as MapActionsType } from '../../state/map/types';
+import { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 
 // Using streets-v12 for 3D buildings and natural colors (parks, water)
 // Similar to MiniTokyo3D's custom style but with built-in 3D building support
@@ -92,6 +93,9 @@ export function MapCanvas() {
 
   // Mesh position getters from each layer (for VehicleListView click-to-zoom)
   const meshPositionGettersRef = useRef<Map<string, (vehicleKey: string) => [number, number] | null>>(new Map());
+
+  // Single click coordinator for all 3D vehicle layers
+  const clickCoordinatorRef = useRef(new VehicleClickCoordinator());
   const [debugToolsEnabled, setDebugToolsEnabled] = useState(
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
   );
@@ -180,6 +184,33 @@ export function MapCanvas() {
     },
     []
   );
+
+  // Coordinated click handler: one click handler for all vehicle layers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const canvas = map.getCanvas();
+    const coordinator = clickCoordinatorRef.current;
+
+    const handleClick = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const point = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+      };
+
+      const result = coordinator.resolveClick(point, 4);
+      if (result) {
+        void result.onSelect(result.hit);
+      }
+    };
+
+    canvas.addEventListener('click', handleClick);
+    return () => {
+      canvas.removeEventListener('click', handleClick);
+    };
+  }, [mapInstance]);
 
   // Aggregated getMeshPosition function that queries all registered layers
   const getMeshPosition = useCallback(
@@ -834,6 +865,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.metro.selectedLineIds}
           isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleMetroMeshPositionGetterReady}
+          clickCoordinator={clickCoordinatorRef.current}
         />
       ) : null}
       {/* Bus route lines (below stops) */}
@@ -869,6 +901,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleBusMeshPositionGetterReady}
+          clickCoordinator={clickCoordinatorRef.current}
         />
       ) : null}
       {/* TRAM line geometries */}
@@ -902,6 +935,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.tram.selectedLineIds}
           isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleTramMeshPositionGetterReady}
+          clickCoordinator={clickCoordinatorRef.current}
         />
       ) : null}
       {/* FGC line geometries */}
@@ -935,6 +969,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.fgc.selectedLineIds}
           isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleFgcMeshPositionGetterReady}
+          clickCoordinator={clickCoordinatorRef.current}
         />
       ) : null}
       {/* Rodalies line geometries */}
@@ -969,6 +1004,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           isolateMode={networkHighlights.rodalies.highlightMode === 'isolate'}
           modelScale={modelSizes.rodalies}
           onMeshPositionGetterReady={handleRodaliesMeshPositionGetterReady}
+          clickCoordinator={clickCoordinatorRef.current}
         />
       ) : null}
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
