@@ -102,11 +102,11 @@ export class ScaleManager implements IScaleManager {
     this.scaleCache = new Map();
 
     // Discrete zoom buckets for simplified scale computation
-    // Zoom 0-15: Standard size (1.0x)
-    // Zoom 15+: Reduced size (0.5x) to prevent trains becoming too large
+    // Zoom 0-15.5: Reduced size (0.7x) to match visual proportion at zoom 15
+    // Zoom 15.5+: Further reduced (0.5x) to prevent trains becoming too large
     this.zoomBuckets = [
-      { minZoom: 0, maxZoom: 15, scale: 1.0 },
-      { minZoom: 15, maxZoom: 100, scale: 0.5 },
+      { minZoom: 0, maxZoom: 15.5, scale: 0.7 },
+      { minZoom: 15.5, maxZoom: 100, scale: 0.5 },
     ];
   }
 

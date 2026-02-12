@@ -22,6 +22,7 @@ import { useFgcPositions } from './hooks/useFgcPositions';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 import { useTransitActions, type DataSourceType } from '../../state/transit';
 import { useMapState, useMapActions } from '../../state/map';
+import type { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 
 export interface TransitVehicleLayer3DProps {
   /** Mapbox GL Map instance */
@@ -42,6 +43,8 @@ export interface TransitVehicleLayer3DProps {
   isolateMode?: boolean;
   /** Callback when mesh position getter is available */
   onMeshPositionGetterReady?: (getter: (vehicleKey: string) => [number, number] | null) => void;
+  /** Shared click coordinator for cross-layer hit resolution */
+  clickCoordinator?: VehicleClickCoordinator;
 }
 
 /**
@@ -59,6 +62,7 @@ export function TransitVehicleLayer3D({
   highlightedLineIds = [],
   isolateMode = false,
   onMeshPositionGetterReady,
+  clickCoordinator,
 }: TransitVehicleLayer3DProps) {
   const [sceneReady, setSceneReady] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
@@ -632,41 +636,10 @@ export function TransitVehicleLayer3D({
     map.triggerRepaint();
   }, [map]);
 
-  /**
-   * Handle click on vehicle
-   */
-  const handlePointerClick = useCallback(
-    (event: MouseEvent) => {
-      if (!visible) return;
-
-      const canvas = map.getCanvas();
-      const rect = canvas.getBoundingClientRect();
-      const point = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
-
-      const hit = resolveScreenHit(point, 4);
-
-      if (hit) {
-        console.log(`🎯 ${networkType} clicked: ${hit.vehicleKey} (line: ${hit.lineCode})`);
-
-        // Find the vehicle position from our stored positions
-        const vehicleData = positionsRef.current.find(
-          (v) => v.vehicleKey === hit.vehicleKey
-        );
-
-        if (vehicleData) {
-          selectVehicle(vehicleData);
-          setActivePanel('transitInfo');
-        }
-      }
-    },
-    [map, visible, networkType, resolveScreenHit, selectVehicle, setActivePanel]
-  );
+  // Click handling is now done via VehicleClickCoordinator (see registration effect below)
 
   /**
-   * Attach pointer event listeners
+   * Attach pointer event listeners (hover only; click is handled by coordinator)
    */
   useEffect(() => {
     if (!map || !sceneReady) return;
@@ -674,14 +647,55 @@ export function TransitVehicleLayer3D({
     const canvas = map.getCanvas();
     canvas.addEventListener('mousemove', handlePointerMove);
     canvas.addEventListener('mouseleave', handlePointerLeave);
-    canvas.addEventListener('click', handlePointerClick);
 
     return () => {
       canvas.removeEventListener('mousemove', handlePointerMove);
       canvas.removeEventListener('mouseleave', handlePointerLeave);
-      canvas.removeEventListener('click', handlePointerClick);
     };
-  }, [map, sceneReady, handlePointerMove, handlePointerLeave, handlePointerClick]);
+  }, [map, sceneReady, handlePointerMove, handlePointerLeave]);
+
+  /**
+   * Register with VehicleClickCoordinator for coordinated click handling
+   */
+  useEffect(() => {
+    if (!clickCoordinator) return;
+
+    clickCoordinator.register(
+      networkType,
+      (point, paddingPx) => {
+        const hit = resolveScreenHit(point, paddingPx);
+        if (!hit) return null;
+        return {
+          vehicleKey: hit.vehicleKey,
+          distance: hit.distance,
+          metadata: { lineCode: hit.lineCode, networkType },
+        };
+      },
+      (hit) => {
+        const vehicleData = positionsRef.current.find(
+          (v) => v.vehicleKey === hit.vehicleKey,
+        );
+        if (vehicleData) {
+          selectVehicle(vehicleData);
+          setActivePanel('transitInfo');
+        }
+      },
+      visible,
+    );
+
+    return () => {
+      clickCoordinator.unregister(networkType);
+    };
+  }, [clickCoordinator, networkType, resolveScreenHit, visible, selectVehicle, setActivePanel]);
+
+  /**
+   * Sync visibility with coordinator
+   */
+  useEffect(() => {
+    if (clickCoordinator) {
+      clickCoordinator.setLayerVisible(networkType, visible);
+    }
+  }, [clickCoordinator, networkType, visible]);
 
   /**
    * Notify parent when mesh position getter is ready
