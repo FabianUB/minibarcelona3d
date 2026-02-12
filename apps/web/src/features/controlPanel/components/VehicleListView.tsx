@@ -265,7 +265,7 @@ export function VehicleListView({
       {/* Header with back button */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{networkTab?.icon}</span>
+          {networkTab?.icon && <img src={networkTab.icon} alt="" className="w-5 h-5 object-contain" />}
           <span className="font-semibold text-sm">{t('vehicleList.title')}</span>
           <span className="text-xs text-muted-foreground">
             ({vehicles.length})

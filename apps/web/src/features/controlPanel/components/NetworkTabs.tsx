@@ -91,17 +91,17 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
             onTouchEnd={() => handleTouchEnd(tab.type)}
             onTouchCancel={handleTouchCancel}
             className={cn(
-              'relative flex items-center justify-center w-12 h-10 rounded-lg text-xl',
+              'relative flex items-center justify-center w-12 h-10 rounded-lg',
               'transition-all duration-200 ease-out',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               isActive
                 ? 'bg-background text-foreground shadow-md scale-105'
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/60 hover:scale-102',
-              !isEnabled && 'opacity-40 grayscale'
+              !isEnabled && 'opacity-50 grayscale-[60%]'
             )}
             title={`${tab.label} - ${t('tabs.clickToSelect')}`}
           >
-            <span aria-hidden="true">{tab.icon}</span>
+            <img src={tab.icon} alt="" aria-hidden="true" className="w-6 h-6 object-contain" draggable={false} />
             {/* Active indicator dot */}
             {isActive && (
               <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full" />

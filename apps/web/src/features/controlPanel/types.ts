@@ -6,6 +6,12 @@
 
 import type { TransportType, MapHighlightMode } from '@/types/rodalies';
 
+import metroLogo from '@/assets/network-logos/Metro.png';
+import busLogo from '@/assets/network-logos/Bus.png';
+import rodaliesLogo from '@/assets/network-logos/Rodalies.png';
+import fgcLogo from '@/assets/network-logos/FGC.png';
+import tramLogo from '@/assets/network-logos/TRAM.png';
+
 /**
  * Network tab configuration for the control panel
  */
@@ -16,14 +22,14 @@ export interface NetworkTabConfig {
 }
 
 /**
- * Tab configurations for all networks
+ * Tab configurations for all networks (ordered by ridership)
  */
 export const NETWORK_TABS: NetworkTabConfig[] = [
-  { type: 'rodalies', icon: '🚆', label: 'Rodalies' },
-  { type: 'metro', icon: '🚇', label: 'Metro' },
-  { type: 'bus', icon: '🚌', label: 'Bus' },
-  { type: 'tram', icon: '🚊', label: 'TRAM' },
-  { type: 'fgc', icon: '🚃', label: 'FGC' },
+  { type: 'metro', icon: metroLogo, label: 'Metro' },
+  { type: 'bus', icon: busLogo, label: 'Bus' },
+  { type: 'rodalies', icon: rodaliesLogo, label: 'Rodalies' },
+  { type: 'fgc', icon: fgcLogo, label: 'FGC' },
+  { type: 'tram', icon: tramLogo, label: 'TRAM' },
 ];
 
 /**
