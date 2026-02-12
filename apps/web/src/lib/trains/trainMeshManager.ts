@@ -178,6 +178,9 @@ export class TrainMeshManager {
   // Feature 003: Zoom-responsive scale manager
   private scaleManager: ScaleManager;
 
+  // Resolution-based scale: larger models on bigger screens to maintain visual proportion
+  private readonly resolutionScale: number;
+
   // Phase 4: Trip details cache for predictive positioning
   private tripDetailsCache: Map<string, TripDetails> = new Map();
   private predictiveConfig: PredictiveConfig = DEFAULT_PREDICTIVE_CONFIG;
@@ -261,6 +264,13 @@ export class TrainMeshManager {
 
     // Feature 003: Initialize scale manager
     this.scaleManager = new ScaleManager();
+
+    // Resolution-based scale: scale up models on larger screens
+    // MacBook 14" (1470x956 CSS px) is the baseline where models look ideal
+    const screenArea = window.screen.width * window.screen.height;
+    const referenceArea = 1470 * 956;
+    this.resolutionScale = Math.min(2.0, Math.max(1.0,
+      Math.sqrt(screenArea / referenceArea)));
 
     trainDebug.system.info(`Stations loaded: ${this.stationMap.size}`);
   }
@@ -997,7 +1007,7 @@ export class TrainMeshManager {
     // Feature 003: Apply initial scale to parent group (not trainModel)
     const scaleVariation = this.getScaleVariation(train.vehicleKey);
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
-    const initialScale = baseScale * scaleVariation * zoomScale * this.userScale;
+    const initialScale = baseScale * scaleVariation * zoomScale * this.userScale * this.resolutionScale;
     mesh.scale.set(initialScale, initialScale, initialScale);
 
     // Compute object-space half-extents BEFORE rotation for OBR hit detection
@@ -1684,7 +1694,7 @@ export class TrainMeshManager {
       const prev = this.trainMeshes.get(this.highlightedVehicleKey);
       if (prev) {
         const scaleVariation = this.getScaleVariation(prev.vehicleKey);
-        const normalScale = prev.baseScale * scaleVariation * prev.screenSpaceScale * this.userScale;
+        const normalScale = prev.baseScale * scaleVariation * prev.screenSpaceScale * this.userScale * this.resolutionScale;
         prev.mesh.scale.setScalar(normalScale);
       }
     }
@@ -1695,7 +1705,7 @@ export class TrainMeshManager {
       const next = this.trainMeshes.get(nextKey);
       if (next) {
         const scaleVariation = this.getScaleVariation(next.vehicleKey);
-        const normalScale = next.baseScale * scaleVariation * next.screenSpaceScale * this.userScale;
+        const normalScale = next.baseScale * scaleVariation * next.screenSpaceScale * this.userScale * this.resolutionScale;
         const highlightScale = normalScale * 1.12;
         next.mesh.scale.setScalar(highlightScale);
       }
@@ -1925,7 +1935,7 @@ export class TrainMeshManager {
     this.trainMeshes.forEach((meshData) => {
       if (meshData.lastZoomBucket !== quantizedZoom) {
         const scaleVariation = this.getScaleVariation(meshData.vehicleKey);
-        const finalScale = meshData.baseScale * scaleVariation * zoomScale * this.userScale;
+        const finalScale = meshData.baseScale * scaleVariation * zoomScale * this.userScale * this.resolutionScale;
 
         const isHighlighted = this.highlightedVehicleKey === meshData.vehicleKey;
         const scaleToApply = isHighlighted ? finalScale * 1.12 : finalScale;
