@@ -19,11 +19,11 @@ export interface NetworkTabConfig {
  * Tab configurations for all networks
  */
 export const NETWORK_TABS: NetworkTabConfig[] = [
-  { type: 'rodalies', icon: '🚆', label: 'Rodalies' },
   { type: 'metro', icon: '🚇', label: 'Metro' },
   { type: 'bus', icon: '🚌', label: 'Bus' },
-  { type: 'tram', icon: '🚊', label: 'TRAM' },
+  { type: 'rodalies', icon: '🚆', label: 'Rodalies' },
   { type: 'fgc', icon: '🚃', label: 'FGC' },
+  { type: 'tram', icon: '🚊', label: 'TRAM' },
 ];
 
 /**
