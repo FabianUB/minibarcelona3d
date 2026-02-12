@@ -254,6 +254,8 @@ export function TrainLayer3D({
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
+  // Store styledata listener for cleanup
+  const ensureOnTopRef = useRef<(() => void) | null>(null);
 
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
@@ -1577,47 +1579,19 @@ export function TrainLayer3D({
         map.addLayer(customLayer, beforeId);
         layerAddedRef.current = true;
 
-        // Ensure train layer is on top of line layers by moving it after a delay
-        // This handles race conditions where line layers might be added after this layer
-        setTimeout(() => {
-          if (map.getLayer(LAYER_ID)) {
-            // moveLayer without second arg moves to top of stack
+        // Keep train layer on top whenever new layers are added (e.g. async Rodalies lines).
+        // The styledata event fires when any layer/source is added or changed.
+        const ensureOnTop = () => {
+          if (!map.getLayer(LAYER_ID)) return;
+          const layers = map.getStyle().layers ?? [];
+          const lastLayer = layers[layers.length - 1];
+          if (lastLayer && lastLayer.id !== LAYER_ID) {
             map.moveLayer(LAYER_ID);
-            console.log('TrainLayer3D: Moved layer to top of stack');
           }
-        }, 500);
-
-        // Debug: Log layer order to diagnose z-fighting issues
-        const logLayerDiagnostic = (label: string) => {
-          const styleLayers = map.getStyle().layers ?? [];
-          const allLayerIds = styleLayers.map(l => l.id);
-          const trainLayerIndex = allLayerIds.indexOf(LAYER_ID);
-          const rodaliesLineIndex = allLayerIds.indexOf('rodalies-lines-outline');
-          const rodaliesRelated = allLayerIds.filter(id => id.includes('rodalies') || id.includes('train'));
-
-          // Check if layer actually exists via getLayer
-          const trainLayerExists = !!map.getLayer(LAYER_ID);
-
-          // Find any custom layers (type === 'custom')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const customLayers = styleLayers.filter(l => (l as any).type === 'custom').map(l => l.id);
-
-          console.log(`🔍🚂 [TrainLayer3D] Layer order diagnostic (${label}):`, {
-            LAYER_ID,
-            beforeId: beforeId ?? '(none - should be on top)',
-            trainLayerExists,
-            trainLayerIndex,
-            rodaliesLineIndex,
-            trainAboveRodalies: trainLayerIndex > rodaliesLineIndex,
-            totalLayers: allLayerIds.length,
-            customLayers,
-            rodaliesRelatedLayers: rodaliesRelated,
-            last10Layers: allLayerIds.slice(-10),
-          });
         };
-        logLayerDiagnostic('immediate');
-        // Also log after a delay to catch final state
-        setTimeout(() => logLayerDiagnostic('after 500ms'), 500);
+        ensureOnTopRef.current = ensureOnTop;
+        ensureOnTop();
+        map.on('styledata', ensureOnTop);
 
         console.log(
           `TrainLayer3D: Custom layer added to map${beforeId ? ` before ${beforeId}` : ''}`
@@ -1638,6 +1612,11 @@ export function TrainLayer3D({
     // Cleanup: remove layer on unmount and clear timer
     return () => {
       clearTimeout(timer);
+
+      if (ensureOnTopRef.current) {
+        map.off('styledata', ensureOnTopRef.current);
+        ensureOnTopRef.current = null;
+      }
 
       if (layerAddedRef.current) {
         try {
