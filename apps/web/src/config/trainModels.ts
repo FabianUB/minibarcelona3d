@@ -95,19 +95,9 @@ export function extractLineFromRouteId(routeId: string | null): string | null {
  * @param routeId - Route ID from train data (e.g., "51T0093R11"), can be null
  * @returns Model type identifier
  */
-export function getModelTypeForRoute(routeId: string | null): TrainModelType {
-  const line = extractLineFromRouteId(routeId);
-
-  if (!line) {
-    // Default to Civia if we can't determine the line
-    return 'civia';
-  }
-
-  // Look up the model for this line
-  const modelType = LINE_TO_MODEL_MAP[line];
-
-  // Default to Civia if line not in mapping
-  return modelType || 'civia';
+export function getModelTypeForRoute(_routeId: string | null): TrainModelType {
+  // Use Civia for all Rodalies trains for visual consistency
+  return 'civia';
 }
 
 /**
