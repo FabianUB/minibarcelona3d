@@ -6,14 +6,14 @@
 
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { useMapState, useMapActions } from '@/state/map';
+import { useMapNetwork, useMapActions } from '@/state/map';
 
 export function PanelModeToggle() {
   const { t } = useTranslation('controlPanel');
-  const { ui } = useMapState();
+  const { controlPanelMode } = useMapNetwork();
   const { setControlPanelMode } = useMapActions();
 
-  const isControlMode = ui.controlPanelMode === 'controls';
+  const isControlMode = controlPanelMode === 'controls';
 
   const handleToggle = () => {
     setControlPanelMode(isControlMode ? 'vehicles' : 'controls');

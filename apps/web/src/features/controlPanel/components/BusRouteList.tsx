@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { useMapState, useMapActions } from '@/state/map';
+import { useMapNetwork, useMapActions } from '@/state/map';
 import { BUS_ROUTE_GROUPS, type BusRoutePrefix } from '../types';
 import { TOP_BUS_LINES } from '@/config/busConfig';
 
@@ -54,7 +54,7 @@ function getRoutePrefix(routeCode: string): BusRoutePrefix | 'other' {
 
 export function BusRouteList({ className }: BusRouteListProps) {
   const { t } = useTranslation('controlPanel');
-  const { ui } = useMapState();
+  const { networkHighlights, showOnlyTopBusLines } = useMapNetwork();
   const { setNetworkHighlight, toggleNetworkLine, clearNetworkHighlight, toggleShowOnlyTopBusLines } = useMapActions();
   const [routes, setRoutes] = useState<BusRoute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,7 +62,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const networkHighlight = ui.networkHighlights.bus;
+  const networkHighlight = networkHighlights.bus;
   const hasSelection = networkHighlight.selectedLineIds.length > 0;
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -106,7 +106,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
   const filteredRoutes = useMemo(() => {
     // First filter by top lines if enabled
     let result = routes;
-    if (ui.showOnlyTopBusLines) {
+    if (showOnlyTopBusLines) {
       result = result.filter((r) => TOP_BUS_LINES.includes(r.route_code as typeof TOP_BUS_LINES[number]));
     }
 
@@ -121,7 +121,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
     }
 
     return result;
-  }, [routes, searchQuery, ui.showOnlyTopBusLines]);
+  }, [routes, searchQuery, showOnlyTopBusLines]);
 
   // Virtual list setup
   const virtualizer = useVirtualizer({
@@ -218,7 +218,7 @@ export function BusRouteList({ className }: BusRouteListProps) {
         </label>
         <Switch
           id="top-bus-toggle"
-          checked={ui.showOnlyTopBusLines}
+          checked={showOnlyTopBusLines}
           onCheckedChange={toggleShowOnlyTopBusLines}
         />
       </div>
