@@ -12,9 +12,11 @@ services:
     volumes:
       - transit_data:/data
       - ./data/gtfs:/data/gtfs:ro
+      - ./apps/web/public:/app/web_public
     environment:
       SQLITE_DATABASE: /data/transit.db
       GTFS_DIR: /data/gtfs
+      WEB_PUBLIC_DIR: /app/web_public
     command: ["sh", "/app/init-db.sh"]
     networks:
       - app_network
