@@ -19,8 +19,8 @@ import type {
   MapUIContextState,
 } from './contextTypes';
 
-/** @deprecated Use useMapCore(), useMapUI(), or useMapNetwork() instead */
-export function useMapState(): MapState {
+/** @internal Used by useMapStore() for full reducer state access in tests */
+function useMapState(): MapState {
   const ctx = useContext(MapStateContext);
   if (!ctx) {
     throw new Error('useMapState must be used within a MapStateProvider');
