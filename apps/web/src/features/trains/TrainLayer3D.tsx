@@ -20,12 +20,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import type { TrainPosition, RawTrainPosition } from '../../types/trains';
+import type { Train, TrainPosition, RawTrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
 import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
-import { loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
+import { loadManifest, loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
 import { buildLineColorMap } from '../../lib/trains/outlineManager';
 import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
@@ -432,9 +432,11 @@ export function TrainLayer3D({
       }
 
       if (!loggedDistinctPreviousRef.current && snapshotPreviousPositions.size > 0) {
+        // O(1) lookup instead of O(n) .find() per previous position
+        const currentByKey = new Map(resolvedPositions.map(p => [p.vehicleKey, p]));
         const previousStats = Array.from(snapshotPreviousPositions.values()).reduce(
           (acc, previous) => {
-            const current = resolvedPositions.find((pos) => pos.vehicleKey === previous.vehicleKey);
+            const current = currentByKey.get(previous.vehicleKey);
             if (
               current &&
               current.latitude !== null &&
@@ -472,19 +474,29 @@ export function TrainLayer3D({
 
       previousPositionsRef.current = snapshotPreviousPositions;
 
-      // Filter out trains without valid GPS coordinates
-      const validTrains = resolvedPositions.filter(
-        (train) => train.latitude !== null && train.longitude !== null
-      );
+      // Single-pass: filter valid trains and collect stats simultaneously
+      const validTrains: TrainPosition[] = [];
+      const nullCoordTrains: TrainPosition[] = [];
+      let nullRouteCount = 0;
+      let stoppedAtCount = 0, inTransitCount = 0, incomingAtCount = 0;
+      const stoppedAtNullRoute: TrainPosition[] = [];
 
-      // Calculate statistics for structured logging
-      const nullCoordTrains = resolvedPositions.filter(
-        (train) => train.latitude === null || train.longitude === null
-      );
-      const nullRouteTrains = validTrains.filter((train) => train.routeId === null);
-      const stoppedAtTrains = validTrains.filter((train) => train.status === 'STOPPED_AT');
-      const inTransitTrains = validTrains.filter((train) => train.status === 'IN_TRANSIT_TO');
-      const incomingAtTrains = validTrains.filter((train) => train.status === 'INCOMING_AT');
+      for (const train of resolvedPositions) {
+        if (train.latitude === null || train.longitude === null) {
+          nullCoordTrains.push(train);
+          continue;
+        }
+        validTrains.push(train);
+        if (train.routeId === null) nullRouteCount++;
+        if (train.status === 'STOPPED_AT') {
+          stoppedAtCount++;
+          if (train.routeId === null) stoppedAtNullRoute.push(train);
+        } else if (train.status === 'IN_TRANSIT_TO') {
+          inTransitCount++;
+        } else if (train.status === 'INCOMING_AT') {
+          incomingAtCount++;
+        }
+      }
 
       const previousKeys = new Set(lastPositionsRef.current.keys());
       const currentKeys = new Set(validTrains.map(t => t.vehicleKey));
@@ -497,31 +509,30 @@ export function TrainLayer3D({
         totalTrains: resolvedPositions.length,
         validTrains: validTrains.length,
         filteredOut: nullCoordTrains.length,
-        nullRouteId: nullRouteTrains.length,
-        stoppedAt: stoppedAtTrains.length,
-        inTransit: inTransitTrains.length,
-        incomingAt: incomingAtTrains.length,
+        nullRouteId: nullRouteCount,
+        stoppedAt: stoppedAtCount,
+        inTransit: inTransitCount,
+        incomingAt: incomingAtCount,
         filledFromStation,
         newTrains: newTrainKeys,
         removedTrains: disappearedTrains,
       });
 
       // Add issues for problematic trains
-      nullCoordTrains.forEach(train => {
+      for (const train of nullCoordTrains) {
         trainDebug.addPollIssue(train.vehicleKey, 'null coordinates', {
           status: train.status,
           routeId: train.routeId,
           nextStopId: train.nextStopId,
         });
-      });
+      }
 
-      // Add issues for STOPPED_AT trains with null routeId (potential visibility issues)
-      stoppedAtTrains.filter(t => t.routeId === null).forEach(train => {
+      for (const train of stoppedAtNullRoute) {
         trainDebug.addPollIssue(train.vehicleKey, 'STOPPED_AT with null routeId', {
           coords: `${train.latitude?.toFixed(4)}, ${train.longitude?.toFixed(4)}`,
           nextStopId: train.nextStopId,
         });
-      });
+      }
 
       trainDebug.endPollSummary();
 
@@ -1257,94 +1268,11 @@ export function TrainLayer3D({
   }), [map]);
 
   /**
-   * Effect: Load station data for bearing calculations
-   * Task: T047
+   * Effect: Load all static data in parallel (stations, railways, line colors, 3D models)
+   * Fetches manifest once and passes it to dependent loaders to avoid redundant fetches.
    */
   useEffect(() => {
-    const loadStationData = async () => {
-      try {
-        const stationCollection = await loadStations();
-
-        // Extract station data from GeoJSON features
-        const stations: Station[] = stationCollection.features.map((feature) => ({
-          id: feature.properties.id,
-          name: feature.properties.name,
-          code: feature.properties.code,
-          lines: feature.properties.lines,
-          geometry: feature.geometry,
-        }));
-
-        stationsRef.current = stations;
-        stationMapRef.current = new Map(stations.map((station) => [station.id, station]));
-        setStationsLoaded(true);
-        console.log(`TrainLayer3D: Loaded ${stations.length} stations for bearing calculations`);
-      } catch (err) {
-        console.error('TrainLayer3D: Failed to load stations:', err);
-        setError('Failed to load station data');
-      }
-    };
-
-    void loadStationData();
-  }, []);
-
-  /**
-   * Effect: Load railway geometry and preprocess for snapping
-   */
-  useEffect(() => {
-    const loadRailwayData = async () => {
-      try {
-        const collection = await loadLineGeometryCollection();
-        const processed = new Map<string, PreprocessedRailwayLine>();
-
-        collection.features.forEach((feature) => {
-          const shortCode = feature.properties?.short_code ?? feature.properties?.id;
-          if (!shortCode) {
-            return;
-          }
-          const preprocessed = preprocessRailwayLine(feature.geometry);
-          if (preprocessed) {
-            processed.set(shortCode.toUpperCase(), preprocessed);
-          }
-        });
-
-        railwaysRef.current = processed;
-        console.log(`TrainLayer3D: Preprocessed ${processed.size} railway lines for snapping`);
-      } catch (err) {
-        console.error('TrainLayer3D: Failed to load railway geometry for snapping', err);
-        setError((prev) => prev ?? 'Failed to load railway geometry data');
-      } finally {
-        setRailwaysLoaded(true);
-      }
-    };
-
-    void loadRailwayData();
-  }, []);
-
-  /**
-   * Effect: Load line data and build color map for hover outlines
-   * Phase 5: User Story 3 - Line Identification on Hover
-   */
-  useEffect(() => {
-    const loadLineData = async () => {
-      try {
-        const lines = await loadRodaliesLines();
-        const colorMap = buildLineColorMap(lines);
-        lineColorMapRef.current = colorMap;
-        console.log(`TrainLayer3D: Loaded ${colorMap.size} line colors for outlines`);
-      } catch (err) {
-        console.error('TrainLayer3D: Failed to load line data for outlines', err);
-      }
-    };
-
-    void loadLineData();
-  }, []);
-
-  /**
-   * Effect: Preload 3D train models
-   * T045: Load in parallel with other static data (stations, railways, lines)
-   * Moved here from onAdd to start loading earlier
-   */
-  useEffect(() => {
+    // Model preload is independent of manifest — start immediately
     preloadAllTrainModels()
       .then(() => {
         setModelsLoaded(true);
@@ -1354,6 +1282,55 @@ export function TrainLayer3D({
         console.error('TrainLayer3D: Failed to load train models:', error);
         setError('Failed to load 3D train models');
       });
+
+    // Load manifest once, then fetch all data files in parallel
+    const loadData = async () => {
+      try {
+        const manifest = await loadManifest();
+        const [stationCollection, collection, lines] = await Promise.all([
+          loadStations(manifest),
+          loadLineGeometryCollection(manifest),
+          loadRodaliesLines(manifest),
+        ]);
+
+        // Process stations
+        const stations: Station[] = stationCollection.features.map((feature) => ({
+          id: feature.properties.id,
+          name: feature.properties.name,
+          code: feature.properties.code,
+          lines: feature.properties.lines,
+          geometry: feature.geometry,
+        }));
+        stationsRef.current = stations;
+        stationMapRef.current = new Map(stations.map((station) => [station.id, station]));
+        setStationsLoaded(true);
+        console.log(`TrainLayer3D: Loaded ${stations.length} stations for bearing calculations`);
+
+        // Process railway geometry
+        const processed = new Map<string, PreprocessedRailwayLine>();
+        collection.features.forEach((feature) => {
+          const shortCode = feature.properties?.short_code ?? feature.properties?.id;
+          if (!shortCode) return;
+          const preprocessed = preprocessRailwayLine(feature.geometry);
+          if (preprocessed) {
+            processed.set(shortCode.toUpperCase(), preprocessed);
+          }
+        });
+        railwaysRef.current = processed;
+        setRailwaysLoaded(true);
+        console.log(`TrainLayer3D: Preprocessed ${processed.size} railway lines for snapping`);
+
+        // Process line colors
+        const colorMap = buildLineColorMap(lines);
+        lineColorMapRef.current = colorMap;
+        console.log(`TrainLayer3D: Loaded ${colorMap.size} line colors for outlines`);
+      } catch (err) {
+        console.error('TrainLayer3D: Failed to load data:', err);
+        setError('Failed to load map data');
+        setRailwaysLoaded(true);
+      }
+    };
+    void loadData();
   }, []);
 
   /**
@@ -1731,6 +1708,8 @@ export function TrainLayer3D({
     // Performance: Uses memoized trainOpacities map instead of recalculating
     if (trainOpacities) {
       meshManagerRef.current.setTrainOpacities(trainOpacities);
+    } else {
+      meshManagerRef.current.resetAllOpacities();
     }
 
     // CRITICAL: Trigger Mapbox repaint after updating meshes
@@ -1815,7 +1794,7 @@ export function TrainLayer3D({
           metadata: { routeId: hit.routeId },
         };
       },
-      async (hit) => {
+      (hit) => {
         onRaycastResult?.({
           hit: true,
           vehicleKey: hit.vehicleKey,
@@ -1823,13 +1802,39 @@ export function TrainLayer3D({
           objectsHit: 1,
           timestamp: Date.now(),
         });
-        try {
-          const trainData = await fetchTrainByKey(hit.vehicleKey);
-          selectTrain(trainData);
-          setActivePanel('trainInfo');
-        } catch (error) {
-          console.error('Failed to fetch train details:', error);
-        }
+
+        // Show panel immediately from cached position data
+        const pos = lastPositionsRef.current.get(hit.vehicleKey);
+        const placeholder: Train = {
+          vehicleKey: hit.vehicleKey,
+          vehicleId: null,
+          vehicleLabel: hit.vehicleKey,
+          entityId: hit.vehicleKey,
+          tripId: null,
+          routeId: pos?.routeId ?? (hit.metadata?.routeId as string) ?? null,
+          latitude: pos?.latitude ?? null,
+          longitude: pos?.longitude ?? null,
+          currentStopId: pos?.currentStopId ?? null,
+          previousStopId: pos?.previousStopId ?? null,
+          nextStopId: pos?.nextStopId ?? null,
+          nextStopSequence: null,
+          status: pos?.status ?? 'IN_TRANSIT_TO',
+          arrivalDelaySeconds: null,
+          departureDelaySeconds: null,
+          scheduleRelationship: null,
+          predictedArrivalUtc: pos?.predictedArrivalUtc ?? null,
+          predictedDepartureUtc: null,
+          vehicleTimestampUtc: null,
+          polledAtUtc: pos?.polledAtUtc ?? new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        selectTrain(placeholder);
+        setActivePanel('trainInfo');
+
+        // Enrich with full details in background
+        fetchTrainByKey(hit.vehicleKey)
+          .then((trainData) => selectTrain(trainData))
+          .catch((error) => console.error('Failed to fetch train details:', error));
       },
       visible,
     );

@@ -39,6 +39,10 @@ import {
 } from './predictiveCalculator';
 import { trainDebug } from './debugLogger';
 
+// Pooled Vector3 instances reused in getScreenCandidates to avoid per-call GC pressure
+const _poolLocalX = new THREE.Vector3();
+const _poolLocalY = new THREE.Vector3();
+
 // Optional: watchlist of vehicle keys to emit detailed poll logs
 const POLL_WATCH_KEYS: Set<string> = new Set(
   (import.meta.env?.VITE_POLL_DEBUG_WATCH_KEYS ?? '')
@@ -1684,6 +1688,21 @@ export class TrainMeshManager {
     });
   }
 
+  /**
+   * Reset all train meshes to full opacity (1.0).
+   * Called when line highlighting is turned off.
+   */
+  resetAllOpacities(): void {
+    this.trainMeshes.forEach((meshData) => {
+      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
+        for (const mat of meshData.cachedMaterials) {
+          mat.transparent = false;
+          mat.opacity = 1.0;
+        }
+      }
+    });
+  }
+
   setHighlightedTrain(vehicleKey?: string): void {
     const nextKey = vehicleKey ?? null;
     if (this.highlightedVehicleKey === nextKey) {
@@ -1867,8 +1886,8 @@ export class TrainMeshManager {
 
       // Transform local axes to world space using the mesh's quaternion
       // Model's length is along X axis (faces -X, so length runs from +X to -X)
-      const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(mesh.quaternion);
-      const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(mesh.quaternion);
+      const localX = _poolLocalX.set(1, 0, 0).applyQuaternion(mesh.quaternion);
+      const localY = _poolLocalY.set(0, 1, 0).applyQuaternion(mesh.quaternion);
 
       // Project front (+X direction) and right (+Y direction) points to screen
       const frontLngLat = getLngLatFromModelPosition(
@@ -2102,18 +2121,22 @@ export class TrainMeshManager {
         meshData.targetSnap &&
         meshData.currentSnap.lineId === meshData.targetSnap.lineId
       ) {
-        const railway = this.railwayLines.get(meshData.currentSnap.lineId);
-        if (railway) {
-          const distanceStart = meshData.currentSnap.distance;
-          const distanceEnd = meshData.targetSnap.distance;
-          const interpolatedDistance = distanceStart + (distanceEnd - distanceStart) * progress;
-          const sample = sampleRailwayPosition(railway, interpolatedDistance);
-          const travellingForward = distanceEnd >= distanceStart;
-          interpolatedLngLat = [sample.position[0], sample.position[1]];
-          bearingOverride = {
-            bearing: sample.bearing,
-            reversed: !travellingForward,
-          };
+        const distanceStart = meshData.currentSnap.distance;
+        const distanceEnd = meshData.targetSnap.distance;
+        const travellingForward = distanceEnd >= distanceStart;
+
+        // At progress 1.0 use target snap directly — avoids binary search
+        if (progress >= 1.0) {
+          interpolatedLngLat = [meshData.targetSnap.position[0], meshData.targetSnap.position[1]];
+          bearingOverride = { bearing: meshData.targetSnap.bearing, reversed: !travellingForward };
+        } else {
+          const railway = this.railwayLines.get(meshData.currentSnap.lineId);
+          if (railway) {
+            const interpolatedDistance = distanceStart + (distanceEnd - distanceStart) * progress;
+            const sample = sampleRailwayPosition(railway, interpolatedDistance);
+            interpolatedLngLat = [sample.position[0], sample.position[1]];
+            bearingOverride = { bearing: sample.bearing, reversed: !travellingForward };
+          }
         }
       }
 

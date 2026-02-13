@@ -119,7 +119,6 @@ export function MapCanvas() {
     setMapInstance,
     setMapLoaded,
     setViewport,
-    selectStation,
   } = mapActions;
   // Note: useMapHighlightSelectors still needed for backwards compatibility with other components
   useMapHighlightSelectors();
@@ -987,7 +986,6 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           map={mapInstance}
           highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
           highlightMode={networkHighlights.rodalies.highlightMode}
-          onStationClick={selectStation}
           visible={transportFilters.rodalies && showStations}
         />
       ) : null}

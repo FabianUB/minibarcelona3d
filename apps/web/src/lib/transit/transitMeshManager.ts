@@ -42,6 +42,10 @@ export interface ScreenSpaceCandidate {
   };
 }
 
+// Pooled Vector3 instances reused in getScreenCandidates to avoid per-call GC pressure
+const _poolLocalX = new THREE.Vector3();
+const _poolLocalY = new THREE.Vector3();
+
 /**
  * Mesh data stored for each vehicle - includes continuous motion parameters
  */
@@ -142,6 +146,8 @@ export class TransitMeshManager {
   private currentZoom = 12;
   private highlightedVehicleKey: string | null = null;
   private currentLODState: 'high' | 'low' = 'high';
+  private userScale = 1.0;
+  private readonly resolutionScale: number;
 
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
@@ -157,6 +163,12 @@ export class TransitMeshManager {
       maxHeightPx: 50,
       targetHeightPx: 30,
     });
+
+    // Scale up models on larger screens (matches TrainMeshManager logic)
+    const screenArea = window.screen.width * window.screen.height;
+    const referenceArea = 1470 * 956;
+    this.resolutionScale = Math.min(2.0, Math.max(1.0,
+      Math.sqrt(screenArea / referenceArea)));
   }
 
   /**
@@ -321,6 +333,25 @@ export class TransitMeshManager {
   }
 
   /**
+   * Set user-controlled model scale multiplier.
+   * Dynamically rescales all existing meshes without recreating the layer.
+   */
+  setUserScale(scale: number): void {
+    const clamped = Math.max(0.5, Math.min(2.0, scale));
+    if (this.userScale === clamped) return;
+    this.userScale = clamped;
+    // Recalculate baseScale and apply to every mesh
+    const modelScale = getModelScale();
+    const newBase = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale;
+    for (const [, data] of this.meshes) {
+      data.baseScale = newBase;
+      const finalScale = newBase * data.screenSpaceScale;
+      const isHighlighted = this.highlightedVehicleKey === data.vehicleKey;
+      data.mesh.scale.setScalar(isHighlighted ? finalScale * 1.12 : finalScale);
+    }
+  }
+
+  /**
    * Get preprocessed geometry for a vehicle
    */
   private getGeometry(networkType: TransportType, lineCode: string): PreprocessedRailwayLine | null {
@@ -460,6 +491,12 @@ export class TransitMeshManager {
    * Determine which animation mode to use based on available data
    */
   private getAnimationMode(vehicle: VehiclePosition): 'continuous' | 'lerp' {
+    // Continuous mode requires line geometry to sample positions along the path
+    const geometry = this.getGeometry(vehicle.networkType, vehicle.lineCode);
+    if (!geometry || geometry.totalLength <= 0) {
+      return 'lerp';
+    }
+
     // Use continuous mode if we have valid motion parameters
     // distanceAlongLine > 0 required because some APIs return 0 as "not provided"
     const hasMotionParams =
@@ -619,9 +656,9 @@ export class TransitMeshManager {
     // Add the rotated model to the parent group
     mesh.add(trainModel);
 
-    // Calculate base scale
+    // Calculate base scale (includes user scale and resolution multipliers)
     const modelScale = getModelScale();
-    const baseScale = modelScale * this.config.vehicleSizeMeters;
+    const baseScale = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale;
 
     // Apply scale to parent group
     mesh.scale.setScalar(baseScale);
@@ -770,10 +807,10 @@ export class TransitMeshManager {
 
     for (const [key, data] of this.meshes) {
       if (!activeKeys.has(key)) {
+        this.disposeMesh(data);
         this.scene.remove(data.mesh);
         toRemove.push(key);
 
-        // Clear highlighted key if this vehicle is removed
         if (this.highlightedVehicleKey === key) {
           this.highlightedVehicleKey = null;
         }
@@ -783,6 +820,37 @@ export class TransitMeshManager {
     for (const key of toRemove) {
       this.meshes.delete(key);
     }
+  }
+
+  private disposeMesh(data: TransitMeshData): void {
+    // Dispose outline mesh if present
+    if (data.outlineMesh) {
+      if (data.outlineMesh.parent) {
+        data.outlineMesh.parent.remove(data.outlineMesh);
+      }
+      data.outlineMesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose());
+          } else {
+            child.material?.dispose();
+          }
+        }
+      });
+    }
+
+    // Dispose geometry and materials to free GPU memory
+    data.mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) {
+          child.material.forEach((mat) => mat.dispose());
+        } else {
+          child.material?.dispose();
+        }
+      }
+    });
   }
 
   /**
@@ -828,9 +896,6 @@ export class TransitMeshManager {
     // Get line geometry to sample position - must have geometry for continuous mode
     const geometry = this.getGeometry(data.networkType, data.lineCode);
     if (!geometry || geometry.totalLength <= 0) {
-      // No geometry available - can't animate in continuous mode
-      // This shouldn't happen if getAnimationMode worked correctly
-      console.warn(`[TransitMeshManager] No geometry for continuous animation: ${data.networkType}/${data.lineCode}`);
       return;
     }
 
@@ -892,6 +957,11 @@ export class TransitMeshManager {
     const elapsed = now - data.lerpStartTime;
     const t = Math.min(elapsed / data.lerpDuration, 1);
 
+    // Once interpolation completes, skip all sampling until next update
+    if (t >= 1 && data.currentPosition[0] === data.targetPosition[0] && data.currentPosition[1] === data.targetPosition[1]) {
+      return;
+    }
+
     // Smooth easing function (ease-out cubic)
     const eased = 1 - Math.pow(1 - t, 3);
 
@@ -903,25 +973,36 @@ export class TransitMeshManager {
     if (data.precomputedSnap?.hasValidSnap) {
       const geometry = this.getGeometry(data.networkType, data.lineCode);
       if (geometry) {
-        // Interpolate along pre-computed railway distance
-        let distance = data.precomputedSnap.startDistance +
-          (data.precomputedSnap.endDistance - data.precomputedSnap.startDistance) * eased;
+        // At t=1.0 use end position directly — avoids binary search
+        if (t >= 1) {
+          const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
+          const endDist = (data.precomputedSnap.endDistance + spreadOffset) % geometry.totalLength;
+          const sample = sampleRailwayPosition(geometry, endDist);
+          lng = sample.position[0];
+          lat = sample.position[1];
+          bearing = data.precomputedSnap.endBearing;
+          bearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+        } else {
+          // Interpolate along pre-computed railway distance
+          let distance = data.precomputedSnap.startDistance +
+            (data.precomputedSnap.endDistance - data.precomputedSnap.startDistance) * eased;
 
-        // Apply longitudinal offset to spread overlapping vehicles along the line
-        const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
-        distance = (distance + spreadOffset) % geometry.totalLength;
+          // Apply longitudinal offset to spread overlapping vehicles along the line
+          const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
+          distance = (distance + spreadOffset) % geometry.totalLength;
 
-        // Sample position from geometry (O(log n) binary search, no snapping)
-        const sample = sampleRailwayPosition(geometry, distance);
-        lng = sample.position[0];
-        lat = sample.position[1];
+          // Sample position from geometry (O(log n) binary search, no snapping)
+          const sample = sampleRailwayPosition(geometry, distance);
+          lng = sample.position[0];
+          lat = sample.position[1];
 
-        // Interpolate bearing
-        let bearingDiff = data.precomputedSnap.endBearing - data.precomputedSnap.startBearing;
-        if (bearingDiff > 180) bearingDiff -= 360;
-        if (bearingDiff < -180) bearingDiff += 360;
-        bearing = data.precomputedSnap.startBearing + bearingDiff * eased;
-        bearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+          // Interpolate bearing
+          let bearingDiff = data.precomputedSnap.endBearing - data.precomputedSnap.startBearing;
+          if (bearingDiff > 180) bearingDiff -= 360;
+          if (bearingDiff < -180) bearingDiff += 360;
+          bearing = data.precomputedSnap.startBearing + bearingDiff * eased;
+          bearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+        }
       } else {
         // Fallback: geometry not loaded yet
         lng = data.lerpStartPosition[0] + (data.targetPosition[0] - data.lerpStartPosition[0]) * eased;
@@ -1009,6 +1090,7 @@ export class TransitMeshManager {
    */
   clear(): void {
     for (const data of this.meshes.values()) {
+      this.disposeMesh(data);
       this.scene.remove(data.mesh);
     }
     this.meshes.clear();
@@ -1060,8 +1142,8 @@ export class TransitMeshManager {
       const worldHalfWidth = boundingHalfExtents.y * currentScale;  // Width along model's Y axis
 
       // Transform local axes to world space using the mesh's quaternion
-      const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(mesh.quaternion);
-      const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(mesh.quaternion);
+      const localX = _poolLocalX.set(1, 0, 0).applyQuaternion(mesh.quaternion);
+      const localY = _poolLocalY.set(0, 1, 0).applyQuaternion(mesh.quaternion);
 
       // Project front (+X direction) and right (+Y direction) points to screen
       const frontLngLat = getLngLatFromModelPosition(

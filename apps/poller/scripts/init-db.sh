@@ -5,6 +5,7 @@ DB_PATH="${SQLITE_DATABASE:-/data/transit.db}"
 GTFS_DIR="${GTFS_DIR:-/data/gtfs}"
 GTFS_DOWNLOAD_DIR="${GTFS_DOWNLOAD_DIR:-/data/gtfs_download}"
 RODALIES_GTFS_URL="${RODALIES_GTFS_URL:-https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip}"
+TMB_DATA_DIR="${WEB_PUBLIC_DIR:-/app/web_public}/tmb_data"
 SCHEMA_FILE="/app/schema.sql"
 
 echo "Checking database initialization..."
@@ -45,7 +46,12 @@ if [ "$GTFS_IMPORTED" = false ]; then
     echo "Step 1/2: Importing GTFS data..."
 
     # First import the mounted GTFS files (FGC, TRAM, Bus)
-    ./import-gtfs -db "$DB_PATH" -gtfs-dir "$GTFS_DIR"
+    GEOJSON_FLAG=""
+    if [ -d "$TMB_DATA_DIR" ]; then
+        # Generate tram/fgc line geometry + stations GeoJSON and update the manifest
+        GEOJSON_FLAG="-geojson-dir $TMB_DATA_DIR"
+    fi
+    ./import-gtfs -db "$DB_PATH" -gtfs-dir "$GTFS_DIR" $GEOJSON_FLAG
 
     # Then import the downloaded Rodalies GTFS
     ./import-gtfs -db "$DB_PATH" -gtfs-dir "$GTFS_DOWNLOAD_DIR"
