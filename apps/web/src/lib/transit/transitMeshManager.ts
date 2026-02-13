@@ -147,6 +147,7 @@ export class TransitMeshManager {
   private highlightedVehicleKey: string | null = null;
   private currentLODState: 'high' | 'low' = 'high';
   private userScale = 1.0;
+  private readonly resolutionScale: number;
 
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
@@ -162,6 +163,12 @@ export class TransitMeshManager {
       maxHeightPx: 50,
       targetHeightPx: 30,
     });
+
+    // Scale up models on larger screens (matches TrainMeshManager logic)
+    const screenArea = window.screen.width * window.screen.height;
+    const referenceArea = 1470 * 956;
+    this.resolutionScale = Math.min(2.0, Math.max(1.0,
+      Math.sqrt(screenArea / referenceArea)));
   }
 
   /**
@@ -335,7 +342,7 @@ export class TransitMeshManager {
     this.userScale = clamped;
     // Recalculate baseScale and apply to every mesh
     const modelScale = getModelScale();
-    const newBase = modelScale * this.config.vehicleSizeMeters * this.userScale;
+    const newBase = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale;
     for (const [, data] of this.meshes) {
       data.baseScale = newBase;
       const finalScale = newBase * data.screenSpaceScale;
@@ -649,9 +656,9 @@ export class TransitMeshManager {
     // Add the rotated model to the parent group
     mesh.add(trainModel);
 
-    // Calculate base scale (includes user scale multiplier)
+    // Calculate base scale (includes user scale and resolution multipliers)
     const modelScale = getModelScale();
-    const baseScale = modelScale * this.config.vehicleSizeMeters * this.userScale;
+    const baseScale = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale;
 
     // Apply scale to parent group
     mesh.scale.setScalar(baseScale);
