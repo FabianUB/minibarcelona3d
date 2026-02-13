@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useMapActions, useMapState } from '../../../state/map';
+import { useMapActions, useMapUI } from '../../../state/map';
 import type { PropsWithChildren } from 'react';
 import { MapStateProvider } from '../../../state/map/MapStateProvider';
 
@@ -50,61 +50,61 @@ describe('Contrast Toggle State Persistence', () => {
   });
 
   it('should initialize with high contrast disabled by default', () => {
-    const { result } = renderHook(() => useMapState(), { wrapper: Wrapper });
+    const { result } = renderHook(() => useMapUI(), { wrapper: Wrapper });
 
-    expect(result.current.ui.isHighContrast).toBe(false);
+    expect(result.current.isHighContrast).toBe(false);
   });
 
   it('should toggle high contrast mode', () => {
     const { result } = renderHook(() => ({
-      state: useMapState(),
+      ui: useMapUI(),
       actions: useMapActions(),
     }), {
       wrapper: Wrapper,
     });
 
     // Initially disabled
-    expect(result.current.state.ui.isHighContrast).toBe(false);
+    expect(result.current.ui.isHighContrast).toBe(false);
 
     // Enable high contrast
     act(() => {
       result.current.actions.setHighContrast(true);
     });
 
-    expect(result.current.state.ui.isHighContrast).toBe(true);
+    expect(result.current.ui.isHighContrast).toBe(true);
 
     // Disable high contrast
     act(() => {
       result.current.actions.setHighContrast(false);
     });
 
-    expect(result.current.state.ui.isHighContrast).toBe(false);
+    expect(result.current.ui.isHighContrast).toBe(false);
   });
 
   it('should toggle high contrast with toggleHighContrast action', () => {
     const { result } = renderHook(() => ({
-      state: useMapState(),
+      ui: useMapUI(),
       actions: useMapActions(),
     }), {
       wrapper: Wrapper,
     });
 
     // Initially disabled
-    expect(result.current.state.ui.isHighContrast).toBe(false);
+    expect(result.current.ui.isHighContrast).toBe(false);
 
     // Toggle to enable
     act(() => {
       result.current.actions.toggleHighContrast();
     });
 
-    expect(result.current.state.ui.isHighContrast).toBe(true);
+    expect(result.current.ui.isHighContrast).toBe(true);
 
     // Toggle to disable
     act(() => {
       result.current.actions.toggleHighContrast();
     });
 
-    expect(result.current.state.ui.isHighContrast).toBe(false);
+    expect(result.current.ui.isHighContrast).toBe(false);
   });
 
   it('should persist high contrast state to localStorage', () => {
@@ -139,20 +139,20 @@ describe('Contrast Toggle State Persistence', () => {
       JSON.stringify({ isHighContrast: true }),
     );
 
-    const { result } = renderHook(() => useMapState(), { wrapper: Wrapper });
+    const { result } = renderHook(() => useMapUI(), { wrapper: Wrapper });
 
     // Should restore from localStorage
-    expect(result.current.ui.isHighContrast).toBe(true);
+    expect(result.current.isHighContrast).toBe(true);
   });
 
   it('should handle corrupt localStorage data gracefully', () => {
     // Set invalid JSON in localStorage
     localStorage.setItem('rodalies-map-preferences', 'invalid-json{');
 
-    const { result } = renderHook(() => useMapState(), { wrapper: Wrapper });
+    const { result } = renderHook(() => useMapUI(), { wrapper: Wrapper });
 
     // Should fallback to default (disabled)
-    expect(result.current.ui.isHighContrast).toBe(false);
+    expect(result.current.isHighContrast).toBe(false);
   });
 
   it('should handle missing isHighContrast key in stored preferences', () => {
@@ -162,10 +162,10 @@ describe('Contrast Toggle State Persistence', () => {
       JSON.stringify({ someOtherKey: 'value' }),
     );
 
-    const { result } = renderHook(() => useMapState(), { wrapper: Wrapper });
+    const { result } = renderHook(() => useMapUI(), { wrapper: Wrapper });
 
     // Should fallback to default (disabled)
-    expect(result.current.ui.isHighContrast).toBe(false);
+    expect(result.current.isHighContrast).toBe(false);
   });
 
   it('should preserve other preferences when toggling contrast', () => {

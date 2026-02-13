@@ -10,7 +10,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useMapState, useMapActions } from '@/state/map';
+import { useMapNetwork, useMapActions } from '@/state/map';
 import type { TransportType } from '@/types/rodalies';
 import { useNetworkLines } from '../hooks/useNetworkLines';
 
@@ -21,12 +21,12 @@ interface NetworkLineGridProps {
 
 export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
   const { t } = useTranslation('controlPanel');
-  const { ui } = useMapState();
+  const { networkHighlights } = useMapNetwork();
   const { setNetworkHighlight, toggleNetworkLine, clearNetworkHighlight } = useMapActions();
   const { lines, isLoading, error } = useNetworkLines(network);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
-  const networkHighlight = ui.networkHighlights[network];
+  const networkHighlight = networkHighlights[network];
   const hasSelection = networkHighlight.selectedLineIds.length > 0;
 
   const handleMouseDown = useCallback(

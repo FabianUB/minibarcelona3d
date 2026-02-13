@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useMapState, useMapActions } from '../../state/map';
+import { useMapUI, useMapNetwork, useMapActions } from '../../state/map';
 import { TransportFilterSheet } from './TransportFilterSheet';
 import { FILTER_OPTIONS } from './filterOptions';
 import type { TransportType } from '../../types/rodalies';
@@ -21,11 +21,12 @@ import type { TransportType } from '../../types/rodalies';
  * - Desktop (>768px): Expandable card below settings button
  */
 export function TransportFilterButton() {
-  const { ui } = useMapState();
+  const { activePanel } = useMapUI();
+  const { transportFilters } = useMapNetwork();
   const { setActivePanel, toggleTransportFilter } = useMapActions();
 
-  const isExpanded = ui.activePanel === 'transportFilter';
-  const isOtherPanelExpanded = ui.activePanel !== 'none' && ui.activePanel !== 'transportFilter';
+  const isExpanded = activePanel === 'transportFilter';
+  const isOtherPanelExpanded = activePanel !== 'none' && activePanel !== 'transportFilter';
 
   const handleToggle = (type: TransportType) => {
     toggleTransportFilter(type);
@@ -53,7 +54,7 @@ export function TransportFilterButton() {
             </div>
             <Switch
               id={`filter-${option.type}`}
-              checked={ui.transportFilters[option.type]}
+              checked={transportFilters[option.type]}
               onCheckedChange={() => handleToggle(option.type)}
               disabled={option.disabled}
               aria-label={`Toggle ${option.label} visibility`}

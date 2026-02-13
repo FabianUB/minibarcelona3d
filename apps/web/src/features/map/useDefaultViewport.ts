@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useMapActions, useMapState } from '../../state/map';
+import { useMapActions, useMapCore } from '../../state/map';
 import {
   getFallbackViewport,
   loadMapViewport,
@@ -17,7 +17,7 @@ interface UseDefaultViewportResult {
 
 export function useDefaultViewport(): UseDefaultViewportResult {
   const fallbackViewport = useMemo(() => getFallbackViewport(), []);
-  const { defaultViewport } = useMapState();
+  const { defaultViewport } = useMapCore();
   const { setDefaultViewport, resetViewport } = useMapActions();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(!defaultViewport);

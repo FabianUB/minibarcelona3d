@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { StationInfoPanel } from './StationInfoPanel';
 import { loadRodaliesLines, loadStationList } from '../../lib/rodalies/dataLoader';
-import { useMapActions, useMapState } from '../../state/map';
+import { useMapActions, useMapUI } from '../../state/map';
 import type { RodaliesLine, Station } from '../../types/rodalies';
 
 const DEFAULT_ERROR_MESSAGE = 'Unable to load station details. Please try again.';
@@ -30,7 +30,7 @@ async function ensureLineCache(
 }
 
 export function StationInfoPanelContainer() {
-  const { ui } = useMapState();
+  const { selectedStationId, activePanel, stationLoadError } = useMapUI();
   const {
     selectStation,
     setActivePanel,
@@ -55,7 +55,7 @@ export function StationInfoPanelContainer() {
   }, []);
 
   useEffect(() => {
-    const stationId = ui.selectedStationId;
+    const stationId = selectedStationId;
     if (!stationId) {
       setSelectedStation(null);
       setIsLoading(false);
@@ -107,7 +107,7 @@ export function StationInfoPanelContainer() {
     return () => {
       isCancelled = true;
     };
-  }, [ui.selectedStationId, retryNonce, setStationLoadError]);
+  }, [selectedStationId, retryNonce, setStationLoadError]);
 
   const closePanel = useCallback(() => {
     selectStation(null);
@@ -120,15 +120,15 @@ export function StationInfoPanelContainer() {
     setRetryNonce((value) => value + 1);
   }, [retryStationLoad]);
 
-  const isPanelOpen = ui.activePanel === 'stationInfo' && (isLoading || Boolean(selectedStation));
+  const isPanelOpen = activePanel === 'stationInfo' && (isLoading || Boolean(selectedStation));
 
-  const errorBanner = ui.stationLoadError ? (
+  const errorBanner = stationLoadError ? (
     <div
       className="fixed left-1/2 top-4 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-yellow-400/70 bg-yellow-50 px-4 py-2 text-sm text-yellow-900 shadow-lg"
       role="alert"
       data-testid="station-error-banner"
     >
-      <span>{ui.stationLoadError}</span>
+      <span>{stationLoadError}</span>
       <button
         type="button"
         className="text-xs font-semibold uppercase tracking-wide text-yellow-800 underline-offset-2 hover:underline"

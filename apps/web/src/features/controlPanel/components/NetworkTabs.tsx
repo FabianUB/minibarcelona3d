@@ -10,7 +10,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { useMapState, useMapActions } from '@/state/map';
+import { useMapNetwork, useMapActions } from '@/state/map';
 import type { TransportType } from '@/types/rodalies';
 import { NETWORK_TABS, type NetworkTabConfig } from '../types';
 
@@ -20,7 +20,7 @@ interface NetworkTabsProps {
 
 export function NetworkTabs({ className }: NetworkTabsProps) {
   const { t } = useTranslation('controlPanel');
-  const { ui } = useMapState();
+  const { activeControlTab, transportFilters } = useMapNetwork();
   const { setExclusiveNetwork, toggleNetworkMulti } = useMapActions();
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -77,8 +77,8 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
       aria-label={t('tabs.ariaLabel')}
     >
       {NETWORK_TABS.map((tab: NetworkTabConfig) => {
-        const isActive = ui.activeControlTab === tab.type;
-        const isEnabled = ui.transportFilters[tab.type];
+        const isActive = activeControlTab === tab.type;
+        const isEnabled = transportFilters[tab.type];
 
         return (
           <button

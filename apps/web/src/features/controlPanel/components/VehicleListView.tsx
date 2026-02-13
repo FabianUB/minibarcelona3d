@@ -11,7 +11,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useMapState, useMapActions } from '@/state/map';
+import { useMapNetwork, useMapActions } from '@/state/map';
 import type { TransportType } from '@/types/rodalies';
 import type { TrainPosition } from '@/types/trains';
 import type { VehiclePosition } from '@/types/transit';
@@ -75,7 +75,7 @@ export function VehicleListView({
   className,
 }: VehicleListViewProps) {
   const { t } = useTranslation('controlPanel');
-  const { ui } = useMapState();
+  const { transportFilters } = useMapNetwork();
   const { setControlPanelMode } = useMapActions();
   const parentRef = useRef<HTMLDivElement>(null);
   const networkTab = NETWORK_TABS.find((t) => t.type === network);
@@ -223,7 +223,7 @@ export function VehicleListView({
     overscan: 5,
   });
 
-  if (!ui.transportFilters[network]) {
+  if (!transportFilters[network]) {
     return (
       <div className={cn('py-8 text-center text-muted-foreground space-y-4', className)}>
         <div>
