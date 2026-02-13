@@ -432,9 +432,11 @@ export function TrainLayer3D({
       }
 
       if (!loggedDistinctPreviousRef.current && snapshotPreviousPositions.size > 0) {
+        // O(1) lookup instead of O(n) .find() per previous position
+        const currentByKey = new Map(resolvedPositions.map(p => [p.vehicleKey, p]));
         const previousStats = Array.from(snapshotPreviousPositions.values()).reduce(
           (acc, previous) => {
-            const current = resolvedPositions.find((pos) => pos.vehicleKey === previous.vehicleKey);
+            const current = currentByKey.get(previous.vehicleKey);
             if (
               current &&
               current.latitude !== null &&
@@ -472,19 +474,29 @@ export function TrainLayer3D({
 
       previousPositionsRef.current = snapshotPreviousPositions;
 
-      // Filter out trains without valid GPS coordinates
-      const validTrains = resolvedPositions.filter(
-        (train) => train.latitude !== null && train.longitude !== null
-      );
+      // Single-pass: filter valid trains and collect stats simultaneously
+      const validTrains: TrainPosition[] = [];
+      const nullCoordTrains: TrainPosition[] = [];
+      let nullRouteCount = 0;
+      let stoppedAtCount = 0, inTransitCount = 0, incomingAtCount = 0;
+      const stoppedAtNullRoute: TrainPosition[] = [];
 
-      // Calculate statistics for structured logging
-      const nullCoordTrains = resolvedPositions.filter(
-        (train) => train.latitude === null || train.longitude === null
-      );
-      const nullRouteTrains = validTrains.filter((train) => train.routeId === null);
-      const stoppedAtTrains = validTrains.filter((train) => train.status === 'STOPPED_AT');
-      const inTransitTrains = validTrains.filter((train) => train.status === 'IN_TRANSIT_TO');
-      const incomingAtTrains = validTrains.filter((train) => train.status === 'INCOMING_AT');
+      for (const train of resolvedPositions) {
+        if (train.latitude === null || train.longitude === null) {
+          nullCoordTrains.push(train);
+          continue;
+        }
+        validTrains.push(train);
+        if (train.routeId === null) nullRouteCount++;
+        if (train.status === 'STOPPED_AT') {
+          stoppedAtCount++;
+          if (train.routeId === null) stoppedAtNullRoute.push(train);
+        } else if (train.status === 'IN_TRANSIT_TO') {
+          inTransitCount++;
+        } else if (train.status === 'INCOMING_AT') {
+          incomingAtCount++;
+        }
+      }
 
       const previousKeys = new Set(lastPositionsRef.current.keys());
       const currentKeys = new Set(validTrains.map(t => t.vehicleKey));
@@ -497,31 +509,30 @@ export function TrainLayer3D({
         totalTrains: resolvedPositions.length,
         validTrains: validTrains.length,
         filteredOut: nullCoordTrains.length,
-        nullRouteId: nullRouteTrains.length,
-        stoppedAt: stoppedAtTrains.length,
-        inTransit: inTransitTrains.length,
-        incomingAt: incomingAtTrains.length,
+        nullRouteId: nullRouteCount,
+        stoppedAt: stoppedAtCount,
+        inTransit: inTransitCount,
+        incomingAt: incomingAtCount,
         filledFromStation,
         newTrains: newTrainKeys,
         removedTrains: disappearedTrains,
       });
 
       // Add issues for problematic trains
-      nullCoordTrains.forEach(train => {
+      for (const train of nullCoordTrains) {
         trainDebug.addPollIssue(train.vehicleKey, 'null coordinates', {
           status: train.status,
           routeId: train.routeId,
           nextStopId: train.nextStopId,
         });
-      });
+      }
 
-      // Add issues for STOPPED_AT trains with null routeId (potential visibility issues)
-      stoppedAtTrains.filter(t => t.routeId === null).forEach(train => {
+      for (const train of stoppedAtNullRoute) {
         trainDebug.addPollIssue(train.vehicleKey, 'STOPPED_AT with null routeId', {
           coords: `${train.latitude?.toFixed(4)}, ${train.longitude?.toFixed(4)}`,
           nextStopId: train.nextStopId,
         });
-      });
+      }
 
       trainDebug.endPollSummary();
 
