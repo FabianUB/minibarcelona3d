@@ -42,6 +42,38 @@ const (
 	RouteTypeFunicular  = 7
 )
 
+// GenerateNetwork creates GeoJSON line and station files for a single transit network.
+// Used for TRAM and FGC whose GTFS zips each contain one network's data.
+func GenerateNetwork(data *gtfs.Data, outputDir, networkDir string) error {
+	linesDir := filepath.Join(outputDir, networkDir, "lines")
+	if err := os.MkdirAll(linesDir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", linesDir, err)
+	}
+
+	nowStr := time.Now().UTC().Format(time.RFC3339)
+
+	routeToLine := buildRouteToLineMapping(data.Routes)
+	stopToLines := buildStopToLinesMapping(data.Trips, data.StopTimes, routeToLine)
+
+	if err := generateMetroLineFiles(data, data.Routes, routeToLine, linesDir, nowStr); err != nil {
+		return fmt.Errorf("failed to generate %s lines: %w", networkDir, err)
+	}
+
+	if err := generateMetroStations(data.Stops, stopToLines, filepath.Join(outputDir, networkDir)); err != nil {
+		return fmt.Errorf("failed to generate %s stations: %w", networkDir, err)
+	}
+
+	log.Printf("%s: generated %d routes", networkDir, len(data.Routes))
+	return nil
+}
+
+// GenerateManifest regenerates only the TMB manifest by scanning existing directories.
+// Called after GeoJSON generation to ensure the manifest includes all networks.
+func GenerateManifest(outputDir string) error {
+	nowStr := time.Now().UTC().Format(time.RFC3339)
+	return generateTMBManifest(outputDir, nowStr)
+}
+
 // Generate creates TMB GeoJSON files from GTFS data
 func Generate(data *gtfs.Data, outputDir string) error {
 	// Create output directories
