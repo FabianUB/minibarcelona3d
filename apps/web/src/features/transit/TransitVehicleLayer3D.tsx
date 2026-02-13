@@ -457,6 +457,8 @@ export function TransitVehicleLayer3D({
     // Apply vehicle opacities based on line selection (highlight/isolate mode)
     if (vehicleOpacities) {
       meshManagerRef.current.setVehicleOpacities(vehicleOpacities);
+    } else {
+      meshManagerRef.current.setOpacity(1.0);
     }
 
     // Store positions for click lookup
