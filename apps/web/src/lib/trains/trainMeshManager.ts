@@ -2121,18 +2121,22 @@ export class TrainMeshManager {
         meshData.targetSnap &&
         meshData.currentSnap.lineId === meshData.targetSnap.lineId
       ) {
-        const railway = this.railwayLines.get(meshData.currentSnap.lineId);
-        if (railway) {
-          const distanceStart = meshData.currentSnap.distance;
-          const distanceEnd = meshData.targetSnap.distance;
-          const interpolatedDistance = distanceStart + (distanceEnd - distanceStart) * progress;
-          const sample = sampleRailwayPosition(railway, interpolatedDistance);
-          const travellingForward = distanceEnd >= distanceStart;
-          interpolatedLngLat = [sample.position[0], sample.position[1]];
-          bearingOverride = {
-            bearing: sample.bearing,
-            reversed: !travellingForward,
-          };
+        const distanceStart = meshData.currentSnap.distance;
+        const distanceEnd = meshData.targetSnap.distance;
+        const travellingForward = distanceEnd >= distanceStart;
+
+        // At progress 1.0 use target snap directly — avoids binary search
+        if (progress >= 1.0) {
+          interpolatedLngLat = [meshData.targetSnap.position[0], meshData.targetSnap.position[1]];
+          bearingOverride = { bearing: meshData.targetSnap.bearing, reversed: !travellingForward };
+        } else {
+          const railway = this.railwayLines.get(meshData.currentSnap.lineId);
+          if (railway) {
+            const interpolatedDistance = distanceStart + (distanceEnd - distanceStart) * progress;
+            const sample = sampleRailwayPosition(railway, interpolatedDistance);
+            interpolatedLngLat = [sample.position[0], sample.position[1]];
+            bearingOverride = { bearing: sample.bearing, reversed: !travellingForward };
+          }
         }
       }
 

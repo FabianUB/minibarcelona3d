@@ -930,6 +930,11 @@ export class TransitMeshManager {
     const elapsed = now - data.lerpStartTime;
     const t = Math.min(elapsed / data.lerpDuration, 1);
 
+    // Once interpolation completes, skip all sampling until next update
+    if (t >= 1 && data.currentPosition[0] === data.targetPosition[0] && data.currentPosition[1] === data.targetPosition[1]) {
+      return;
+    }
+
     // Smooth easing function (ease-out cubic)
     const eased = 1 - Math.pow(1 - t, 3);
 
@@ -941,25 +946,36 @@ export class TransitMeshManager {
     if (data.precomputedSnap?.hasValidSnap) {
       const geometry = this.getGeometry(data.networkType, data.lineCode);
       if (geometry) {
-        // Interpolate along pre-computed railway distance
-        let distance = data.precomputedSnap.startDistance +
-          (data.precomputedSnap.endDistance - data.precomputedSnap.startDistance) * eased;
+        // At t=1.0 use end position directly — avoids binary search
+        if (t >= 1) {
+          const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
+          const endDist = (data.precomputedSnap.endDistance + spreadOffset) % geometry.totalLength;
+          const sample = sampleRailwayPosition(geometry, endDist);
+          lng = sample.position[0];
+          lat = sample.position[1];
+          bearing = data.precomputedSnap.endBearing;
+          bearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+        } else {
+          // Interpolate along pre-computed railway distance
+          let distance = data.precomputedSnap.startDistance +
+            (data.precomputedSnap.endDistance - data.precomputedSnap.startDistance) * eased;
 
-        // Apply longitudinal offset to spread overlapping vehicles along the line
-        const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
-        distance = (distance + spreadOffset) % geometry.totalLength;
+          // Apply longitudinal offset to spread overlapping vehicles along the line
+          const spreadOffset = this.calculateLongitudinalOffset(data.vehicleKey);
+          distance = (distance + spreadOffset) % geometry.totalLength;
 
-        // Sample position from geometry (O(log n) binary search, no snapping)
-        const sample = sampleRailwayPosition(geometry, distance);
-        lng = sample.position[0];
-        lat = sample.position[1];
+          // Sample position from geometry (O(log n) binary search, no snapping)
+          const sample = sampleRailwayPosition(geometry, distance);
+          lng = sample.position[0];
+          lat = sample.position[1];
 
-        // Interpolate bearing
-        let bearingDiff = data.precomputedSnap.endBearing - data.precomputedSnap.startBearing;
-        if (bearingDiff > 180) bearingDiff -= 360;
-        if (bearingDiff < -180) bearingDiff += 360;
-        bearing = data.precomputedSnap.startBearing + bearingDiff * eased;
-        bearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+          // Interpolate bearing
+          let bearingDiff = data.precomputedSnap.endBearing - data.precomputedSnap.startBearing;
+          if (bearingDiff > 180) bearingDiff -= 360;
+          if (bearingDiff < -180) bearingDiff += 360;
+          bearing = data.precomputedSnap.startBearing + bearingDiff * eased;
+          bearing = data.direction === 1 ? (bearing + 180) % 360 : bearing;
+        }
       } else {
         // Fallback: geometry not loaded yet
         lng = data.lerpStartPosition[0] + (data.targetPosition[0] - data.lerpStartPosition[0]) * eased;
