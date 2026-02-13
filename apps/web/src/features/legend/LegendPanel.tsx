@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLegendStore } from './legendStore';
-import { useMapActions, useMapState } from '../../state/map';
+import { useMapActions, useMapUI } from '../../state/map';
 import { LegendSheet } from './LegendSheet';
 
 /**
@@ -15,11 +15,11 @@ import { LegendSheet } from './LegendSheet';
  */
 export function LegendPanel() {
   const legend = useLegendStore();
-  const { ui } = useMapState();
+  const { activePanel } = useMapUI();
   const { setActivePanel } = useMapActions();
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
-  const isExpanded = ui.activePanel === 'legend';
+  const isExpanded = activePanel === 'legend';
 
   if (legend.isLoading) {
     return (
