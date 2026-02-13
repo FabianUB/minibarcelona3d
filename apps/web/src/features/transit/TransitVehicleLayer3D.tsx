@@ -21,7 +21,7 @@ import { useTramPositions } from './hooks/useTramPositions';
 import { useFgcPositions } from './hooks/useFgcPositions';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 import { useTransitActions, type DataSourceType } from '../../state/transit';
-import { useMapState, useMapActions } from '../../state/map';
+import { useMapNetwork, useMapActions } from '../../state/map';
 import type { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 
 export interface TransitVehicleLayer3DProps {
@@ -73,7 +73,7 @@ export function TransitVehicleLayer3D({
   visibleRef.current = visible;
 
   // State for bus filtering
-  const { ui } = useMapState();
+  const { showOnlyTopBusLines } = useMapNetwork();
 
   // State actions
   const { selectVehicle, setDataSource } = useTransitActions();
@@ -127,7 +127,7 @@ export function TransitVehicleLayer3D({
     isSimulationFallback: busSimulation,
   } = useBusPositions({
     enabled: networkType === 'bus' && visible,
-    filterTopLinesOnly: ui.showOnlyTopBusLines,
+    filterTopLinesOnly: showOnlyTopBusLines,
   });
 
   const {

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { useMapState, useMapActions } from '../../state/map';
+import { useMapNetwork, useMapActions } from '../../state/map';
 import { FILTER_OPTIONS } from './filterOptions';
 import type { TransportType } from '../../types/rodalies';
 
@@ -27,7 +27,7 @@ import type { TransportType } from '../../types/rodalies';
  */
 export function TransportFilterSheet() {
   const [isOpen, setIsOpen] = useState(false);
-  const { ui } = useMapState();
+  const { transportFilters } = useMapNetwork();
   const { toggleTransportFilter } = useMapActions();
 
   const handleToggle = (type: TransportType) => {
@@ -74,7 +74,7 @@ export function TransportFilterSheet() {
                   </div>
                   <Switch
                     id={`filter-mobile-${option.type}`}
-                    checked={ui.transportFilters[option.type]}
+                    checked={transportFilters[option.type]}
                     onCheckedChange={() => handleToggle(option.type)}
                     disabled={option.disabled}
                     aria-label={`Toggle ${option.label} visibility`}

@@ -8,7 +8,7 @@
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { useMapState, useMapActions } from '@/state/map';
+import { useMapNetwork, useMapActions } from '@/state/map';
 import type { TransportType } from '@/types/rodalies';
 import { DEFAULT_MODEL_SIZES } from '../types';
 
@@ -25,10 +25,10 @@ const SIZE_MULTIPLIERS = [
 
 export function ModelSizeSlider({ network, className }: ModelSizeSliderProps) {
   const { t } = useTranslation('controlPanel');
-  const { ui } = useMapState();
+  const networkState = useMapNetwork();
   const { setModelSize } = useMapActions();
 
-  const currentSize = ui.modelSizes[network];
+  const currentSize = networkState.modelSizes[network];
   const networkDefault = DEFAULT_MODEL_SIZES[network];
 
   // Compute absolute values from multipliers relative to network default
