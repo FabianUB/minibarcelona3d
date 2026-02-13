@@ -1,5 +1,5 @@
 import { Switch } from '@/components/ui/switch';
-import { useMapActions, useMapState } from '../../state/map';
+import { useMapActions, useMapUI } from '../../state/map';
 
 /**
  * ContrastToggle - High contrast mode toggle component
@@ -14,10 +14,8 @@ import { useMapActions, useMapState } from '../../state/map';
  * - Used within Settings menu
  */
 export function ContrastToggle() {
-  const { ui } = useMapState();
+  const { isHighContrast } = useMapUI();
   const { toggleHighContrast } = useMapActions();
-
-  const isHighContrast = ui.isHighContrast;
 
   return (
     <Switch

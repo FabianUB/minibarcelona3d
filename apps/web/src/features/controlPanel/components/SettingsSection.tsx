@@ -8,7 +8,7 @@
 import { useTranslation } from 'react-i18next';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { useMapState, useMapActions } from '@/state/map';
+import { useMapUI, useMapActions } from '@/state/map';
 import { MapPin, ParkingCircle } from 'lucide-react';
 
 interface SettingsSectionProps {
@@ -19,7 +19,7 @@ interface SettingsSectionProps {
 
 export function SettingsSection({ className, showRodaliesSettings = false }: SettingsSectionProps) {
   const { t } = useTranslation('controlPanel');
-  const { ui } = useMapState();
+  const { showStations, enableTrainParking } = useMapUI();
   const { toggleShowStations, toggleEnableTrainParking } = useMapActions();
 
   return (
@@ -42,7 +42,7 @@ export function SettingsSection({ className, showRodaliesSettings = false }: Set
         </div>
         <Switch
           id="show-stations"
-          checked={ui.showStations}
+          checked={showStations}
           onCheckedChange={toggleShowStations}
           aria-label={t('settings.showStations')}
         />
@@ -67,7 +67,7 @@ export function SettingsSection({ className, showRodaliesSettings = false }: Set
           </div>
           <Switch
             id="train-parking"
-            checked={ui.enableTrainParking}
+            checked={enableTrainParking}
             onCheckedChange={toggleEnableTrainParking}
             aria-label={t('settings.trainParking')}
           />
