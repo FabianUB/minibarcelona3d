@@ -494,18 +494,63 @@ func generateBusStops(stops []gtfs.Stop, stopToLines map[string]map[string]bool,
 	return os.WriteFile(filepath.Join(busDir, "stops.geojson"), data, 0644)
 }
 
+// manifestFileEntry matches the frontend's TmbManifestFile interface
+type manifestFileEntry struct {
+	Type      string `json:"type"`
+	Path      string `json:"path"`
+	LineCode  string `json:"line_code,omitempty"`
+	RouteCode string `json:"route_code,omitempty"`
+}
+
 func generateTMBManifest(outputDir, nowStr string) error {
+	var files []manifestFileEntry
+
+	// Metro stations
+	if _, err := os.Stat(filepath.Join(outputDir, "metro", "stations.geojson")); err == nil {
+		files = append(files, manifestFileEntry{Type: "metro_stations", Path: "metro/stations.geojson"})
+	}
+
+	// Metro lines - scan directory for generated .geojson files
+	metroLinesDir := filepath.Join(outputDir, "metro", "lines")
+	if entries, err := os.ReadDir(metroLinesDir); err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".geojson") {
+				continue
+			}
+			lineCode := strings.TrimSuffix(entry.Name(), ".geojson")
+			files = append(files, manifestFileEntry{
+				Type:     "metro_line",
+				LineCode: lineCode,
+				Path:     "metro/lines/" + entry.Name(),
+			})
+		}
+	}
+
+	// Bus stops
+	if _, err := os.Stat(filepath.Join(outputDir, "bus", "stops.geojson")); err == nil {
+		files = append(files, manifestFileEntry{Type: "bus_stops", Path: "bus/stops.geojson"})
+	}
+
+	// Bus routes - scan directory for generated .geojson files
+	busRoutesDir := filepath.Join(outputDir, "bus", "routes")
+	if entries, err := os.ReadDir(busRoutesDir); err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".geojson") {
+				continue
+			}
+			routeCode := strings.TrimSuffix(entry.Name(), ".geojson")
+			files = append(files, manifestFileEntry{
+				Type:      "bus_route",
+				RouteCode: routeCode,
+				Path:      "bus/routes/" + entry.Name(),
+			})
+		}
+	}
+
 	manifest := map[string]interface{}{
-		"generated_at": nowStr,
 		"version":      "1.0",
-		"metro": map[string]string{
-			"stations": "metro/stations.geojson",
-			"lines":    "metro/lines/",
-		},
-		"bus": map[string]string{
-			"stops":  "bus/stops.geojson",
-			"routes": "bus/routes/",
-		},
+		"generated_at": nowStr,
+		"files":        files,
 	}
 
 	data, err := json.MarshalIndent(manifest, "", "  ")
