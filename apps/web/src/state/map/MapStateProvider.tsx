@@ -4,9 +4,17 @@ import type { Map as MapboxMap } from 'mapbox-gl';
 
 import {
   MapActionsContext,
+  MapCoreContext,
   MapHighlightSelectorsContext,
+  MapNetworkContext,
   MapStateContext,
+  MapUIContext,
 } from './context';
+import type {
+  MapCoreState,
+  MapNetworkContextState,
+  MapUIContextState,
+} from './contextTypes';
 import type {
   MapActions,
   MapHighlightSelectors,
@@ -485,6 +493,41 @@ export function MapStateProvider({ children }: PropsWithChildren) {
     };
   }, [state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.transportFilters, state.ui.modelSizes, state.ui.networkHighlights, state.ui.activeControlTab, state.ui.showStations, state.ui.showOnlyTopBusLines, state.ui.enableTrainParking]);
 
+  const coreState = useMemo<MapCoreState>(
+    () => ({
+      defaultViewport: state.defaultViewport,
+      viewport: state.viewport,
+      mapInstance: state.mapInstance,
+      isMapLoaded: state.isMapLoaded,
+    }),
+    [state.defaultViewport, state.viewport, state.mapInstance, state.isMapLoaded],
+  );
+
+  const uiState = useMemo<MapUIContextState>(
+    () => ({
+      activePanel: state.ui.activePanel,
+      isHighContrast: state.ui.isHighContrast,
+      isLegendOpen: state.ui.isLegendOpen,
+      showStations: state.ui.showStations,
+      enableTrainParking: state.ui.enableTrainParking,
+      selectedStationId: state.ui.selectedStationId,
+      stationLoadError: state.ui.stationLoadError,
+    }),
+    [state.ui.activePanel, state.ui.isHighContrast, state.ui.isLegendOpen, state.ui.showStations, state.ui.enableTrainParking, state.ui.selectedStationId, state.ui.stationLoadError],
+  );
+
+  const networkState = useMemo<MapNetworkContextState>(
+    () => ({
+      transportFilters: state.ui.transportFilters,
+      modelSizes: state.ui.modelSizes,
+      activeControlTab: state.ui.activeControlTab,
+      controlPanelMode: state.ui.controlPanelMode,
+      networkHighlights: state.ui.networkHighlights,
+      showOnlyTopBusLines: state.ui.showOnlyTopBusLines,
+    }),
+    [state.ui.transportFilters, state.ui.modelSizes, state.ui.activeControlTab, state.ui.controlPanelMode, state.ui.networkHighlights, state.ui.showOnlyTopBusLines],
+  );
+
   const actions = useMemo<MapActions>(
     () => ({
       setDefaultViewport(viewport) {
@@ -633,11 +676,17 @@ export function MapStateProvider({ children }: PropsWithChildren) {
 
   return (
     <MapStateContext.Provider value={state}>
-      <MapActionsContext.Provider value={actions}>
-        <MapHighlightSelectorsContext.Provider value={highlightSelectors}>
-          {children}
-        </MapHighlightSelectorsContext.Provider>
-      </MapActionsContext.Provider>
+      <MapCoreContext.Provider value={coreState}>
+        <MapUIContext.Provider value={uiState}>
+          <MapNetworkContext.Provider value={networkState}>
+            <MapActionsContext.Provider value={actions}>
+              <MapHighlightSelectorsContext.Provider value={highlightSelectors}>
+                {children}
+              </MapHighlightSelectorsContext.Provider>
+            </MapActionsContext.Provider>
+          </MapNetworkContext.Provider>
+        </MapUIContext.Provider>
+      </MapCoreContext.Provider>
     </MapStateContext.Provider>
   );
 }
