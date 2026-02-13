@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ContrastToggle } from '../accessibility/ContrastToggle';
-import { useMapState, useMapActions } from '../../state/map';
+import { useMapUI, useMapActions } from '../../state/map';
 import { SettingsSheet } from './SettingsSheet';
 
 /**
@@ -17,11 +17,11 @@ import { SettingsSheet } from './SettingsSheet';
  * - Desktop (>768px): Expandable card (similar to legend) in top-left, below legend
  */
 export function SettingsMenu() {
-  const { ui } = useMapState();
+  const { activePanel } = useMapUI();
   const { setActivePanel } = useMapActions();
 
-  const isExpanded = ui.activePanel === 'settings';
-  const isLegendExpanded = ui.activePanel === 'legend';
+  const isExpanded = activePanel === 'settings';
+  const isLegendExpanded = activePanel === 'legend';
 
   const SettingsContent = () => (
     <div className="space-y-4">

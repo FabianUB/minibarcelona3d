@@ -27,7 +27,7 @@ import type { LineGeometryCollection } from '@/types/rodalies';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '@/lib/trains/geometry';
 import { setModelOrigin, getModelOrigin } from '@/lib/map/coordinates';
 import { buildLineColorMap } from '@/lib/trains/outlineManager';
-import { useMapState } from '@/state/map';
+import { useMapNetwork } from '@/state/map';
 import { useTransitActions } from '@/state/transit';
 
 interface UnifiedTransitLayer3DProps {
@@ -60,7 +60,7 @@ export function UnifiedTransitLayer3D({
   fgcPositions = [],
   visibleNetworks = new Set(['rodalies', 'metro', 'bus', 'tram', 'fgc']),
 }: UnifiedTransitLayer3DProps) {
-  const { ui } = useMapState();
+  const { modelSizes } = useMapNetwork();
   const { setDataSource } = useTransitActions();
 
   // Refs for Three.js objects (shared across all networks)
@@ -446,9 +446,9 @@ export function UnifiedTransitLayer3D({
   // Handle user scale changes
   useEffect(() => {
     if (rodaliesMeshManagerRef.current) {
-      rodaliesMeshManagerRef.current.setUserScale(ui.modelSizes.rodalies);
+      rodaliesMeshManagerRef.current.setUserScale(modelSizes.rodalies);
     }
-  }, [ui.modelSizes]);
+  }, [modelSizes]);
 
   return null;
 }

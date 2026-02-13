@@ -31,7 +31,7 @@ import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
 import { extractLineFromRouteId } from '../../config/trainModels';
 import { useTrainActions } from '../../state/trains';
-import { useMapActions, useMapState } from '../../state/map';
+import { useMapActions, useMapUI } from '../../state/map';
 import { useTransitActions } from '../../state/transit';
 import type { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 import { TrainErrorDisplay } from './TrainErrorDisplay';
@@ -188,7 +188,7 @@ export function TrainLayer3D({
   const { selectTrain } = useTrainActions();
   const { setActivePanel } = useMapActions();
   const { setDataSource } = useTransitActions();
-  const { ui } = useMapState();
+  const { enableTrainParking } = useMapUI();
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -230,9 +230,9 @@ export function TrainLayer3D({
   // Reference for train mesh manager (T046, T047)
   const meshManagerRef = useRef<TrainMeshManager | null>(null);
   // Ref to hold current enableTrainParking value for use in render callback
-  const enableTrainParkingRef = useRef(ui.enableTrainParking);
+  const enableTrainParkingRef = useRef(enableTrainParking);
   // Ref to track previous enableTrainParking value for detecting toggle-off
-  const prevEnableTrainParkingRef = useRef(ui.enableTrainParking);
+  const prevEnableTrainParkingRef = useRef(enableTrainParking);
   const previousPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
   const lastPositionsRef = useRef<Map<string, TrainPosition>>(new Map());
   const loggedDistinctPreviousRef = useRef(false);
@@ -250,7 +250,7 @@ export function TrainLayer3D({
   // Keep retry count ref in sync with state for stable closure access
   retryCountRef.current = retryCount;
   // Keep enableTrainParking ref in sync for use in render callback
-  enableTrainParkingRef.current = ui.enableTrainParking;
+  enableTrainParkingRef.current = enableTrainParking;
 
   // Track if layer has been added to map
   const layerAddedRef = useRef(false);
@@ -757,7 +757,7 @@ export function TrainLayer3D({
   // Detect when train parking is toggled and animate accordingly
   useEffect(() => {
     const wasEnabled = prevEnableTrainParkingRef.current;
-    const isEnabled = ui.enableTrainParking;
+    const isEnabled = enableTrainParking;
 
     if (wasEnabled && !isEnabled && meshManagerRef.current) {
       // Parking was just disabled - animate parked trains back to normal
@@ -768,7 +768,7 @@ export function TrainLayer3D({
     }
 
     prevEnableTrainParkingRef.current = isEnabled;
-  }, [ui.enableTrainParking]);
+  }, [enableTrainParking]);
 
   useEffect(() => {
     if (!debugEnabledRef.current) {

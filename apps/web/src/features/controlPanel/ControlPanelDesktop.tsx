@@ -7,7 +7,7 @@
  */
 
 import { Card, CardContent } from '@/components/ui/card';
-import { useMapState } from '@/state/map';
+import { useMapNetwork } from '@/state/map';
 import { useTransitState } from '@/state/transit';
 import type { TrainPosition } from '@/types/trains';
 import type { Map as MapboxMap } from 'mapbox-gl';
@@ -33,11 +33,11 @@ export function ControlPanelDesktop({
   map,
   getMeshPosition,
 }: ControlPanelDesktopProps) {
-  const { ui } = useMapState();
+  const { controlPanelMode, activeControlTab, showOnlyTopBusLines } = useMapNetwork();
   const { dataSourceStatus } = useTransitState();
 
-  const isControlMode = ui.controlPanelMode === 'controls';
-  const activeNetwork = ui.activeControlTab;
+  const isControlMode = controlPanelMode === 'controls';
+  const activeNetwork = activeControlTab;
   const isVehicleMode = !isControlMode;
 
   // Only fetch positions when in vehicle list mode AND for the active network
@@ -47,7 +47,7 @@ export function ControlPanelDesktop({
   });
   const { positions: busPositions } = useBusPositions({
     enabled: isVehicleMode && activeNetwork === 'bus',
-    filterTopLinesOnly: ui.showOnlyTopBusLines,
+    filterTopLinesOnly: showOnlyTopBusLines,
   });
   const { positions: tramPositions } = useTramPositions({
     enabled: isVehicleMode && activeNetwork === 'tram',
