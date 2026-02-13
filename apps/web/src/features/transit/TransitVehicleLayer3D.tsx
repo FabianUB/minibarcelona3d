@@ -502,7 +502,7 @@ export function TransitVehicleLayer3D({
     if (!meshManagerRef.current) return;
     meshManagerRef.current.setUserScale(modelScale);
     map.triggerRepaint();
-  }, [modelScale, map]);
+  }, [modelScale, map, sceneReady]);
 
   /**
    * Trigger repaint on zoom change
