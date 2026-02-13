@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '../../styles/map.css';
 
-import { useMapActions, useMapHighlightSelectors, useMapState } from '../../state/map';
+import { useMapActions, useMapHighlightSelectors, useMapCore, useMapUI, useMapNetwork } from '../../state/map';
 import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
 import { ServiceUnavailable } from './ServiceUnavailable';
@@ -122,15 +122,14 @@ export function MapCanvas() {
   } = mapActions;
   // Note: useMapHighlightSelectors still needed for backwards compatibility with other components
   useMapHighlightSelectors();
-  const { ui, mapInstance, isMapLoaded } = useMapState();
+  const { mapInstance, isMapLoaded } = useMapCore();
+  const { isHighContrast, showStations } = useMapUI();
+  const { transportFilters, networkHighlights, modelSizes, showOnlyTopBusLines, activeControlTab } = useMapNetwork();
   const {
     effectiveViewport,
     error: viewportError,
     recenter,
   } = useDefaultViewport();
-
-  const isHighContrast = ui.isHighContrast;
-  const { transportFilters, networkHighlights, modelSizes, showStations, showOnlyTopBusLines } = ui;
 
   // Keep a ref to current transportFilters for use in closures
   const transportFiltersRef = useRef(transportFilters);
@@ -1018,7 +1017,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
         </div>
       ) : null}
       {/* Alert badge - top right, only on Rodalies tab */}
-      {mapInstance && isMapLoaded && ui.activeControlTab === 'rodalies' ? <AlertBadge /> : null}
+      {mapInstance && isMapLoaded && activeControlTab === 'rodalies' ? <AlertBadge /> : null}
       {process.env.NODE_ENV !== 'production' && debugToolsEnabled ? (
         <>
           <button
