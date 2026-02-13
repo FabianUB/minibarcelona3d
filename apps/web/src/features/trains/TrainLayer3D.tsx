@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import type { TrainPosition, RawTrainPosition } from '../../types/trains';
+import type { Train, TrainPosition, RawTrainPosition } from '../../types/trains';
 import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
@@ -1794,7 +1794,7 @@ export function TrainLayer3D({
           metadata: { routeId: hit.routeId },
         };
       },
-      async (hit) => {
+      (hit) => {
         onRaycastResult?.({
           hit: true,
           vehicleKey: hit.vehicleKey,
@@ -1802,13 +1802,39 @@ export function TrainLayer3D({
           objectsHit: 1,
           timestamp: Date.now(),
         });
-        try {
-          const trainData = await fetchTrainByKey(hit.vehicleKey);
-          selectTrain(trainData);
-          setActivePanel('trainInfo');
-        } catch (error) {
-          console.error('Failed to fetch train details:', error);
-        }
+
+        // Show panel immediately from cached position data
+        const pos = lastPositionsRef.current.get(hit.vehicleKey);
+        const placeholder: Train = {
+          vehicleKey: hit.vehicleKey,
+          vehicleId: null,
+          vehicleLabel: hit.vehicleKey,
+          entityId: hit.vehicleKey,
+          tripId: null,
+          routeId: pos?.routeId ?? (hit.metadata?.routeId as string) ?? null,
+          latitude: pos?.latitude ?? null,
+          longitude: pos?.longitude ?? null,
+          currentStopId: pos?.currentStopId ?? null,
+          previousStopId: pos?.previousStopId ?? null,
+          nextStopId: pos?.nextStopId ?? null,
+          nextStopSequence: null,
+          status: pos?.status ?? 'IN_TRANSIT_TO',
+          arrivalDelaySeconds: null,
+          departureDelaySeconds: null,
+          scheduleRelationship: null,
+          predictedArrivalUtc: pos?.predictedArrivalUtc ?? null,
+          predictedDepartureUtc: null,
+          vehicleTimestampUtc: null,
+          polledAtUtc: pos?.polledAtUtc ?? new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        selectTrain(placeholder);
+        setActivePanel('trainInfo');
+
+        // Enrich with full details in background
+        fetchTrainByKey(hit.vehicleKey)
+          .then((trainData) => selectTrain(trainData))
+          .catch((error) => console.error('Failed to fetch train details:', error));
       },
       visible,
     );

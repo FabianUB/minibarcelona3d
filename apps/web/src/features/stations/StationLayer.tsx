@@ -15,7 +15,7 @@ export interface StationLayerProps {
   map: MapboxMap;
   highlightedLineIds: string[];
   highlightMode: 'none' | 'highlight' | 'isolate';
-  onStationClick: (stationId: string) => void;
+  onStationClick?: (stationId: string) => void;
   onStationHover?: (stationId: string | null) => void;
   visible?: boolean;
 }
@@ -209,9 +209,10 @@ export function StationLayer({
     }
   }, [map, visible, highlightedLineIds, highlightMode]);
 
-  // Click handler
+  // Click handler (only active when onStationClick is provided)
   const handleClick = useCallback(
     (e: mapboxgl.MapMouseEvent) => {
+      if (!onStationClick) return;
       const features = map.queryRenderedFeatures(e.point, {
         layers: [CIRCLE_LAYER_ID],
       });
@@ -227,9 +228,9 @@ export function StationLayer({
     [map, onStationClick]
   );
 
-  // Register click handlers
+  // Register click/hover handlers only when click callback is provided
   useEffect(() => {
-    if (!map || !styleReady || !map.getLayer(CIRCLE_LAYER_ID)) return;
+    if (!map || !styleReady || !map.getLayer(CIRCLE_LAYER_ID) || !onStationClick) return;
 
     const handleMouseEnter = () => {
       map.getCanvas().style.cursor = 'pointer';
@@ -248,7 +249,7 @@ export function StationLayer({
       map.off('mouseenter', CIRCLE_LAYER_ID, handleMouseEnter);
       map.off('mouseleave', CIRCLE_LAYER_ID, handleMouseLeave);
     };
-  }, [map, handleClick, styleReady]);
+  }, [map, handleClick, onStationClick, styleReady]);
 
   return null;
 }
