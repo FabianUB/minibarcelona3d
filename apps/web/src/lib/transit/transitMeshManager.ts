@@ -146,6 +146,7 @@ export class TransitMeshManager {
   private currentZoom = 12;
   private highlightedVehicleKey: string | null = null;
   private currentLODState: 'high' | 'low' = 'high';
+  private userScale = 1.0;
 
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
@@ -322,6 +323,25 @@ export class TransitMeshManager {
    */
   setZoom(zoom: number): void {
     this.currentZoom = zoom;
+  }
+
+  /**
+   * Set user-controlled model scale multiplier.
+   * Dynamically rescales all existing meshes without recreating the layer.
+   */
+  setUserScale(scale: number): void {
+    const clamped = Math.max(0.5, Math.min(2.0, scale));
+    if (this.userScale === clamped) return;
+    this.userScale = clamped;
+    // Recalculate baseScale and apply to every mesh
+    const modelScale = getModelScale();
+    const newBase = modelScale * this.config.vehicleSizeMeters * this.userScale;
+    for (const [, data] of this.meshes) {
+      data.baseScale = newBase;
+      const finalScale = newBase * data.screenSpaceScale;
+      const isHighlighted = this.highlightedVehicleKey === data.vehicleKey;
+      data.mesh.scale.setScalar(isHighlighted ? finalScale * 1.12 : finalScale);
+    }
   }
 
   /**
@@ -629,9 +649,9 @@ export class TransitMeshManager {
     // Add the rotated model to the parent group
     mesh.add(trainModel);
 
-    // Calculate base scale
+    // Calculate base scale (includes user scale multiplier)
     const modelScale = getModelScale();
-    const baseScale = modelScale * this.config.vehicleSizeMeters;
+    const baseScale = modelScale * this.config.vehicleSizeMeters * this.userScale;
 
     // Apply scale to parent group
     mesh.scale.setScalar(baseScale);

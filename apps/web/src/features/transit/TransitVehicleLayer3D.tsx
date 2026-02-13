@@ -314,11 +314,9 @@ export function TransitVehicleLayer3D({
           bus: 'bus',
           rodalies: 'civia', // Not used here
         };
-        // Apply modelScale to the base vehicle size
         const baseSize = vehicleSizes[networkType] ?? 15;
-        const scaledSize = baseSize * modelScale;
         const meshManager = new TransitMeshManager(scene, {
-          vehicleSizeMeters: scaledSize,
+          vehicleSizeMeters: baseSize,
           modelType: modelTypes[networkType] ?? 'metro',
         });
         meshManagerRef.current = meshManager;
@@ -411,7 +409,7 @@ export function TransitVehicleLayer3D({
         console.log(`TransitVehicleLayer3D [${networkType}]: Layer removed`);
       },
     }),
-    [layerId, map, networkType, modelScale]
+    [layerId, map, networkType]
   );
 
   /**
@@ -496,6 +494,15 @@ export function TransitVehicleLayer3D({
     meshManagerRef.current.setOpacity(visible ? 1.0 : 0.0);
     map.triggerRepaint();
   }, [visible, map]);
+
+  /**
+   * Apply model scale dynamically without tearing down the layer
+   */
+  useEffect(() => {
+    if (!meshManagerRef.current) return;
+    meshManagerRef.current.setUserScale(modelScale);
+    map.triggerRepaint();
+  }, [modelScale, map]);
 
   /**
    * Trigger repaint on zoom change
