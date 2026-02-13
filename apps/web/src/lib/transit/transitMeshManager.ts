@@ -42,6 +42,10 @@ export interface ScreenSpaceCandidate {
   };
 }
 
+// Pooled Vector3 instances reused in getScreenCandidates to avoid per-call GC pressure
+const _poolLocalX = new THREE.Vector3();
+const _poolLocalY = new THREE.Vector3();
+
 /**
  * Mesh data stored for each vehicle - includes continuous motion parameters
  */
@@ -1063,8 +1067,8 @@ export class TransitMeshManager {
       const worldHalfWidth = boundingHalfExtents.y * currentScale;  // Width along model's Y axis
 
       // Transform local axes to world space using the mesh's quaternion
-      const localX = new THREE.Vector3(1, 0, 0).applyQuaternion(mesh.quaternion);
-      const localY = new THREE.Vector3(0, 1, 0).applyQuaternion(mesh.quaternion);
+      const localX = _poolLocalX.set(1, 0, 0).applyQuaternion(mesh.quaternion);
+      const localY = _poolLocalY.set(0, 1, 0).applyQuaternion(mesh.quaternion);
 
       // Project front (+X direction) and right (+Y direction) points to screen
       const frontLngLat = getLngLatFromModelPosition(
