@@ -460,6 +460,12 @@ export class TransitMeshManager {
    * Determine which animation mode to use based on available data
    */
   private getAnimationMode(vehicle: VehiclePosition): 'continuous' | 'lerp' {
+    // Continuous mode requires line geometry to sample positions along the path
+    const geometry = this.getGeometry(vehicle.networkType, vehicle.lineCode);
+    if (!geometry || geometry.totalLength <= 0) {
+      return 'lerp';
+    }
+
     // Use continuous mode if we have valid motion parameters
     // distanceAlongLine > 0 required because some APIs return 0 as "not provided"
     const hasMotionParams =
@@ -828,9 +834,6 @@ export class TransitMeshManager {
     // Get line geometry to sample position - must have geometry for continuous mode
     const geometry = this.getGeometry(data.networkType, data.lineCode);
     if (!geometry || geometry.totalLength <= 0) {
-      // No geometry available - can't animate in continuous mode
-      // This shouldn't happen if getAnimationMode worked correctly
-      console.warn(`[TransitMeshManager] No geometry for continuous animation: ${data.networkType}/${data.lineCode}`);
       return;
     }
 
