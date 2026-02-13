@@ -448,7 +448,6 @@ export function UnifiedTransitLayer3D({
     if (rodaliesMeshManagerRef.current) {
       rodaliesMeshManagerRef.current.setUserScale(ui.modelSizes.rodalies);
     }
-    // Note: TransitMeshManager doesn't have setUserScale yet - can be added if needed
   }, [ui.modelSizes]);
 
   return null;
