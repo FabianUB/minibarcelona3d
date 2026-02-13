@@ -91,8 +91,8 @@ export function TransitVehicleLayer3D({
   // Ensures only the current meshManager's model loading promise updates state.
   const meshManagerGenerationRef = useRef(0);
 
-  // Store current positions for lookup on click
-  const positionsRef = useRef<VehiclePosition[]>([]);
+  // Store current positions for O(1) lookup on click
+  const positionsMapRef = useRef<Map<string, VehiclePosition>>(new Map());
 
   // Hover state (using ref for performance - no re-renders on hover)
   const hoveredVehicleRef = useRef<string | null>(null);
@@ -462,7 +462,7 @@ export function TransitVehicleLayer3D({
     }
 
     // Store positions for click lookup
-    positionsRef.current = positions;
+    positionsMapRef.current = new Map(positions.map(p => [p.vehicleKey, p]));
 
     // Trigger map repaint
     map.triggerRepaint();
@@ -674,9 +674,7 @@ export function TransitVehicleLayer3D({
         };
       },
       (hit) => {
-        const vehicleData = positionsRef.current.find(
-          (v) => v.vehicleKey === hit.vehicleKey,
-        );
+        const vehicleData = positionsMapRef.current.get(hit.vehicleKey);
         if (vehicleData) {
           selectVehicle(vehicleData);
           setActivePanel('transitInfo');
