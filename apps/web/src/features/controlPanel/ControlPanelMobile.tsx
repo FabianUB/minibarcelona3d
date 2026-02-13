@@ -27,6 +27,7 @@ import { VehicleListView } from './components/VehicleListView';
 import { PanelModeToggle } from './components/PanelModeToggle';
 import { DataSourceBadge } from './components/DataSourceBadge';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { NETWORK_TABS } from './types';
 
 interface ControlPanelMobileProps {
   rodaliesTrains?: TrainPosition[];
@@ -85,7 +86,12 @@ export function ControlPanelMobile({
           className="fixed bottom-4 left-4 w-12 h-12 rounded-full shadow-lg z-10"
           aria-label="Open control panel"
         >
-          <span className="text-xl">🚆</span>
+          <img
+            src={NETWORK_TABS.find(t => t.type === activeNetwork)?.icon}
+            alt=""
+            aria-hidden="true"
+            className="w-7 h-7 object-contain"
+          />
         </Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[70vh] flex flex-col">

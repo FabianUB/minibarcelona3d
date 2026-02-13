@@ -91,8 +91,8 @@ export function TransitVehicleLayer3D({
   // Ensures only the current meshManager's model loading promise updates state.
   const meshManagerGenerationRef = useRef(0);
 
-  // Store current positions for lookup on click
-  const positionsRef = useRef<VehiclePosition[]>([]);
+  // Store current positions for O(1) lookup on click
+  const positionsMapRef = useRef<Map<string, VehiclePosition>>(new Map());
 
   // Hover state (using ref for performance - no re-renders on hover)
   const hoveredVehicleRef = useRef<string | null>(null);
@@ -314,11 +314,9 @@ export function TransitVehicleLayer3D({
           bus: 'bus',
           rodalies: 'civia', // Not used here
         };
-        // Apply modelScale to the base vehicle size
         const baseSize = vehicleSizes[networkType] ?? 15;
-        const scaledSize = baseSize * modelScale;
         const meshManager = new TransitMeshManager(scene, {
-          vehicleSizeMeters: scaledSize,
+          vehicleSizeMeters: baseSize,
           modelType: modelTypes[networkType] ?? 'metro',
         });
         meshManagerRef.current = meshManager;
@@ -411,7 +409,7 @@ export function TransitVehicleLayer3D({
         console.log(`TransitVehicleLayer3D [${networkType}]: Layer removed`);
       },
     }),
-    [layerId, map, networkType, modelScale]
+    [layerId, map, networkType]
   );
 
   /**
@@ -457,10 +455,12 @@ export function TransitVehicleLayer3D({
     // Apply vehicle opacities based on line selection (highlight/isolate mode)
     if (vehicleOpacities) {
       meshManagerRef.current.setVehicleOpacities(vehicleOpacities);
+    } else {
+      meshManagerRef.current.setOpacity(1.0);
     }
 
     // Store positions for click lookup
-    positionsRef.current = positions;
+    positionsMapRef.current = new Map(positions.map(p => [p.vehicleKey, p]));
 
     // Trigger map repaint
     map.triggerRepaint();
@@ -494,6 +494,15 @@ export function TransitVehicleLayer3D({
     meshManagerRef.current.setOpacity(visible ? 1.0 : 0.0);
     map.triggerRepaint();
   }, [visible, map]);
+
+  /**
+   * Apply model scale dynamically without tearing down the layer
+   */
+  useEffect(() => {
+    if (!meshManagerRef.current) return;
+    meshManagerRef.current.setUserScale(modelScale);
+    map.triggerRepaint();
+  }, [modelScale, map, sceneReady]);
 
   /**
    * Trigger repaint on zoom change
@@ -672,9 +681,7 @@ export function TransitVehicleLayer3D({
         };
       },
       (hit) => {
-        const vehicleData = positionsRef.current.find(
-          (v) => v.vehicleKey === hit.vehicleKey,
-        );
+        const vehicleData = positionsMapRef.current.get(hit.vehicleKey);
         if (vehicleData) {
           selectVehicle(vehicleData);
           setActivePanel('transitInfo');

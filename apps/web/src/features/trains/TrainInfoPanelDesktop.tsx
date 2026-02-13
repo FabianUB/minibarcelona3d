@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDismissPanel } from '@/hooks/useDismissPanel';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
 import type { RodaliesLine } from '@/types/rodalies';
 import type { TripDetails } from '@/types/trains';
 import { StopList } from './StopList';
+import { useScheduleDelay } from './useScheduleDelay';
 
 export function TrainInfoPanelDesktop() {
   const { t } = useTranslation('vehicles');
@@ -66,71 +68,12 @@ export function TrainInfoPanelDesktop() {
     setActivePanel('none');
   }, [clearSelection, setActivePanel]);
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [handleClose]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        handleClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [handleClose]);
+  useDismissPanel(panelRef, handleClose);
+  const delay = useScheduleDelay(tripDetails, selectedTrain?.nextStopId ?? null);
 
   if (!selectedTrain) {
     return null;
   }
-
-  // Get delay for next stop from GTFS-RT feed data
-  const calculateScheduleDelay = (): { text: string; status: 'on-time' | 'delayed' | 'early' | 'unknown' } => {
-    if (!tripDetails || !selectedTrain.nextStopId) {
-      return { text: t('delay.unknown'), status: 'unknown' };
-    }
-
-    const nextStop = tripDetails.stopTimes.find(st => st.stopId === selectedTrain.nextStopId);
-    if (!nextStop) {
-      return { text: t('delay.unknown'), status: 'unknown' };
-    }
-
-    // Use real-time delay from GTFS-RT feed (already calculated)
-    const delaySeconds = nextStop.arrivalDelaySeconds ?? nextStop.departureDelaySeconds;
-
-    if (delaySeconds === null || delaySeconds === undefined) {
-      return { text: t('delay.unknown'), status: 'unknown' };
-    }
-
-    if (delaySeconds === 0) {
-      return { text: t('delay.onTime'), status: 'on-time' };
-    }
-
-    if (delaySeconds > 0) {
-      const delayMinutes = Math.floor(delaySeconds / 60);
-      const text = delayMinutes > 0
-        ? t('delay.minLate', { count: delayMinutes })
-        : t('delay.secLate', { count: delaySeconds });
-      return { text, status: 'delayed' };
-    }
-
-    // Negative delay = early
-    const delayMinutes = Math.floor(Math.abs(delaySeconds) / 60);
-    const text = delayMinutes > 0
-      ? t('delay.minEarly', { count: delayMinutes })
-      : t('delay.secEarly', { count: Math.abs(delaySeconds) });
-    return { text, status: 'early' };
-  };
-
-  const delay = calculateScheduleDelay();
   const nextStopName = selectedTrain.nextStopId
     ? stationNames.get(selectedTrain.nextStopId) || selectedTrain.nextStopId
     : null;

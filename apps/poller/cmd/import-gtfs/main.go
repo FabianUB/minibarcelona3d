@@ -10,12 +10,14 @@ import (
 
 	"github.com/mini-rodalies-3d/poller/internal/db"
 	"github.com/mini-rodalies-3d/poller/internal/static/gtfs"
+	tmbgen "github.com/mini-rodalies-3d/poller/internal/static/tmb"
 )
 
 func main() {
 	// Command line flags
 	dbPath := flag.String("db", "../../data/transit.db", "Path to SQLite database")
 	gtfsDir := flag.String("gtfs-dir", "../../data/gtfs", "Directory containing GTFS zip files")
+	geojsonDir := flag.String("geojson-dir", "", "If set, generate GeoJSON files for tram/fgc into this tmb_data directory")
 	flag.Parse()
 
 	// Initialize database
@@ -39,6 +41,11 @@ func main() {
 		log.Fatalf("Failed to read GTFS directory: %v", err)
 	}
 
+	// Track parsed GTFS data for GeoJSON generation
+	tramDataSets := []*gtfs.Data{}
+
+	var fgcData *gtfs.Data
+
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".zip") {
 			continue
@@ -51,8 +58,44 @@ func main() {
 
 		if err := importGTFS(database, zipPath, network); err != nil {
 			log.Printf("ERROR importing %s: %v", entry.Name(), err)
-		} else {
-			log.Printf("SUCCESS: %s imported", entry.Name())
+			continue
+		}
+		log.Printf("SUCCESS: %s imported", entry.Name())
+
+		// Keep parsed data for GeoJSON generation
+		if *geojsonDir != "" {
+			data, err := gtfs.Parse(zipPath)
+			if err != nil {
+				log.Printf("Warning: failed to re-parse %s for GeoJSON: %v", entry.Name(), err)
+				continue
+			}
+			switch {
+			case strings.HasPrefix(network, "tram"):
+				tramDataSets = append(tramDataSets, data)
+			case network == "fgc":
+				fgcData = data
+			}
+		}
+	}
+
+	// Generate GeoJSON files for tram and FGC
+	if *geojsonDir != "" {
+		if len(tramDataSets) > 0 {
+			merged := mergeGTFSData(tramDataSets)
+			log.Printf("Generating TRAM GeoJSON (%d routes, %d stops)...", len(merged.Routes), len(merged.Stops))
+			if err := tmbgen.GenerateNetwork(merged, *geojsonDir, "tram"); err != nil {
+				log.Printf("ERROR generating tram GeoJSON: %v", err)
+			}
+		}
+		if fgcData != nil {
+			log.Printf("Generating FGC GeoJSON (%d routes, %d stops)...", len(fgcData.Routes), len(fgcData.Stops))
+			if err := tmbgen.GenerateNetwork(fgcData, *geojsonDir, "fgc"); err != nil {
+				log.Printf("ERROR generating fgc GeoJSON: %v", err)
+			}
+		}
+		// Regenerate manifest to include new tram/fgc entries
+		if err := tmbgen.GenerateManifest(*geojsonDir); err != nil {
+			log.Printf("ERROR regenerating manifest: %v", err)
 		}
 	}
 
@@ -273,4 +316,23 @@ func parseIntSafe(s string) int {
 		}
 	}
 	return result
+}
+
+// mergeGTFSData combines multiple parsed GTFS datasets (e.g., tram_tbs + tram_tbx)
+func mergeGTFSData(datasets []*gtfs.Data) *gtfs.Data {
+	merged := &gtfs.Data{
+		Shapes: make(map[string][]gtfs.ShapePoint),
+	}
+	for _, d := range datasets {
+		merged.Routes = append(merged.Routes, d.Routes...)
+		merged.Stops = append(merged.Stops, d.Stops...)
+		merged.Trips = append(merged.Trips, d.Trips...)
+		merged.StopTimes = append(merged.StopTimes, d.StopTimes...)
+		merged.Calendars = append(merged.Calendars, d.Calendars...)
+		merged.CalendarDates = append(merged.CalendarDates, d.CalendarDates...)
+		for k, v := range d.Shapes {
+			merged.Shapes[k] = v
+		}
+	}
+	return merged
 }

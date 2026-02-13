@@ -51,14 +51,15 @@ export type NetworkHighlightMap = Record<TransportType, NetworkHighlightState>;
 export type ModelSizeMap = Record<TransportType, number>;
 
 /**
- * Default model sizes for each network (1.0 = 100%)
+ * Default model sizes for each network.
+ * Must match the defaults in MapStateProvider.
  */
 export const DEFAULT_MODEL_SIZES: ModelSizeMap = {
   rodalies: 1.0,
-  metro: 1.0,
-  fgc: 1.0,
-  tram: 1.0,
-  bus: 1.0,
+  metro: 1.6,
+  fgc: 1.6,
+  tram: 1.6,
+  bus: 1.6,
 };
 
 /**

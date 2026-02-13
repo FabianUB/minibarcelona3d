@@ -38,9 +38,9 @@ const DEFAULT_NETWORK_HIGHLIGHTS: NetworkHighlightMap = {
 const DEFAULT_MODEL_SIZES: ModelSizeMap = {
   rodalies: 1.0,
   metro: 1.6,
-  fgc: 1.0,
-  tram: 1.0,
-  bus: 1.2,
+  fgc: 1.6,
+  tram: 1.6,
+  bus: 1.6,
 };
 
 type MapAction =
@@ -626,7 +626,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         return Boolean(candidate && !activeLineIds.includes(candidate));
       },
     };
-  }, [state.ui]);
+  }, [state.ui.highlightMode, state.ui.selectedLineIds]);
 
   // Note: Map viewport syncing is handled by MapCanvas component
   // to avoid circular updates between map events and state changes

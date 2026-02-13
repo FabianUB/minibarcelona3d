@@ -59,11 +59,11 @@ export function DataFreshnessIndicator({
     return () => clearInterval(interval);
   }, [loadFreshness, refreshInterval]);
 
-  // Update displayed time every second
+  // Update displayed time every 5 seconds (reduces re-renders vs 1s tick)
   useEffect(() => {
     const tickInterval = setInterval(() => {
       setTick((t) => t + 1);
-    }, 1000);
+    }, 5000);
     return () => clearInterval(tickInterval);
   }, []);
 
