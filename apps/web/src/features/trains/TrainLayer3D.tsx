@@ -25,7 +25,7 @@ import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
 import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
-import { loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
+import { loadManifest, loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
 import { buildLineColorMap } from '../../lib/trains/outlineManager';
 import { getModelOrigin } from '../../lib/map/coordinates';
 import { preprocessRailwayLine, type PreprocessedRailwayLine } from '../../lib/trains/geometry';
@@ -1257,94 +1257,11 @@ export function TrainLayer3D({
   }), [map]);
 
   /**
-   * Effect: Load station data for bearing calculations
-   * Task: T047
+   * Effect: Load all static data in parallel (stations, railways, line colors, 3D models)
+   * Fetches manifest once and passes it to dependent loaders to avoid redundant fetches.
    */
   useEffect(() => {
-    const loadStationData = async () => {
-      try {
-        const stationCollection = await loadStations();
-
-        // Extract station data from GeoJSON features
-        const stations: Station[] = stationCollection.features.map((feature) => ({
-          id: feature.properties.id,
-          name: feature.properties.name,
-          code: feature.properties.code,
-          lines: feature.properties.lines,
-          geometry: feature.geometry,
-        }));
-
-        stationsRef.current = stations;
-        stationMapRef.current = new Map(stations.map((station) => [station.id, station]));
-        setStationsLoaded(true);
-        console.log(`TrainLayer3D: Loaded ${stations.length} stations for bearing calculations`);
-      } catch (err) {
-        console.error('TrainLayer3D: Failed to load stations:', err);
-        setError('Failed to load station data');
-      }
-    };
-
-    void loadStationData();
-  }, []);
-
-  /**
-   * Effect: Load railway geometry and preprocess for snapping
-   */
-  useEffect(() => {
-    const loadRailwayData = async () => {
-      try {
-        const collection = await loadLineGeometryCollection();
-        const processed = new Map<string, PreprocessedRailwayLine>();
-
-        collection.features.forEach((feature) => {
-          const shortCode = feature.properties?.short_code ?? feature.properties?.id;
-          if (!shortCode) {
-            return;
-          }
-          const preprocessed = preprocessRailwayLine(feature.geometry);
-          if (preprocessed) {
-            processed.set(shortCode.toUpperCase(), preprocessed);
-          }
-        });
-
-        railwaysRef.current = processed;
-        console.log(`TrainLayer3D: Preprocessed ${processed.size} railway lines for snapping`);
-      } catch (err) {
-        console.error('TrainLayer3D: Failed to load railway geometry for snapping', err);
-        setError((prev) => prev ?? 'Failed to load railway geometry data');
-      } finally {
-        setRailwaysLoaded(true);
-      }
-    };
-
-    void loadRailwayData();
-  }, []);
-
-  /**
-   * Effect: Load line data and build color map for hover outlines
-   * Phase 5: User Story 3 - Line Identification on Hover
-   */
-  useEffect(() => {
-    const loadLineData = async () => {
-      try {
-        const lines = await loadRodaliesLines();
-        const colorMap = buildLineColorMap(lines);
-        lineColorMapRef.current = colorMap;
-        console.log(`TrainLayer3D: Loaded ${colorMap.size} line colors for outlines`);
-      } catch (err) {
-        console.error('TrainLayer3D: Failed to load line data for outlines', err);
-      }
-    };
-
-    void loadLineData();
-  }, []);
-
-  /**
-   * Effect: Preload 3D train models
-   * T045: Load in parallel with other static data (stations, railways, lines)
-   * Moved here from onAdd to start loading earlier
-   */
-  useEffect(() => {
+    // Model preload is independent of manifest — start immediately
     preloadAllTrainModels()
       .then(() => {
         setModelsLoaded(true);
@@ -1354,6 +1271,55 @@ export function TrainLayer3D({
         console.error('TrainLayer3D: Failed to load train models:', error);
         setError('Failed to load 3D train models');
       });
+
+    // Load manifest once, then fetch all data files in parallel
+    const loadData = async () => {
+      try {
+        const manifest = await loadManifest();
+        const [stationCollection, collection, lines] = await Promise.all([
+          loadStations(manifest),
+          loadLineGeometryCollection(manifest),
+          loadRodaliesLines(manifest),
+        ]);
+
+        // Process stations
+        const stations: Station[] = stationCollection.features.map((feature) => ({
+          id: feature.properties.id,
+          name: feature.properties.name,
+          code: feature.properties.code,
+          lines: feature.properties.lines,
+          geometry: feature.geometry,
+        }));
+        stationsRef.current = stations;
+        stationMapRef.current = new Map(stations.map((station) => [station.id, station]));
+        setStationsLoaded(true);
+        console.log(`TrainLayer3D: Loaded ${stations.length} stations for bearing calculations`);
+
+        // Process railway geometry
+        const processed = new Map<string, PreprocessedRailwayLine>();
+        collection.features.forEach((feature) => {
+          const shortCode = feature.properties?.short_code ?? feature.properties?.id;
+          if (!shortCode) return;
+          const preprocessed = preprocessRailwayLine(feature.geometry);
+          if (preprocessed) {
+            processed.set(shortCode.toUpperCase(), preprocessed);
+          }
+        });
+        railwaysRef.current = processed;
+        setRailwaysLoaded(true);
+        console.log(`TrainLayer3D: Preprocessed ${processed.size} railway lines for snapping`);
+
+        // Process line colors
+        const colorMap = buildLineColorMap(lines);
+        lineColorMapRef.current = colorMap;
+        console.log(`TrainLayer3D: Loaded ${colorMap.size} line colors for outlines`);
+      } catch (err) {
+        console.error('TrainLayer3D: Failed to load data:', err);
+        setError('Failed to load map data');
+        setRailwaysLoaded(true);
+      }
+    };
+    void loadData();
   }, []);
 
   /**
