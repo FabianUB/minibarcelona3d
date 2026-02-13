@@ -780,10 +780,10 @@ export class TransitMeshManager {
 
     for (const [key, data] of this.meshes) {
       if (!activeKeys.has(key)) {
+        this.disposeMesh(data);
         this.scene.remove(data.mesh);
         toRemove.push(key);
 
-        // Clear highlighted key if this vehicle is removed
         if (this.highlightedVehicleKey === key) {
           this.highlightedVehicleKey = null;
         }
@@ -793,6 +793,37 @@ export class TransitMeshManager {
     for (const key of toRemove) {
       this.meshes.delete(key);
     }
+  }
+
+  private disposeMesh(data: TransitMeshData): void {
+    // Dispose outline mesh if present
+    if (data.outlineMesh) {
+      if (data.outlineMesh.parent) {
+        data.outlineMesh.parent.remove(data.outlineMesh);
+      }
+      data.outlineMesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach((mat) => mat.dispose());
+          } else {
+            child.material?.dispose();
+          }
+        }
+      });
+    }
+
+    // Dispose geometry and materials to free GPU memory
+    data.mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) {
+          child.material.forEach((mat) => mat.dispose());
+        } else {
+          child.material?.dispose();
+        }
+      }
+    });
   }
 
   /**
@@ -1016,6 +1047,7 @@ export class TransitMeshManager {
    */
   clear(): void {
     for (const data of this.meshes.values()) {
+      this.disposeMesh(data);
       this.scene.remove(data.mesh);
     }
     this.meshes.clear();
