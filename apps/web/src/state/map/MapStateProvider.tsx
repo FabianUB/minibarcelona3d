@@ -626,7 +626,7 @@ export function MapStateProvider({ children }: PropsWithChildren) {
         return Boolean(candidate && !activeLineIds.includes(candidate));
       },
     };
-  }, [state.ui]);
+  }, [state.ui.highlightMode, state.ui.selectedLineIds]);
 
   // Note: Map viewport syncing is handled by MapCanvas component
   // to avoid circular updates between map events and state changes

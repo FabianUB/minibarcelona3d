@@ -1684,6 +1684,21 @@ export class TrainMeshManager {
     });
   }
 
+  /**
+   * Reset all train meshes to full opacity (1.0).
+   * Called when line highlighting is turned off.
+   */
+  resetAllOpacities(): void {
+    this.trainMeshes.forEach((meshData) => {
+      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
+        for (const mat of meshData.cachedMaterials) {
+          mat.transparent = false;
+          mat.opacity = 1.0;
+        }
+      }
+    });
+  }
+
   setHighlightedTrain(vehicleKey?: string): void {
     const nextKey = vehicleKey ?? null;
     if (this.highlightedVehicleKey === nextKey) {

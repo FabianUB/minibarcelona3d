@@ -1731,6 +1731,8 @@ export function TrainLayer3D({
     // Performance: Uses memoized trainOpacities map instead of recalculating
     if (trainOpacities) {
       meshManagerRef.current.setTrainOpacities(trainOpacities);
+    } else {
+      meshManagerRef.current.resetAllOpacities();
     }
 
     // CRITICAL: Trigger Mapbox repaint after updating meshes
