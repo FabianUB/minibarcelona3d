@@ -300,6 +300,11 @@ func Generate(data *gtfs.Data, outputDir string) error {
 		return fmt.Errorf("failed to write manifest.json: %w", err)
 	}
 
+	// Validate the output to catch corruption before it reaches production
+	if err := validateOutput(outputDir); err != nil {
+		return fmt.Errorf("post-generation validation failed: %w", err)
+	}
+
 	log.Printf("Rodalies: generated %d lines, %d stations", len(lineManifests), len(data.Stops))
 	return nil
 }
@@ -605,6 +610,51 @@ func writeJSON(path string, v interface{}) error {
 func sha256Sum(data []byte) string {
 	hash := sha256.Sum256(data)
 	return hex.EncodeToString(hash[:])
+}
+
+// validateOutput checks that the generated output is consistent:
+// 1. Every line in the manifest is in LineColorMap
+// 2. No unexpected .geojson files exist in lines/
+func validateOutput(outputDir string) error {
+	// Read manifest
+	manifestData, err := os.ReadFile(filepath.Join(outputDir, "manifest.json"))
+	if err != nil {
+		return fmt.Errorf("cannot read manifest: %w", err)
+	}
+
+	var manifest Manifest
+	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+		return fmt.Errorf("cannot parse manifest: %w", err)
+	}
+
+	// Check that every manifest line is in the allowlist
+	for _, line := range manifest.Lines {
+		if _, ok := LineColorMap[line.ID]; !ok {
+			return fmt.Errorf("manifest contains line %q not in LineColorMap", line.ID)
+		}
+	}
+
+	// Scan lines/ directory for unexpected files
+	linesDir := filepath.Join(outputDir, "lines")
+	entries, err := os.ReadDir(linesDir)
+	if err != nil {
+		return fmt.Errorf("cannot read lines directory: %w", err)
+	}
+
+	var fileCount int
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".geojson") {
+			continue
+		}
+		fileCount++
+		lineCode := strings.TrimSuffix(entry.Name(), ".geojson")
+		if _, ok := LineColorMap[lineCode]; !ok {
+			return fmt.Errorf("unexpected line file %s not in LineColorMap", entry.Name())
+		}
+	}
+
+	log.Printf("Validation passed: %d manifest lines, %d line files", len(manifest.Lines), fileCount)
+	return nil
 }
 
 // cleanLineFiles removes .geojson files from linesDir whose name (minus

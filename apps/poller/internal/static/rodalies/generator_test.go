@@ -31,6 +31,48 @@ func TestComputeViewportBarcelona(t *testing.T) {
 	assertBarcelonaViewport(t, viewport)
 }
 
+// TestBuildRouteToLineMappingFiltersNonCatalunya verifies that routes from
+// other Spanish Cercanías networks (C1-C10, T1, etc.) are excluded from
+// the mapping while Catalunya lines (R1, R2, RT1, etc.) are kept.
+func TestBuildRouteToLineMappingFiltersNonCatalunya(t *testing.T) {
+	routes := []gtfs.Route{
+		{RouteID: "route-c1", RouteShortName: "C1"},   // Madrid Cercanías
+		{RouteID: "route-c2", RouteShortName: "C2"},   // Madrid Cercanías
+		{RouteID: "route-t1", RouteShortName: "T1"},   // Non-Catalunya tram
+		{RouteID: "route-r1", RouteShortName: "R1"},   // Catalunya
+		{RouteID: "route-r2", RouteShortName: "R2"},   // Catalunya
+		{RouteID: "route-rt1", RouteShortName: "RT1"}, // Catalunya
+		{RouteID: "route-empty", RouteShortName: ""},   // No code
+	}
+
+	mapping := buildRouteToLineMapping(routes)
+
+	// Catalunya lines must be present
+	for _, want := range []struct{ routeID, lineCode string }{
+		{"route-r1", "R1"},
+		{"route-r2", "R2"},
+		{"route-rt1", "RT1"},
+	} {
+		got, ok := mapping[want.routeID]
+		if !ok {
+			t.Errorf("expected route %s to map to %s, but it was excluded", want.routeID, want.lineCode)
+		} else if got != want.lineCode {
+			t.Errorf("route %s mapped to %q, want %q", want.routeID, got, want.lineCode)
+		}
+	}
+
+	// Non-Catalunya lines must be excluded
+	for _, routeID := range []string{"route-c1", "route-c2", "route-t1", "route-empty"} {
+		if code, ok := mapping[routeID]; ok {
+			t.Errorf("route %s should be filtered out, but mapped to %q", routeID, code)
+		}
+	}
+
+	if len(mapping) != 3 {
+		t.Errorf("expected 3 mappings (R1, R2, RT1), got %d: %v", len(mapping), mapping)
+	}
+}
+
 func assertBarcelonaViewport(t *testing.T, viewport MapViewport) {
 	t.Helper()
 
