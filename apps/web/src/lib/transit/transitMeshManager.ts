@@ -715,6 +715,12 @@ export class TransitMeshManager {
       }
     });
 
+    // Set userData for raycast hit detection
+    mesh.userData = {
+      vehicleKey: vehicle.vehicleKey,
+      lineCode: vehicle.lineCode,
+    };
+
     // Add to scene
     this.scene.add(mesh);
 
