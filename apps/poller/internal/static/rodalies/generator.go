@@ -205,6 +205,11 @@ func Generate(data *gtfs.Data, outputDir string) error {
 		return fmt.Errorf("failed to create lines directory: %w", err)
 	}
 
+	// Remove orphaned line files from previous generations
+	if err := cleanLineFiles(linesDir); err != nil {
+		log.Printf("Warning: failed to clean orphaned line files: %v", err)
+	}
+
 	now := time.Now().UTC()
 	nowStr := now.Format(time.RFC3339)
 
@@ -302,13 +307,18 @@ func Generate(data *gtfs.Data, outputDir string) error {
 func buildRouteToLineMapping(routes []gtfs.Route) map[string]string {
 	mapping := make(map[string]string)
 	for _, route := range routes {
-		// Extract line code from route_short_name (e.g., "R1", "R2N")
 		lineCode := route.RouteShortName
 		if lineCode == "" {
 			continue
 		}
-		// Normalize line codes
 		lineCode = strings.ToUpper(lineCode)
+
+		// Only include Rodalies de Catalunya lines; the national GTFS feed
+		// contains all Spanish Cercanías (Madrid C1-C10, Bilbao, etc.)
+		if _, ok := LineColorMap[lineCode]; !ok {
+			continue
+		}
+
 		mapping[route.RouteID] = lineCode
 	}
 	return mapping
@@ -392,9 +402,6 @@ func generateLineFiles(data *gtfs.Data, routeToLine map[string]string, linesDir,
 		}
 
 		color := LineColorMap[lineCode]
-		if color == "" {
-			color = "888888" // Default gray
-		}
 
 		order := LineOrderMap[lineCode]
 		name := lineNames[lineCode]
@@ -598,4 +605,42 @@ func writeJSON(path string, v interface{}) error {
 func sha256Sum(data []byte) string {
 	hash := sha256.Sum256(data)
 	return hex.EncodeToString(hash[:])
+}
+
+// cleanLineFiles removes .geojson files from linesDir whose name (minus
+// extension) is not present in LineColorMap. This prevents stale files from
+// persisting when lines are removed from the allowlist.
+func cleanLineFiles(linesDir string) error {
+	entries, err := os.ReadDir(linesDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	var removed int
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".geojson") {
+			continue
+		}
+		lineCode := strings.TrimSuffix(name, ".geojson")
+		if _, ok := LineColorMap[lineCode]; !ok {
+			path := filepath.Join(linesDir, name)
+			if err := os.Remove(path); err != nil {
+				log.Printf("Warning: failed to remove orphaned file %s: %v", name, err)
+			} else {
+				removed++
+			}
+		}
+	}
+
+	if removed > 0 {
+		log.Printf("Cleaned %d orphaned line file(s) from %s", removed, linesDir)
+	}
+	return nil
 }
