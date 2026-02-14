@@ -1,6 +1,9 @@
 package rodalies
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/mini-rodalies-3d/poller/internal/static/gtfs"
@@ -70,6 +73,126 @@ func TestBuildRouteToLineMappingFiltersNonCatalunya(t *testing.T) {
 
 	if len(mapping) != 3 {
 		t.Errorf("expected 3 mappings (R1, R2, RT1), got %d: %v", len(mapping), mapping)
+	}
+}
+
+func TestCleanLineFiles_RemovesOrphans(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create valid files
+	os.WriteFile(filepath.Join(dir, "R1.geojson"), []byte("{}"), 0644)
+	os.WriteFile(filepath.Join(dir, "R2.geojson"), []byte("{}"), 0644)
+
+	// Create orphaned files
+	os.WriteFile(filepath.Join(dir, "C1.geojson"), []byte("{}"), 0644)
+	os.WriteFile(filepath.Join(dir, "C10.geojson"), []byte("{}"), 0644)
+	os.WriteFile(filepath.Join(dir, "T1.geojson"), []byte("{}"), 0644)
+
+	// Create a non-geojson file (should be ignored)
+	os.WriteFile(filepath.Join(dir, "README.txt"), []byte("hi"), 0644)
+
+	if err := cleanLineFiles(dir); err != nil {
+		t.Fatalf("cleanLineFiles returned error: %v", err)
+	}
+
+	// Valid files should remain
+	for _, name := range []string{"R1.geojson", "R2.geojson", "README.txt"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Errorf("expected %s to remain, but it was removed", name)
+		}
+	}
+
+	// Orphaned files should be gone
+	for _, name := range []string{"C1.geojson", "C10.geojson", "T1.geojson"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); !os.IsNotExist(err) {
+			t.Errorf("expected %s to be removed, but it still exists", name)
+		}
+	}
+}
+
+func TestCleanLineFiles_EmptyDir(t *testing.T) {
+	dir := t.TempDir()
+	if err := cleanLineFiles(dir); err != nil {
+		t.Fatalf("cleanLineFiles on empty dir returned error: %v", err)
+	}
+}
+
+func TestCleanLineFiles_NonExistentDir(t *testing.T) {
+	if err := cleanLineFiles("/tmp/does-not-exist-dir-12345"); err != nil {
+		t.Fatalf("cleanLineFiles on non-existent dir returned error: %v", err)
+	}
+}
+
+func TestValidateOutput_ValidData(t *testing.T) {
+	dir := t.TempDir()
+	linesDir := filepath.Join(dir, "lines")
+	os.MkdirAll(linesDir, 0755)
+
+	// Create line files for two valid lines
+	os.WriteFile(filepath.Join(linesDir, "R1.geojson"), []byte("{}"), 0644)
+	os.WriteFile(filepath.Join(linesDir, "R2.geojson"), []byte("{}"), 0644)
+
+	// Create matching manifest
+	manifest := Manifest{
+		Lines: []ManifestLine{
+			{ID: "R1", Path: "lines/R1.geojson", Checksum: "abc"},
+			{ID: "R2", Path: "lines/R2.geojson", Checksum: "def"},
+		},
+		UpdatedAt: "2025-01-01T00:00:00Z",
+	}
+	data, _ := json.MarshalIndent(manifest, "", "  ")
+	os.WriteFile(filepath.Join(dir, "manifest.json"), data, 0644)
+
+	if err := validateOutput(dir); err != nil {
+		t.Errorf("validateOutput should pass for valid data, got: %v", err)
+	}
+}
+
+func TestValidateOutput_ManifestHasInvalidLine(t *testing.T) {
+	dir := t.TempDir()
+	linesDir := filepath.Join(dir, "lines")
+	os.MkdirAll(linesDir, 0755)
+
+	os.WriteFile(filepath.Join(linesDir, "R1.geojson"), []byte("{}"), 0644)
+
+	// Manifest references C1 which is not in LineColorMap
+	manifest := Manifest{
+		Lines: []ManifestLine{
+			{ID: "R1", Path: "lines/R1.geojson", Checksum: "abc"},
+			{ID: "C1", Path: "lines/C1.geojson", Checksum: "xyz"},
+		},
+		UpdatedAt: "2025-01-01T00:00:00Z",
+	}
+	data, _ := json.MarshalIndent(manifest, "", "  ")
+	os.WriteFile(filepath.Join(dir, "manifest.json"), data, 0644)
+
+	err := validateOutput(dir)
+	if err == nil {
+		t.Error("validateOutput should fail when manifest contains non-Catalunya line")
+	}
+}
+
+func TestValidateOutput_UnexpectedFileInLinesDir(t *testing.T) {
+	dir := t.TempDir()
+	linesDir := filepath.Join(dir, "lines")
+	os.MkdirAll(linesDir, 0755)
+
+	// Valid file + orphan
+	os.WriteFile(filepath.Join(linesDir, "R1.geojson"), []byte("{}"), 0644)
+	os.WriteFile(filepath.Join(linesDir, "C5.geojson"), []byte("{}"), 0644)
+
+	manifest := Manifest{
+		Lines: []ManifestLine{
+			{ID: "R1", Path: "lines/R1.geojson", Checksum: "abc"},
+		},
+		UpdatedAt: "2025-01-01T00:00:00Z",
+	}
+	data, _ := json.MarshalIndent(manifest, "", "  ")
+	os.WriteFile(filepath.Join(dir, "manifest.json"), data, 0644)
+
+	err := validateOutput(dir)
+	if err == nil {
+		t.Error("validateOutput should fail when lines/ contains unexpected file")
 	}
 }
 
