@@ -1,172 +1,87 @@
 {
-  "gtfs_checksum": "859036a997f07fed671cd31cb04c15fe9f4cbb44295a78939f88d89009119ce7",
+  "gtfs_checksum": "acc00a0c05005bde15843eedfaf1a6f5fcad166081b1205ff5a0843b26acf5b5",
   "legend_entries_path": "LegendEntry.json",
   "line_geometries_path": "LineGeometry.geojson",
   "lines": [
     {
-      "checksum": "4d2b1ac6b59f71a6045b294f146145b31bea227399415ba5980d488da9b2a3bb",
-      "id": "C1",
-      "path": "lines/C1.geojson"
-    },
-    {
-      "checksum": "860b50e1fbf241c0469f272d55171bc44f96fe3ab23be55a4b77fca62ea273e3",
-      "id": "C10",
-      "path": "lines/C10.geojson"
-    },
-    {
-      "checksum": "d892654826de12a0a02c573711ad8b2cfdce7e9f222a01856a7fc0a6d1ca9936",
-      "id": "C1A",
-      "path": "lines/C1A.geojson"
-    },
-    {
-      "checksum": "3d445243d6e060ff3f9e3db2f885bb64f944c5e24744dec22cc6d52de5d7a278",
-      "id": "C2",
-      "path": "lines/C2.geojson"
-    },
-    {
-      "checksum": "c02b69147c9b5c06f095df562d256c25fa92a5967f3789c90bf91c68f25559ed",
-      "id": "C3",
-      "path": "lines/C3.geojson"
-    },
-    {
-      "checksum": "eb168df81ead056e4d4ac201b3d398903ed5faffacea4390cab2e382e6d27e99",
-      "id": "C4",
-      "path": "lines/C4.geojson"
-    },
-    {
-      "checksum": "905060e313c6bf69135f07414181becb3745b2b5558996bd8684c26601255288",
-      "id": "C4A",
-      "path": "lines/C4A.geojson"
-    },
-    {
-      "checksum": "249f1734c1b464438580209797dd3c353989babe6f3a56d4a6996ecafbed94d4",
-      "id": "C4B",
-      "path": "lines/C4B.geojson"
-    },
-    {
-      "checksum": "8eac4b35e3334a64b7d1205f3048d81052cc5da4b7e2d6066c5c8a2a4afc528c",
-      "id": "C5",
-      "path": "lines/C5.geojson"
-    },
-    {
-      "checksum": "ad560be9664b56701e885f576850aac78d0d8b5804da53833f9838b1eb1a7dcd",
-      "id": "C5A",
-      "path": "lines/C5A.geojson"
-    },
-    {
-      "checksum": "ed0c31861028e81d611ff4dde6c4302b6162d3af6f7e30b79defc98c7a240ad5",
-      "id": "C6",
-      "path": "lines/C6.geojson"
-    },
-    {
-      "checksum": "0b3f9e94383d24fe7291538d49454c2813cc79ee9e475bb6606433e918b7f3de",
-      "id": "C7",
-      "path": "lines/C7.geojson"
-    },
-    {
-      "checksum": "da39f65acd165417efd63edb33c4dc04de25b19656d5d9cec37254d1e1bc023c",
-      "id": "C8",
-      "path": "lines/C8.geojson"
-    },
-    {
-      "checksum": "9af99835b0d1bcb6fe56ed3967d89f2a86a9bd64b82b5c80bbf04756d35f536d",
-      "id": "C8A",
-      "path": "lines/C8A.geojson"
-    },
-    {
-      "checksum": "ffe615a02b3c920b1705bc646fba7a8536cac815a54ac4661eedafe41934a2f9",
-      "id": "C8B",
-      "path": "lines/C8B.geojson"
-    },
-    {
-      "checksum": "396b38223335f32d370e76df1be6420519cbd2a7a9bcfbb7781500cdb3c974c1",
-      "id": "C9",
-      "path": "lines/C9.geojson"
-    },
-    {
-      "checksum": "6658a622d266e7f1f8158f2cef9a6a1b34fc5ea8463dd57b49141e5444b0725e",
+      "checksum": "ef306ec7b29efd4dd69213ebb0b2111a112f4179db220e1c3d0297de46f7ac0a",
       "id": "R1",
       "path": "lines/R1.geojson"
     },
     {
-      "checksum": "067cf5df07ccdf09bdcc2dc49d629b9afc0921bc311f2215f437f283cd2c9627",
+      "checksum": "53ac0196861b1a502ffd14f73569f1b099d8c2e3e9c6bd26930b75ef216617d6",
       "id": "R11",
       "path": "lines/R11.geojson"
     },
     {
-      "checksum": "528747b02a115b3a4a36a36400e14235d729e009029f64518805fb9067df7571",
+      "checksum": "52f3a4923dfea971f9c6df56e7cc704f898e9014a48de63ab2a7f6058d87376f",
       "id": "R13",
       "path": "lines/R13.geojson"
     },
     {
-      "checksum": "f998aa8b18bf521f211a7e6793a86fd7d363453b87d431060c6284bfae011d29",
+      "checksum": "c667718837be947edc7cc38a4249a57423a5a677a78759599c4a961d24067d3e",
       "id": "R14",
       "path": "lines/R14.geojson"
     },
     {
-      "checksum": "a5336c75de2ac52f18f8b7fb5fe6272fec2ad00ffd1f832d922212b9724724fa",
+      "checksum": "0fea25478c9faea29aec054db453c17c52a3060f1309655d10ffeecff82fe294",
       "id": "R15",
       "path": "lines/R15.geojson"
     },
     {
-      "checksum": "a3300d7dc35d193ef4f048c160ccc5711e8e351ece59fbe27ebb79ee4b933f65",
+      "checksum": "135289343460212eb60c2811124fe04730b47cae5fb6128bde6be79bd1bfbd3f",
       "id": "R16",
       "path": "lines/R16.geojson"
     },
     {
-      "checksum": "62775d14628a8de50c84525c531008f664679b75234a4a174b3bb5987f87577c",
+      "checksum": "7640c8bca686970965567a39f3f1c1aaeb6390a69bef624383be4e311e2a8c09",
       "id": "R17",
       "path": "lines/R17.geojson"
     },
     {
-      "checksum": "ad55c5faf4b27946856cd50c919fb9abeeaf66f7d127cc96395f944af2c9b6a7",
+      "checksum": "1c6f24a7942089e861737e844deca22ada66d53ca36f80a481dcd599b0bf11b9",
       "id": "R2",
       "path": "lines/R2.geojson"
     },
     {
-      "checksum": "c91c1bea8bcb5dac3271d17890e449dafd3923fcabf5ff6dcad59b74151ae64f",
+      "checksum": "b345f3ea110fabc7c171a816b51dfa02981e3af4eb55d9abdfc728b852fda1c6",
       "id": "R2N",
       "path": "lines/R2N.geojson"
     },
     {
-      "checksum": "6af1effe9ca3c31708ba09f4a4ee5ba7e95059a07c76c9580bdefdde0782bb39",
+      "checksum": "63422cda3ba527fe5d1e9177abbb4680354e47b1049523d25d16e1bf24e0954d",
       "id": "R2S",
       "path": "lines/R2S.geojson"
     },
     {
-      "checksum": "f38de4753f6988ad53f6ad77446c4cfc71bb22103b692b5312fb4509e8b66846",
+      "checksum": "60f9522e723a8440d0b7321dcc06459ac516ac3ab6d1f50afd78a871edec7576",
       "id": "R3",
       "path": "lines/R3.geojson"
     },
     {
-      "checksum": "2a2816999b52a819941dd425f7c50fe51c35b2473f676675334c8760d4b4c4f7",
+      "checksum": "5557b70bd418ac1609ec63cf1eea03d9bddc233a9981e7703c6afda89025ac48",
       "id": "R4",
       "path": "lines/R4.geojson"
     },
     {
-      "checksum": "47cc05c40bb6fae613b0f4d2f5ab1c7f1009ba0422cdfd68b0ac122921bb39b4",
+      "checksum": "ac6ba1813535b133a57d45b3d17aabcfcf00f409d4aab1cef623922393fcf556",
       "id": "R8",
       "path": "lines/R8.geojson"
     },
     {
-      "checksum": "b5e83f14d7eba10ba5158515bf1826072408f0ddfcfeac0a221dd84d0c7a4fa8",
+      "checksum": "fd1a0c20e296c54fc95b5a6aaae3fb64bd8e220eac8c61c3dddae150b943a29f",
       "id": "RT1",
       "path": "lines/RT1.geojson"
-    },
-    {
-      "checksum": "a626cc25ebef4543557bf92983468826eb4008ad7c8341be15dd463b38da5c62",
-      "id": "T1",
-      "path": "lines/T1.geojson"
     }
   ],
   "map_ui_state_path": "MapUIState.json",
   "map_viewport_path": "MapViewport.json",
   "rodalies_lines_path": "RodaliesLine.json",
   "stations": {
-    "checksum": "8acd66d9b5b762f3e1decf5efaa1e69f9d0716aa938fdbb98f35cd8cdfde1783",
+    "checksum": "969c10f10926123f0abd319214b609b13ed5029f3e3556c6a4839b170ff83636",
     "path": "Station.geojson"
   },
-  "updated_at": "2026-02-06T15:17:38Z",
+  "updated_at": "2026-02-13T20:11:11Z",
   "viewport": {
     "center": {
       "lat": 41.3896,
@@ -188,6 +103,7 @@
       "right": 24,
       "top": 48
     },
-    "zoom": 15
-  }
+    "zoom": 13.48
+  },
+  "generator_version": "2"
 }
