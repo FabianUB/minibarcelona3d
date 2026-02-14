@@ -590,7 +590,7 @@ func computeViewport(stops []gtfs.Stop) MapViewport {
 	// We hardcode Barcelona coordinates to ensure correct initial view.
 	return MapViewport{
 		Center: ManifestCenter{Lat: 41.3896, Lng: 2.170302},
-		Zoom:   13.48,
+		Zoom:   15.5,
 		MaxBounds: [][2]float64{
 			{0.249476, 40.395723},
 			{3.363469, 42.65891},

@@ -226,8 +226,8 @@ func assertBarcelonaViewport(t *testing.T, viewport MapViewport) {
 	}
 
 	// Check zoom
-	if viewport.Zoom != 13.48 {
-		t.Errorf("Viewport zoom = %f, want 13.48", viewport.Zoom)
+	if viewport.Zoom != 15.5 {
+		t.Errorf("Viewport zoom = %f, want 15.5", viewport.Zoom)
 	}
 
 	// Check bounds are Catalonia, not all of Spain

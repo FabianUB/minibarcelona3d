@@ -18,7 +18,7 @@ const RODALIES_DATA_ROOT = 'rodalies_data';
 const MANIFEST_FILENAME = 'manifest.json';
 const FALLBACK_VIEWPORT: MapViewport = {
   center: { lat: 41.3896, lng: 2.170302 },
-  zoom: 15,
+  zoom: 15.5,
   max_bounds: [
     [0.249476, 40.395723],
     [3.363469, 42.65891],
