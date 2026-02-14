@@ -23,6 +23,8 @@ import { useMapStyleReady } from '../../hooks/useMapStyleReady';
 import { useTransitActions, type DataSourceType } from '../../state/transit';
 import { useMapNetwork, useMapActions } from '../../state/map';
 import type { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
+import { useHitDetectionMode } from '../../hooks/useHitDetectionMode';
+import { raycastHitTest } from '../../lib/map/RaycastHitResolver';
 
 export interface TransitVehicleLayer3DProps {
   /** Mapbox GL Map instance */
@@ -67,6 +69,7 @@ export function TransitVehicleLayer3D({
   const [sceneReady, setSceneReady] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
   const styleReady = useMapStyleReady(map);
+  const [hitDetectionMode] = useHitDetectionMode();
 
   // Track visibility in a ref for use in render loop
   const visibleRef = useRef(visible);
@@ -83,6 +86,7 @@ export function TransitVehicleLayer3D({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const projMatrixInverseRef = useRef(new THREE.Matrix4());
   const meshManagerRef = useRef<TransitMeshManager | null>(null);
   const environmentRTRef = useRef<THREE.WebGLRenderTarget | null>(null);
   const layerAddedRef = useRef(false);
@@ -378,6 +382,13 @@ export function TransitVehicleLayer3D({
         // Use resultMatrix to avoid clone() allocation
         matrices.resultMatrix.copy(matrices.mapboxMatrix).multiply(matrices.modelTransform);
         cameraRef.current.projectionMatrix.copy(matrices.resultMatrix);
+        cameraRef.current.projectionMatrixInverse
+          .copy(cameraRef.current.projectionMatrix)
+          .invert();
+        cameraRef.current.matrixWorld.identity();
+        cameraRef.current.matrixWorldInverse.identity();
+        // Snapshot the inverse for raycast use between frames
+        projMatrixInverseRef.current.copy(matrices.resultMatrix).invert();
 
         // Render
         rendererRef.current.resetState();
@@ -580,6 +591,24 @@ export function TransitVehicleLayer3D({
     [map]
   );
 
+  const resolveRaycastHit = useCallback(
+    (point: { x: number; y: number }) => {
+      const scene = sceneRef.current;
+      if (!scene) return null;
+
+      const canvas = map.getCanvas();
+      return raycastHitTest(
+        projMatrixInverseRef.current,
+        scene.children,
+        canvas.clientWidth,
+        canvas.clientHeight,
+        point.x,
+        point.y,
+      );
+    },
+    [map],
+  );
+
   /**
    * Handle hover on vehicle (show outline + scale up)
    */
@@ -601,8 +630,14 @@ export function TransitVehicleLayer3D({
         y: event.clientY - rect.top,
       };
 
-      const hit = resolveScreenHit(point, 4);
-      const vehicleKey = hit?.vehicleKey ?? null;
+      let vehicleKey: string | null = null;
+      if (hitDetectionMode === 'raycast') {
+        const hit = resolveRaycastHit(point);
+        vehicleKey = hit?.vehicleKey ?? null;
+      } else {
+        const hit = resolveScreenHit(point, 4);
+        vehicleKey = hit?.vehicleKey ?? null;
+      }
 
       if (hoveredVehicleRef.current !== vehicleKey) {
         // Hide outline from previous hovered vehicle
@@ -625,7 +660,7 @@ export function TransitVehicleLayer3D({
         map.triggerRepaint();
       }
     },
-    [map, visible, resolveScreenHit]
+    [map, visible, resolveScreenHit, resolveRaycastHit, hitDetectionMode]
   );
 
   /**
@@ -672,6 +707,15 @@ export function TransitVehicleLayer3D({
     clickCoordinator.register(
       networkType,
       (point, paddingPx) => {
+        if (hitDetectionMode === 'raycast') {
+          const hit = resolveRaycastHit(point);
+          if (!hit) return null;
+          return {
+            vehicleKey: hit.vehicleKey,
+            distance: hit.distance,
+            metadata: { lineCode: hit.lineCode, networkType },
+          };
+        }
         const hit = resolveScreenHit(point, paddingPx);
         if (!hit) return null;
         return {
@@ -693,7 +737,7 @@ export function TransitVehicleLayer3D({
     return () => {
       clickCoordinator.unregister(networkType);
     };
-  }, [clickCoordinator, networkType, resolveScreenHit, visible, selectVehicle, setActivePanel]);
+  }, [clickCoordinator, networkType, resolveScreenHit, resolveRaycastHit, hitDetectionMode, visible, selectVehicle, setActivePanel]);
 
   /**
    * Sync visibility with coordinator
