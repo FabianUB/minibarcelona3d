@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { TrainMeshManager } from '../../lib/trains/trainMeshManager';
 import { getTripCache, type CacheStats } from '../../lib/trains/tripCache';
 import { trainDebug } from '../../lib/trains/debugLogger';
+import { useHitDetectionMode } from '../../hooks/useHitDetectionMode';
 
 interface TrainDebugPanelProps {
   meshManager: TrainMeshManager | null;
@@ -22,6 +23,7 @@ export function TrainDebugPanel({
   onTogglePolling,
   onManualPoll,
 }: TrainDebugPanelProps) {
+  const [hitMode, setHitMode] = useHitDetectionMode();
   const [debugData, setDebugData] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [showZoomInfo, setShowZoomInfo] = useState(true);
@@ -276,6 +278,43 @@ export function TrainDebugPanel({
               )}
             </div>
           )}
+          <div style={{ borderTop: '1px solid #444', paddingTop: '8px', marginTop: '8px' }}>
+            <div style={{ color: '#888', fontSize: '12px', marginBottom: '6px' }}>Hit Detection</div>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                onClick={() => setHitMode('obr')}
+                style={{
+                  flex: 1,
+                  padding: '5px 8px',
+                  backgroundColor: hitMode === 'obr' ? '#4a9eff' : 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: hitMode === 'obr' ? 'none' : '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: hitMode === 'obr' ? 600 : 400,
+                }}
+              >
+                OBR
+              </button>
+              <button
+                onClick={() => setHitMode('raycast')}
+                style={{
+                  flex: 1,
+                  padding: '5px 8px',
+                  backgroundColor: hitMode === 'raycast' ? '#4a9eff' : 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: hitMode === 'raycast' ? 'none' : '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: hitMode === 'raycast' ? 600 : 400,
+                }}
+              >
+                Raycast
+              </button>
+            </div>
+          </div>
           <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
             <button
               onClick={() => trainDebug.download()}

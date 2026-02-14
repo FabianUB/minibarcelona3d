@@ -37,6 +37,8 @@ import type { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordina
 import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
 import { trainDebug } from '../../lib/trains/debugLogger';
+import { useHitDetectionMode } from '../../hooks/useHitDetectionMode';
+import { raycastHitTest } from '../../lib/map/RaycastHitResolver';
 
 export interface TrainLayer3DProps {
   /**
@@ -189,6 +191,7 @@ export function TrainLayer3D({
   const { setActivePanel } = useMapActions();
   const { setDataSource } = useTransitActions();
   const { enableTrainParking } = useMapUI();
+  const [hitDetectionMode] = useHitDetectionMode();
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -217,6 +220,10 @@ export function TrainLayer3D({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  // Snapshot of the projection matrix inverse captured every render frame.
+  // The camera's own projectionMatrix gets reset to identity between frames,
+  // so we store our computed inverse separately for use by the raycaster.
+  const projMatrixInverseRef = useRef(new THREE.Matrix4());
   const pmremGeneratorRef = useRef<THREE.PMREMGenerator | null>(null);
   const environmentRTRef = useRef<THREE.WebGLRenderTarget | null>(null);
 
@@ -713,6 +720,24 @@ export function TrainLayer3D({
     [map]
   );
 
+  const resolveRaycastHit = useCallback(
+    (point: { x: number; y: number }) => {
+      const scene = sceneRef.current;
+      if (!scene) return null;
+
+      const canvas = map.getCanvas();
+      return raycastHitTest(
+        projMatrixInverseRef.current,
+        scene.children,
+        canvas.clientWidth,
+        canvas.clientHeight,
+        point.x,
+        point.y,
+      );
+    },
+    [map],
+  );
+
   const hoveredVehicleRef = useRef<string | null>(null);
   const lastMouseMoveTime = useRef<number>(0);
   const MOUSE_MOVE_THROTTLE_MS = 100; // Throttle to max 10 FPS
@@ -1001,8 +1026,14 @@ export function TrainLayer3D({
         y: event.clientY - rect.top,
       };
 
-      const hit = resolveScreenHit(point, 6);
-      const vehicleKey = hit?.vehicleKey ?? null;
+      let vehicleKey: string | null = null;
+      if (hitDetectionMode === 'raycast') {
+        const hit = resolveRaycastHit(point);
+        vehicleKey = hit?.vehicleKey ?? null;
+      } else {
+        const hit = resolveScreenHit(point, 6);
+        vehicleKey = hit?.vehicleKey ?? null;
+      }
 
       if (hoveredVehicleRef.current !== vehicleKey) {
         // Hide outline from previous hovered train
@@ -1019,7 +1050,7 @@ export function TrainLayer3D({
         }
       }
     },
-    [map, resolveScreenHit]
+    [map, resolveScreenHit, resolveRaycastHit, hitDetectionMode]
   );
 
   const handlePointerLeave = useCallback(() => {
@@ -1189,6 +1220,8 @@ export function TrainLayer3D({
           .copy(renderCamera.projectionMatrix)
           .invert();
       }
+      // Snapshot the inverse for raycast use between frames
+      projMatrixInverseRef.current.copy(matrices.resultMatrix).invert();
       renderCamera.matrixWorld.identity();
       renderCamera.matrixWorldInverse.identity();
 
@@ -1786,6 +1819,15 @@ export function TrainLayer3D({
     clickCoordinator.register(
       'rodalies',
       (point, paddingPx) => {
+        if (hitDetectionMode === 'raycast') {
+          const hit = resolveRaycastHit(point);
+          if (!hit) return null;
+          return {
+            vehicleKey: hit.vehicleKey,
+            distance: hit.distance,
+            metadata: { routeId: hit.routeId },
+          };
+        }
         const hit = resolveScreenHit(point, paddingPx);
         if (!hit) return null;
         return {
@@ -1842,7 +1884,7 @@ export function TrainLayer3D({
     return () => {
       clickCoordinator.unregister('rodalies');
     };
-  }, [clickCoordinator, resolveScreenHit, visible, onRaycastResult, selectTrain, setActivePanel]);
+  }, [clickCoordinator, resolveScreenHit, resolveRaycastHit, hitDetectionMode, visible, onRaycastResult, selectTrain, setActivePanel]);
 
   /**
    * Effect: Sync visibility with coordinator

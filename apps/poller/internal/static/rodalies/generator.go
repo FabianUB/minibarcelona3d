@@ -205,6 +205,11 @@ func Generate(data *gtfs.Data, outputDir string) error {
 		return fmt.Errorf("failed to create lines directory: %w", err)
 	}
 
+	// Remove orphaned line files from previous generations
+	if err := cleanLineFiles(linesDir); err != nil {
+		log.Printf("Warning: failed to clean orphaned line files: %v", err)
+	}
+
 	now := time.Now().UTC()
 	nowStr := now.Format(time.RFC3339)
 
@@ -295,6 +300,11 @@ func Generate(data *gtfs.Data, outputDir string) error {
 		return fmt.Errorf("failed to write manifest.json: %w", err)
 	}
 
+	// Validate the output to catch corruption before it reaches production
+	if err := validateOutput(outputDir); err != nil {
+		return fmt.Errorf("post-generation validation failed: %w", err)
+	}
+
 	log.Printf("Rodalies: generated %d lines, %d stations", len(lineManifests), len(data.Stops))
 	return nil
 }
@@ -302,13 +312,18 @@ func Generate(data *gtfs.Data, outputDir string) error {
 func buildRouteToLineMapping(routes []gtfs.Route) map[string]string {
 	mapping := make(map[string]string)
 	for _, route := range routes {
-		// Extract line code from route_short_name (e.g., "R1", "R2N")
 		lineCode := route.RouteShortName
 		if lineCode == "" {
 			continue
 		}
-		// Normalize line codes
 		lineCode = strings.ToUpper(lineCode)
+
+		// Only include Rodalies de Catalunya lines; the national GTFS feed
+		// contains all Spanish Cercanías (Madrid C1-C10, Bilbao, etc.)
+		if _, ok := LineColorMap[lineCode]; !ok {
+			continue
+		}
+
 		mapping[route.RouteID] = lineCode
 	}
 	return mapping
@@ -392,9 +407,6 @@ func generateLineFiles(data *gtfs.Data, routeToLine map[string]string, linesDir,
 		}
 
 		color := LineColorMap[lineCode]
-		if color == "" {
-			color = "888888" // Default gray
-		}
 
 		order := LineOrderMap[lineCode]
 		name := lineNames[lineCode]
@@ -598,4 +610,87 @@ func writeJSON(path string, v interface{}) error {
 func sha256Sum(data []byte) string {
 	hash := sha256.Sum256(data)
 	return hex.EncodeToString(hash[:])
+}
+
+// validateOutput checks that the generated output is consistent:
+// 1. Every line in the manifest is in LineColorMap
+// 2. No unexpected .geojson files exist in lines/
+func validateOutput(outputDir string) error {
+	// Read manifest
+	manifestData, err := os.ReadFile(filepath.Join(outputDir, "manifest.json"))
+	if err != nil {
+		return fmt.Errorf("cannot read manifest: %w", err)
+	}
+
+	var manifest Manifest
+	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+		return fmt.Errorf("cannot parse manifest: %w", err)
+	}
+
+	// Check that every manifest line is in the allowlist
+	for _, line := range manifest.Lines {
+		if _, ok := LineColorMap[line.ID]; !ok {
+			return fmt.Errorf("manifest contains line %q not in LineColorMap", line.ID)
+		}
+	}
+
+	// Scan lines/ directory for unexpected files
+	linesDir := filepath.Join(outputDir, "lines")
+	entries, err := os.ReadDir(linesDir)
+	if err != nil {
+		return fmt.Errorf("cannot read lines directory: %w", err)
+	}
+
+	var fileCount int
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".geojson") {
+			continue
+		}
+		fileCount++
+		lineCode := strings.TrimSuffix(entry.Name(), ".geojson")
+		if _, ok := LineColorMap[lineCode]; !ok {
+			return fmt.Errorf("unexpected line file %s not in LineColorMap", entry.Name())
+		}
+	}
+
+	log.Printf("Validation passed: %d manifest lines, %d line files", len(manifest.Lines), fileCount)
+	return nil
+}
+
+// cleanLineFiles removes .geojson files from linesDir whose name (minus
+// extension) is not present in LineColorMap. This prevents stale files from
+// persisting when lines are removed from the allowlist.
+func cleanLineFiles(linesDir string) error {
+	entries, err := os.ReadDir(linesDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	var removed int
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasSuffix(name, ".geojson") {
+			continue
+		}
+		lineCode := strings.TrimSuffix(name, ".geojson")
+		if _, ok := LineColorMap[lineCode]; !ok {
+			path := filepath.Join(linesDir, name)
+			if err := os.Remove(path); err != nil {
+				log.Printf("Warning: failed to remove orphaned file %s: %v", name, err)
+			} else {
+				removed++
+			}
+		}
+	}
+
+	if removed > 0 {
+		log.Printf("Cleaned %d orphaned line file(s) from %s", removed, linesDir)
+	}
+	return nil
 }

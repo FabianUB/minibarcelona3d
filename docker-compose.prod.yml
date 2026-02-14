@@ -57,10 +57,12 @@ services:
     container_name: minibarcelona3d-init-db
     volumes:
       - transit_data:/data
+      - static_data:/app/web_public
       - ./data/gtfs:/data/gtfs:ro
     environment:
       SQLITE_DATABASE: /data/transit.db
       GTFS_DIR: /data/gtfs
+      WEB_PUBLIC_DIR: /app/web_public
     command: ["sh", "/app/init-db.sh"]
     networks:
       - app_network
@@ -102,6 +104,7 @@ services:
       LINES_DIR: /app/web_public/tmb_data/metro/lines
     volumes:
       - transit_data:/data
+      - static_data:/app/web_public
     networks:
       - app_network
     depends_on:
@@ -165,8 +168,8 @@ services:
       args:
         VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN}
     container_name: minibarcelona3d-web
-    # GeoJSON files (lines, stations) are baked into the image
-    # Real-time vehicle positions come from the API, not static files
+    volumes:
+      - static_data:/data/static:ro
     networks:
       - app_network
     restart: unless-stopped
@@ -193,6 +196,10 @@ volumes:
   # Persistent transit database
   transit_data:
     name: minibarcelona3d_transit_data
+
+  # Shared static data (GeoJSON files written by poller, served by web)
+  static_data:
+    name: minibarcelona3d_static_data
 
   # Caddy certificates and config
   caddy_data:

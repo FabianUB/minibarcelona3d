@@ -114,4 +114,5 @@ data/gtfs/*
 !data/gtfs/tram_tbs_gtfs.zip
 !data/gtfs/tram_tbx_gtfs.zip
 
-apps/poller/data/*.har
+# HAR files (browser network recordings — may contain API tokens)
+*.har

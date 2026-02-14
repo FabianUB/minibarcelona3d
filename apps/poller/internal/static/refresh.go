@@ -19,12 +19,18 @@ import (
 	tmbgen "github.com/mini-rodalies-3d/poller/internal/static/tmb"
 )
 
+// GeneratorVersion is bumped whenever the parsing/generation logic changes.
+// When a deployed poller sees a manifest with a different version, it forces
+// a full re-parse even if the GTFS zip checksum is unchanged.
+const GeneratorVersion = "2"
+
 // Manifest represents the manifest.json structure
 type Manifest struct {
-	UpdatedAt    string `json:"updated_at"`              // When the manifest was last updated
-	GeneratedAt  string `json:"generated_at"`            // Legacy field, also check this
-	Version      string `json:"version"`
-	GTFSChecksum string `json:"gtfs_checksum,omitempty"` // SHA256 of source GTFS zip
+	UpdatedAt        string `json:"updated_at"`                        // When the manifest was last updated
+	GeneratedAt      string `json:"generated_at"`                      // Legacy field, also check this
+	Version          string `json:"version"`
+	GTFSChecksum     string `json:"gtfs_checksum,omitempty"`           // SHA256 of source GTFS zip
+	GeneratorVersion string `json:"generator_version,omitempty"`       // Version of the generation code
 }
 
 // RefreshIfStale checks manifest files and refreshes data if older than threshold
@@ -72,10 +78,10 @@ func RefreshIfStale(cfg *config.Config, database *db.DB) error {
 func isStaleOrMissing(manifestPath string, maxAgeDays int) bool {
 	data, err := os.ReadFile(manifestPath)
 	if err != nil {
-		// File doesn't exist - skip refresh (init-db handles first-time setup)
-		// Only refresh if we previously generated data and it's now stale
-		log.Printf("Manifest not found at %s, skipping refresh (use init-db for first-time setup)", manifestPath)
-		return false
+		// File doesn't exist — trigger refresh so the poller self-heals
+		// even when init-db was skipped or the volume is empty
+		log.Printf("Manifest not found at %s, triggering refresh", manifestPath)
+		return true
 	}
 
 	var manifest Manifest
@@ -124,20 +130,27 @@ func refreshRodalies(cfg *config.Config, database *db.DB) error {
 		log.Printf("Warning: failed to calculate checksum: %v", err)
 		// Continue with refresh if checksum fails
 	} else {
-		// Compare with stored checksum
+		// Compare with stored checksum and generator version
 		manifestPath := filepath.Join(cfg.WebPublicDir, "rodalies_data", "manifest.json")
 		oldChecksum := getStoredChecksum(manifestPath)
-		if oldChecksum != "" && oldChecksum == newChecksum {
+		storedVersion := getStoredGeneratorVersion(manifestPath)
+		versionChanged := storedVersion != GeneratorVersion
+
+		if oldChecksum != "" && oldChecksum == newChecksum && !versionChanged {
 			log.Printf("Rodalies GTFS unchanged (checksum: %s...)", newChecksum[:12])
-			// Update manifest timestamp but skip expensive parsing
 			updateManifestTimestamp(manifestPath, newChecksum)
 			return nil
 		}
-		log.Printf("Rodalies GTFS changed (old: %s, new: %s), refreshing...",
-			truncateChecksum(oldChecksum), truncateChecksum(newChecksum))
+		if versionChanged {
+			log.Printf("Generator version changed (%s -> %s), forcing re-parse",
+				storedVersion, GeneratorVersion)
+		} else {
+			log.Printf("Rodalies GTFS changed (old: %s, new: %s), refreshing...",
+				truncateChecksum(oldChecksum), truncateChecksum(newChecksum))
+		}
 	}
 
-	// Parse GTFS data (only when checksum differs)
+	// Parse GTFS data (only when checksum or generator version differs)
 	data, err := gtfs.Parse(zipPath)
 	if err != nil {
 		return err
@@ -149,7 +162,7 @@ func refreshRodalies(cfg *config.Config, database *db.DB) error {
 		return err
 	}
 
-	// Store checksum in manifest for next comparison
+	// Store checksum and generator version in manifest for next comparison
 	if newChecksum != "" {
 		storeChecksumInManifest(filepath.Join(outputDir, "manifest.json"), newChecksum)
 	}
@@ -191,19 +204,27 @@ func refreshTMB(cfg *config.Config, database *db.DB) error {
 	if err != nil {
 		log.Printf("Warning: failed to calculate TMB checksum: %v", err)
 	} else {
-		// Compare with stored checksum
+		// Compare with stored checksum and generator version
 		manifestPath := filepath.Join(cfg.WebPublicDir, "tmb_data", "manifest.json")
 		oldChecksum := getStoredChecksum(manifestPath)
-		if oldChecksum != "" && oldChecksum == newChecksum {
+		storedVersion := getStoredGeneratorVersion(manifestPath)
+		versionChanged := storedVersion != GeneratorVersion
+
+		if oldChecksum != "" && oldChecksum == newChecksum && !versionChanged {
 			log.Printf("TMB GTFS unchanged (checksum: %s...)", newChecksum[:12])
 			updateManifestTimestamp(manifestPath, newChecksum)
 			return nil
 		}
-		log.Printf("TMB GTFS changed (old: %s, new: %s), refreshing...",
-			truncateChecksum(oldChecksum), truncateChecksum(newChecksum))
+		if versionChanged {
+			log.Printf("Generator version changed (%s -> %s), forcing TMB re-parse",
+				storedVersion, GeneratorVersion)
+		} else {
+			log.Printf("TMB GTFS changed (old: %s, new: %s), refreshing...",
+				truncateChecksum(oldChecksum), truncateChecksum(newChecksum))
+		}
 	}
 
-	// Parse GTFS data (only when checksum differs)
+	// Parse GTFS data (only when checksum or generator version differs)
 	data, err := gtfs.Parse(zipPath)
 	if err != nil {
 		return err
@@ -215,7 +236,7 @@ func refreshTMB(cfg *config.Config, database *db.DB) error {
 		return err
 	}
 
-	// Store checksum in manifest
+	// Store checksum and generator version in manifest
 	if newChecksum != "" {
 		storeChecksumInManifest(filepath.Join(outputDir, "manifest.json"), newChecksum)
 	}
@@ -460,7 +481,7 @@ func getStoredChecksum(manifestPath string) string {
 	return manifest.GTFSChecksum
 }
 
-// storeChecksumInManifest updates the GTFS checksum in an existing manifest file
+// storeChecksumInManifest updates the GTFS checksum and generator version in an existing manifest file
 func storeChecksumInManifest(manifestPath, checksum string) {
 	data, err := os.ReadFile(manifestPath)
 	if err != nil {
@@ -476,6 +497,7 @@ func storeChecksumInManifest(manifestPath, checksum string) {
 	}
 
 	manifest["gtfs_checksum"] = checksum
+	manifest["generator_version"] = GeneratorVersion
 
 	updatedData, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
@@ -486,6 +508,21 @@ func storeChecksumInManifest(manifestPath, checksum string) {
 	if err := os.WriteFile(manifestPath, updatedData, 0644); err != nil {
 		log.Printf("Warning: failed to write manifest with checksum: %v", err)
 	}
+}
+
+// getStoredGeneratorVersion reads the generator version from a manifest file
+func getStoredGeneratorVersion(manifestPath string) string {
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return ""
+	}
+
+	var manifest Manifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		return ""
+	}
+
+	return manifest.GeneratorVersion
 }
 
 // updateManifestTimestamp updates the timestamp in manifest without changing other fields
