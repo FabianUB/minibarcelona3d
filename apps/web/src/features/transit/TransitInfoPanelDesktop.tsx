@@ -18,9 +18,10 @@ import { getMetroLineConfig } from '@/config/metroConfig';
 import { getTramLineConfig } from '@/config/tramConfig';
 import { getFgcLineConfig } from '@/config/fgcConfig';
 import { getBusRouteConfig } from '@/config/busConfig';
+import { fetchTripDetailsCached } from '@/lib/api/transit';
 import type { TransportType } from '@/types/transit';
 import type { LineConfig } from '@/types/transit';
-import { TransitStopList } from './TransitStopList';
+import { VehicleStopList } from '../shared/VehicleStopList';
 
 /**
  * Get line configuration for any transit network type
@@ -139,16 +140,16 @@ export function TransitInfoPanelDesktop() {
         {/* Stops section */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-foreground">{t('transit.stops')}</h3>
-          <TransitStopList
-            vehicleKey={selectedVehicle.vehicleKey}
-            tripId={selectedVehicle.tripId}
-            previousStopId={selectedVehicle.previousStopId}
+          <VehicleStopList
+            tripId={selectedVehicle.tripId ?? null}
             nextStopId={selectedVehicle.nextStopId}
             previousStopName={selectedVehicle.previousStopName}
             nextStopName={selectedVehicle.nextStopName}
-            status={selectedVehicle.status}
-            progressFraction={selectedVehicle.progressFraction}
-            networkType={selectedVehicle.networkType}
+            isStoppedAtStation={selectedVehicle.status === 'STOPPED_AT'}
+            fetchAllStops={async (tripId) => {
+              const details = await fetchTripDetailsCached(tripId);
+              return details.stopTimes;
+            }}
           />
         </div>
 

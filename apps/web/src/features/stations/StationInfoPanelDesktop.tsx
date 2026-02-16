@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { XIcon } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +60,7 @@ export function StationInfoPanelDesktop({
   className,
   position = 'bottom-center',
 }: StationInfoPanelDesktopProps) {
+  const { t } = useTranslation('stations');
   const stationLines = useMemo(() => getStationLines(station, lines), [station, lines]);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -101,13 +103,13 @@ export function StationInfoPanelDesktop({
     >
       <CardHeader className="pb-0">
         <CardTitle className="flex items-center justify-between gap-4 text-lg font-semibold">
-          <span id="station-panel-title">{station?.name ?? (isLoading ? 'Loading station…' : 'Select a station')}</span>
+          <span id="station-panel-title">{station?.name ?? (isLoading ? t('panel.loading') : t('panel.selectStation'))}</span>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
             className="h-8 w-8 rounded-full"
-            aria-label="Close station panel"
+            aria-label={t('panel.closePanel')}
             data-testid="station-panel-close"
           >
             <XIcon className="size-4" />
@@ -125,13 +127,13 @@ export function StationInfoPanelDesktop({
           <section>
             {station.code && (
               <div className="mb-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Station code</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">{t('info.stationCode')}</h3>
                 <p className="mt-1 text-base font-medium" data-testid="station-code">
                   {station.code}
                 </p>
               </div>
             )}
-            <h3 className="text-sm font-medium text-muted-foreground">Serving lines</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('info.servingLines')}</h3>
             <div data-testid="station-line-badges" className="mt-2 flex flex-wrap gap-2">
               {stationLines.length > 0 ? (
                 stationLines.map((line) => {
@@ -152,13 +154,13 @@ export function StationInfoPanelDesktop({
                   );
                 })
               ) : (
-                <p className="text-sm text-muted-foreground">No line data available.</p>
+                <p className="text-sm text-muted-foreground">{t('info.noLineData')}</p>
               )}
             </div>
           </section>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Select a station marker on the map to view its details.
+            {t('panel.selectPrompt')}
           </p>
         )}
       </CardContent>

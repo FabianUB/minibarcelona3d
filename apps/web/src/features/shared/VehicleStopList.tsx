@@ -2,27 +2,49 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { fetchTripDetails } from '@/lib/api/trains';
+import { VEHICLE_ICON_MOVING, VEHICLE_ICON_STOPPED } from '@/lib/transit/vehicleIcons';
 import type { StopTime } from '@/types/trains';
 
-interface StopListProps {
+export interface VehicleStopListProps {
   tripId: string | null;
-  currentStopId: string | null;
-  nextStopId: string | null;
   previousStopName: string | null;
-  currentStopName: string | null;
+  currentStopName?: string | null;
   nextStopName: string | null;
+  nextStopId: string | null;
   isStoppedAtStation: boolean;
+  showDelays?: boolean;
+  fetchAllStops: (tripId: string) => Promise<StopTime[]>;
 }
 
-export function StopList({
+function formatTime(timeString: string | null): string | null {
+  if (!timeString) return null;
+  if (timeString === '00:00:00' || timeString === '00:00') return null;
+  const parts = timeString.split(':');
+  if (parts.length < 2) return timeString;
+  return `${parts[0]}:${parts[1]}`;
+}
+
+function formatDelay(delaySeconds: number | null): string | null {
+  if (delaySeconds === null || delaySeconds === 0) return null;
+  const absDelay = Math.abs(delaySeconds);
+  const minutes = Math.floor(absDelay / 60);
+  return delaySeconds > 0 ? `+${minutes} min` : `-${minutes} min`;
+}
+
+function getStopDelay(stop: StopTime): number | null {
+  return stop.arrivalDelaySeconds ?? stop.departureDelaySeconds ?? null;
+}
+
+export function VehicleStopList({
   tripId,
-  nextStopId,
   previousStopName,
   currentStopName,
   nextStopName,
+  nextStopId,
   isStoppedAtStation,
-}: StopListProps) {
+  showDelays = false,
+  fetchAllStops,
+}: VehicleStopListProps) {
   const { t } = useTranslation('vehicles');
   const [isExpanded, setIsExpanded] = useState(false);
   const [stopTimes, setStopTimes] = useState<StopTime[]>([]);
@@ -34,9 +56,9 @@ export function StopList({
       setIsLoading(true);
       setError(null);
 
-      fetchTripDetails(tripId)
-        .then((tripDetails) => {
-          setStopTimes(tripDetails.stopTimes);
+      fetchAllStops(tripId)
+        .then((stops) => {
+          setStopTimes(stops);
         })
         .catch((err) => {
           console.error('Failed to fetch trip details:', err);
@@ -49,54 +71,34 @@ export function StopList({
   }, [isExpanded, tripId, stopTimes.length]);
 
   const getStopStatus = (stop: StopTime): 'completed' | 'next' | 'upcoming' => {
-    // Use nextStopId as the primary indicator for the next stop
     if (nextStopId && stop.stopId === nextStopId) return 'next';
 
-    // Find indices to determine completed vs upcoming
     const nextStopIndex = nextStopId ? stopTimes.findIndex(s => s.stopId === nextStopId) : -1;
     const stopIndex = stopTimes.findIndex(s => s.stopId === stop.stopId);
 
     if (nextStopIndex === -1) return 'upcoming';
-
-    // Stops before the next stop are completed
     if (stopIndex < nextStopIndex) return 'completed';
 
     return 'upcoming';
   };
 
-  const formatTime = (timeString: string | null): string | null => {
-    if (!timeString) return null;
-    // "00:00:00" means no time specified in GTFS for intermediate stops
-    if (timeString === '00:00:00' || timeString === '00:00') return null;
+  const hasStopNames = !!(previousStopName || nextStopName || currentStopName);
 
-    const parts = timeString.split(':');
-    if (parts.length < 2) return timeString;
-
-    return `${parts[0]}:${parts[1]}`;
-  };
-
-  const formatDelay = (delaySeconds: number | null): string | null => {
-    if (delaySeconds === null || delaySeconds === 0) return null;
-
-    const absDelay = Math.abs(delaySeconds);
-    const minutes = Math.floor(absDelay / 60);
-
-    if (delaySeconds > 0) {
-      return `+${minutes} min`;
-    } else {
-      return `-${minutes} min`;
-    }
-  };
-
-  // Get delay from GTFS-RT feed data (already calculated)
-  const getStopDelay = (stop: StopTime): number | null => {
-    return stop.arrivalDelaySeconds ?? stop.departureDelaySeconds ?? null;
-  };
-
-  if (!tripId) {
+  // No trip and no stop names at all — simulated position with no data
+  if (!tripId && !hasStopNames) {
     return (
-      <div className="px-3 py-4 bg-muted/50 rounded-md text-sm text-muted-foreground text-center">
-        {t('stops.journeyUnavailable')}
+      <div className="space-y-2">
+        <div className="px-2 py-3">
+          <div className="flex items-center justify-center gap-2">
+            <div className="text-2xl">{VEHICLE_ICON_MOVING}</div>
+            <span className="text-sm text-muted-foreground">
+              {t('stops.inService')}
+            </span>
+          </div>
+        </div>
+        <div className="px-3 py-2 bg-muted/50 rounded-md text-xs text-muted-foreground text-center">
+          {t('stops.simulatedPosition')}
+        </div>
       </div>
     );
   }
@@ -105,6 +107,7 @@ export function StopList({
     return (
       <div className="space-y-2">
         {isStoppedAtStation && currentStopName ? (
+          /* Stopped at station: show previous → stopped icon → next */
           <div className="px-2 py-3">
             <div className="flex items-start justify-between gap-2">
               {previousStopName && (
@@ -123,7 +126,9 @@ export function StopList({
               )}
 
               <div className="flex-1 flex flex-col items-start gap-1">
-                <div className="text-2xl self-center -mt-2" style={{ transform: 'scaleX(-1)' }} title={t('stops.trainStopped')}>🚂</div>
+                <div className="text-2xl self-center -mt-2" title={t('stops.trainStopped')}>
+                  {VEHICLE_ICON_STOPPED}
+                </div>
                 <span
                   className="text-xs text-center font-medium max-w-[120px] line-clamp-3 w-full"
                   title={currentStopName}
@@ -149,6 +154,7 @@ export function StopList({
             </div>
           </div>
         ) : previousStopName || nextStopName ? (
+          /* In transit: show previous → moving icon → next */
           <div className="px-2 py-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 flex flex-col items-start gap-1">
@@ -168,7 +174,9 @@ export function StopList({
 
               <div className="flex-1 flex items-center gap-1 -mt-1">
                 <div className="flex-1 h-0.5 bg-muted" />
-                <div className="text-lg" style={{ transform: 'scaleX(-1)' }} title={t('stops.train')}>🚂</div>
+                <div className="text-lg" title={t('stops.train')}>
+                  {VEHICLE_ICON_MOVING}
+                </div>
                 <div className="flex-1 h-0.5 bg-muted" />
               </div>
 
@@ -194,14 +202,16 @@ export function StopList({
           </div>
         )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => setIsExpanded(true)}
-        >
-          {t('stops.showAll')}
-        </Button>
+        {tripId && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setIsExpanded(true)}
+          >
+            {t('stops.showAll')}
+          </Button>
+        )}
       </div>
     );
   }
@@ -243,13 +253,7 @@ export function StopList({
           {stopTimes.map((stop) => {
             const status = getStopStatus(stop);
             const scheduledTime = formatTime(stop.scheduledArrival || stop.scheduledDeparture);
-            // Get real-time delay from GTFS-RT feed
-            let delaySeconds: number | null = null;
-
-            // Show delay for all stops that have delay data available
-            // The GTFS-RT feed provides delay for stops with real-time updates
-            delaySeconds = getStopDelay(stop);
-
+            const delaySeconds = showDelays ? getStopDelay(stop) : null;
             const delay = formatDelay(delaySeconds);
 
             return (
