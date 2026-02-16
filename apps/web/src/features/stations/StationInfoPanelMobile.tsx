@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Sheet,
   SheetContent,
@@ -43,6 +44,7 @@ export function StationInfoPanelMobile({
   maxHeightPercent = 65,
   className,
 }: StationInfoPanelMobileProps) {
+  const { t } = useTranslation('stations');
   const stationLines = useMemo(() => getStationLines(station, lines), [station, lines]);
 
   return (
@@ -64,12 +66,12 @@ export function StationInfoPanelMobile({
       >
         <SheetHeader className="px-1 pb-1">
           <SheetTitle className="text-lg font-semibold leading-tight">
-            {station?.name ?? (isLoading ? 'Loading station…' : 'Select a station')}
+            {station?.name ?? (isLoading ? t('panel.loading') : t('panel.selectStation'))}
           </SheetTitle>
           <SheetDescription className="text-xs">
             {stationLines.length > 0
-              ? `Serving ${stationLines.length} line${stationLines.length > 1 ? 's' : ''}`
-              : 'Select a station to view its lines'}
+              ? t('info.servingLinesCount', { count: stationLines.length })
+              : t('panel.selectPromptMobile')}
           </SheetDescription>
         </SheetHeader>
         <div className="h-px w-full bg-border" />
@@ -84,13 +86,13 @@ export function StationInfoPanelMobile({
             <section>
               {station.code && (
                 <div className="mb-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">Station code</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground">{t('info.stationCode')}</h3>
                   <p className="mt-1 text-base font-medium" data-testid="station-code">
                     {station.code}
                   </p>
                 </div>
               )}
-              <h3 className="text-sm font-medium text-muted-foreground">Serving lines</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">{t('info.servingLines')}</h3>
               <div data-testid="station-line-badges" className="mt-3 flex flex-wrap gap-2">
                 {stationLines.length > 0 ? (
                   stationLines.map((line) => (
@@ -108,12 +110,12 @@ export function StationInfoPanelMobile({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No line data available.</p>
+                  <p className="text-sm text-muted-foreground">{t('info.noLineData')}</p>
                 )}
               </div>
             </section>
           ) : (
-            <p className="text-sm text-muted-foreground">Select a station marker on the map.</p>
+            <p className="text-sm text-muted-foreground">{t('panel.selectPromptMobile')}</p>
           )}
         </div>
       </SheetContent>

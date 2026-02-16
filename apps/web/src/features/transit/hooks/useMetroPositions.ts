@@ -7,19 +7,124 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type { VehiclePosition } from '../../../types/transit';
-import type { MetroApiPosition } from '../../../types/metro';
+import type { VehiclePosition, TravelDirection } from '../../../types/transit';
+import type { MetroApiPosition, MetroStationFeature } from '../../../types/metro';
 import { fetchMetroPositions } from '../../../lib/api/metro';
 import {
   generateAllMetroPositions,
   preloadMetroGeometries,
+  getPreprocessedMetroLine,
 } from '../../../lib/metro/positionSimulator';
+import { loadMetroStations } from '../../../lib/metro/dataLoader';
+import {
+  orderStopsByDistance,
+  findStopsBetween,
+  type StopWithDistance,
+} from '../../../lib/transit/positionSimulatorFactory';
 
 /**
  * Polling interval in milliseconds (30 seconds)
  * Matches Rodalies polling interval
  */
 const POLLING_INTERVAL_MS = 30000;
+
+// Cache ordered stops per line so we only compute once
+const orderedStopsCache = new Map<string, StopWithDistance[]>();
+let stationsLoaded = false;
+let stationsMap: Map<string, { id: string; name: string; coordinates: [number, number]; lines: string[] }> | null = null;
+
+/**
+ * Loads metro stations into a lookup map (cached after first call)
+ */
+async function ensureStationsLoaded(): Promise<void> {
+  if (stationsLoaded) return;
+  try {
+    const stations = await loadMetroStations();
+    stationsMap = new Map();
+    for (const feature of stations.features) {
+      const f = feature as MetroStationFeature;
+      stationsMap.set(f.properties.id, {
+        id: f.properties.id,
+        name: f.properties.name,
+        coordinates: f.geometry.coordinates as [number, number],
+        lines: f.properties.lines,
+      });
+    }
+    stationsLoaded = true;
+  } catch {
+    // Non-fatal: enrichment just won't happen
+  }
+}
+
+/**
+ * Get ordered stops for a metro line (cached)
+ */
+function getOrderedStopsForLine(lineCode: string): StopWithDistance[] | null {
+  const key = lineCode.toUpperCase();
+  if (orderedStopsCache.has(key)) return orderedStopsCache.get(key)!;
+
+  const railway = getPreprocessedMetroLine(lineCode);
+  if (!railway || !stationsMap) return null;
+
+  const lineStops: Array<{ id: string; name: string; coordinates: [number, number] }> = [];
+  for (const [, stop] of stationsMap) {
+    if (stop.lines.includes(lineCode)) {
+      lineStops.push({ id: stop.id, name: stop.name, coordinates: stop.coordinates });
+    }
+  }
+  if (lineStops.length === 0) return null;
+
+  const ordered = orderStopsByDistance(lineStops, railway);
+  orderedStopsCache.set(key, ordered);
+  return ordered;
+}
+
+/**
+ * Enrich API positions that are missing previousStopName
+ * by looking up the previous station from the line's ordered stop list.
+ */
+async function enrichPreviousStops(positions: VehiclePosition[]): Promise<void> {
+  // Geometries must be loaded before we can order stops along the line
+  await preloadMetroGeometries();
+  await ensureStationsLoaded();
+
+  for (const pos of positions) {
+    if (pos.previousStopName) continue;
+
+    const ordered = getOrderedStopsForLine(pos.lineCode);
+    if (!ordered) continue;
+
+    const stopInfo = findStopsBetween(
+      pos.distanceAlongLine,
+      ordered,
+      pos.direction as TravelDirection
+    );
+
+    let prevId = stopInfo.previousStopId;
+    let prevName = stopInfo.previousStopName;
+
+    // When the train is at a station, findStopsBetween returns that station
+    // as "previous", but the API already has it as nextStop. Walk one back.
+    if (prevId && prevId === pos.nextStopId) {
+      const idx = ordered.findIndex(s => s.id === prevId);
+      if (pos.direction === 0 && idx > 0) {
+        prevId = ordered[idx - 1].id;
+        prevName = ordered[idx - 1].name;
+      } else if (pos.direction === 1 && idx < ordered.length - 1) {
+        prevId = ordered[idx + 1].id;
+        prevName = ordered[idx + 1].name;
+      } else {
+        prevId = null;
+        prevName = null;
+      }
+    }
+
+    if (prevId) {
+      pos.previousStopId = prevId;
+      pos.previousStopName = prevName;
+    }
+  }
+}
 
 export interface UseMetroPositionsOptions {
   /** Whether position fetching is enabled (default: true) */
@@ -131,6 +236,9 @@ export function useMetroPositions(
       const newPreviousPositions = response.previousPositions
         ? response.previousPositions.map(apiToVehiclePosition)
         : [];
+
+      // iMetro API only provides the next stop; derive previous from line geometry
+      await enrichPreviousStops(newPositions);
 
       setPositions(newPositions);
       setPreviousPositions(newPreviousPositions);

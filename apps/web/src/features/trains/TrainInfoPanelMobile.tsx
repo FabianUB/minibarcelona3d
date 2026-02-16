@@ -16,7 +16,7 @@ import { fetchTripDetailsCached } from '@/lib/api/trains';
 import { cn } from '@/lib/utils';
 import type { RodaliesLine } from '@/types/rodalies';
 import type { TripDetails } from '@/types/trains';
-import { StopList } from './StopList';
+import { VehicleStopList } from '../shared/VehicleStopList';
 import { useScheduleDelay } from './useScheduleDelay';
 
 export function TrainInfoPanelMobile() {
@@ -176,14 +176,18 @@ export function TrainInfoPanelMobile() {
 
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-foreground text-center">{t('train.stops')}</h3>
-            <StopList
+            <VehicleStopList
               tripId={selectedTrain.tripId}
-              currentStopId={selectedTrain.currentStopId}
               nextStopId={selectedTrain.nextStopId}
               previousStopName={previousStopName}
               currentStopName={currentStopName}
               nextStopName={nextStopName}
               isStoppedAtStation={isStoppedAtStation}
+              showDelays
+              fetchAllStops={async (tripId) => {
+                const details = await fetchTripDetailsCached(tripId);
+                return details.stopTimes;
+              }}
             />
           </div>
         </div>
