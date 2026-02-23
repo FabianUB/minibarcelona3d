@@ -8,7 +8,9 @@
     "transitControl": "Control de Tránsito",
     "vehicleList": "Lista de Vehículos",
     "showVehicleList": "Mostrar lista de vehículos",
-    "showControls": "Mostrar controles"
+    "showControls": "Mostrar controles",
+    "collapse": "Contraer panel",
+    "expand": "Expandir panel"
   },
   "tabs": {
     "rodalies": "Rodalies",

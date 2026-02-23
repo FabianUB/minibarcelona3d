@@ -9,7 +9,10 @@
     "cancel": "Cancelar",
     "clear": "Limpiar",
     "reset": "Restablecer",
-    "backToMap": "Volver al Mapa"
+    "backToMap": "Volver al Mapa",
+    "viewModeBirdsEye": "Cambiar a vista aérea",
+    "viewModeBirdsEyeShort": "Vista aérea",
+    "viewModeFreeView": "Cambiar a vista 3D libre"
   },
   "loading": {
     "generic": "Cargando...",

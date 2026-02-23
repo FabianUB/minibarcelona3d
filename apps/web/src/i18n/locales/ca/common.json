@@ -9,7 +9,10 @@
     "cancel": "Cancel·lar",
     "clear": "Netejar",
     "reset": "Restablir",
-    "backToMap": "Tornar al Mapa"
+    "backToMap": "Tornar al Mapa",
+    "viewModeBirdsEye": "Canviar a vista aèria",
+    "viewModeBirdsEyeShort": "Vista aèria",
+    "viewModeFreeView": "Canviar a vista 3D lliure"
   },
   "loading": {
     "generic": "Carregant...",

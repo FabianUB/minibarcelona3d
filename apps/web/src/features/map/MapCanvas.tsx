@@ -7,6 +7,7 @@ import '../../styles/map.css';
 import { useMapActions, useMapHighlightSelectors, useMapCore, useMapUI, useMapNetwork } from '../../state/map';
 import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
+import { ViewModeBar, type ViewMode } from './controls/ViewModeBar';
 import { ServiceUnavailable } from './ServiceUnavailable';
 import { LoadingOverlay, type LoadingStages } from './LoadingOverlay';
 import type { MapViewport } from '../../types/rodalies';
@@ -15,6 +16,7 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { RodaliesLineLayer } from '../trains/RodaliesLineLayer';
 import { ControlPanel } from '../controlPanel';
+import { NetworkBar } from '../controlPanel/components/NetworkBar';
 import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
@@ -70,6 +72,7 @@ export function MapCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const recenterControlRef = useRef<RecenterControl | null>(null);
+  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>('free');
   const latestRecenterRef = useRef<() => void>(() => {});
   const initialViewportRef = useRef<MapViewport | null>(null);
   const skipMoveSyncRef = useRef(false);
@@ -85,6 +88,7 @@ export function MapCanvas() {
   const [raycastDebugInfo, setRaycastDebugInfo] = useState<RaycastDebugInfo | null>(null);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
   const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
+  const [viewModeScale, setViewModeScale] = useState(1.0);
   const [loadingStages, setLoadingStages] = useState<LoadingStages>({
     map: false,
     models: false,
@@ -223,6 +227,45 @@ export function MapCanvas() {
       return null;
     },
     []
+  );
+
+  const BIRDS_EYE_SCALE_BOOST = 2.0;
+
+  const handleViewModeChange = useCallback(
+    (mode: ViewMode) => {
+      const map = mapRef.current;
+      if (!map) return;
+      setCurrentViewMode(mode);
+      if (mode === 'birdsEye') {
+        setViewModeScale(BIRDS_EYE_SCALE_BOOST);
+        map.flyTo({
+          center: [2.17, 41.39],
+          zoom: 13.5,
+          pitch: 30,
+          bearing: 0,
+          duration: 1500,
+          essential: true,
+        });
+        map.once('moveend', () => {
+          map.dragRotate.disable();
+          map.touchPitch.disable();
+        });
+      } else {
+        setViewModeScale(1.0);
+        map.dragRotate.enable();
+        map.touchPitch.enable();
+        const vp = initialViewportRef.current;
+        map.flyTo({
+          center: vp ? [vp.center.lng, vp.center.lat] : [2.17, 41.39],
+          zoom: vp?.zoom ?? 15.5,
+          pitch: 60,
+          bearing: 0,
+          duration: 1500,
+          essential: true,
+        });
+      }
+    },
+    [],
   );
 
   if (!initialViewportRef.current) {
@@ -430,6 +473,10 @@ export function MapCanvas() {
     );
 
     const recenterControl = new RecenterControl(() => {
+      map.dragRotate.enable();
+      map.touchPitch.enable();
+      setViewModeScale(1.0);
+      setCurrentViewMode('free');
       latestRecenterRef.current();
     });
     map.addControl(recenterControl, 'top-right');
@@ -860,6 +907,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="metro"
           visible={transportFilters.metro}
           modelScale={modelSizes.metro}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.metro.selectedLineIds}
           isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleMetroMeshPositionGetterReady}
@@ -896,6 +944,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="bus"
           visible={transportFilters.bus}
           modelScale={modelSizes.bus}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleBusMeshPositionGetterReady}
@@ -930,6 +979,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="tram"
           visible={transportFilters.tram}
           modelScale={modelSizes.tram}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.tram.selectedLineIds}
           isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleTramMeshPositionGetterReady}
@@ -964,6 +1014,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="fgc"
           visible={transportFilters.fgc}
           modelScale={modelSizes.fgc}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.fgc.selectedLineIds}
           isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleFgcMeshPositionGetterReady}
@@ -1000,9 +1051,16 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
           isolateMode={networkHighlights.rodalies.highlightMode === 'isolate'}
           modelScale={modelSizes.rodalies}
+          viewModeScale={viewModeScale}
           onMeshPositionGetterReady={handleRodaliesMeshPositionGetterReady}
           clickCoordinator={clickCoordinatorRef.current}
         />
+      ) : null}
+      {/* Network Bar - floating top-center for quick network switching */}
+      {mapInstance && isMapLoaded ? <NetworkBar /> : null}
+      {/* View Mode Bar - below network bar for camera switching */}
+      {mapInstance && isMapLoaded ? (
+        <ViewModeBar onViewModeChange={handleViewModeChange} currentMode={currentViewMode} />
       ) : null}
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
       {mapInstance && isMapLoaded ? (

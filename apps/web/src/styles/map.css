@@ -94,7 +94,7 @@
 .map-canvas__error {
   position: absolute;
   z-index: 2;
-  top: 16px;
+  top: 72px;
   left: 50%;
   transform: translateX(-50%);
   padding: 12px 16px;
@@ -299,6 +299,76 @@
 
 .rodalies-ctrl-group {
   margin-bottom: 8px;
+}
+
+.rodalies-ctrl-viewmode-wrapper {
+  position: relative;
+  overflow: visible;
+}
+
+.mapboxgl-ctrl-group button.rodalies-ctrl-viewmode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rodalies-ctrl-viewmode svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.rodalies-ctrl-viewmode-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  border-radius: 10px;
+  background: var(--rodalies-map-control-bg);
+  border: 1px solid var(--rodalies-map-control-border);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.rodalies-ctrl-viewmode-dropdown--open {
+  display: block;
+}
+
+.rodalies-ctrl-viewmode-item {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: var(--rodalies-map-control-text);
+  font-family: var(--rodalies-map-font-family);
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms ease-in-out;
+  white-space: nowrap;
+}
+
+.rodalies-ctrl-viewmode-item:hover,
+.rodalies-ctrl-viewmode-item:focus-visible {
+  background-color: var(--rodalies-map-control-hover);
+}
+
+.rodalies-ctrl-viewmode-item:focus-visible {
+  outline: none;
+  box-shadow: var(--rodalies-map-focus-ring);
+}
+
+.rodalies-ctrl-viewmode-item + .rodalies-ctrl-viewmode-item {
+  border-top: 1px solid var(--rodalies-map-control-border);
+}
+
+.rodalies-ctrl-viewmode-item--active {
+  color: #60a5fa;
+  font-weight: 600;
 }
 
 .rodalies-ctrl-recenter {

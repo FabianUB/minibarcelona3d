@@ -6,6 +6,7 @@
 
 export { ControlPanel, ControlPanelDesktop, ControlPanelMobile } from './ControlPanel';
 export { NetworkTabs } from './components/NetworkTabs';
+export { NetworkBar } from './components/NetworkBar';
 export { NetworkLineGrid } from './components/NetworkLineGrid';
 export { NetworkTabContent } from './components/NetworkTabContent';
 export { ModelSizeSlider } from './components/ModelSizeSlider';
