@@ -793,7 +793,7 @@
         "lines": [
           "L5"
         ],
-        "name": "Congrés | Indians",
+        "name": "Congrés",
         "primary_color": "#0078C6",
         "stop_code": "527"
       }
@@ -3079,8 +3079,8 @@
       },
       "properties": {
         "colors": [
-          "#F58220",
-          "#00A9E0"
+          "#00A9E0",
+          "#F58220"
         ],
         "id": "1.915",
         "lines": [
@@ -3088,7 +3088,7 @@
           "L9S"
         ],
         "name": "Torrassa",
-        "primary_color": "#F58220",
+        "primary_color": "#00A9E0",
         "stop_code": "915"
       }
     },

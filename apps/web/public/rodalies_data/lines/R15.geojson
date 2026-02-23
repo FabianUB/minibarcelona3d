@@ -3,13 +3,13 @@
   "id": "R15",
   "properties": {
     "id": "R15",
-    "name": "Torredembarra                           -Reus",
+    "name": "Mora la Nova                            -",
     "short_code": "R15",
     "brand_color": "978571",
     "default_pattern": "solid-r15",
     "high_contrast_pattern": "hatched-r15",
     "order": 12,
-    "last_verified_at": "2026-02-13T20:11:11Z"
+    "last_verified_at": "2026-02-23T18:12:21Z"
   },
   "geometry": {
     "type": "LineString",

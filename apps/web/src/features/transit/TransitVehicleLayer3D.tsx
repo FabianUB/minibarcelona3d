@@ -39,6 +39,8 @@ export interface TransitVehicleLayer3DProps {
   onLoadingChange?: (isLoading: boolean) => void;
   /** Model scale multiplier (0.5 to 2.0, default 1.0) */
   modelScale?: number;
+  /** View mode scale boost (e.g. larger models in bird's eye view) */
+  viewModeScale?: number;
   /** Highlighted line IDs for filtering vehicles */
   highlightedLineIds?: string[];
   /** Whether isolate mode is active (hide non-highlighted vs dim them) */
@@ -61,6 +63,7 @@ export function TransitVehicleLayer3D({
   beforeId,
   onLoadingChange,
   modelScale = 1.0,
+  viewModeScale = 1.0,
   highlightedLineIds = [],
   isolateMode = false,
   onMeshPositionGetterReady,
@@ -514,6 +517,12 @@ export function TransitVehicleLayer3D({
     meshManagerRef.current.setUserScale(modelScale);
     map.triggerRepaint();
   }, [modelScale, map, sceneReady]);
+
+  useEffect(() => {
+    if (!meshManagerRef.current) return;
+    meshManagerRef.current.setViewModeScale(viewModeScale);
+    map.triggerRepaint();
+  }, [viewModeScale, map, sceneReady]);
 
   /**
    * Trigger repaint on zoom change
