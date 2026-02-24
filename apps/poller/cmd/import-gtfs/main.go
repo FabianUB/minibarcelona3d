@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -318,20 +319,29 @@ func parseIntSafe(s string) int {
 	return result
 }
 
-// mergeGTFSData combines multiple parsed GTFS datasets (e.g., tram_tbs + tram_tbx)
+// mergeGTFSData combines multiple parsed GTFS datasets (e.g., tram_tbs + tram_tbx).
+// Shape IDs are prefixed per dataset to avoid collisions (both zips use "1", "2", etc.).
 func mergeGTFSData(datasets []*gtfs.Data) *gtfs.Data {
 	merged := &gtfs.Data{
 		Shapes: make(map[string][]gtfs.ShapePoint),
 	}
-	for _, d := range datasets {
+	for i, d := range datasets {
+		prefix := fmt.Sprintf("ds%d_", i)
 		merged.Routes = append(merged.Routes, d.Routes...)
 		merged.Stops = append(merged.Stops, d.Stops...)
-		merged.Trips = append(merged.Trips, d.Trips...)
-		merged.StopTimes = append(merged.StopTimes, d.StopTimes...)
 		merged.Calendars = append(merged.Calendars, d.Calendars...)
 		merged.CalendarDates = append(merged.CalendarDates, d.CalendarDates...)
+		// Namespace shape IDs and update trip references to match
+		for j := range d.Trips {
+			trip := d.Trips[j]
+			if trip.ShapeID != "" {
+				trip.ShapeID = prefix + trip.ShapeID
+			}
+			merged.Trips = append(merged.Trips, trip)
+		}
+		merged.StopTimes = append(merged.StopTimes, d.StopTimes...)
 		for k, v := range d.Shapes {
-			merged.Shapes[k] = v
+			merged.Shapes[prefix+k] = v
 		}
 	}
 	return merged

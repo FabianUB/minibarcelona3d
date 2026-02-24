@@ -1,10 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             1.629858,
@@ -1854,13 +1851,16 @@
             2.14882,
             41.374771
           ]
-        ]
+        ],
+        "type": "LineString"
       },
       "properties": {
-        "line_code": "R63",
-        "name": "Barcelona Pl. Espanya - Igualada",
-        "color": "#b3b3b3"
-      }
+        "color": "#b3b3b3",
+        "last_verified_at": "2026-02-24T11:16:51Z",
+        "line_code": "R63"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

@@ -1,10 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             2.111263,
@@ -25,34 +22,17 @@
           [
             2.105759,
             41.414185
-          ],
-          [
-            2.105759,
-            41.414185
-          ],
-          [
-            2.106553,
-            41.413525
-          ],
-          [
-            2.108722,
-            41.411617
-          ],
-          [
-            2.10943,
-            41.410995
-          ],
-          [
-            2.111263,
-            41.409328
           ]
-        ]
+        ],
+        "type": "LineString"
       },
       "properties": {
-        "line_code": "FV",
-        "name": "Funicular de Vallvidrera",
-        "color": "#0A57A3"
-      }
+        "color": "#0A57A3",
+        "last_verified_at": "2026-02-24T11:16:51Z",
+        "line_code": "FV"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }
