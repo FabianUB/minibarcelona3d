@@ -18,19 +18,19 @@ export interface NetworkViewConfig {
 
 export const NETWORK_VIEWPORTS: Record<TransportType, NetworkViewConfig> = {
   rodalies: {
-    birdsEye: { center: [2.15, 41.40], zoom: 12.5, pitch: 30, bearing: 0, scaleBoost: 2.5 },
+    birdsEye: { center: [2.13752, 41.39388], zoom: 11.29, pitch: 30, bearing: 0, scaleBoost: 7.0 },
     free3D:   { center: [2.14, 41.38], zoom: 15.5, pitch: 60, bearing: 0 },
   },
   metro: {
-    birdsEye: { center: [2.155, 41.395], zoom: 13, pitch: 30, bearing: 0, scaleBoost: 2.0 },
+    birdsEye: { center: [2.148353, 41.403243], zoom: 11.85, pitch: 30.12, bearing: 0, scaleBoost: 3.5 },
     free3D:   { center: [2.165, 41.393], zoom: 15.5, pitch: 60, bearing: 0 },
   },
   bus: {
-    birdsEye: { center: [2.155, 41.395], zoom: 13, pitch: 30, bearing: 0, scaleBoost: 2.0 },
+    birdsEye: { center: [2.142187, 41.402268], zoom: 11.99, pitch: 30, bearing: 0, scaleBoost: 5.5 },
     free3D:   { center: [2.170, 41.387], zoom: 15.5, pitch: 60, bearing: 0 },
   },
   tram: {
-    birdsEye: { center: [2.145, 41.395], zoom: 13.5, pitch: 30, bearing: 0, scaleBoost: 3.0 },
+    birdsEye: { center: [2.133049, 41.398334], zoom: 11.93, pitch: 30, bearing: 0, scaleBoost: 7.0 },
     free3D:   { center: [2.08, 41.387], zoom: 15, pitch: 60, bearing: 0 },
   },
   fgc: {
