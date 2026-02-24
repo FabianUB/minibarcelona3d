@@ -39,7 +39,6 @@ const MAPBOX_TOKEN =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_MAPBOX_TOKEN) ||
   '';
 
-const SHOW_CAMERA_DEBUG = false;
 const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
 
 type MapboxWindow = Window & {
