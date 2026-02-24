@@ -80,9 +80,10 @@ export function ControlPanelDesktop({
         onClick={toggle}
         aria-label={t('panel.expand')}
         title={t('panel.expand')}
-        className="fixed top-3 left-0 z-10 flex items-center gap-1 pl-2 pr-2.5 py-2.5 bg-background/95 backdrop-blur-sm border border-l-0 border-border/50 rounded-r-xl shadow-xl hover:pl-3 transition-all duration-200 text-muted-foreground hover:text-foreground"
+        className="fixed top-3 left-0 z-10 flex items-center gap-1.5 pl-2 pr-3 py-2.5 bg-background/95 backdrop-blur-sm border border-l-0 border-border/50 rounded-r-xl shadow-xl hover:pl-3 transition-all duration-200 text-muted-foreground hover:text-foreground animate-slide-in-left"
       >
         <ChevronsRight className="w-4 h-4" />
+        <span className="text-xs font-medium">{t('panel.expand')}</span>
       </button>
     );
   }

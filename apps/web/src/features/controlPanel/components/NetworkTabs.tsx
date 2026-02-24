@@ -91,7 +91,7 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
             onTouchEnd={() => handleTouchEnd(tab.type)}
             onTouchCancel={handleTouchCancel}
             className={cn(
-              'relative flex items-center justify-center w-12 h-10 rounded-lg',
+              'relative flex items-center justify-center gap-1.5 w-12 lg:w-auto lg:px-3 h-10 rounded-lg',
               'transition-all duration-200 ease-out',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               isActive
@@ -102,6 +102,7 @@ export function NetworkTabs({ className }: NetworkTabsProps) {
             title={`${tab.label} - ${t('tabs.clickToSelect')}`}
           >
             <img src={tab.icon} alt="" aria-hidden="true" className="w-6 h-6 object-contain" draggable={false} />
+            <span className="hidden lg:inline text-[10px] font-medium">{tab.label}</span>
             {/* Active indicator dot */}
             {isActive && (
               <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full" />

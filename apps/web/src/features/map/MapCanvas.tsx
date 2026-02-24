@@ -28,6 +28,7 @@ import { FGCLineLayer, FGCStationLayer } from '../fgc';
 import { TransitVehicleLayer3D } from '../transit';
 import { DataFreshnessIndicator } from '../status';
 import { AlertBadge } from './AlertBadge';
+import { NETWORK_VIEWPORTS } from './networkViewports';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 import { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 
@@ -139,6 +140,10 @@ export function MapCanvas() {
   const transportFiltersRef = useRef(transportFilters);
   transportFiltersRef.current = transportFilters;
 
+  // Keep a ref to activeControlTab for use in stable callbacks
+  const activeControlTabRef = useRef(activeControlTab);
+  activeControlTabRef.current = activeControlTab;
+
   // Callbacks to register mesh position getters from each layer
   const handleRodaliesMeshPositionGetterReady = useCallback(
     (getter: (vehicleKey: string) => [number, number] | null) => {
@@ -229,21 +234,23 @@ export function MapCanvas() {
     []
   );
 
-  const BIRDS_EYE_SCALE_BOOST = 2.0;
-
   const handleViewModeChange = useCallback(
     (mode: ViewMode) => {
       const map = mapRef.current;
       if (!map) return;
+      map.stop();
       setCurrentViewMode(mode);
+      const networkPreset = NETWORK_VIEWPORTS[activeControlTabRef.current];
       if (mode === 'birdsEye') {
-        setViewModeScale(BIRDS_EYE_SCALE_BOOST);
+        setViewModeScale(networkPreset.birdsEye.scaleBoost);
         map.flyTo({
-          center: [2.17, 41.39],
-          zoom: 13.5,
-          pitch: 30,
-          bearing: 0,
-          duration: 1500,
+          center: networkPreset.birdsEye.center,
+          zoom: networkPreset.birdsEye.zoom,
+          pitch: networkPreset.birdsEye.pitch,
+          bearing: networkPreset.birdsEye.bearing,
+          speed: 1.2,
+          curve: 1.42,
+          maxDuration: 2500,
           essential: true,
         });
         map.once('moveend', () => {
@@ -254,19 +261,40 @@ export function MapCanvas() {
         setViewModeScale(1.0);
         map.dragRotate.enable();
         map.touchPitch.enable();
-        const vp = initialViewportRef.current;
-        map.flyTo({
-          center: vp ? [vp.center.lng, vp.center.lat] : [2.17, 41.39],
-          zoom: vp?.zoom ?? 15.5,
-          pitch: 60,
-          bearing: 0,
-          duration: 1500,
+        // easeTo for returning to 3D — no arc, just pitch/zoom change at current center
+        const currentCenter = map.getCenter();
+        map.easeTo({
+          center: [currentCenter.lng, currentCenter.lat],
+          zoom: networkPreset.free3D.zoom,
+          pitch: networkPreset.free3D.pitch,
+          bearing: networkPreset.free3D.bearing,
+          duration: 1200,
+          easing: (t: number) => 1 - Math.pow(1 - t, 3),
           essential: true,
         });
       }
     },
     [],
   );
+
+  // Auto-fly to the new network's bird's eye preset when switching tabs in bird's eye mode
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || currentViewMode !== 'birdsEye') return;
+    map.stop();
+    const preset = NETWORK_VIEWPORTS[activeControlTab].birdsEye;
+    setViewModeScale(preset.scaleBoost);
+    map.flyTo({
+      center: preset.center,
+      zoom: preset.zoom,
+      pitch: preset.pitch,
+      bearing: preset.bearing,
+      speed: 1.4,
+      curve: 1.42,
+      maxDuration: 2000,
+      essential: true,
+    });
+  }, [activeControlTab, currentViewMode]);
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -827,7 +855,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           ) : null}
         </div>
       ) : null}
-      {SHOW_CAMERA_DEBUG && cameraSnapshot ? (
+      {debugToolsEnabled && cameraSnapshot ? (
         <div className="map-canvas__camera-debug">
           <label className="map-canvas__camera-debug-label" htmlFor="camera-debug-input">
             Camera snapshot
@@ -1057,18 +1085,26 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
         />
       ) : null}
       {/* Network Bar - floating top-center for quick network switching */}
-      {mapInstance && isMapLoaded ? <NetworkBar /> : null}
+      {mapInstance && isMapLoaded ? (
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <NetworkBar />
+        </div>
+      ) : null}
       {/* View Mode Bar - below network bar for camera switching */}
       {mapInstance && isMapLoaded ? (
-        <ViewModeBar onViewModeChange={handleViewModeChange} currentMode={currentViewMode} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <ViewModeBar onViewModeChange={handleViewModeChange} currentMode={currentViewMode} />
+        </div>
       ) : null}
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
       {mapInstance && isMapLoaded ? (
-        <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
+        </div>
       ) : null}
       {/* Data Freshness Indicator - bottom right */}
       {mapInstance && isMapLoaded ? (
-        <div className="map-canvas__freshness-indicator">
+        <div className="map-canvas__freshness-indicator animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <DataFreshnessIndicator
             onClick={() => window.location.href = '/status'}
           />
