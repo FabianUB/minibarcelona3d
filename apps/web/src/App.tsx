@@ -8,6 +8,7 @@ import { TransitInfoPanel } from './features/transit';
 import { StatusPage } from './features/status';
 import { DelaysPage } from './features/delays';
 import { MapStateProvider } from './state/map';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { TrainStateProvider } from './state/trains';
 import { TransitStateProvider } from './state/transit';
 
@@ -25,19 +26,21 @@ function App() {
   }
 
   return (
-    <MapStateProvider>
-      <TrainStateProvider>
-        <TransitStateProvider>
-          <div className="app-shell" data-testid="app-shell">
-            <MapCanvas />
-            {/* LegendPanel and SettingsMenu removed - now in ControlPanel */}
-            <TrainInfoPanel />
-            <TransitInfoPanel />
-            <StationInfoPanelContainer />
-          </div>
-        </TransitStateProvider>
-      </TrainStateProvider>
-    </MapStateProvider>
+    <TooltipProvider delayDuration={300}>
+      <MapStateProvider>
+        <TrainStateProvider>
+          <TransitStateProvider>
+            <div className="app-shell" data-testid="app-shell">
+              <MapCanvas />
+              {/* LegendPanel and SettingsMenu removed - now in ControlPanel */}
+              <TrainInfoPanel />
+              <TransitInfoPanel />
+              <StationInfoPanelContainer />
+            </div>
+          </TransitStateProvider>
+        </TrainStateProvider>
+      </MapStateProvider>
+    </TooltipProvider>
   );
 }
 

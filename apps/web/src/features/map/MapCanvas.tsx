@@ -7,6 +7,7 @@ import '../../styles/map.css';
 import { useMapActions, useMapHighlightSelectors, useMapCore, useMapUI, useMapNetwork } from '../../state/map';
 import { useDefaultViewport } from './useDefaultViewport';
 import { RecenterControl } from './controls/RecenterControl';
+import { ViewModeBar, type ViewMode } from './controls/ViewModeBar';
 import { ServiceUnavailable } from './ServiceUnavailable';
 import { LoadingOverlay, type LoadingStages } from './LoadingOverlay';
 import type { MapViewport } from '../../types/rodalies';
@@ -15,6 +16,7 @@ import { startMetric, endMetric } from '../../lib/analytics/perf';
 import { TrainLayer3D, type RaycastDebugInfo } from '../trains/TrainLayer3D';
 import { RodaliesLineLayer } from '../trains/RodaliesLineLayer';
 import { ControlPanel } from '../controlPanel';
+import { NetworkBar } from '../controlPanel/components/NetworkBar';
 import type { TrainPosition } from '../../types/trains';
 import { setModelOrigin } from '../../lib/map/coordinates';
 import { StationLayer } from '../stations/StationLayer';
@@ -26,6 +28,7 @@ import { FGCLineLayer, FGCStationLayer } from '../fgc';
 import { TransitVehicleLayer3D } from '../transit';
 import { DataFreshnessIndicator } from '../status';
 import { AlertBadge } from './AlertBadge';
+import { NETWORK_VIEWPORTS } from './networkViewports';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 import { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 
@@ -36,7 +39,6 @@ const MAPBOX_TOKEN =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_MAPBOX_TOKEN) ||
   '';
 
-const SHOW_CAMERA_DEBUG = false;
 const DEBUG_TOGGLE_EVENT = 'debug-tools-toggle';
 
 type MapboxWindow = Window & {
@@ -70,6 +72,7 @@ export function MapCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const recenterControlRef = useRef<RecenterControl | null>(null);
+  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>('free');
   const latestRecenterRef = useRef<() => void>(() => {});
   const initialViewportRef = useRef<MapViewport | null>(null);
   const skipMoveSyncRef = useRef(false);
@@ -85,6 +88,7 @@ export function MapCanvas() {
   const [raycastDebugInfo, setRaycastDebugInfo] = useState<RaycastDebugInfo | null>(null);
   const [isStationDebugMode, setIsStationDebugMode] = useState(false);
   const [trainPositions, setTrainPositions] = useState<TrainPosition[]>([]);
+  const [viewModeScale, setViewModeScale] = useState(1.0);
   const [loadingStages, setLoadingStages] = useState<LoadingStages>({
     map: false,
     models: false,
@@ -134,6 +138,10 @@ export function MapCanvas() {
   // Keep a ref to current transportFilters for use in closures
   const transportFiltersRef = useRef(transportFilters);
   transportFiltersRef.current = transportFilters;
+
+  // Keep a ref to activeControlTab for use in stable callbacks
+  const activeControlTabRef = useRef(activeControlTab);
+  activeControlTabRef.current = activeControlTab;
 
   // Callbacks to register mesh position getters from each layer
   const handleRodaliesMeshPositionGetterReady = useCallback(
@@ -224,6 +232,68 @@ export function MapCanvas() {
     },
     []
   );
+
+  const handleViewModeChange = useCallback(
+    (mode: ViewMode) => {
+      const map = mapRef.current;
+      if (!map) return;
+      map.stop();
+      setCurrentViewMode(mode);
+      const networkPreset = NETWORK_VIEWPORTS[activeControlTabRef.current];
+      if (mode === 'birdsEye') {
+        setViewModeScale(networkPreset.birdsEye.scaleBoost);
+        map.flyTo({
+          center: networkPreset.birdsEye.center,
+          zoom: networkPreset.birdsEye.zoom,
+          pitch: networkPreset.birdsEye.pitch,
+          bearing: networkPreset.birdsEye.bearing,
+          speed: 1.2,
+          curve: 1.42,
+          maxDuration: 2500,
+          essential: true,
+        });
+        map.once('moveend', () => {
+          map.dragRotate.disable();
+          map.touchPitch.disable();
+        });
+      } else {
+        setViewModeScale(1.0);
+        map.dragRotate.enable();
+        map.touchPitch.enable();
+        // easeTo for returning to 3D — no arc, just pitch/zoom change at current center
+        const currentCenter = map.getCenter();
+        map.easeTo({
+          center: [currentCenter.lng, currentCenter.lat],
+          zoom: networkPreset.free3D.zoom,
+          pitch: networkPreset.free3D.pitch,
+          bearing: networkPreset.free3D.bearing,
+          duration: 1200,
+          easing: (t: number) => 1 - Math.pow(1 - t, 3),
+          essential: true,
+        });
+      }
+    },
+    [],
+  );
+
+  // Auto-fly to the new network's bird's eye preset when switching tabs in bird's eye mode
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || currentViewMode !== 'birdsEye') return;
+    map.stop();
+    const preset = NETWORK_VIEWPORTS[activeControlTab].birdsEye;
+    setViewModeScale(preset.scaleBoost);
+    map.flyTo({
+      center: preset.center,
+      zoom: preset.zoom,
+      pitch: preset.pitch,
+      bearing: preset.bearing,
+      speed: 1.4,
+      curve: 1.42,
+      maxDuration: 2000,
+      essential: true,
+    });
+  }, [activeControlTab, currentViewMode]);
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -430,6 +500,10 @@ export function MapCanvas() {
     );
 
     const recenterControl = new RecenterControl(() => {
+      map.dragRotate.enable();
+      map.touchPitch.enable();
+      setViewModeScale(1.0);
+      setCurrentViewMode('free');
       latestRecenterRef.current();
     });
     map.addControl(recenterControl, 'top-right');
@@ -780,7 +854,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           ) : null}
         </div>
       ) : null}
-      {SHOW_CAMERA_DEBUG && cameraSnapshot ? (
+      {debugToolsEnabled && cameraSnapshot ? (
         <div className="map-canvas__camera-debug">
           <label className="map-canvas__camera-debug-label" htmlFor="camera-debug-input">
             Camera snapshot
@@ -860,6 +934,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="metro"
           visible={transportFilters.metro}
           modelScale={modelSizes.metro}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.metro.selectedLineIds}
           isolateMode={networkHighlights.metro.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleMetroMeshPositionGetterReady}
@@ -896,6 +971,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="bus"
           visible={transportFilters.bus}
           modelScale={modelSizes.bus}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.bus.selectedLineIds}
           isolateMode={networkHighlights.bus.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleBusMeshPositionGetterReady}
@@ -930,6 +1006,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="tram"
           visible={transportFilters.tram}
           modelScale={modelSizes.tram}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.tram.selectedLineIds}
           isolateMode={networkHighlights.tram.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleTramMeshPositionGetterReady}
@@ -964,6 +1041,7 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           networkType="fgc"
           visible={transportFilters.fgc}
           modelScale={modelSizes.fgc}
+          viewModeScale={viewModeScale}
           highlightedLineIds={networkHighlights.fgc.selectedLineIds}
           isolateMode={networkHighlights.fgc.highlightMode === 'isolate'}
           onMeshPositionGetterReady={handleFgcMeshPositionGetterReady}
@@ -1000,17 +1078,32 @@ Zoom: ${mapInstance.getZoom().toFixed(2)}`;
           highlightedLineIds={networkHighlights.rodalies.selectedLineIds}
           isolateMode={networkHighlights.rodalies.highlightMode === 'isolate'}
           modelScale={modelSizes.rodalies}
+          viewModeScale={viewModeScale}
           onMeshPositionGetterReady={handleRodaliesMeshPositionGetterReady}
           clickCoordinator={clickCoordinatorRef.current}
         />
       ) : null}
+      {/* Network Bar - floating top-center for quick network switching */}
+      {mapInstance && isMapLoaded ? (
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <NetworkBar />
+        </div>
+      ) : null}
+      {/* View Mode Bar - below network bar for camera switching */}
+      {mapInstance && isMapLoaded ? (
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <ViewModeBar onViewModeChange={handleViewModeChange} currentMode={currentViewMode} />
+        </div>
+      ) : null}
       {/* Unified Control Panel - replaces VehicleListButton and TransportFilterButton */}
       {mapInstance && isMapLoaded ? (
-        <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <ControlPanel rodaliesTrains={trainPositions} map={mapInstance} getMeshPosition={getMeshPosition} />
+        </div>
       ) : null}
       {/* Data Freshness Indicator - bottom right */}
       {mapInstance && isMapLoaded ? (
-        <div className="map-canvas__freshness-indicator">
+        <div className="map-canvas__freshness-indicator animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <DataFreshnessIndicator
             onClick={() => window.location.href = '/status'}
           />

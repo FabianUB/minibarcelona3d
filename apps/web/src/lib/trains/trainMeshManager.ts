@@ -202,6 +202,9 @@ export class TrainMeshManager {
   // User-controlled model scale (from control panel slider)
   private userScale: number = 1.0;
 
+  // View mode scale boost (e.g. larger models in bird's eye view)
+  private viewModeScale: number = 1.0;
+
   /**
    * Set user-controlled model scale multiplier
    * @param scale - Scale multiplier (0.5 to 2.0, default 1.0)
@@ -213,6 +216,19 @@ export class TrainMeshManager {
       // Force scale recalculation on all meshes
       this.trainMeshes.forEach((meshData) => {
         meshData.lastZoomBucket = -1; // Invalidate cache
+      });
+      this.applyZoomResponsiveScale();
+    }
+  }
+
+  /**
+   * Set view mode scale multiplier (unclamped, for bird's eye boost)
+   */
+  setViewModeScale(scale: number): void {
+    if (this.viewModeScale !== scale) {
+      this.viewModeScale = scale;
+      this.trainMeshes.forEach((meshData) => {
+        meshData.lastZoomBucket = -1;
       });
       this.applyZoomResponsiveScale();
     }
@@ -1954,7 +1970,7 @@ export class TrainMeshManager {
     this.trainMeshes.forEach((meshData) => {
       if (meshData.lastZoomBucket !== quantizedZoom) {
         const scaleVariation = this.getScaleVariation(meshData.vehicleKey);
-        const finalScale = meshData.baseScale * scaleVariation * zoomScale * this.userScale * this.resolutionScale;
+        const finalScale = meshData.baseScale * scaleVariation * zoomScale * this.userScale * this.resolutionScale * this.viewModeScale;
 
         const isHighlighted = this.highlightedVehicleKey === meshData.vehicleKey;
         const scaleToApply = isHighlighted ? finalScale * 1.12 : finalScale;

@@ -147,6 +147,7 @@ export class TransitMeshManager {
   private highlightedVehicleKey: string | null = null;
   private currentLODState: 'high' | 'low' = 'high';
   private userScale = 1.0;
+  private viewModeScale = 1.0;
   private readonly resolutionScale: number;
 
   // Rotation offset: models face -X, we need them to face bearing direction
@@ -249,7 +250,8 @@ export class TransitMeshManager {
    * Called during animation to toggle between detailed and simple representations
    */
   private updateLODState(): void {
-    const shouldBeLowLOD = this.currentZoom < this.config.lodThreshold;
+    // Force high LOD when view mode scale is boosted (bird's eye view)
+    const shouldBeLowLOD = this.viewModeScale > 1 ? false : this.currentZoom < this.config.lodThreshold;
     const newState = shouldBeLowLOD ? 'low' : 'high';
 
     if (newState === this.currentLODState) {
@@ -340,9 +342,24 @@ export class TransitMeshManager {
     const clamped = Math.max(0.5, Math.min(2.0, scale));
     if (this.userScale === clamped) return;
     this.userScale = clamped;
-    // Recalculate baseScale and apply to every mesh
+    this.recomputeAllScales();
+  }
+
+  /**
+   * Set view mode scale multiplier (unclamped, for bird's eye boost)
+   */
+  setViewModeScale(scale: number): void {
+    if (this.viewModeScale === scale) return;
+    this.viewModeScale = scale;
+    // Force LOD re-evaluation (bird's eye boost overrides LOD threshold)
+    this.currentLODState = this.viewModeScale > 1 ? 'low' : 'high';
+    this.updateLODState();
+    this.recomputeAllScales();
+  }
+
+  private recomputeAllScales(): void {
     const modelScale = getModelScale();
-    const newBase = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale;
+    const newBase = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale * this.viewModeScale;
     for (const [, data] of this.meshes) {
       data.baseScale = newBase;
       const finalScale = newBase * data.screenSpaceScale;
@@ -658,7 +675,7 @@ export class TransitMeshManager {
 
     // Calculate base scale (includes user scale and resolution multipliers)
     const modelScale = getModelScale();
-    const baseScale = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale;
+    const baseScale = modelScale * this.config.vehicleSizeMeters * this.userScale * this.resolutionScale * this.viewModeScale;
 
     // Apply scale to parent group
     mesh.scale.setScalar(baseScale);
@@ -671,8 +688,8 @@ export class TransitMeshManager {
     const lodSprite = this.createLodSprite(lineColor, baseScale);
     mesh.add(lodSprite);
 
-    // Set initial LOD state
-    const isLowLOD = this.currentZoom < this.config.lodThreshold;
+    // Set initial LOD state (force high LOD when view mode is boosted)
+    const isLowLOD = this.viewModeScale > 1 ? false : this.currentZoom < this.config.lodThreshold;
     trainModel.visible = !isLowLOD;
     lodSprite.visible = isLowLOD;
 

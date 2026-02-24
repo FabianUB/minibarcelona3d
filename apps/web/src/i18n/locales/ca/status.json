@@ -54,7 +54,8 @@
     "loading": "Carregant...",
     "error": "Error",
     "noData": "Sense dades",
-    "notAvailable": "N/D"
+    "notAvailable": "N/D",
+    "viewStatus": "Veure estat del sistema"
   },
   "footer": {
     "lastUpdated": "Última actualització: {{time}}",

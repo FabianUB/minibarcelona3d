@@ -13,7 +13,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { useMapNetwork } from '@/state/map';
+import { useTranslation } from 'react-i18next';
+import { useMapNetwork, useMapActions } from '@/state/map';
 import { useTransitState } from '@/state/transit';
 import type { TrainPosition } from '@/types/trains';
 import type { Map as MapboxMap } from 'mapbox-gl';
@@ -21,10 +22,8 @@ import { useMetroPositions } from '../transit/hooks/useMetroPositions';
 import { useBusPositions } from '../transit/hooks/useBusPositions';
 import { useTramPositions } from '../transit/hooks/useTramPositions';
 import { useFgcPositions } from '../transit/hooks/useFgcPositions';
-import { NetworkTabs } from './components/NetworkTabs';
 import { NetworkTabContent } from './components/NetworkTabContent';
 import { VehicleListView } from './components/VehicleListView';
-import { PanelModeToggle } from './components/PanelModeToggle';
 import { DataSourceBadge } from './components/DataSourceBadge';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { NETWORK_TABS } from './types';
@@ -41,7 +40,9 @@ export function ControlPanelMobile({
   map,
   getMeshPosition,
 }: ControlPanelMobileProps) {
+  const { t } = useTranslation('controlPanel');
   const { controlPanelMode, activeControlTab, showOnlyTopBusLines } = useMapNetwork();
+  const { setControlPanelMode } = useMapActions();
   const { dataSourceStatus } = useTransitState();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -97,18 +98,32 @@ export function ControlPanelMobile({
       <SheetContent side="bottom" className="h-[70vh] flex flex-col">
         <SheetHeader className="pb-2 shrink-0">
           <SheetTitle className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <LanguageToggle />
-              <DataSourceBadge source={dataSource} />
+            <LanguageToggle />
+            <div className="flex items-center gap-1 p-0.5 bg-muted/50 rounded-lg">
+              <button
+                onClick={() => setControlPanelMode('controls')}
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all duration-150 ${
+                  isControlMode
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('modes.controls')}
+              </button>
+              <button
+                onClick={() => setControlPanelMode('vehicles')}
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all duration-150 ${
+                  !isControlMode
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {t('modes.vehicles')}
+              </button>
             </div>
-            <PanelModeToggle />
+            <DataSourceBadge source={dataSource} />
           </SheetTitle>
         </SheetHeader>
-
-        {/* Network Tabs */}
-        <div className="pb-2 shrink-0">
-          <NetworkTabs />
-        </div>
 
         {/* Content area - scrollable */}
         <div className="flex-1 overflow-auto">

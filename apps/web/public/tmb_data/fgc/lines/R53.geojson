@@ -1,10 +1,7 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
       "geometry": {
-        "type": "LineString",
         "coordinates": [
           [
             1.82746,
@@ -1570,13 +1567,16 @@
             2.14882,
             41.374771
           ]
-        ]
+        ],
+        "type": "LineString"
       },
       "properties": {
-        "line_code": "R53",
-        "name": "Barcelona Pl. Espanya - Manresa",
-        "color": "#3dbfc3"
-      }
+        "color": "#3dbfc3",
+        "last_verified_at": "2026-02-24T12:12:10Z",
+        "line_code": "R53"
+      },
+      "type": "Feature"
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

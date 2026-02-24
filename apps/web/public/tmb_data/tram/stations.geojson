@@ -1,3437 +1,2381 @@
 {
-  "type": "FeatureCollection",
   "features": [
     {
       "type": "Feature",
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.053352,
-          41.379371
-        ]
+          2.2135918,
+          41.4171972
+        ],
+        "type": "Point"
       },
       "properties": {
-        "id": "997-1032",
-        "name": "Sant Feliu|C.C.",
-        "stop_code": "1032",
+        "colors": null,
+        "id": "2127",
         "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.060803,
-          41.379782
-        ]
-      },
-      "properties": {
-        "id": "997-1031",
-        "name": "Torreblanca",
-        "stop_code": "1031",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.060798,
-          41.379729
-        ]
-      },
-      "properties": {
-        "id": "997-1131",
-        "name": "Torreblanca",
-        "stop_code": "1131",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.066906,
-          41.379746
-        ]
-      },
-      "properties": {
-        "id": "997-1030",
-        "name": "Walden",
-        "stop_code": "1030",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.066883,
-          41.37969
-        ]
-      },
-      "properties": {
-        "id": "997-1130",
-        "name": "Walden",
-        "stop_code": "1130",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.075047,
-          41.378855
-        ]
-      },
-      "properties": {
-        "id": "997-1029",
-        "name": "Rambla de Sant Just",
-        "stop_code": "1029",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.07504,
-          41.378798
-        ]
-      },
-      "properties": {
-        "id": "997-1129",
-        "name": "Rambla de Sant Just",
-        "stop_code": "1129",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.075717,
-          41.372397
-        ]
-      },
-      "properties": {
-        "id": "997-1028",
-        "name": "Hospital Sjd|Tv3",
-        "stop_code": "1028",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.075657,
-          41.372353
-        ]
-      },
-      "properties": {
-        "id": "997-1128",
-        "name": "Hospital Sjd|Tv3",
-        "stop_code": "1128",
-        "lines": [
-          "T3"
-        ],
-        "primary_color": "#0074E8",
-        "colors": [
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.080903,
-          41.369674
-        ]
-      },
-      "properties": {
-        "id": "997-1016",
-        "name": "Montesa",
-        "stop_code": "1016",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.080947,
-          41.369641
-        ]
-      },
-      "properties": {
-        "id": "997-1116",
-        "name": "Montesa",
-        "stop_code": "1116",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.083979,
-          41.372794
-        ]
-      },
-      "properties": {
-        "id": "997-1015",
-        "name": "La Sardana",
-        "stop_code": "1015",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.084017,
-          41.372773
-        ]
-      },
-      "properties": {
-        "id": "997-1115",
-        "name": "La Sardana",
-        "stop_code": "1115",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.08861,
-          41.376857
-        ]
-      },
-      "properties": {
-        "id": "997-1014",
-        "name": "Pont d'Esplugues",
-        "stop_code": "1014",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.08864,
-          41.376832
-        ]
-      },
-      "properties": {
-        "id": "997-1114",
-        "name": "Pont d'Esplugues",
-        "stop_code": "1114",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.093533,
-          41.376967
-        ]
-      },
-      "properties": {
-        "id": "997-1213",
-        "name": "Can Clota",
-        "stop_code": "1213",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.093528,
-          41.376932
-        ]
-      },
-      "properties": {
-        "id": "997-1313",
-        "name": "Can Clota",
-        "stop_code": "1313",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.098415,
-          41.376625
-        ]
-      },
-      "properties": {
-        "id": "997-1013",
-        "name": "Ca n'Oliveres",
-        "stop_code": "1013",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.09842,
-          41.376586
-        ]
-      },
-      "properties": {
-        "id": "997-1113",
-        "name": "Ca n'Oliveres",
-        "stop_code": "1113",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.105938,
-          41.3761
-        ]
-      },
-      "properties": {
-        "id": "997-1012",
-        "name": "Can Rigal",
-        "stop_code": "1012",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.105937,
-          41.376065
-        ]
-      },
-      "properties": {
-        "id": "997-1112",
-        "name": "Can Rigal",
-        "stop_code": "1112",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.110769,
-          41.376692
-        ]
-      },
-      "properties": {
-        "id": "997-1011",
-        "name": "Ernest Lluch",
-        "stop_code": "1011",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.110877,
-          41.376673
-        ]
-      },
-      "properties": {
-        "id": "997-1111",
-        "name": "Ernest Lluch",
-        "stop_code": "1111",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.114796,
-          41.380757
-        ]
-      },
-      "properties": {
-        "id": "997-1010",
-        "name": "Avinguda de Xile",
-        "stop_code": "1010",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.114877,
-          41.380728
-        ]
-      },
-      "properties": {
-        "id": "997-1110",
-        "name": "Avinguda de Xile",
-        "stop_code": "1110",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.11441,
-          41.384262
-        ]
-      },
-      "properties": {
-        "id": "997-1009",
-        "name": "Z.Universit\u00e0ria",
-        "stop_code": "1009",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.11445,
-          41.384276
-        ]
-      },
-      "properties": {
-        "id": "997-1109",
-        "name": "Z.Universit\u00e0ria",
-        "stop_code": "1109",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.118468,
-          41.385944
-        ]
-      },
-      "properties": {
-        "id": "997-1008",
-        "name": "Palau Reial",
-        "stop_code": "1008",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.118478,
-          41.385919
-        ]
-      },
-      "properties": {
-        "id": "997-1108",
-        "name": "Palau Reial",
-        "stop_code": "1108",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.121604,
-          41.38674
-        ]
-      },
-      "properties": {
-        "id": "997-1005",
-        "name": "Pius Xii",
-        "stop_code": "1005",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.121614,
-          41.38671
-        ]
-      },
-      "properties": {
-        "id": "997-1105",
-        "name": "Pius Xii",
-        "stop_code": "1105",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.126498,
-          41.387986
-        ]
-      },
-      "properties": {
-        "id": "997-1004",
-        "name": "Maria Cristina",
-        "stop_code": "1004",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.126516,
-          41.387957
-        ]
-      },
-      "properties": {
-        "id": "997-1104",
-        "name": "Maria Cristina",
-        "stop_code": "1104",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.131961,
-          41.389368
-        ]
-      },
-      "properties": {
-        "id": "997-1003",
-        "name": "Num\u00e0ncia",
-        "stop_code": "1003",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.131971,
-          41.389339
-        ]
-      },
-      "properties": {
-        "id": "997-1103",
-        "name": "Num\u00e0ncia",
-        "stop_code": "1103",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.136522,
-          41.390524
-        ]
-      },
-      "properties": {
-        "id": "997-1002",
-        "name": "L'Illa",
-        "stop_code": "1002",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.136532,
-          41.390496
-        ]
-      },
-      "properties": {
-        "id": "997-1102",
-        "name": "L'Illa",
-        "stop_code": "1102",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.143135,
-          41.392222
-        ]
-      },
-      "properties": {
-        "id": "997-1001",
-        "name": "Francesc Maci\u00e0",
-        "stop_code": "1001",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.143288,
-          41.392189
-        ]
-      },
-      "properties": {
-        "id": "997-1101",
-        "name": "Francesc Maci\u00e0",
-        "stop_code": "1101",
-        "lines": [
-          "T1",
-          "T2",
-          "T3"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80",
-          "#0074E8"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.07666,
-          41.365338
-        ]
-      },
-      "properties": {
-        "id": "997-1017",
-        "name": "El Pedr\u00f3",
-        "stop_code": "1017",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.076692,
-          41.365319
-        ]
-      },
-      "properties": {
-        "id": "997-1117",
-        "name": "El Pedr\u00f3",
-        "stop_code": "1117",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.072664,
-          41.361256
-        ]
-      },
-      "properties": {
-        "id": "997-1018",
-        "name": "Ignasi Igl\u00e9sias",
-        "stop_code": "1018",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.072691,
-          41.361236
-        ]
-      },
-      "properties": {
-        "id": "997-1118",
-        "name": "Ignasi Igl\u00e9sias",
-        "stop_code": "1118",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.070199,
-          41.357681
-        ]
-      },
-      "properties": {
-        "id": "997-1019",
-        "name": "Cornell\u00e0 Centre",
-        "stop_code": "1019",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.070231,
-          41.357662
-        ]
-      },
-      "properties": {
-        "id": "997-1119",
-        "name": "Cornell\u00e0 Centre",
-        "stop_code": "1119",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.066099,
-          41.356667
-        ]
-      },
-      "properties": {
-        "id": "997-1020",
-        "name": "Les Aig\u00fces",
-        "stop_code": "1020",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.066065,
-          41.356653
-        ]
-      },
-      "properties": {
-        "id": "997-1120",
-        "name": "Les Aig\u00fces",
-        "stop_code": "1120",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.062241,
-          41.360337
-        ]
-      },
-      "properties": {
-        "id": "997-1021",
-        "name": "Fontsanta|Fatj\u00f3",
-        "stop_code": "1021",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.062205,
-          41.36032
-        ]
-      },
-      "properties": {
-        "id": "997-1121",
-        "name": "Fontsanta|Fatj\u00f3",
-        "stop_code": "1121",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.05891,
-          41.364698
-        ]
-      },
-      "properties": {
-        "id": "997-1022",
-        "name": "Bon Viatge",
-        "stop_code": "1022",
-        "lines": [
-          "T2"
-        ],
-        "primary_color": "#80FF80",
-        "colors": [
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.058745,
-          41.364563
-        ]
-      },
-      "properties": {
-        "id": "997-1122",
-        "name": "Bon Viatge",
-        "stop_code": "1122",
-        "lines": [
-          "T1",
-          "T2"
-        ],
-        "primary_color": "#FF0D0D",
-        "colors": [
-          "#FF0D0D",
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.062966,
-          41.367767
-        ]
-      },
-      "properties": {
-        "id": "997-1025",
-        "name": "La Fontsanta",
-        "stop_code": "1025",
-        "lines": [
-          "T2"
-        ],
-        "primary_color": "#80FF80",
-        "colors": [
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.06291,
-          41.367823
-        ]
-      },
-      "properties": {
-        "id": "997-1125",
-        "name": "La Fontsanta",
-        "stop_code": "1125",
-        "lines": [
-          "T2"
-        ],
-        "primary_color": "#80FF80",
-        "colors": [
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.071202,
-          41.368623
-        ]
-      },
-      "properties": {
-        "id": "997-1026",
-        "name": "Centre Miquel Mart\u00ed i Pol",
-        "stop_code": "1026",
-        "lines": [
-          "T2"
-        ],
-        "primary_color": "#80FF80",
-        "colors": [
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.071161,
-          41.368687
-        ]
-      },
-      "properties": {
-        "id": "997-1126",
-        "name": "Centre Miquel Mart\u00ed i Pol",
-        "stop_code": "1126",
-        "lines": [
-          "T2"
-        ],
-        "primary_color": "#80FF80",
-        "colors": [
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.076184,
-          41.371019
-        ]
-      },
-      "properties": {
-        "id": "997-1127",
-        "name": "Llevant-L.Planes",
-        "stop_code": "1127",
-        "lines": [
-          "T2"
-        ],
-        "primary_color": "#80FF80",
-        "colors": [
-          "#80FF80"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-202",
-        "name": "Ciutadella / V.O.",
-        "stop_code": "202",
-        "lines": [
-          "T4",
           "T5",
           "T6"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.191918,
-          41.387641
-        ]
+        "name": "Alfons el Magnànim",
+        "primary_color": "#888888",
+        "stop_code": "T_ALFS"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2135365,
+          41.4171655
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-ST-203",
-        "name": "Wellington / Upf",
-        "stop_code": "203",
+        "colors": null,
+        "id": "2027",
         "lines": [
-          "T4",
           "T5",
           "T6"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.188575,
-          41.390169
-        ]
+        "name": "Alfons el Magnànim",
+        "primary_color": "#888888",
+        "stop_code": "A_ALFS"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1869012,
+          41.3975488
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-ST-204",
-        "name": "Marina",
-        "stop_code": "204",
+        "colors": null,
+        "id": "2002",
         "lines": [
-          "T4",
           "T5",
           "T6"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.18694,
-          41.394069
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-205",
         "name": "Auditori/Teatre Nacional",
-        "stop_code": "205",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.186901,
-          41.397549
-        ]
+        "primary_color": "#888888",
+        "stop_code": "A_ATTR"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1868569,
+          41.397551
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-ST-206",
-        "name": "Gl\u00f2ries",
-        "stop_code": "206",
+        "colors": null,
+        "id": "2102",
         "lines": [
-          "T4",
           "T5",
           "T6"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.187435,
-          41.402537
-        ]
+        "name": "Auditori/Teatre Nacional",
+        "primary_color": "#888888",
+        "stop_code": "T_ATTR"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-ST-208",
-        "name": "Can Jaumandreu",
-        "stop_code": "208",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.193762,
-          41.40817
-        ]
+          2.1147965,
+          41.3807568
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1010",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Avinguda de Xile",
+        "primary_color": "#888888",
+        "stop_code": "A_XILE"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-ST-209",
-        "name": "Espronceda",
-        "stop_code": "209",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.19794,
-          41.411343
-        ]
+          2.1148774,
+          41.3807283
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1110",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Avinguda de Xile",
+        "primary_color": "#888888",
+        "stop_code": "T_XILE"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2094073,
+          41.4199875
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-ST-210",
-        "name": "Sant Mart\u00ed de Proven\u00e7als",
-        "stop_code": "210",
+        "colors": null,
+        "id": "2126",
         "lines": [
-          "T4",
           "T5",
           "T6"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.20476,
-          41.416458
-        ]
+        "name": "Besòs",
+        "primary_color": "#888888",
+        "stop_code": "T_BSOS"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2096084,
+          41.4201002
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-ST-211",
-        "name": "Bes\u00f2s",
-        "stop_code": "211",
+        "colors": null,
+        "id": "2026",
         "lines": [
-          "T4",
           "T5",
           "T6"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.209608,
-          41.4201
-        ]
+        "name": "Besòs",
+        "primary_color": "#888888",
+        "stop_code": "A_BSOS"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-ST-212",
-        "name": "Alfons el Magn\u00e0nim",
-        "stop_code": "212",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.213536,
-          41.417166
-        ]
+          2.0589095,
+          41.3646981
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1022",
+        "lines": [
+          "T2"
+        ],
+        "name": "Bon Viatge",
+        "primary_color": "#888888",
+        "stop_code": "A_BVIA"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-ST-213",
-        "name": "Parc del Bes\u00f2s",
-        "stop_code": "213",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.217668,
-          41.419397
-        ]
+          2.0587446,
+          41.364563
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1122",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Bon Viatge",
+        "primary_color": "#888888",
+        "stop_code": "T_BVIA"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-ST-214",
-        "name": "La Catalana",
-        "stop_code": "214",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.221978,
-          41.422629
-        ]
+          2.1914452,
+          41.4045208
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2104",
+        "lines": [
+          "T4"
+        ],
+        "name": "Ca l'Aranyó",
+        "primary_color": "#888888",
+        "stop_code": "T_ARNY"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-ST-215",
-        "name": "Sant Joan Baptista",
-        "stop_code": "215",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.225459,
-          41.42745
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-216",
-        "name": "Encants de Sant Adri\u00e0",
-        "stop_code": "216",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.222753,
-          41.430528
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-217",
-        "name": "Sant Roc",
-        "stop_code": "217",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.22762,
-          41.434927
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-219",
-        "name": "Gorg",
-        "stop_code": "219",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.233261,
-          41.439946
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-220",
-        "name": "La Mina",
-        "stop_code": "220",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.220911,
-          41.418308
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-221",
-        "name": "Ca l'Arany\u00f3",
-        "stop_code": "221",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
         "coordinates": [
           2.191518,
-          41.40437
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-222",
-        "name": "Pere Iv",
-        "stop_code": "222",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
+          41.4043702
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
+        "type": "Point"
       },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.198241,
-          41.406069
-        ]
-      }
-    },
-    {
-      "type": "Feature",
       "properties": {
-        "id": "996-ST-223",
-        "name": "Fluvi\u00e0",
-        "stop_code": "223",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.204938,
-          41.407739
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-224",
-        "name": "Selva de Mar",
-        "stop_code": "224",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.210452,
-          41.409111
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-225",
-        "name": "El Maresme",
-        "stop_code": "225",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.215649,
-          41.410465
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-226",
-        "name": "F\u00f2rum",
-        "stop_code": "226",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.219887,
-          41.41182
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-227",
-        "name": "Campus Diagonal-Bes\u00f2s",
-        "stop_code": "227",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.222964,
-          41.415224
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-228",
-        "name": "Port F\u00f2rum",
-        "stop_code": "228",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.226185,
-          41.418868
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-229",
-        "name": "Estaci\u00f3 St.Adri\u00e0",
-        "stop_code": "229",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.230585,
-          41.42394
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-235",
-        "name": "Monumental",
-        "stop_code": "235",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.180941,
-          41.402016
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-237",
-        "name": "Sicilia",
-        "stop_code": "237",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.174216,
-          41.400208
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-ST-238",
-        "name": "Verdaguer",
-        "stop_code": "238",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.167419,
-          41.398502
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2020",
-        "name": "Ciutadella / V.O.",
-        "stop_code": "A_CTDL",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.191918,
-          41.387641
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2120",
-        "name": "Ciutadella / V.O.",
-        "stop_code": "T_CTDL",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.191881,
-          41.387616
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2021",
-        "name": "Wellington / Upf",
-        "stop_code": "A_WLTN",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.188575,
-          41.390169
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2121",
-        "name": "Wellington / Upf",
-        "stop_code": "T_WLTN",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.188539,
-          41.390136
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2022",
-        "name": "Marina",
-        "stop_code": "A_MRNA",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.18694,
-          41.394069
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2122",
-        "name": "Marina",
-        "stop_code": "T_MRNA",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.186907,
-          41.394071
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2002",
-        "name": "Auditori/Teatre Nacional",
-        "stop_code": "A_ATTR",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.186901,
-          41.397549
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2102",
-        "name": "Auditori/Teatre Nacional",
-        "stop_code": "T_ATTR",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.186857,
-          41.397551
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2003",
-        "name": "Gl\u00f2ries",
-        "stop_code": "A_GLR3",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.187435,
-          41.402537
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2103",
-        "name": "Gl\u00f2ries",
-        "stop_code": "T_GLR2",
-        "lines": [
-          "T4",
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.187275,
-          41.402603
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2023",
-        "name": "Can Jaumandreu",
-        "stop_code": "A_JAUM",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.193762,
-          41.40817
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2123",
-        "name": "Can Jaumandreu",
-        "stop_code": "T_JAUM",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.193574,
-          41.408118
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2024",
-        "name": "Espronceda",
-        "stop_code": "A_ESPR",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.19794,
-          41.411343
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2124",
-        "name": "Espronceda",
-        "stop_code": "T_ESPR",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.197912,
-          41.411366
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2025",
-        "name": "Sant Mart\u00ed de Proven\u00e7als",
-        "stop_code": "A_MRTI",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.20476,
-          41.416458
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2125",
-        "name": "Sant Mart\u00ed de Proven\u00e7als",
-        "stop_code": "T_MRTI",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.204549,
-          41.416362
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2026",
-        "name": "Bes\u00f2s",
-        "stop_code": "A_BSOS",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.209608,
-          41.4201
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2126",
-        "name": "Bes\u00f2s",
-        "stop_code": "T_BSOS",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.209407,
-          41.419988
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2027",
-        "name": "Alfons el Magn\u00e0nim",
-        "stop_code": "A_ALFS",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.213536,
-          41.417166
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2127",
-        "name": "Alfons el Magn\u00e0nim",
-        "stop_code": "T_ALFS",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.213592,
-          41.417197
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2028",
-        "name": "Parc del Bes\u00f2s",
-        "stop_code": "A_PARC",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.217668,
-          41.419397
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2128",
-        "name": "Parc del Bes\u00f2s",
-        "stop_code": "T_PARC",
-        "lines": [
-          "T5",
-          "T6"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080",
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.217608,
-          41.419442
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2013",
-        "name": "La Catalana",
-        "stop_code": "A_CATA",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.221978,
-          41.422629
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2113",
-        "name": "La Catalana",
-        "stop_code": "T_CATA",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.221906,
-          41.422668
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2014",
-        "name": "Sant Joan Baptista",
-        "stop_code": "A_JOAN",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.225459,
-          41.42745
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2114",
-        "name": "Sant Joan Baptista",
-        "stop_code": "T_JOAN",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.225358,
-          41.427318
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2016",
-        "name": "Encants de Sant Adri\u00e0",
-        "stop_code": "A_NKNS",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.222753,
-          41.430528
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2116",
-        "name": "Encants de Sant Adri\u00e0",
-        "stop_code": "T_NKNS",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.222704,
-          41.430563
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2017",
-        "name": "Sant Roc",
-        "stop_code": "A_SROC",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.22762,
-          41.434927
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2117",
-        "name": "Sant Roc",
-        "stop_code": "T_SROC",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.227575,
-          41.43496
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2019",
-        "name": "Gorg",
-        "stop_code": "A_GORG",
-        "lines": [
-          "T5"
-        ],
-        "primary_color": "#FF0080",
-        "colors": [
-          "#FF0080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.233261,
-          41.439946
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2111",
-        "name": "La Mina",
-        "stop_code": "A_MINA",
-        "lines": [
-          "T6"
-        ],
-        "primary_color": "#4B5BE9",
-        "colors": [
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.220911,
-          41.418308
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2011",
-        "name": "La Mina",
-        "stop_code": "T_MINA",
-        "lines": [
-          "T6"
-        ],
-        "primary_color": "#4B5BE9",
-        "colors": [
-          "#4B5BE9"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.221062,
-          41.418414
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2030",
-        "name": "Estaci\u00f3 St.Adri\u00e0",
-        "stop_code": "A_SABS",
+        "colors": null,
+        "id": "2004",
         "lines": [
           "T4"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.230585,
-          41.42394
-        ]
+        "name": "Ca l'Aranyó",
+        "primary_color": "#888888",
+        "stop_code": "A_ARNY"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2130",
-        "name": "Estaci\u00f3 St.Adri\u00e0",
-        "stop_code": "T_SABS",
-        "lines": [
-          "T6"
-        ],
-        "primary_color": "#4B5BE9",
-        "colors": [
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.230513,
-          41.423967
-        ]
+          2.0984202,
+          41.3765855
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1113",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Ca n'Oliveres",
+        "primary_color": "#888888",
+        "stop_code": "T_OLIV"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2029",
-        "name": "Port F\u00f2rum",
-        "stop_code": "A_PORT",
-        "lines": [
-          "T4",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.226185,
-          41.418868
-        ]
+          2.0984151,
+          41.3766253
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1013",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Ca n'Oliveres",
+        "primary_color": "#888888",
+        "stop_code": "A_OLIV"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2129",
-        "name": "Port F\u00f2rum",
-        "stop_code": "T_PORT",
-        "lines": [
-          "T4",
-          "T6"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080",
-          "#4B5BE9"
-        ]
-      },
       "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.226154,
-          41.418882
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2010",
-        "name": "Campus Diagonal-Bes\u00f2s",
-        "stop_code": "A_CDBE",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.222964,
-          41.415224
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "id": "996-2110",
-        "name": "Campus Diagonal-Bes\u00f2s",
-        "stop_code": "T_CDBE",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
         "coordinates": [
           2.222904,
           41.415257
-        ]
-      }
-    },
-    {
-      "type": "Feature",
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2009",
-        "name": "F\u00f2rum",
-        "stop_code": "A_FRUM",
+        "colors": null,
+        "id": "2110",
         "lines": [
           "T4"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.219887,
-          41.41182
-        ]
+        "name": "Campus Diagonal-Besòs",
+        "primary_color": "#888888",
+        "stop_code": "T_CDBE"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2229644,
+          41.4152243
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2109",
-        "name": "F\u00f2rum",
-        "stop_code": "T_FRUM",
+        "colors": null,
+        "id": "2010",
         "lines": [
           "T4"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.219824,
-          41.411846
-        ]
+        "name": "Campus Diagonal-Besòs",
+        "primary_color": "#888888",
+        "stop_code": "A_CDBE"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0935283,
+          41.3769325
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2008",
+        "colors": null,
+        "id": "1313",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Can Clota",
+        "primary_color": "#888888",
+        "stop_code": "T_CLOT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0935333,
+          41.3769666
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1213",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Can Clota",
+        "primary_color": "#888888",
+        "stop_code": "A_CLOT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1937616,
+          41.4081704
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2023",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Can Jaumandreu",
+        "primary_color": "#888888",
+        "stop_code": "A_JAUM"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1935745,
+          41.4081184
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2123",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Can Jaumandreu",
+        "primary_color": "#888888",
+        "stop_code": "T_JAUM"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1059373,
+          41.3760647
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1112",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Can Rigal",
+        "primary_color": "#888888",
+        "stop_code": "T_RIGL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1059375,
+          41.3761001
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1012",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Can Rigal",
+        "primary_color": "#888888",
+        "stop_code": "A_RIGL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0711613,
+          41.3686866
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1126",
+        "lines": [
+          "T2"
+        ],
+        "name": "Centre Miquel Martí i Pol",
+        "primary_color": "#888888",
+        "stop_code": "T_CTMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0712016,
+          41.3686226
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1026",
+        "lines": [
+          "T2"
+        ],
+        "name": "Centre Miquel Martí i Pol",
+        "primary_color": "#888888",
+        "stop_code": "A_CTMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1919181,
+          41.3876411
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2020",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Ciutadella|V.O.",
+        "primary_color": "#888888",
+        "stop_code": "A_CTDL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1918808,
+          41.3876165
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2120",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Ciutadella|V.O.",
+        "primary_color": "#888888",
+        "stop_code": "T_CTDL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0701988,
+          41.3576808
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1019",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Cornellà Centre",
+        "primary_color": "#888888",
+        "stop_code": "A_CNLL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0702314,
+          41.3576621
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1119",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Cornellà Centre",
+        "primary_color": "#888888",
+        "stop_code": "T_CNLL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2156492,
+          41.4104651
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2008",
+        "lines": [
+          "T4"
+        ],
         "name": "El Maresme",
-        "stop_code": "A_MRSM",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.215649,
-          41.410465
-        ]
+        "primary_color": "#888888",
+        "stop_code": "A_MRSM"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2156338,
+          41.4105265
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2108",
+        "colors": null,
+        "id": "2108",
+        "lines": [
+          "T4"
+        ],
         "name": "El Maresme",
-        "stop_code": "T_MRSM",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.215634,
-          41.410526
-        ]
+        "primary_color": "#888888",
+        "stop_code": "T_MRSM"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2005",
-        "name": "Pere Iv",
-        "stop_code": "A_PRIV",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.198241,
-          41.406069
-        ]
+          2.0766601,
+          41.3653375
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1017",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "El Pedró",
+        "primary_color": "#888888",
+        "stop_code": "A_PDRO"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2105",
-        "name": "Pere Iv",
-        "stop_code": "T_PRIV",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.198257,
-          41.406228
-        ]
+          2.0766919,
+          41.3653188
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1117",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "El Pedró",
+        "primary_color": "#888888",
+        "stop_code": "T_PDRO"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2006",
-        "name": "Fluvi\u00e0",
-        "stop_code": "A_FVIA",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.204938,
-          41.407739
-        ]
+          2.2227042,
+          41.4305626
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2116",
+        "lines": [
+          "T5"
+        ],
+        "name": "Encants de Sant Adrià",
+        "primary_color": "#888888",
+        "stop_code": "T_NKNS"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2106",
-        "name": "Fluvi\u00e0",
-        "stop_code": "T_FVIA",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.204881,
-          41.407893
-        ]
+          2.222753,
+          41.4305283
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2016",
+        "lines": [
+          "T5"
+        ],
+        "name": "Encants de Sant Adrià",
+        "primary_color": "#888888",
+        "stop_code": "A_NKNS"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2007",
-        "name": "Selva de Mar",
-        "stop_code": "A_SLVA",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.210452,
-          41.409111
-        ]
+          2.1108774,
+          41.3766727
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1111",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Ernest Lluch",
+        "primary_color": "#888888",
+        "stop_code": "T_LLUC"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2107",
-        "name": "Selva de Mar",
-        "stop_code": "T_SLVA",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.210419,
-          41.409274
-        ]
+          2.1107688,
+          41.3766917
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1011",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Ernest Lluch",
+        "primary_color": "#888888",
+        "stop_code": "A_LLUC"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2004",
-        "name": "Ca l'Arany\u00f3",
-        "stop_code": "A_ARNY",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.191518,
-          41.40437
-        ]
+          2.1979124,
+          41.4113663
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2124",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Espronceda",
+        "primary_color": "#888888",
+        "stop_code": "T_ESPR"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2104",
-        "name": "Ca l'Arany\u00f3",
-        "stop_code": "T_ARNY",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.191445,
-          41.404521
-        ]
+          2.1979404,
+          41.411343
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2024",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Espronceda",
+        "primary_color": "#888888",
+        "stop_code": "A_ESPR"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2132",
-        "name": "Monumental",
-        "stop_code": "T_MONU",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.180941,
-          41.402016
-        ]
+          2.2305129,
+          41.4239673
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2130",
+        "lines": [
+          "T6"
+        ],
+        "name": "Estació St.Adrià",
+        "primary_color": "#888888",
+        "stop_code": "T_SABS"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2305854,
+          41.4239402
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2032",
-        "name": "Monumental",
-        "stop_code": "A_MONU",
+        "colors": null,
+        "id": "2030",
         "lines": [
           "T4"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.181157,
-          41.401853
-        ]
+        "name": "Estació St.Adrià",
+        "primary_color": "#888888",
+        "stop_code": "A_SABS"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2049379,
+          41.4077391
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2133",
-        "name": "Sicilia",
-        "stop_code": "T_SICI",
+        "colors": null,
+        "id": "2006",
         "lines": [
           "T4"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.174216,
-          41.400208
-        ]
+        "name": "Fluvià",
+        "primary_color": "#888888",
+        "stop_code": "A_FVIA"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2048806,
+          41.4078926
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2033",
-        "name": "Sicilia",
-        "stop_code": "A_SICI",
+        "colors": null,
+        "id": "2106",
         "lines": [
           "T4"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          2.174233,
-          41.400172
-        ]
+        "name": "Fluvià",
+        "primary_color": "#888888",
+        "stop_code": "T_FVIA"
       }
     },
     {
       "type": "Feature",
-      "properties": {
-        "id": "996-2034",
-        "name": "Verdaguer",
-        "stop_code": "A_VERD",
-        "lines": [
-          "T4"
-        ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
       "geometry": {
-        "type": "Point",
         "coordinates": [
-          2.167436,
-          41.398463
-        ]
+          2.0622051,
+          41.3603201
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1121",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Fontsanta|Fatjó",
+        "primary_color": "#888888",
+        "stop_code": "T_FTJO"
       }
     },
     {
       "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0622411,
+          41.3603372
+        ],
+        "type": "Point"
+      },
       "properties": {
-        "id": "996-2203",
-        "name": "Gl\u00f2ries",
-        "stop_code": "A_GLR1",
+        "colors": null,
+        "id": "1021",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Fontsanta|Fatjó",
+        "primary_color": "#888888",
+        "stop_code": "A_FTJO"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.143135,
+          41.3922223
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1001",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Francesc Macià",
+        "primary_color": "#888888",
+        "stop_code": "A_FRMC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1432882,
+          41.3921887
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1101",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Francesc Macià",
+        "primary_color": "#888888",
+        "stop_code": "T_FRMC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2198243,
+          41.4118457
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2109",
         "lines": [
           "T4"
         ],
-        "primary_color": "#008080",
-        "colors": [
-          "#008080"
-        ]
-      },
+        "name": "Fòrum",
+        "primary_color": "#888888",
+        "stop_code": "T_FRUM"
+      }
+    },
+    {
+      "type": "Feature",
       "geometry": {
-        "type": "Point",
+        "coordinates": [
+          2.2198872,
+          41.4118195
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2009",
+        "lines": [
+          "T4"
+        ],
+        "name": "Fòrum",
+        "primary_color": "#888888",
+        "stop_code": "A_FRUM"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1874347,
+          41.4025373
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2003",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Glòries",
+        "primary_color": "#888888",
+        "stop_code": "A_GLR3"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1872749,
+          41.4026034
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2103",
+        "lines": [
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "name": "Glòries",
+        "primary_color": "#888888",
+        "stop_code": "T_GLR2"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
         "coordinates": [
           2.187331,
           41.402537
-        ]
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2203",
+        "lines": [
+          "T4"
+        ],
+        "name": "Glòries",
+        "primary_color": "#888888",
+        "stop_code": "A_GLR1"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2332613,
+          41.4399464
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2019",
+        "lines": [
+          "T5"
+        ],
+        "name": "Gorg",
+        "primary_color": "#888888",
+        "stop_code": "A_GORG"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0757172,
+          41.3723967
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1028",
+        "lines": [
+          "T3"
+        ],
+        "name": "Hospital SJD|TV3",
+        "primary_color": "#888888",
+        "stop_code": "A_HTV3"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0756566,
+          41.3723531
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1128",
+        "lines": [
+          "T3"
+        ],
+        "name": "Hospital SJD|TV3",
+        "primary_color": "#888888",
+        "stop_code": "T_HTV3"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0726635,
+          41.361256
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1018",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Ignasi Iglésias",
+        "primary_color": "#888888",
+        "stop_code": "A_IIGL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0726907,
+          41.3612356
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1118",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Ignasi Iglésias",
+        "primary_color": "#888888",
+        "stop_code": "T_IIGL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1365323,
+          41.3904956
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1102",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "L'Illa",
+        "primary_color": "#888888",
+        "stop_code": "T_ILLA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1365222,
+          41.390524
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1002",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "L'Illa",
+        "primary_color": "#888888",
+        "stop_code": "A_ILLA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2219055,
+          41.422668
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2113",
+        "lines": [
+          "T5"
+        ],
+        "name": "La Catalana",
+        "primary_color": "#888888",
+        "stop_code": "T_CATA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2219779,
+          41.4226288
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2013",
+        "lines": [
+          "T5"
+        ],
+        "name": "La Catalana",
+        "primary_color": "#888888",
+        "stop_code": "A_CATA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0629661,
+          41.367767
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1025",
+        "lines": [
+          "T2"
+        ],
+        "name": "La Fontsanta",
+        "primary_color": "#888888",
+        "stop_code": "A_FSTA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0629098,
+          41.3678226
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1125",
+        "lines": [
+          "T2"
+        ],
+        "name": "La Fontsanta",
+        "primary_color": "#888888",
+        "stop_code": "T_FSTA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2209111,
+          41.418308
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2111",
+        "lines": [
+          "T6"
+        ],
+        "name": "La Mina",
+        "primary_color": "#888888",
+        "stop_code": "A_MINA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.221062,
+          41.4184136
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2011",
+        "lines": [
+          "T6"
+        ],
+        "name": "La Mina",
+        "primary_color": "#888888",
+        "stop_code": "T_MINA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0839786,
+          41.372794
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1015",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "La Sardana",
+        "primary_color": "#888888",
+        "stop_code": "A_SRDN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0840165,
+          41.3727731
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1115",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "La Sardana",
+        "primary_color": "#888888",
+        "stop_code": "T_SRDN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0660653,
+          41.3566534
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1120",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Les Aigües",
+        "primary_color": "#888888",
+        "stop_code": "T_AIGU"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0660992,
+          41.3566671
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1020",
+        "lines": [
+          "T1",
+          "T2"
+        ],
+        "name": "Les Aigües",
+        "primary_color": "#888888",
+        "stop_code": "A_AIGU"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0761835,
+          41.3710192
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1127",
+        "lines": [
+          "T2"
+        ],
+        "name": "Llevant-L.Planes",
+        "primary_color": "#888888",
+        "stop_code": "T_LLEV"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.126516,
+          41.3879572
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1104",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Maria Cristina",
+        "primary_color": "#888888",
+        "stop_code": "T_MRCR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1264983,
+          41.3879856
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1004",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Maria Cristina",
+        "primary_color": "#888888",
+        "stop_code": "A_MRCR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1869395,
+          41.3940691
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2022",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Marina",
+        "primary_color": "#888888",
+        "stop_code": "A_MRNA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1869071,
+          41.3940713
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2122",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Marina",
+        "primary_color": "#888888",
+        "stop_code": "T_MRNA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0809471,
+          41.3696406
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1116",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Montesa",
+        "primary_color": "#888888",
+        "stop_code": "T_MNTS"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0809029,
+          41.3696737
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1016",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Montesa",
+        "primary_color": "#888888",
+        "stop_code": "A_MNTS"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1811567,
+          41.4018532
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2032",
+        "lines": [
+          "T4"
+        ],
+        "name": "Monumental",
+        "primary_color": "#888888",
+        "stop_code": "A_MONU"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1809411,
+          41.4020156
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2132",
+        "lines": [
+          "T4"
+        ],
+        "name": "Monumental",
+        "primary_color": "#888888",
+        "stop_code": "T_MONU"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1319613,
+          41.3893676
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1003",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Numància",
+        "primary_color": "#888888",
+        "stop_code": "A_NMNC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1319714,
+          41.3893392
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1103",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Numància",
+        "primary_color": "#888888",
+        "stop_code": "T_NMNC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1184781,
+          41.3859192
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1108",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Palau Reial",
+        "primary_color": "#888888",
+        "stop_code": "T_PLRL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.118468,
+          41.3859439
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1008",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Palau Reial",
+        "primary_color": "#888888",
+        "stop_code": "A_PLRL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2176682,
+          41.419397
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2028",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Parc del Besòs",
+        "primary_color": "#888888",
+        "stop_code": "A_PARC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2176078,
+          41.4194423
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2128",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Parc del Besòs",
+        "primary_color": "#888888",
+        "stop_code": "T_PARC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.198241,
+          41.4060689
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2005",
+        "lines": [
+          "T4"
+        ],
+        "name": "Pere IV",
+        "primary_color": "#888888",
+        "stop_code": "A_PRIV"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1982574,
+          41.4062285
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2105",
+        "lines": [
+          "T4"
+        ],
+        "name": "Pere IV",
+        "primary_color": "#888888",
+        "stop_code": "T_PRIV"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1216038,
+          41.3867401
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1005",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Pius XII",
+        "primary_color": "#888888",
+        "stop_code": "A_PIUS"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1216139,
+          41.3867098
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1105",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Pius XII",
+        "primary_color": "#888888",
+        "stop_code": "T_PIUS"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0886101,
+          41.3768574
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1014",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Pont d'Esplugues",
+        "primary_color": "#888888",
+        "stop_code": "A_PTSP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0886404,
+          41.3768316
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1114",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Pont d'Esplugues",
+        "primary_color": "#888888",
+        "stop_code": "T_PTSP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2261539,
+          41.4188819
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2129",
+        "lines": [
+          "T4",
+          "T6"
+        ],
+        "name": "Port Fòrum",
+        "primary_color": "#888888",
+        "stop_code": "T_PORT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2261847,
+          41.4188678
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2029",
+        "lines": [
+          "T4",
+          "T6"
+        ],
+        "name": "Port Fòrum",
+        "primary_color": "#888888",
+        "stop_code": "A_PORT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0750395,
+          41.3787984
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1129",
+        "lines": [
+          "T3"
+        ],
+        "name": "Rambla de Sant Just",
+        "primary_color": "#888888",
+        "stop_code": "T_RBSJ"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0750471,
+          41.3788553
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1029",
+        "lines": [
+          "T3"
+        ],
+        "name": "Rambla de Sant Just",
+        "primary_color": "#888888",
+        "stop_code": "A_RBSJ"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0533619,
+          41.3793369
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1132",
+        "lines": [
+          "T3"
+        ],
+        "name": "Sant Feliu|C.C.",
+        "primary_color": "#888888",
+        "stop_code": "T_CCML"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0533518,
+          41.379371
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1032",
+        "lines": [
+          "T3"
+        ],
+        "name": "Sant Feliu|C.C.",
+        "primary_color": "#888888",
+        "stop_code": "A_CCML"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2253581,
+          41.4273177
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2114",
+        "lines": [
+          "T5"
+        ],
+        "name": "Sant Joan Baptista",
+        "primary_color": "#888888",
+        "stop_code": "T_JOAN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2254587,
+          41.4274504
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2014",
+        "lines": [
+          "T5"
+        ],
+        "name": "Sant Joan Baptista",
+        "primary_color": "#888888",
+        "stop_code": "A_JOAN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2045494,
+          41.4163615
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2125",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Sant Martí de Provençals",
+        "primary_color": "#888888",
+        "stop_code": "T_MRTI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2047597,
+          41.4164583
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2025",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Sant Martí de Provençals",
+        "primary_color": "#888888",
+        "stop_code": "A_MRTI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2276196,
+          41.4349266
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2017",
+        "lines": [
+          "T5"
+        ],
+        "name": "Sant Roc",
+        "primary_color": "#888888",
+        "stop_code": "A_SROC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2275753,
+          41.4349598
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2117",
+        "lines": [
+          "T5"
+        ],
+        "name": "Sant Roc",
+        "primary_color": "#888888",
+        "stop_code": "T_SROC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.2104518,
+          41.4091114
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2007",
+        "lines": [
+          "T4"
+        ],
+        "name": "Selva de Mar",
+        "primary_color": "#888888",
+        "stop_code": "A_SLVA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.210419,
+          41.4092741
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2107",
+        "lines": [
+          "T4"
+        ],
+        "name": "Selva de Mar",
+        "primary_color": "#888888",
+        "stop_code": "T_SLVA"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1742327,
+          41.4001718
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2033",
+        "lines": [
+          "T4"
+        ],
+        "name": "Sicilia",
+        "primary_color": "#888888",
+        "stop_code": "A_SICI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.174216,
+          41.4002079
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2133",
+        "lines": [
+          "T4"
+        ],
+        "name": "Sicilia",
+        "primary_color": "#888888",
+        "stop_code": "T_SICI"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0607983,
+          41.3797293
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1131",
+        "lines": [
+          "T3"
+        ],
+        "name": "Torreblanca",
+        "primary_color": "#888888",
+        "stop_code": "T_TRBL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0608034,
+          41.3797824
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1031",
+        "lines": [
+          "T3"
+        ],
+        "name": "Torreblanca",
+        "primary_color": "#888888",
+        "stop_code": "A_TRBL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1674359,
+          41.3984631
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2034",
+        "lines": [
+          "T4"
+        ],
+        "name": "Verdaguer",
+        "primary_color": "#888888",
+        "stop_code": "A_VERD"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0669057,
+          41.3797464
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1030",
+        "lines": [
+          "T3"
+        ],
+        "name": "Walden",
+        "primary_color": "#888888",
+        "stop_code": "A_WLDN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.0668829,
+          41.3796895
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1130",
+        "lines": [
+          "T3"
+        ],
+        "name": "Walden",
+        "primary_color": "#888888",
+        "stop_code": "T_WLDN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1885393,
+          41.3901357
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2121",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Wellington|UPF",
+        "primary_color": "#888888",
+        "stop_code": "T_WLTN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1885747,
+          41.3901689
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "2021",
+        "lines": [
+          "T5",
+          "T6"
+        ],
+        "name": "Wellington|UPF",
+        "primary_color": "#888888",
+        "stop_code": "A_WLTN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1144504,
+          41.3842756
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1109",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Z.Universitària",
+        "primary_color": "#888888",
+        "stop_code": "T_UNIV"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.1144099,
+          41.3842623
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "colors": null,
+        "id": "1009",
+        "lines": [
+          "T1",
+          "T2",
+          "T3"
+        ],
+        "name": "Z.Universitària",
+        "primary_color": "#888888",
+        "stop_code": "A_UNIV"
       }
     }
-  ]
+  ],
+  "type": "FeatureCollection"
 }

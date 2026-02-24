@@ -6,10 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useMapActions } from '@/state/map';
 import { useTransitState } from '@/state/transit';
 import type { TransportType } from '@/types/rodalies';
 import { NetworkLineGrid } from './NetworkLineGrid';
@@ -24,9 +21,7 @@ interface NetworkTabContentProps {
 }
 
 export function NetworkTabContent({ network }: NetworkTabContentProps) {
-  const { t } = useTranslation('controlPanel');
   const { t: tCommon } = useTranslation('common');
-  const { setControlPanelMode } = useMapActions();
   const { dataSourceStatus } = useTransitState();
   const networkTab = NETWORK_TABS.find((tab) => tab.type === network);
   const networkLabel = tCommon(`networks.${network}`);
@@ -35,21 +30,9 @@ export function NetworkTabContent({ network }: NetworkTabContentProps) {
   return (
     <div className="space-y-3">
       {/* Network header */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          {networkTab?.icon && <img src={networkTab.icon} alt="" className="w-5 h-5 object-contain" />}
-          <span className="font-semibold text-sm">{networkLabel}</span>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setControlPanelMode('vehicles')}
-          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-          title={t('vehicleList.showVehicleList')}
-        >
-          <List className="h-4 w-4 mr-1" />
-          {t('modes.vehicles')}
-        </Button>
+      <div className="flex items-center gap-2 px-1">
+        {networkTab?.icon && <img src={networkTab.icon} alt="" className="w-5 h-5 object-contain" />}
+        <span className="font-semibold text-sm">{networkLabel}</span>
       </div>
 
       {/* Status alert for data issues */}

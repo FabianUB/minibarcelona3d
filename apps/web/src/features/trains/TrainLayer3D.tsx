@@ -112,6 +112,9 @@ export interface TrainLayer3DProps {
    */
   modelScale?: number;
 
+  /** View mode scale boost (e.g. larger models in bird's eye view) */
+  viewModeScale?: number;
+
   /**
    * Shared click coordinator for cross-layer hit resolution.
    * When provided, this layer registers its hit resolver with the coordinator
@@ -185,6 +188,7 @@ export function TrainLayer3D({
   highlightedLineIds = [],
   isolateMode = false,
   modelScale = 1.0,
+  viewModeScale = 1.0,
   clickCoordinator,
 }: TrainLayer3DProps) {
   const { selectTrain } = useTrainActions();
@@ -1793,6 +1797,12 @@ export function TrainLayer3D({
       meshManagerRef.current.setUserScale(modelScale);
     }
   }, [modelScale]);
+
+  useEffect(() => {
+    if (meshManagerRef.current) {
+      meshManagerRef.current.setViewModeScale(viewModeScale);
+    }
+  }, [viewModeScale]);
 
   /**
    * Effect: Handle pointer hover using screen-space distance

@@ -9,6 +9,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ChevronRight } from 'lucide-react';
 import {
   fetchDataFreshness,
   type DataFreshness,
@@ -151,7 +153,7 @@ export function DataFreshnessIndicator({
 
   const mostRecentAge = getMostRecentAge();
 
-  return (
+  const indicator = (
     <div
       className={`inline-flex ${expanded ? 'flex-col' : ''} items-center gap-1.5 px-2 py-1 bg-card/80 backdrop-blur-sm rounded text-xs border border-border transition-colors ${onClick ? 'cursor-pointer hover:bg-accent/50' : ''}`}
       onClick={onClick}
@@ -166,6 +168,7 @@ export function DataFreshnessIndicator({
           <span className="text-foreground whitespace-nowrap">
             {mostRecentAge >= 0 ? formatAge(mostRecentAge) : t('freshness.noData')}
           </span>
+          {onClick && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
         </>
       )}
 
@@ -194,4 +197,15 @@ export function DataFreshnessIndicator({
       )}
     </div>
   );
+
+  if (onClick && !expanded) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{indicator}</TooltipTrigger>
+        <TooltipContent>{t('freshness.viewStatus')}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return indicator;
 }

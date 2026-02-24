@@ -9,7 +9,10 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "reset": "Reset",
-    "backToMap": "Back to Map"
+    "backToMap": "Back to Map",
+    "viewModeBirdsEye": "Switch to bird's eye view",
+    "viewModeBirdsEyeShort": "Bird's eye",
+    "viewModeFreeView": "Switch to free 3D view"
   },
   "loading": {
     "generic": "Loading...",

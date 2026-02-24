@@ -8,10 +8,8 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useMapNetwork, useMapActions } from '@/state/map';
+import { useMapNetwork } from '@/state/map';
 import type { TransportType } from '@/types/rodalies';
 import type { TrainPosition } from '@/types/trains';
 import type { VehiclePosition } from '@/types/transit';
@@ -76,7 +74,7 @@ export function VehicleListView({
 }: VehicleListViewProps) {
   const { t } = useTranslation('controlPanel');
   const { transportFilters } = useMapNetwork();
-  const { setControlPanelMode } = useMapActions();
+
   const parentRef = useRef<HTMLDivElement>(null);
   const networkTab = NETWORK_TABS.find((t) => t.type === network);
 
@@ -225,62 +223,30 @@ export function VehicleListView({
 
   if (!transportFilters[network]) {
     return (
-      <div className={cn('py-8 text-center text-muted-foreground space-y-4', className)}>
-        <div>
-          <p className="text-sm">{t('vehicleList.networkDisabled')}</p>
-          <p className="text-xs mt-1">{t('vehicleList.enableNetwork', { network })}</p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setControlPanelMode('controls')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('modes.controls')}
-        </Button>
+      <div className={cn('py-8 text-center text-muted-foreground', className)}>
+        <p className="text-sm">{t('vehicleList.networkDisabled')}</p>
+        <p className="text-xs mt-1">{t('vehicleList.enableNetwork', { network })}</p>
       </div>
     );
   }
 
   if (vehicles.length === 0) {
     return (
-      <div className={cn('py-8 text-center text-muted-foreground space-y-4', className)}>
+      <div className={cn('py-8 text-center text-muted-foreground', className)}>
         <p className="text-sm">{t('vehicleList.noActiveVehicles')}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setControlPanelMode('controls')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('modes.controls')}
-        </Button>
       </div>
     );
   }
 
   return (
     <div className={cn('space-y-3', className)}>
-      {/* Header with back button */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          {networkTab?.icon && <img src={networkTab.icon} alt="" className="w-5 h-5 object-contain" />}
-          <span className="font-semibold text-sm">{t('vehicleList.title')}</span>
-          <span className="text-xs text-muted-foreground">
-            ({vehicles.length})
-          </span>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setControlPanelMode('controls')}
-          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-          title={t('vehicleList.backToControls')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          {t('modes.controls')}
-        </Button>
+      {/* Header */}
+      <div className="flex items-center gap-2 px-1">
+        {networkTab?.icon && <img src={networkTab.icon} alt="" className="w-5 h-5 object-contain" />}
+        <span className="font-semibold text-sm">{t('vehicleList.title')}</span>
+        <span className="text-xs text-muted-foreground">
+          ({vehicles.length})
+        </span>
       </div>
 
       <div

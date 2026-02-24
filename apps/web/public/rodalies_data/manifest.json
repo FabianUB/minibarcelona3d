@@ -1,75 +1,76 @@
 {
-  "gtfs_checksum": "acc00a0c05005bde15843eedfaf1a6f5fcad166081b1205ff5a0843b26acf5b5",
+  "generator_version": "2",
+  "gtfs_checksum": "f6585be78823549c249b25ffeed7fe73dd9d502189528c34d86bc8d88602ca22",
   "legend_entries_path": "LegendEntry.json",
   "line_geometries_path": "LineGeometry.geojson",
   "lines": [
     {
-      "checksum": "ef306ec7b29efd4dd69213ebb0b2111a112f4179db220e1c3d0297de46f7ac0a",
+      "checksum": "e564276832f2ea3f77b496d0db4826a41103a3b2da6a99f057c3147ab455682c",
       "id": "R1",
       "path": "lines/R1.geojson"
     },
     {
-      "checksum": "53ac0196861b1a502ffd14f73569f1b099d8c2e3e9c6bd26930b75ef216617d6",
+      "checksum": "407c1e000937232013e3104a8694dfb04f0c656675c0c99072803f6d0bf44ffe",
       "id": "R11",
       "path": "lines/R11.geojson"
     },
     {
-      "checksum": "52f3a4923dfea971f9c6df56e7cc704f898e9014a48de63ab2a7f6058d87376f",
+      "checksum": "63b4db98ee1ddc60aad2a697a2a0a15e0c0d912206efbec113957461a176b6d7",
       "id": "R13",
       "path": "lines/R13.geojson"
     },
     {
-      "checksum": "c667718837be947edc7cc38a4249a57423a5a677a78759599c4a961d24067d3e",
+      "checksum": "02483b254adc428d197219827cbe369febb246b6bddda4453ee87362b8f9e767",
       "id": "R14",
       "path": "lines/R14.geojson"
     },
     {
-      "checksum": "0fea25478c9faea29aec054db453c17c52a3060f1309655d10ffeecff82fe294",
+      "checksum": "acb4af18cbbdf21ce225f7ff139c79ead4dd5e7c09bdacd3d844467bcd8e5f58",
       "id": "R15",
       "path": "lines/R15.geojson"
     },
     {
-      "checksum": "135289343460212eb60c2811124fe04730b47cae5fb6128bde6be79bd1bfbd3f",
+      "checksum": "b5d4edb1b1427b58e11f441982f8ffa0b9ab0039241669d66f5515676ecd1ac8",
       "id": "R16",
       "path": "lines/R16.geojson"
     },
     {
-      "checksum": "7640c8bca686970965567a39f3f1c1aaeb6390a69bef624383be4e311e2a8c09",
+      "checksum": "dc6dab03c037867c761db9613924221827fa0f197b1b878493be9e08364ad9b7",
       "id": "R17",
       "path": "lines/R17.geojson"
     },
     {
-      "checksum": "1c6f24a7942089e861737e844deca22ada66d53ca36f80a481dcd599b0bf11b9",
+      "checksum": "3bd4fca19492883a7cac46d7f7ac1c12ca4261871f359ea7345f42784203865d",
       "id": "R2",
       "path": "lines/R2.geojson"
     },
     {
-      "checksum": "b345f3ea110fabc7c171a816b51dfa02981e3af4eb55d9abdfc728b852fda1c6",
+      "checksum": "d958436ee9088712a08245dde66a46ef4f9e33433c5496fe528af3bd247410f1",
       "id": "R2N",
       "path": "lines/R2N.geojson"
     },
     {
-      "checksum": "63422cda3ba527fe5d1e9177abbb4680354e47b1049523d25d16e1bf24e0954d",
+      "checksum": "7dd209c213f7a84082bde8a6653f44aef929a706eef84aec663d7609befc2155",
       "id": "R2S",
       "path": "lines/R2S.geojson"
     },
     {
-      "checksum": "60f9522e723a8440d0b7321dcc06459ac516ac3ab6d1f50afd78a871edec7576",
+      "checksum": "b5ac385ff703366079b442e0c400d4ceb41c3160dee4ba96ce3d2c083fa22453",
       "id": "R3",
       "path": "lines/R3.geojson"
     },
     {
-      "checksum": "5557b70bd418ac1609ec63cf1eea03d9bddc233a9981e7703c6afda89025ac48",
+      "checksum": "e218a6e13750d8e59e3f63c81cf05ecd9167f7e4d49579531bbce616244815fc",
       "id": "R4",
       "path": "lines/R4.geojson"
     },
     {
-      "checksum": "ac6ba1813535b133a57d45b3d17aabcfcf00f409d4aab1cef623922393fcf556",
+      "checksum": "9535daef054d4ae905d13b1cd51c6305be0c00c332421bab4d12a03255e648a6",
       "id": "R8",
       "path": "lines/R8.geojson"
     },
     {
-      "checksum": "fd1a0c20e296c54fc95b5a6aaae3fb64bd8e220eac8c61c3dddae150b943a29f",
+      "checksum": "9fc780fa463e8d0fdbfcc51361e4f34ea4e2069a53f84069d1ac59e2fb169100",
       "id": "RT1",
       "path": "lines/RT1.geojson"
     }
@@ -78,10 +79,10 @@
   "map_viewport_path": "MapViewport.json",
   "rodalies_lines_path": "RodaliesLine.json",
   "stations": {
-    "checksum": "969c10f10926123f0abd319214b609b13ed5029f3e3556c6a4839b170ff83636",
+    "checksum": "7edb314565d027d30b697f28a8736245fdb30092a49927120b472a1fdc4c779d",
     "path": "Station.geojson"
   },
-  "updated_at": "2026-02-13T20:11:11Z",
+  "updated_at": "2026-02-23T18:12:21Z",
   "viewport": {
     "center": {
       "lat": 41.3896,
@@ -104,6 +105,5 @@
       "top": 48
     },
     "zoom": 15.5
-  },
-  "generator_version": "2"
+  }
 }

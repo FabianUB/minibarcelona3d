@@ -185,7 +185,7 @@
         "lines": [
           "27"
         ],
-        "name": "Les Torres - Mina de la Ciutat",
+        "name": "Les Torres - Mina de la Ciutat - Final de trajecte",
         "stop_code": "17"
       }
     },
@@ -203,7 +203,7 @@
         "lines": [
           "47"
         ],
-        "name": "Antonio Machado - E M de Natació",
+        "name": "Antonio Machado - E M de Natació - Final trajecte",
         "stop_code": "18"
       }
     },
@@ -361,7 +361,7 @@
         "lines": [
           "76"
         ],
-        "name": "Sant Genís dels Agudells - Natzaret",
+        "name": "St Genís dels Agudells - Natzaret - Final trajecte",
         "stop_code": "29"
       }
     },
@@ -379,7 +379,7 @@
         "lines": [
           "19"
         ],
-        "name": "Sant Genís dels Agudells",
+        "name": "Sant Genís dels Agudells - Final de trajecte",
         "stop_code": "30"
       }
     },
@@ -1193,24 +1193,6 @@
         ],
         "name": "Diagonal - Balmes",
         "stop_code": "94"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.165804,
-          41.387854
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.95.690105",
-        "lines": [
-          "H12"
-        ],
-        "name": "Gran Via - Balmes",
-        "stop_code": "95"
       }
     },
     {
@@ -2059,7 +2041,7 @@
         "lines": [
           "70"
         ],
-        "name": "Badal - Canalejas",
+        "name": "Badal - Canalejas - Final de trajecte",
         "stop_code": "160"
       }
     },
@@ -2111,9 +2093,7 @@
       "properties": {
         "id": "2.164.676657",
         "lines": [
-          "119",
-          "19",
-          "H2"
+          "119"
         ],
         "name": "Santa Rosalia - Besòs",
         "stop_code": "164"
@@ -2504,7 +2484,7 @@
         "lines": [
           "V3"
         ],
-        "name": "Can Caralleu",
+        "name": "Can Caralleu - Final de trajecte",
         "stop_code": "195"
       }
     },
@@ -2841,25 +2821,6 @@
         ],
         "name": "Josep Tarradellas - Rosselló",
         "stop_code": "217"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.158727,
-          41.400915
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.218.675118",
-        "lines": [
-          "114",
-          "39"
-        ],
-        "name": "Torrent de l'Olla - Penedès",
-        "stop_code": "218"
       }
     },
     {
@@ -3718,7 +3679,7 @@
         "lines": [
           "24"
         ],
-        "name": "Doctor Bové - Pg de la Font de la Mulassa",
+        "name": "Dr Bové - Pg Font la Mulassa - Final de trajecte",
         "stop_code": "272"
       }
     },
@@ -5241,24 +5202,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.148575,
-          41.374291
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.389.675716",
-        "lines": [
-          "H12"
-        ],
-        "name": "Pl Espanya - FGC",
-        "stop_code": "389"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.144895,
           41.375153
         ],
@@ -5306,8 +5249,6 @@
         "id": "2.393.697164",
         "lines": [
           "13",
-          "381",
-          "382",
           "X3"
         ],
         "name": "Av Reina Maria Cristina - Pl Espanya",
@@ -5658,7 +5599,7 @@
           "119",
           "22"
         ],
-        "name": "Gran Vista - Turó de la Rovira",
+        "name": "Gran Vista - Turó de la Rovira - Final de trajecte",
         "stop_code": "423"
       }
     },
@@ -5927,10 +5868,7 @@
       "properties": {
         "id": "2.444.675202",
         "lines": [
-          "13",
-          "55",
-          "91",
-          "H16"
+          "55"
         ],
         "name": "Entença - Floridablanca",
         "stop_code": "444"
@@ -6616,42 +6554,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.119202,
-          41.420662
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.501.698936",
-        "lines": [
-          "111"
-        ],
-        "name": "Colònia Tibidabo",
-        "stop_code": "501"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.11903,
-          41.42038
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.501.699107",
-        "lines": [
-          "111"
-        ],
-        "name": "Colònia Tibidabo",
-        "stop_code": "501"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.173666,
           41.393762
         ],
@@ -6966,8 +6868,7 @@
         "id": "2.526.682637",
         "lines": [
           "70",
-          "V11",
-          "V13"
+          "V11"
         ],
         "name": "Ganduxer - Alacant",
         "stop_code": "526"
@@ -7004,8 +6905,7 @@
         "id": "2.529.685987",
         "lines": [
           "70",
-          "H6",
-          "V13"
+          "H6"
         ],
         "name": "Mitre - Mandri",
         "stop_code": "529"
@@ -7252,7 +7152,7 @@
         "lines": [
           "7"
         ],
-        "name": "Metro Zona Universitària",
+        "name": "Metro Zona Universitària - Final de trajecte",
         "stop_code": "547"
       }
     },
@@ -7375,7 +7275,7 @@
         "lines": [
           "H6"
         ],
-        "name": "Zona Universitària",
+        "name": "Zona Universitària - Final de trajecte",
         "stop_code": "556"
       }
     },
@@ -7563,7 +7463,7 @@
         "lines": [
           "H12"
         ],
-        "name": "Besòs - Verneda",
+        "name": "Besòs - Verneda - Final de trajecte",
         "stop_code": "572"
       }
     },
@@ -8165,7 +8065,7 @@
         "lines": [
           "H2"
         ],
-        "name": "Palamós - Sa Tuna",
+        "name": "Palamós - Sa Tuna - Final de trajecte",
         "stop_code": "623"
       }
     },
@@ -8545,7 +8445,7 @@
         "lines": [
           "39"
         ],
-        "name": "Pl Catalana - Mascaró",
+        "name": "Pl Catalana - Mascaró - Final de trajecte",
         "stop_code": "650"
       }
     },
@@ -8983,7 +8883,7 @@
         "lines": [
           "V25"
         ],
-        "name": "Cementiri de l'Est",
+        "name": "Cementiri de l'Est - Final de trajecte",
         "stop_code": "682"
       }
     },
@@ -9506,7 +9406,7 @@
         "lines": [
           "H4"
         ],
-        "name": "Av de l'Exèrcit - Trias i Giró",
+        "name": "Av de l'Exèrcit - Trias i Giró - Final de trajecte",
         "stop_code": "712"
       }
     },
@@ -9823,24 +9723,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.188942,
-          41.482027
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.743.675581",
-        "lines": [
-          "96"
-        ],
-        "name": "Bogatell - Jaume I",
-        "stop_code": "743"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.186077,
           41.421117
         ],
@@ -9907,9 +9789,7 @@
       "properties": {
         "id": "2.749.674873",
         "lines": [
-          "119",
-          "19",
-          "H2"
+          "119"
         ],
         "name": "Santa Rosalia - Castellbisbal",
         "stop_code": "749"
@@ -11108,25 +10988,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.152115,
-          41.424836
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.845.684344",
-        "lines": [
-          "19",
-          "H2"
-        ],
-        "name": "Pg Mare de Déu del Coll - Ramon Rocafull",
-        "stop_code": "845"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.144371,
           41.413026
         ],
@@ -11506,7 +11367,7 @@
         "lines": [
           "97"
         ],
-        "name": "Estació d'Autobusos Fabra i Puig",
+        "name": "Estació d'Autobusos Fabra i Puig - Final trajecte",
         "stop_code": "872"
       }
     },
@@ -13148,8 +13009,7 @@
         "lines": [
           "70",
           "H4",
-          "V11",
-          "V13"
+          "V11"
         ],
         "name": "Pg Bonanova - Horaci",
         "stop_code": "996"
@@ -13169,7 +13029,7 @@
         "lines": [
           "V11"
         ],
-        "name": "Mandri - Jardins Ca n'Altimira",
+        "name": "Mandri - Jardins Ca n'Altimira - Final de trajecte",
         "stop_code": "997"
       }
     },
@@ -13421,7 +13281,7 @@
         "lines": [
           "H16"
         ],
-        "name": "Pl del Nou",
+        "name": "Pl del Nou - Final de trajecte",
         "stop_code": "1011"
       }
     },
@@ -14070,7 +13930,7 @@
         "lines": [
           "65"
         ],
-        "name": "Av Paral·lel - Lleida",
+        "name": "Av Paral·lel - Lleida - Final de trajecte",
         "stop_code": "1062"
       }
     },
@@ -14088,7 +13948,7 @@
         "lines": [
           "46"
         ],
-        "name": "Av Paral·lel - Llançà",
+        "name": "Av Paral·lel - Llançà - Final de trajecte",
         "stop_code": "1064"
       }
     },
@@ -14142,7 +14002,7 @@
         "lines": [
           "55"
         ],
-        "name": "Pl Urquinaona - Pau Claris",
+        "name": "Pl Urquinaona - Pau Claris - Final de trajecte",
         "stop_code": "1067"
       }
     },
@@ -14201,7 +14061,7 @@
         "lines": [
           "39"
         ],
-        "name": "Pl Urquinaona",
+        "name": "Pl Urquinaona - Final de trajecte",
         "stop_code": "1071"
       }
     },
@@ -14301,7 +14161,7 @@
         "lines": [
           "52"
         ],
-        "name": "Ronda Sant Pere - Pl Urquinaona",
+        "name": "Ronda Sant Pere - Pl Urquinaona - Final trajecte",
         "stop_code": "1079"
       }
     },
@@ -14361,7 +14221,7 @@
         "lines": [
           "67"
         ],
-        "name": "Ronda Sant Pere - Pl Catalunya",
+        "name": "Ronda Sant Pere - Pl Catalunya - Final de trajecte",
         "stop_code": "1082"
       }
     },
@@ -15141,7 +15001,7 @@
         "lines": [
           "V21"
         ],
-        "name": "Montbau",
+        "name": "Montbau - Final de trajecte",
         "stop_code": "1146"
       }
     },
@@ -15942,7 +15802,7 @@
         "lines": [
           "24"
         ],
-        "name": "Pl Catalunya - Rambla Catalunya",
+        "name": "Pl Catalunya - Rambla Catalunya - Final de traject",
         "stop_code": "1208"
       }
     },
@@ -16843,7 +16703,7 @@
         "lines": [
           "V13"
         ],
-        "name": "Pl Catalunya - Bergara",
+        "name": "Pl Catalunya - Bergara - Final de trajecte",
         "stop_code": "1271"
       }
     },
@@ -16954,7 +16814,7 @@
         "lines": [
           "47"
         ],
-        "name": "Ramon Trias Fargas - Pg Marítim",
+        "name": "Ramon Trias Fargas - Pg Marítim - Final trajecte",
         "stop_code": "1281"
       }
     },
@@ -17388,26 +17248,6 @@
         ],
         "name": "Pg Zona Franca - Cisell",
         "stop_code": "1323"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.148815,
-          41.423238
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1324.674881",
-        "lines": [
-          "119",
-          "19",
-          "H2"
-        ],
-        "name": "Santa Rosalia - Sant Dalmir",
-        "stop_code": "1324"
       }
     },
     {
@@ -17875,7 +17715,7 @@
         "lines": [
           "52"
         ],
-        "name": "Riera Blanca - Trav de les Corts",
+        "name": "Riera Blanca - Trav de les Corts - Final trajecte",
         "stop_code": "1361"
       }
     },
@@ -18067,6 +17907,7 @@
           "119",
           "19",
           "27",
+          "H2",
           "H4"
         ],
         "name": "Pg Vall d'Hebron - Patronat Ribes",
@@ -18591,25 +18432,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.154499,
-          41.426092
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1407.684345",
-        "lines": [
-          "19",
-          "H2"
-        ],
-        "name": "Dante Alighieri - Sacedón",
-        "stop_code": "1407"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.189525,
           41.453441
         ],
@@ -19092,7 +18914,7 @@
         "lines": [
           "196"
         ],
-        "name": "Pl del Doctor Andreu - Funicular del Tibidabo",
+        "name": "Pl Dr Andreu - Funicular Tibidabo - Final trajecte",
         "stop_code": "1443"
       }
     },
@@ -19632,7 +19454,7 @@
         "lines": [
           "V17"
         ],
-        "name": "Maremagnum",
+        "name": "Maremagnum - Final de trajecte",
         "stop_code": "1482"
       }
     },
@@ -19668,7 +19490,7 @@
         "lines": [
           "33"
         ],
-        "name": "Jordi Girona - John M Keynes",
+        "name": "Jordi Girona - John M Keynes - Final de trajecte",
         "stop_code": "1484"
       }
     },
@@ -21038,6 +20860,24 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.121475,
+          41.401916
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.1587.697019",
+        "lines": [
+          "V7"
+        ],
+        "name": "CAP Sarrià",
+        "stop_code": "1587"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.174491,
           41.430771
         ],
@@ -21155,7 +20995,7 @@
         "lines": [
           "D50"
         ],
-        "name": "Centre Esportiu Ciutat Meridiana",
+        "name": "Centre Esportiu Ciutat Meridiana - Final trajecte",
         "stop_code": "1595"
       }
     },
@@ -22333,9 +22173,7 @@
       "properties": {
         "id": "2.1702.674872",
         "lines": [
-          "119",
-          "19",
-          "H2"
+          "119"
         ],
         "name": "General Mendoza - Santa Rosalia",
         "stop_code": "1702"
@@ -23624,7 +23462,7 @@
         "lines": [
           "D20"
         ],
-        "name": "Trelawny - Av Litoral",
+        "name": "Trelawny - Av Litoral - Final de trajecte",
         "stop_code": "1788"
       }
     },
@@ -23698,7 +23536,7 @@
         "lines": [
           "63"
         ],
-        "name": "Plaça Catalunya",
+        "name": "Plaça Catalunya - Final de trajecte",
         "stop_code": "1797"
       }
     },
@@ -24077,7 +23915,7 @@
         "lines": [
           "55"
         ],
-        "name": "Pl Dante",
+        "name": "Pl Dante - Final de trajecte",
         "stop_code": "1826"
       }
     },
@@ -24311,25 +24149,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.153826,
-          41.427572
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1855.678040",
-        "lines": [
-          "112",
-          "185"
-        ],
-        "name": "Lisboa - Alarcón",
-        "stop_code": "1855"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.150605,
           41.426254
         ],
@@ -24396,7 +24215,9 @@
         "id": "2.1859.675920",
         "lines": [
           "112",
-          "185"
+          "185",
+          "19",
+          "H2"
         ],
         "name": "Coll i Alentorn - Av Martí i Codolar",
         "stop_code": "1859"
@@ -24434,7 +24255,9 @@
         "id": "2.1861.678042",
         "lines": [
           "112",
-          "185"
+          "185",
+          "19",
+          "H2"
         ],
         "name": "Lisboa - Serrallonga",
         "stop_code": "1861"
@@ -24634,7 +24457,7 @@
         "lines": [
           "V31"
         ],
-        "name": "Rambla de Prim - Av Diagonal",
+        "name": "Rambla de Prim - Av Diagonal - Final de trajecte",
         "stop_code": "1878"
       }
     },
@@ -24714,6 +24537,24 @@
         ],
         "name": "Rda Guinardó - Sardenya",
         "stop_code": "1885"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.183873,
+          41.429359
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.1886.675950",
+        "lines": [
+          "H6"
+        ],
+        "name": "Fabra i Puig",
+        "stop_code": "1886"
       }
     },
     {
@@ -25053,24 +24894,6 @@
         ],
         "name": "Via Favència - Pablo Iglesias",
         "stop_code": "1910"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.119182,
-          41.424128
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.1911.675954",
-        "lines": [
-          "111"
-        ],
-        "name": "Ctra de Vallvidrera al Tibidabo",
-        "stop_code": "1911"
       }
     },
     {
@@ -25665,7 +25488,7 @@
         "lines": [
           "V29"
         ],
-        "name": "Pl de les Roquetes",
+        "name": "Pl de les Roquetes - Final de trajecte",
         "stop_code": "1959"
       }
     },
@@ -25777,7 +25600,7 @@
         "lines": [
           "X2"
         ],
-        "name": "Av Paral·lel",
+        "name": "Av Paral·lel - Final de trajecte",
         "stop_code": "1982"
       }
     },
@@ -26105,6 +25928,24 @@
         ],
         "name": "Metro Penitents",
         "stop_code": "2034"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.149056,
+          41.422149
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.2035.676549",
+        "lines": [
+          "119"
+        ],
+        "name": "Mare de Déu dels Àngels - Fastenrath",
+        "stop_code": "2035"
       }
     },
     {
@@ -26520,24 +26361,6 @@
         ],
         "name": "Elkano - Blasco de Garay",
         "stop_code": "2063"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.170582,
-          41.372842
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2068.676115",
-        "lines": [
-          "121"
-        ],
-        "name": "Piquer - Cabanes",
-        "stop_code": "2068"
       }
     },
     {
@@ -27672,24 +27495,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.118827,
-          41.421513
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2149.676170",
-        "lines": [
-          "111"
-        ],
-        "name": "Pl Tibidabo",
-        "stop_code": "2149"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.213121,
           41.404791
         ],
@@ -28555,7 +28360,7 @@
         "lines": [
           "V11"
         ],
-        "name": "Moll de Barcelona",
+        "name": "Moll de Barcelona - Final de trajecte",
         "stop_code": "2243"
       }
     },
@@ -28573,7 +28378,7 @@
         "lines": [
           "23"
         ],
-        "name": "Parc Logístic",
+        "name": "Parc Logístic - Final de trajecte",
         "stop_code": "2246"
       }
     },
@@ -29316,7 +29121,7 @@
         "lines": [
           "V27"
         ],
-        "name": "Pg Marítim",
+        "name": "Pg Marítim - Final de trajecte",
         "stop_code": "2306"
       }
     },
@@ -29704,7 +29509,7 @@
         "lines": [
           "62"
         ],
-        "name": "Vallcivera - Moixeró",
+        "name": "Vallcivera - Moixeró - Final de trajecte",
         "stop_code": "2332"
       }
     },
@@ -29764,6 +29569,42 @@
         ],
         "name": "Museu Nacional - Museu Etnològic",
         "stop_code": "2341"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.133123,
+          41.40399
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.2342.692418",
+        "lines": [
+          "V13"
+        ],
+        "name": "Mandri - Maó",
+        "stop_code": "2342"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.132005,
+          41.40576
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.2344.698774",
+        "lines": [
+          "V13"
+        ],
+        "name": "Pg de la Bonanova - Sant Delfí",
+        "stop_code": "2344"
       }
     },
     {
@@ -30202,7 +30043,7 @@
         "lines": [
           "54"
         ],
-        "name": "Cardenal Reig - Pintor Tapiró",
+        "name": "Cardenal Reig - Pintor Tapiró - Final de trajecte",
         "stop_code": "2392"
       }
     },
@@ -30552,60 +30393,6 @@
         ],
         "name": "Torrassa",
         "stop_code": "2422"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.136564,
-          41.410307
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2430.683671",
-        "lines": [
-          "123"
-        ],
-        "name": "Pg Sant Gervasi - Jardins de la Tamarita",
-        "stop_code": "2430"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.132984,
-          41.411227
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2431.676409",
-        "lines": [
-          "123"
-        ],
-        "name": "Cister - Melilla",
-        "stop_code": "2431"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.1331,
-          41.412018
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2432.680672",
-        "lines": [
-          "123"
-        ],
-        "name": "Quatre Camins - Teodor Roviralta",
-        "stop_code": "2432"
       }
     },
     {
@@ -31148,7 +30935,7 @@
         "lines": [
           "33"
         ],
-        "name": "Rambla Prim - Santander",
+        "name": "Rambla Prim - Santander - Final de trajecte",
         "stop_code": "2473"
       }
     },
@@ -31532,7 +31319,7 @@
         "lines": [
           "59"
         ],
-        "name": "Gran Via Carles III - Pl Reina Maria Cristina",
+        "name": "G V Carles III - Pl Reina M C - Final de trajecte",
         "stop_code": "2530"
       }
     },
@@ -31572,6 +31359,24 @@
         ],
         "name": "Francesc Alegre - Budapest",
         "stop_code": "2533"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.16722,
+          41.37195
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.2536.676522",
+        "lines": [
+          "121"
+        ],
+        "name": "Pg de Montjuïc - Nou de La Rambla",
+        "stop_code": "2536"
       }
     },
     {
@@ -31738,7 +31543,7 @@
         "lines": [
           "H2"
         ],
-        "name": "Parc de Cervantes - Av d'Esplugues",
+        "name": "Parc Cervantes - Av d'Esplugues - Final trajecte",
         "stop_code": "2557"
       }
     },
@@ -32016,7 +31821,7 @@
         "lines": [
           "V25"
         ],
-        "name": "Ctra d'Horta - Cotxeres d'Horta",
+        "name": "Ctra d'Horta - Cotxeres d'Horta - Final trajecte",
         "stop_code": "2582"
       }
     },
@@ -32051,6 +31856,7 @@
       "properties": {
         "id": "2.2584.676603",
         "lines": [
+          "123",
           "V13"
         ],
         "name": "Pl Kennedy",
@@ -32448,7 +32254,7 @@
         "lines": [
           "V31"
         ],
-        "name": "Ctra de Ribes - Tossal",
+        "name": "Ctra de Ribes - Tossal - Final de trajecte",
         "stop_code": "2620"
       }
     },
@@ -32485,7 +32291,7 @@
         "lines": [
           "76"
         ],
-        "name": "Petúnies - Circumval·lació",
+        "name": "Petúnies - Circumval·lació - Final de trajecte",
         "stop_code": "2623"
       }
     },
@@ -33319,24 +33125,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.130744,
-          41.350808
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2714.678607",
-        "lines": [
-          "X3"
-        ],
-        "name": "Av Joan Carles I - Botànica",
-        "stop_code": "2714"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.111525,
           41.386067
         ],
@@ -33384,7 +33172,7 @@
         "lines": [
           "97"
         ],
-        "name": "Pl Primer de Maig",
+        "name": "Pl Primer de Maig - Final de trajecte",
         "stop_code": "2718"
       }
     },
@@ -33627,26 +33415,6 @@
         ],
         "name": "Pujades - Llacuna",
         "stop_code": "2741"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.187303,
-          41.404882
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2742.695520",
-        "lines": [
-          "192",
-          "V23",
-          "V25"
-        ],
-        "name": "Glòries - Meridiana",
-        "stop_code": "2742"
       }
     },
     {
@@ -34027,7 +33795,7 @@
         "lines": [
           "23"
         ],
-        "name": "Pl Espanya",
+        "name": "Pl Espanya - Final de trajecte",
         "stop_code": "2775"
       }
     },
@@ -34755,7 +34523,7 @@
         "lines": [
           "19"
         ],
-        "name": "Pg de Gràcia - Ronda de Sant Pere",
+        "name": "Pg de Gràcia - Ronda de Sant Pere - Final de traje",
         "stop_code": "2833"
       }
     },
@@ -35013,24 +34781,6 @@
         ],
         "name": "Sant Eudald - Pl Mons",
         "stop_code": "2849"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.145261,
-          41.415296
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.2850.680179",
-        "lines": [
-          "129"
-        ],
-        "name": "Cardedeu - Pg Mare de Déu del Coll",
-        "stop_code": "2850"
       }
     },
     {
@@ -35503,7 +35253,7 @@
         "lines": [
           "60"
         ],
-        "name": "Pg Vall d'Hebron - Trueba",
+        "name": "Pg Vall d'Hebron - Trueba - Final de trajecte",
         "stop_code": "2890"
       }
     },
@@ -36730,7 +36480,7 @@
         "lines": [
           "21"
         ],
-        "name": "Estació RENFE - Andana 2",
+        "name": "Estació RENFE - Andana 2 - Final de trajecte",
         "stop_code": "3001"
       }
     },
@@ -37135,7 +36885,7 @@
         "lines": [
           "V15"
         ],
-        "name": "Pg Joan de Borbó - Moll Oriental",
+        "name": "Pg Joan de Borbó - Moll Oriental - Final trajecte",
         "stop_code": "3030"
       }
     },
@@ -37153,7 +36903,7 @@
         "lines": [
           "22"
         ],
-        "name": "Ronda St Pere - Pg de Gràcia",
+        "name": "Ronda St Pere - Pg de Gràcia - Final de trajecte",
         "stop_code": "3032"
       }
     },
@@ -37297,7 +37047,7 @@
         "lines": [
           "46"
         ],
-        "name": "Aeroport T1",
+        "name": "Aeroport T1 - Final de trajecte",
         "stop_code": "3043"
       }
     },
@@ -37353,24 +37103,6 @@
         ],
         "name": "Aeroport T2B - Arribades",
         "stop_code": "3048"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.150737,
-          41.42412
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3051.684392",
-        "lines": [
-          "119"
-        ],
-        "name": "La Murtra - Sta Albina",
-        "stop_code": "3051"
       }
     },
     {
@@ -37786,24 +37518,6 @@
         ],
         "name": "Llerona - Vacarisses",
         "stop_code": "3086"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.181325,
-          41.456989
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3087.698672",
-        "lines": [
-          "180"
-        ],
-        "name": "Llerona - Ptge Carreras",
-        "stop_code": "3087"
       }
     },
     {
@@ -38589,7 +38303,7 @@
         "lines": [
           "65"
         ],
-        "name": "Selva - Pl Volateria",
+        "name": "Selva - Pl Volateria - Final de trajecte",
         "stop_code": "3140"
       }
     },
@@ -39379,7 +39093,7 @@
         "lines": [
           "H12"
         ],
-        "name": "Gornal",
+        "name": "Gornal - Final de trajecte",
         "stop_code": "3225"
       }
     },
@@ -39713,7 +39427,7 @@
         "lines": [
           "13"
         ],
-        "name": "Vivers",
+        "name": "Vivers - Final de trajecte",
         "stop_code": "3253"
       }
     },
@@ -39787,7 +39501,7 @@
         "lines": [
           "6"
         ],
-        "name": "Llacuna - Ramon Turró",
+        "name": "Llacuna - Ramon Turró - Final de trajecte",
         "stop_code": "3257"
       }
     },
@@ -39841,7 +39555,7 @@
         "lines": [
           "V7"
         ],
-        "name": "Sarrià",
+        "name": "Sarrià - Final de trajecte",
         "stop_code": "3263"
       }
     },
@@ -40007,7 +39721,7 @@
           "138",
           "96"
         ],
-        "name": "Pg de St Jordi - Tagamanent",
+        "name": "Pg de St Jordi - Tagamanent - Final de trajecte",
         "stop_code": "3272"
       }
     },
@@ -40173,7 +39887,7 @@
         "lines": [
           "D20"
         ],
-        "name": "Ernest Lluch",
+        "name": "Ernest Lluch - Final de trajecte",
         "stop_code": "3286"
       }
     },
@@ -40390,7 +40104,7 @@
         "lines": [
           "70"
         ],
-        "name": "Mandri - Emancipació",
+        "name": "Mandri - Emancipació - Final de trajecte",
         "stop_code": "3304"
       }
     },
@@ -40593,7 +40307,7 @@
         "lines": [
           "V3"
         ],
-        "name": "Pol. Ind. Zona Franca",
+        "name": "Pol. Ind. Zona Franca - Final de trajecte",
         "stop_code": "3322"
       }
     },
@@ -40702,7 +40416,7 @@
         "lines": [
           "V21"
         ],
-        "name": "Pg Marítim",
+        "name": "Pg Marítim - Final de trajecte",
         "stop_code": "3332"
       }
     },
@@ -40905,7 +40619,7 @@
         "lines": [
           "7"
         ],
-        "name": "Diagonal - Pl Llevant",
+        "name": "Diagonal - Pl Llevant - Final de trajecte",
         "stop_code": "3347"
       }
     },
@@ -40963,42 +40677,6 @@
         ],
         "name": "Barri Artigues",
         "stop_code": "3350"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.222934,
-          41.436504
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3351.689693",
-        "lines": [
-          "H10"
-        ],
-        "name": "Sant Roc",
-        "stop_code": "3351"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.22282,
-          41.436616
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3352.689690",
-        "lines": [
-          "H10"
-        ],
-        "name": "Sant Roc",
-        "stop_code": "3352"
       }
     },
     {
@@ -41457,7 +41135,7 @@
         "lines": [
           "34"
         ],
-        "name": "Costa i Cuxart - Felip II",
+        "name": "Costa i Cuxart - Felip II - Final de trajecte",
         "stop_code": "3381"
       }
     },
@@ -41495,24 +41173,6 @@
         ],
         "name": "Bac de Roda - Pg Taulat",
         "stop_code": "3383"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.225484,
-          41.438101
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3384.691039",
-        "lines": [
-          "H10"
-        ],
-        "name": "Alfons XIII - Juan Valera",
-        "stop_code": "3384"
       }
     },
     {
@@ -41583,7 +41243,7 @@
         "lines": [
           "54"
         ],
-        "name": "Estació del Nord",
+        "name": "Estació del Nord - Final de trajecte",
         "stop_code": "3389"
       }
     },
@@ -41659,7 +41319,7 @@
         "lines": [
           "60"
         ],
-        "name": "Concili de Trento - Pl de la Pau",
+        "name": "Concili de Trento - Pl de la Pau - Final trajecte",
         "stop_code": "3393"
       }
     },
@@ -41837,24 +41497,6 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.225167,
-          41.437692
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.3407.691041",
-        "lines": [
-          "H10"
-        ],
-        "name": "Alfons XIII - Juan Valera",
-        "stop_code": "3407"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
           2.188771,
           41.49109
         ],
@@ -41921,7 +41563,7 @@
         "lines": [
           "H14"
         ],
-        "name": "Ronda Sant Pau - Carrer de les Flors",
+        "name": "Rda St Pau - Carrer de les Flors - Final trajecte",
         "stop_code": "3417"
       }
     },
@@ -41939,7 +41581,7 @@
         "lines": [
           "21"
         ],
-        "name": "Ronda Sant Pau - Paral·lel",
+        "name": "Ronda Sant Pau - Paral·lel - Final de trajecte",
         "stop_code": "3418"
       }
     },
@@ -41957,7 +41599,7 @@
         "lines": [
           "H4"
         ],
-        "name": "Sant Adrià - Biosca",
+        "name": "Sant Adrià - Biosca - Final de trajecte",
         "stop_code": "3420"
       }
     },
@@ -42032,6 +41674,24 @@
         ],
         "name": "Muntaner - Bisbe Sivilla",
         "stop_code": "3424"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.135551,
+          41.401783
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.3425.692420",
+        "lines": [
+          "V13"
+        ],
+        "name": "Mandri - Mitre",
+        "stop_code": "3425"
       }
     },
     {
@@ -42120,7 +41780,7 @@
         "lines": [
           "78"
         ],
-        "name": "Onze de Setembre - Pg del Canal",
+        "name": "Onze de Setembre - Pg del Canal - Final trajecte",
         "stop_code": "3431"
       }
     },
@@ -42301,7 +41961,7 @@
         "lines": [
           "59"
         ],
-        "name": "Cementiri de l'Est - Carmen Amaya",
+        "name": "Cementiri de l'Est - Carmen Amaya - Final trajecte",
         "stop_code": "3445"
       }
     },
@@ -42337,7 +41997,7 @@
         "lines": [
           "196"
         ],
-        "name": "Av Tibidabo - La Rotonda",
+        "name": "Av Tibidabo - La Rotonda - Final de trajecte",
         "stop_code": "3453"
       }
     },
@@ -42409,7 +42069,7 @@
         "lines": [
           "X3"
         ],
-        "name": "Rambla Marina - Av Carrilet",
+        "name": "Rambla Marina - Av Carrilet - Final de trajecte",
         "stop_code": "3462"
       }
     },
@@ -42578,7 +42238,7 @@
         "lines": [
           "H16"
         ],
-        "name": "UPC - Campus Diagonal Besòs",
+        "name": "UPC - Campus Diagonal Besòs - Final de trajecte",
         "stop_code": "3479"
       }
     },
@@ -43290,7 +42950,7 @@
         "lines": [
           "V29"
         ],
-        "name": "Josep Pla - Av Diagonal",
+        "name": "Josep Pla - Av Diagonal - Final de trajecte",
         "stop_code": "3535"
       }
     },
@@ -43458,7 +43118,7 @@
         "lines": [
           "V5"
         ],
-        "name": "Av Pearson - Pl Joan d'Alòs",
+        "name": "Av Pearson - Pl Joan d'Alòs - Final de trajecte",
         "stop_code": "3545"
       }
     },
@@ -43476,7 +43136,7 @@
         "lines": [
           "V5"
         ],
-        "name": "Pg Zona Franca - Sant Eloi",
+        "name": "Pg Zona Franca - Sant Eloi - Final de trajecte",
         "stop_code": "3546"
       }
     },
@@ -43660,7 +43320,7 @@
         "lines": [
           "91"
         ],
-        "name": "Manso - Calàbria",
+        "name": "Manso - Calàbria - Final de trajecte",
         "stop_code": "3561"
       }
     },
@@ -43696,7 +43356,7 @@
         "lines": [
           "13"
         ],
-        "name": "Manso - Viladomat",
+        "name": "Manso - Viladomat - Final de trajecte",
         "stop_code": "3567"
       }
     },
@@ -43732,7 +43392,7 @@
         "lines": [
           "68"
         ],
-        "name": "Provença - Casanova",
+        "name": "Provença - Casanova - Final de trajecte",
         "stop_code": "3570"
       }
     },
@@ -43967,7 +43627,7 @@
         "lines": [
           "V9"
         ],
-        "name": "Anglí - Pl Benet XV",
+        "name": "Anglí - Pl Benet XV - Final de trajecte",
         "stop_code": "3583"
       }
     },
@@ -44387,7 +44047,6 @@
       "properties": {
         "id": "2.3613.695543",
         "lines": [
-          "62",
           "V25"
         ],
         "name": "Meridiana - Aragó",
@@ -44517,7 +44176,7 @@
         "lines": [
           "V23"
         ],
-        "name": "Can Marcet - Vall d'Hebron",
+        "name": "Can Marcet - Vall d'Hebron - Final de trajecte",
         "stop_code": "3620"
       }
     },
@@ -44697,7 +44356,7 @@
         "lines": [
           "V23"
         ],
-        "name": "Jaume Vicenç i Vives - Icària",
+        "name": "Jaume Vicenç i Vives - Icària - Final de trajecte",
         "stop_code": "3630"
       }
     },
@@ -44789,7 +44448,7 @@
         "lines": [
           "V19"
         ],
-        "name": "Josep Garí - Comte de Sert",
+        "name": "Josep Garí - Comte de Sert - Final de trajecte",
         "stop_code": "3636"
       }
     },
@@ -44848,7 +44507,7 @@
         "lines": [
           "V15"
         ],
-        "name": "Josep Garí - Av Tibidabo",
+        "name": "Josep Garí - Av Tibidabo - Final de trajecte",
         "stop_code": "3640"
       }
     },
@@ -44884,7 +44543,7 @@
         "lines": [
           "H8"
         ],
-        "name": "Sas - Pl Celestí Boada",
+        "name": "Sas - Pl Celestí Boada - Final de trajecte",
         "stop_code": "3642"
       }
     },
@@ -44902,7 +44561,7 @@
         "lines": [
           "H10"
         ],
-        "name": "Pg Sant Antoni - Pl Sants",
+        "name": "Pg Sant Antoni - Pl Sants - Final de trajecte",
         "stop_code": "3644"
       }
     },
@@ -44920,7 +44579,7 @@
         "lines": [
           "H6"
         ],
-        "name": "Metro Onze de Setembre",
+        "name": "Metro Onze de Setembre - Final de trajecte",
         "stop_code": "3645"
       }
     },
@@ -44938,7 +44597,7 @@
         "lines": [
           "V1"
         ],
-        "name": "Parc de Cervantes",
+        "name": "Parc de Cervantes - Final de trajecte",
         "stop_code": "3646"
       }
     },
@@ -45245,7 +44904,7 @@
         "lines": [
           "V13"
         ],
-        "name": "Av Tibidabo - Bosch i Alsina",
+        "name": "Av Tibidabo - Bosch i Alsina - Final de trajecte",
         "stop_code": "3675"
       }
     },
@@ -45515,7 +45174,7 @@
         "lines": [
           "D50"
         ],
-        "name": "Ronda Sant Pau - Folch i Torres",
+        "name": "Ronda Sant Pau - Folch i Torres - Final trajecte",
         "stop_code": "3690"
       }
     },
@@ -45749,7 +45408,7 @@
         "lines": [
           "V1"
         ],
-        "name": "Primer de maig - Botànica",
+        "name": "Primer de maig - Botànica - Final de trajecte",
         "stop_code": "3710"
       }
     },
@@ -46248,7 +45907,7 @@
         "lines": [
           "D40"
         ],
-        "name": "Diputació - Vilamarí",
+        "name": "Diputació - Vilamarí - Final de trajecte",
         "stop_code": "3763"
       }
     },
@@ -46432,7 +46091,7 @@
         "lines": [
           "96"
         ],
-        "name": "Bach - Joan Miró",
+        "name": "Bach - Joan Miró - Final de trajecte",
         "stop_code": "3776"
       }
     },
@@ -46650,7 +46309,7 @@
         "lines": [
           "H8"
         ],
-        "name": "Metro Ernest Lluch",
+        "name": "Metro Ernest Lluch - Final de trajecte",
         "stop_code": "3797"
       }
     },
@@ -46722,7 +46381,7 @@
         "lines": [
           "X1"
         ],
-        "name": "Diagonal - Pl Francesc Macià",
+        "name": "Diagonal - Pl Francesc Macià - Final de trajecte",
         "stop_code": "3802"
       }
     },
@@ -46810,7 +46469,7 @@
       "properties": {
         "id": "2.3807.697625",
         "lines": [
-          "62"
+          "V23"
         ],
         "name": "Independència - Meridiana",
         "stop_code": "3807"
@@ -47066,7 +46725,7 @@
         "lines": [
           "V19"
         ],
-        "name": "Pl Rosa dels Vents",
+        "name": "Pl Rosa dels Vents - Final de trajecte",
         "stop_code": "3838"
       }
     },
@@ -47211,7 +46870,7 @@
         "lines": [
           "X1"
         ],
-        "name": "Roc Boronat - Tànger",
+        "name": "Roc Boronat - Tànger - Final de trajecte",
         "stop_code": "3850"
       }
     },
@@ -47508,7 +47167,7 @@
         "lines": [
           "27"
         ],
-        "name": "Estació de Sants - Pl Joan Peiró",
+        "name": "Sants Estació - Pl Joan Peiró - Final de trajecte",
         "stop_code": "3876"
       }
     },
@@ -47526,7 +47185,7 @@
         "lines": [
           "78"
         ],
-        "name": "Pl Joan Peiró - Estació de Sants",
+        "name": "Pl Joan Peiró - Estació de Sants - Final trajecte",
         "stop_code": "3877"
       }
     },
@@ -47566,7 +47225,7 @@
         "lines": [
           "X2"
         ],
-        "name": "Av Remolar - Lleida",
+        "name": "Av Remolar - Lleida - Final de trajecte",
         "stop_code": "3880"
       }
     },
@@ -47859,7 +47518,7 @@
         "lines": [
           "X3"
         ],
-        "name": "Ronda Sant Pau - Aldana",
+        "name": "Ronda Sant Pau - Aldana - Final de trajecte",
         "stop_code": "3910"
       }
     },
@@ -48073,7 +47732,8 @@
       "properties": {
         "id": "2.3925.700133",
         "lines": [
-          "138"
+          "138",
+          "96"
         ],
         "name": "Jaume I - Clavell",
         "stop_code": "3925"
@@ -48183,7 +47843,7 @@
         "lines": [
           "6"
         ],
-        "name": "Pg Manuel Girona - Benet Mateu",
+        "name": "Pg Manuel Girona - Benet Mateu - Final de trajecte",
         "stop_code": "3932"
       }
     },
@@ -48289,54 +47949,18 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.149695,
-          41.373933
+          2.14849,
+          41.406205
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.7002.689403",
+        "id": "2.3939.700486",
         "lines": [
-          "382"
+          "131"
         ],
-        "name": "Alternativa per Fires - Pl Espanya",
-        "stop_code": "7002"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.149981,
-          41.373506
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.7002.699747",
-        "lines": [
-          "381"
-        ],
-        "name": "Alternativa per Fires - Pl Espanya",
-        "stop_code": "7002"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.126922,
-          41.354489
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.7018.687831",
-        "lines": [
-          "381"
-        ],
-        "name": "Av Joan Carles I - Ciències",
-        "stop_code": "7018"
+        "name": "Mitre - Lesseps",
+        "stop_code": "3939"
       }
     },
     {
@@ -48361,36 +47985,18 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.136031,
-          41.354911
+          2.184134,
+          41.42696
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.7023.681550",
+        "id": "2.8009.700450",
         "lines": [
-          "382"
+          "V29"
         ],
-        "name": "Alumini - Alts Forns",
-        "stop_code": "7023"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.129785,
-          41.351957
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.7026.695779",
-        "lines": [
-          "V1"
-        ],
-        "name": "Joan Carles I - Ciències",
-        "stop_code": "7026"
+        "name": "Concepción Arenal 167-168",
+        "stop_code": "8009"
       }
     },
     {
@@ -48568,18 +48174,18 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.166809,
-          41.371806
+          2.140467,
+          41.421497
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.8617.700372",
+        "id": "2.8582.700484",
         "lines": [
-          "121"
+          "119"
         ],
-        "name": "Nou De La Rambla, 179-181",
-        "stop_code": "8617"
+        "name": "Vall d'Hebron, 101",
+        "stop_code": "8582"
       }
     },
     {
@@ -48613,8 +48219,7 @@
         "id": "2.8672.700298",
         "lines": [
           "70",
-          "V11",
-          "V13"
+          "V11"
         ],
         "name": "Ganduxer, 132",
         "stop_code": "8672"
@@ -48752,6 +48357,43 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.18138,
+          41.45662
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9340.700476",
+        "lines": [
+          "180"
+        ],
+        "name": "Llerona, 77",
+        "stop_code": "9340"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.159071,
+          41.4006
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9372.691345",
+        "lines": [
+          "114",
+          "39"
+        ],
+        "name": "Torrent de l'Olla, 59",
+        "stop_code": "9372"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.18676,
           41.42239
         ],
@@ -48791,18 +48433,54 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
-          2.120679,
-          41.402257
+          2.222144,
+          41.435406
         ],
         "type": "Point"
       },
       "properties": {
-        "id": "2.9458.700355",
+        "id": "2.9462.700462",
         "lines": [
-          "V7"
+          "H10"
         ],
-        "name": "via Augusta, 376",
-        "stop_code": "9458"
+        "name": "Maresme 155-226",
+        "stop_code": "9462"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.225348,
+          41.437371
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9463.700478",
+        "lines": [
+          "H10"
+        ],
+        "name": "Jumilla, 53",
+        "stop_code": "9463"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.225396,
+          41.436371
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9464.700480",
+        "lines": [
+          "H10"
+        ],
+        "name": "Almeria, 39",
+        "stop_code": "9464"
       }
     },
     {
@@ -48821,6 +48499,61 @@
         ],
         "name": "Puigxuriguer, 42",
         "stop_code": "9491"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.134939,
+          41.41319
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9532.700495",
+        "lines": [
+          "123"
+        ],
+        "name": "av. Tibidabo, 25",
+        "stop_code": "9532"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.221457,
+          41.435273
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9553.694173",
+        "lines": [
+          "H10"
+        ],
+        "name": "Av. Maresme, 163",
+        "stop_code": "9553"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.187122,
+          41.406205
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9610.695519",
+        "lines": [
+          "192",
+          "V25"
+        ],
+        "name": "9610",
+        "stop_code": "9610"
       }
     },
     {
@@ -48883,6 +48616,25 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.153167,
+          41.427266
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9728.700433",
+        "lines": [
+          "112",
+          "185"
+        ],
+        "name": "Lisboa, 91-116",
+        "stop_code": "9728"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.16144,
           41.377385
         ],
@@ -48895,6 +48647,24 @@
         ],
         "name": "Manso, 45",
         "stop_code": "9789"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.170729,
+          41.372217
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9791.697961",
+        "lines": [
+          "121"
+        ],
+        "name": "Pg. Montjuïc, 38",
+        "stop_code": "9791"
       }
     },
     {
@@ -48957,6 +48727,24 @@
       "type": "Feature",
       "geometry": {
         "coordinates": [
+          2.141622,
+          41.424118
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9931.699533",
+        "lines": [
+          "119"
+        ],
+        "name": "Pg. Vall d'hebron, 101",
+        "stop_code": "9931"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
           2.141535,
           41.404034
         ],
@@ -48969,6 +48757,24 @@
         ],
         "name": "Balmes, 359",
         "stop_code": "9933"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          2.141304,
+          41.422381
+        ],
+        "type": "Point"
+      },
+      "properties": {
+        "id": "2.9940.699609",
+        "lines": [
+          "119"
+        ],
+        "name": "Vall d'hebron, 96.118",
+        "stop_code": "9940"
       }
     },
     {
@@ -49062,24 +48868,6 @@
         ],
         "name": "Juan de Garay, 114",
         "stop_code": "9969"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "coordinates": [
-          2.184587,
-          41.429152
-        ],
-        "type": "Point"
-      },
-      "properties": {
-        "id": "2.9970.699880",
-        "lines": [
-          "H6"
-        ],
-        "name": "Concepción Arenal, 188-192",
-        "stop_code": "9970"
       }
     },
     {

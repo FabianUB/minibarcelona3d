@@ -54,7 +54,8 @@
     "loading": "Cargando...",
     "error": "Error",
     "noData": "Sin datos",
-    "notAvailable": "N/D"
+    "notAvailable": "N/D",
+    "viewStatus": "Ver estado del sistema"
   },
   "footer": {
     "lastUpdated": "Última actualización: {{time}}",

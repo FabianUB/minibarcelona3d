@@ -172,7 +172,7 @@ export function NetworkLineGrid({ network, className }: NetworkLineGridProps) {
       </div>
 
       {/* Help text */}
-      <p className="text-[10px] text-muted-foreground text-center pt-1">
+      <p className="text-[10px] lg:text-xs text-muted-foreground text-center pt-1">
         {t('lineGrid.helpText')}
       </p>
     </div>
