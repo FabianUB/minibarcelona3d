@@ -18,6 +18,7 @@ import type { PreprocessedRailwayLine } from '../trains/geometry';
 import { sampleRailwayPosition, snapTrainToRailway } from '../trains/geometry';
 import { getCachedModel, loadTrainModel } from '../trains/modelLoader';
 import { ScaleManager } from '../trains/scaleManager';
+import type { GeoBounds } from '../trains/trainMeshManager';
 import { getModelPosition, getModelScale, getLngLatFromModelPosition } from '../map/coordinates';
 import { getPreprocessedMetroLine } from '../metro/positionSimulator';
 import { getPreprocessedBusRoute } from '../bus/positionSimulator';
@@ -883,7 +884,11 @@ export class TransitMeshManager {
    * - continuous: Calculates position based on speed and elapsed time
    * - lerp: Interpolates between start and target position
    */
-  animatePositions(): void {
+  /**
+   * @param bounds - Optional padded geographic bounds. Meshes outside are hidden
+   *                 and their interpolation is skipped to save CPU.
+   */
+  animatePositions(bounds?: GeoBounds): void {
     const now = Date.now();
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
 
@@ -891,6 +896,16 @@ export class TransitMeshManager {
     this.updateLODState();
 
     for (const [, data] of this.meshes) {
+      // Geographic bounds check — skip interpolation for off-screen meshes
+      if (bounds) {
+        const [lng, lat] = data.currentPosition;
+        if (lng < bounds.west || lng > bounds.east || lat < bounds.south || lat > bounds.north) {
+          data.mesh.visible = false;
+          continue;
+        }
+        data.mesh.visible = true;
+      }
+
       if (data.animationMode === 'continuous') {
         // Continuous motion mode - calculate position from speed and time
         this.animateContinuous(data, now);

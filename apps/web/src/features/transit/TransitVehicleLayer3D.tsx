@@ -14,6 +14,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { TransportType } from '../../types/rodalies';
 import type { VehiclePosition } from '../../types/transit';
 import { TransitMeshManager } from '../../lib/transit/transitMeshManager';
+import type { GeoBounds } from '../../lib/trains/trainMeshManager';
 import { getModelOrigin, setModelOrigin } from '../../lib/map/coordinates';
 import { useMetroPositions } from './hooks/useMetroPositions';
 import { useBusPositions } from './hooks/useBusPositions';
@@ -379,7 +380,19 @@ export function TransitVehicleLayer3D({
         // Update zoom for scale calculations
         if (meshManagerRef.current) {
           meshManagerRef.current.setZoom(map.getZoom());
-          meshManagerRef.current.animatePositions();
+          // Compute padded geographic bounds for frustum-aware animation skip
+          const mapBounds = map.getBounds();
+          let geoBounds: GeoBounds | undefined;
+          if (mapBounds) {
+            const pad = 0.01; // ~1km padding to avoid pop-in at edges
+            geoBounds = {
+              west: mapBounds.getWest() - pad,
+              east: mapBounds.getEast() + pad,
+              south: mapBounds.getSouth() - pad,
+              north: mapBounds.getNorth() + pad,
+            };
+          }
+          meshManagerRef.current.animatePositions(geoBounds);
         }
 
         // Reuse matrix instances for performance (avoid allocations per frame)

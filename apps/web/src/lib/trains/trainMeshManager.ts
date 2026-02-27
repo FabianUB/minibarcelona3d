@@ -70,6 +70,14 @@ interface LateralOffsetConfig {
   highZoomMultiplier: number; // Offset multiplier at high zoom (default: 1.5)
 }
 
+/** Padded geographic bounds for frustum-aware animation skip */
+export interface GeoBounds {
+  west: number;
+  east: number;
+  south: number;
+  north: number;
+}
+
 interface TrainMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
@@ -2054,7 +2062,11 @@ export class TrainMeshManager {
   private lastUpdateCallTime = 0;
   private updateCallsThisSecond = 0;
 
-  animatePositions(): void {
+  /**
+   * @param bounds - Optional padded geographic bounds. Meshes outside are hidden
+   *                 and their interpolation is skipped to save CPU.
+   */
+  animatePositions(bounds?: GeoBounds): void {
     const now = Date.now();
 
     // Log animation stats every 5 seconds (using debug level to reduce noise)
@@ -2072,6 +2084,15 @@ export class TrainMeshManager {
     const zOffset = this.Z_OFFSET_FACTOR * this.TRAIN_SIZE_METERS * modelScale;
 
     this.trainMeshes.forEach((meshData) => {
+      // Geographic bounds check — skip interpolation for off-screen meshes
+      if (bounds) {
+        const [lng, lat] = meshData.targetPosition;
+        if (lng < bounds.west || lng > bounds.east || lat < bounds.south || lat > bounds.north) {
+          meshData.mesh.visible = false;
+          return;
+        }
+        meshData.mesh.visible = true;
+      }
       const { currentPosition, targetPosition, lastUpdate } = meshData;
 
       // Check if we need to interpolate

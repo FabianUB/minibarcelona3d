@@ -24,7 +24,7 @@ import type { Train, TrainPosition, RawTrainPosition } from '../../types/trains'
 import type { Station } from '../../types/rodalies';
 import { fetchTrainPositions, fetchTrainByKey } from '../../lib/api/trains';
 import { preloadAllTrainModels } from '../../lib/trains/modelLoader';
-import { TrainMeshManager } from '../../lib/trains/trainMeshManager';
+import { TrainMeshManager, type GeoBounds } from '../../lib/trains/trainMeshManager';
 import { loadManifest, loadStations, loadLineGeometryCollection, loadRodaliesLines } from '../../lib/rodalies/dataLoader';
 import { buildLineColorMap } from '../../lib/trains/outlineManager';
 import { getModelOrigin } from '../../lib/map/coordinates';
@@ -1206,7 +1206,19 @@ export function TrainLayer3D({
       }
 
       if (meshManagerRef.current) {
-        meshManagerRef.current.animatePositions();
+        // Compute padded geographic bounds for frustum-aware animation skip
+        const mapBounds = map.getBounds();
+        let geoBounds: GeoBounds | undefined;
+        if (mapBounds) {
+          const pad = 0.01; // ~1km padding to avoid pop-in at edges
+          geoBounds = {
+            west: mapBounds.getWest() - pad,
+            east: mapBounds.getEast() + pad,
+            south: mapBounds.getSouth() - pad,
+            north: mapBounds.getNorth() + pad,
+          };
+        }
+        meshManagerRef.current.animatePositions(geoBounds);
         // Phase 2: Apply parking visuals to stopped trains (rotate 90°)
         // Always call to process ongoing animations (including un-parking)
         // The enableParking flag controls whether NEW parking animations start
