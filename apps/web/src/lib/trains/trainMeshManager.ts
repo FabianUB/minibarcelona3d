@@ -211,6 +211,11 @@ export class TrainMeshManager {
   private creationQueue: Array<() => void> = [];
   private readonly MESHES_PER_FRAME = 6;
 
+  // Material pool: keyed by `${sourceUUID}_${opacityBucket}` to reduce GPU state changes.
+  // Instead of cloning a new material per mesh, multiple meshes share the same material
+  // instance when they have the same source material and opacity bucket.
+  private materialPool = new Map<string, THREE.Material>();
+
   // User-controlled model scale (from control panel slider)
   private userScale: number = 1.0;
 
@@ -247,6 +252,34 @@ export class TrainMeshManager {
   }
 
   /**
+   * Get or create a pooled material for the given source material and opacity.
+   * Opacity is bucketed to nearest 0.1 to keep pool small.
+   *
+   * Materials in the pool are keyed by their *original* GLB source UUID so that
+   * repeated opacity swaps don't create new pool entries.
+   */
+  private getPooledMaterial(source: THREE.Material, opacity: number): THREE.Material {
+    const bucket = Math.round(opacity * 10) / 10;
+    // Track the original UUID through swaps (pooled mats inherit it via userData)
+    const sourceId = (source.userData?._poolSourceId as string) ?? source.uuid;
+    const key = `${sourceId}_${bucket}`;
+    let pooled = this.materialPool.get(key);
+    if (!pooled) {
+      pooled = source.clone();
+      pooled.userData = { ...pooled.userData, _poolSourceId: sourceId };
+      pooled.depthTest = true;
+      pooled.depthWrite = true;
+      pooled.polygonOffset = true;
+      pooled.polygonOffsetFactor = -2;
+      pooled.polygonOffsetUnits = -2;
+      (pooled as THREE.MeshStandardMaterial).opacity = bucket;
+      pooled.transparent = bucket < 1;
+      this.materialPool.set(key, pooled);
+    }
+    return pooled;
+  }
+
+  /**
    * Deterministic variation per train to reduce visual overlaps
    */
   private getScaleVariation(vehicleKey: string): number {
@@ -268,7 +301,6 @@ export class TrainMeshManager {
   private readonly Z_OFFSET_FACTOR = 0.5;
 
   /** Debug flag to log material settings only once */
-  private hasLoggedMaterialSettings = false;
 
   constructor(
     scene: THREE.Scene,
@@ -1081,45 +1113,22 @@ export class TrainMeshManager {
     const boundingSphere = new THREE.Sphere();
     centerBox.getBoundingSphere(boundingSphere);
 
-    // Clone materials for each mesh to ensure independent opacity control.
-    // This prevents trains sharing the same model type (e.g., R1 and R2 both using 'civia')
-    // from sharing material references - setting opacity on one would affect the other.
-    // Also ensures explicit depth buffer settings for consistent rendering across GPUs.
+    // Use pooled materials instead of per-mesh clones to reduce GPU state changes.
+    // Materials are pooled by (sourceUUID, opacityBucket) — vehicles at the same opacity
+    // share the same material instance. Depth settings are applied in getPooledMaterial().
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        const configureMaterial = (m: THREE.Material): THREE.Material => {
-          const cloned = m.clone();
-          // Explicit depth settings to ensure trains render on top of map layers
-          // This fixes z-fighting issues that occur on some GPUs/drivers
-          cloned.depthTest = true;
-          cloned.depthWrite = true;
-          // Polygon offset shifts depth values to prevent z-fighting with Mapbox layers
-          // Negative values push geometry "closer" to camera in depth buffer
-          cloned.polygonOffset = true;
-          cloned.polygonOffsetFactor = -2;
-          cloned.polygonOffsetUnits = -2;
-          // Debug: Log material settings once per model to verify they're applied
-          if (!this.hasLoggedMaterialSettings) {
-            console.log('🔧 [TrainMeshManager] Material settings applied:', {
-              depthTest: cloned.depthTest,
-              depthWrite: cloned.depthWrite,
-              polygonOffset: cloned.polygonOffset,
-              polygonOffsetFactor: cloned.polygonOffsetFactor,
-              polygonOffsetUnits: cloned.polygonOffsetUnits,
-              zOffsetFactor: this.Z_OFFSET_FACTOR,
-            });
-            this.hasLoggedMaterialSettings = true;
-          }
-          return cloned;
-        };
-
         if (Array.isArray(child.material)) {
-          child.material = child.material.map(configureMaterial);
-          cachedMaterials.push(...child.material);
+          child.material = child.material.map((m: THREE.Material) => {
+            const pooled = this.getPooledMaterial(m, 1.0);
+            cachedMaterials.push(pooled);
+            return pooled;
+          });
         } else if (child.material) {
-          child.material = configureMaterial(child.material);
-          cachedMaterials.push(child.material);
+          const pooled = this.getPooledMaterial(child.material, 1.0);
+          child.material = pooled;
+          cachedMaterials.push(pooled);
         }
       }
     });
@@ -1709,15 +1718,7 @@ export class TrainMeshManager {
     opacities.forEach((opacity, vehicleKey) => {
       const meshData = this.trainMeshes.get(vehicleKey);
       if (!meshData) return;
-
-      // Use cached materials if available (performance optimization)
-      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
-        const isTransparent = opacity < 1.0;
-        for (const mat of meshData.cachedMaterials) {
-          mat.transparent = isTransparent;
-          mat.opacity = opacity;
-        }
-      }
+      this.swapMeshMaterials(meshData, opacity);
     });
   }
 
@@ -1727,13 +1728,33 @@ export class TrainMeshManager {
    */
   resetAllOpacities(): void {
     this.trainMeshes.forEach((meshData) => {
-      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
-        for (const mat of meshData.cachedMaterials) {
-          mat.transparent = false;
-          mat.opacity = 1.0;
+      this.swapMeshMaterials(meshData, 1.0);
+    });
+  }
+
+  /**
+   * Swap all materials on a mesh to pooled variants at the given opacity.
+   * This avoids mutating shared materials — instead each mesh references
+   * the pool entry for the appropriate opacity bucket.
+   */
+  private swapMeshMaterials(meshData: TrainMeshData, opacity: number): void {
+    const newCached: THREE.Material[] = [];
+    meshData.mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map((m: THREE.Material) => {
+            const pooled = this.getPooledMaterial(m, opacity);
+            newCached.push(pooled);
+            return pooled;
+          });
+        } else if (child.material) {
+          const pooled = this.getPooledMaterial(child.material, opacity);
+          child.material = pooled;
+          newCached.push(pooled);
         }
       }
     });
+    meshData.cachedMaterials = newCached;
   }
 
   setHighlightedTrain(vehicleKey?: string): void {
