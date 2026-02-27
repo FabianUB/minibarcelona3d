@@ -216,6 +216,12 @@ export class TrainMeshManager {
   // instance when they have the same source material and opacity bucket.
   private materialPool = new Map<string, THREE.Material>();
 
+  // Projection cache: avoids re-computing screen candidates multiple times per frame.
+  // Invalidated each frame when animatePositions increments the counter.
+  private screenCandidatesCache: ScreenSpaceCandidate[] | null = null;
+  private screenCandidatesCacheFrame = -1;
+  private frameCounter = 0;
+
   // User-controlled model scale (from control panel slider)
   private userScale: number = 1.0;
 
@@ -1894,11 +1900,11 @@ export class TrainMeshManager {
   }
 
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
-    // NOTE: Caching disabled - screen positions change on every camera move (pan/rotate/pitch)
-    // Previously cached only on zoom, but that caused stale positions during camera movement
-    // TODO: Re-enable with proper camera position tracking if performance becomes an issue
+    // Return cached result if already computed this frame (e.g. debug overlay + hover handler)
+    if (this.screenCandidatesCacheFrame === this.frameCounter && this.screenCandidatesCache) {
+      return this.screenCandidatesCache;
+    }
 
-    // Recalculate candidates
     const candidates: ScreenSpaceCandidate[] = [];
 
     this.trainMeshes.forEach((meshData) => {
@@ -1987,6 +1993,9 @@ export class TrainMeshManager {
       });
     });
 
+    // Cache for this frame
+    this.screenCandidatesCache = candidates;
+    this.screenCandidatesCacheFrame = this.frameCounter;
     return candidates;
   }
 
@@ -2097,6 +2106,9 @@ export class TrainMeshManager {
    *                 and their interpolation is skipped to save CPU.
    */
   animatePositions(bounds?: GeoBounds): void {
+    // Advance frame counter to invalidate per-frame caches (e.g. screen candidates)
+    this.frameCounter++;
+
     // Drain creation queue: spread mesh creation across frames to avoid spikes
     if (this.creationQueue.length > 0) {
       const batch = this.creationQueue.splice(0, this.MESHES_PER_FRAME);

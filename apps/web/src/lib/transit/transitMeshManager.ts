@@ -158,6 +158,11 @@ export class TransitMeshManager {
   // Material pool: keyed by `${sourceUUID}_${opacityBucket}` to reduce GPU state changes
   private materialPool = new Map<string, THREE.Material>();
 
+  // Projection cache: avoids re-computing screen candidates multiple times per frame
+  private screenCandidatesCache: ScreenSpaceCandidate[] | null = null;
+  private screenCandidatesCacheFrame = -1;
+  private frameCounter = 0;
+
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
 
@@ -911,6 +916,9 @@ export class TransitMeshManager {
    *                 and their interpolation is skipped to save CPU.
    */
   animatePositions(bounds?: GeoBounds): void {
+    // Advance frame counter to invalidate per-frame caches
+    this.frameCounter++;
+
     // Drain creation queue: spread mesh creation across frames to avoid spikes
     if (this.creationQueue.length > 0) {
       const batch = this.creationQueue.splice(0, this.MESHES_PER_FRAME);
@@ -1181,6 +1189,11 @@ export class TransitMeshManager {
    * metro trains and buses by projecting actual bounding box corners to screen space.
    */
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
+    // Return cached result if already computed this frame
+    if (this.screenCandidatesCacheFrame === this.frameCounter && this.screenCandidatesCache) {
+      return this.screenCandidatesCache;
+    }
+
     const candidates: ScreenSpaceCandidate[] = [];
 
     for (const [, data] of this.meshes) {
@@ -1267,6 +1280,9 @@ export class TransitMeshManager {
       });
     }
 
+    // Cache for this frame
+    this.screenCandidatesCache = candidates;
+    this.screenCandidatesCacheFrame = this.frameCounter;
     return candidates;
   }
 
