@@ -151,6 +151,10 @@ export class TransitMeshManager {
   private viewModeScale = 1.0;
   private readonly resolutionScale: number;
 
+  // Staggered mesh creation: queue of pending mesh-create closures
+  private creationQueue: Array<() => void> = [];
+  private readonly MESHES_PER_FRAME = 8;
+
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
 
@@ -629,8 +633,13 @@ export class TransitMeshManager {
           }
         }
       } else {
-        // Create new mesh
-        this.createMesh(vehicle, animationMode);
+        // Queue mesh creation to spread across frames and avoid frame spikes
+        const capturedVehicle = vehicle;
+        const capturedMode = animationMode;
+        this.creationQueue.push(() => {
+          if (this.meshes.has(capturedVehicle.vehicleKey)) return;
+          this.createMesh(capturedVehicle, capturedMode);
+        });
         newMeshes++;
       }
     }
@@ -639,7 +648,7 @@ export class TransitMeshManager {
     this.pruneInactiveVehicles(activeKeys);
 
     if (newMeshes > 0) {
-      console.log(`[TransitMeshManager] Created ${newMeshes} new meshes, total: ${this.meshes.size}`);
+      console.log(`[TransitMeshManager] Queued ${newMeshes} new meshes for staggered creation, existing: ${this.meshes.size}`);
     }
   }
 
@@ -889,6 +898,14 @@ export class TransitMeshManager {
    *                 and their interpolation is skipped to save CPU.
    */
   animatePositions(bounds?: GeoBounds): void {
+    // Drain creation queue: spread mesh creation across frames to avoid spikes
+    if (this.creationQueue.length > 0) {
+      const batch = this.creationQueue.splice(0, this.MESHES_PER_FRAME);
+      for (const createFn of batch) {
+        createFn();
+      }
+    }
+
     const now = Date.now();
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
 

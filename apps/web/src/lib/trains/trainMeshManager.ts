@@ -207,6 +207,10 @@ export class TrainMeshManager {
 
   private highlightedVehicleKey: string | null = null;
 
+  // Staggered mesh creation: queue of pending mesh-create closures
+  private creationQueue: Array<() => void> = [];
+  private readonly MESHES_PER_FRAME = 6;
+
   // User-controlled model scale (from control panel slider)
   private userScale: number = 1.0;
 
@@ -1205,7 +1209,7 @@ export class TrainMeshManager {
 
     const activeTrainKeys = new Set<string>();
     const now = Date.now();
-    let createdCount = 0;
+    const queueSizeBefore = this.creationQueue.length;
 
     // Track how often updateTrainMeshes is called to detect double-calls that cause teleportation
     this.updateCallCount++;
@@ -1435,7 +1439,7 @@ export class TrainMeshManager {
             processed: true,
             reason: 'ok',
             trainCount: trains.length,
-            addedCount: createdCount,
+            addedCount: this.creationQueue.length - queueSizeBefore,
             removedCount: 0,
             stuckCount: 0,
             dataAgeMs:
@@ -1501,80 +1505,85 @@ export class TrainMeshManager {
           this.applyRailwayBearing(existing.mesh, existing.targetSnap.bearing, !travellingForward, train.vehicleKey);
         }
       } else {
-        // Create new mesh for this train
-        const meshData = this.createTrainMesh(
-          train,
-          initialLngLat,
-          targetLngLat,
-          previousSnapState,
-          targetSnapState,
-          baseLastUpdate,
-          interpolationDuration
-        );
+        // Queue mesh creation to spread across frames and avoid frame spikes
+        // Capture loop variables in closure scope
+        const capturedTrain = train;
+        const capturedInitial = initialLngLat;
+        const capturedTarget = targetLngLat;
+        const capturedPrevSnap = previousSnapState;
+        const capturedTargetSnap = targetSnapState;
+        const capturedLastUpdate = baseLastUpdate;
+        const capturedInterpDuration = interpolationDuration;
 
-        if (meshData) {
-          // Leave prevStatus undefined on first render so parking animation can run for initial STOPPED_AT
-          meshData.prevStatus = undefined;
-          const nextStationBearing = this.calculateBearingToNextStation(train);
-          // T052g, T052j: Position using correct coordinate system with Z-offset
-          // getModelPosition returns position relative to model origin with Y negated
-          const position = getModelPosition(initialLngLat[0], initialLngLat[1], 0);
+        this.creationQueue.push(() => {
+          // Skip if this train was already created (e.g. by a newer poll)
+          if (this.trainMeshes.has(capturedTrain.vehicleKey)) return;
 
-          // Calculate Z-offset elevation to prevent z-fighting with map surface
-          // Based on Mini Tokyo 3D: trains "float" 0.44 * scale above ground
-          const modelScale = getModelScale();
-          const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-          const zOffset = this.Z_OFFSET_FACTOR * baseScale;
+          const meshData = this.createTrainMesh(
+            capturedTrain,
+            capturedInitial,
+            capturedTarget,
+            capturedPrevSnap,
+            capturedTargetSnap,
+            capturedLastUpdate,
+            capturedInterpDuration
+          );
 
-          const lateralBearingInfo = targetSnapState
-            ? {
-                bearing: targetSnapState.bearing,
-                reversed: Boolean(
-                  previousSnapState &&
-                    targetSnapState &&
-                    previousSnapState.lineId === targetSnapState.lineId &&
-                    targetSnapState.distance < previousSnapState.distance
-                ),
-              }
-            : previousSnapState
-              ? { bearing: previousSnapState.bearing, reversed: false }
-              : nextStationBearing !== null
-                ? { bearing: nextStationBearing, reversed: false }
-                : null;
+          if (meshData) {
+            meshData.prevStatus = undefined;
+            const nextStationBearing = this.calculateBearingToNextStation(capturedTrain);
+            const position = getModelPosition(capturedInitial[0], capturedInitial[1], 0);
 
-          this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex, meshData.boundingRadius, train.status);
+            const modelScale = getModelScale();
+            const baseScale = this.TRAIN_SIZE_METERS * modelScale;
+            const zOffset = this.Z_OFFSET_FACTOR * baseScale;
 
-          meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+            const lateralBearingInfo = capturedTargetSnap
+              ? {
+                  bearing: capturedTargetSnap.bearing,
+                  reversed: Boolean(
+                    capturedPrevSnap &&
+                      capturedTargetSnap &&
+                      capturedPrevSnap.lineId === capturedTargetSnap.lineId &&
+                      capturedTargetSnap.distance < capturedPrevSnap.distance
+                  ),
+                }
+              : capturedPrevSnap
+                ? { bearing: capturedPrevSnap.bearing, reversed: false }
+                : nextStationBearing !== null
+                  ? { bearing: nextStationBearing, reversed: false }
+                  : null;
 
-          // Add to scene
-          this.scene.add(meshData.mesh);
+            this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex, meshData.boundingRadius, capturedTrain.status);
 
-          if (this.debugCount < this.DEBUG_LIMIT) {
-            this.debugMeshes.push(meshData.mesh);
+            meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+
+            this.scene.add(meshData.mesh);
+
+            if (this.debugCount < this.DEBUG_LIMIT) {
+              this.debugMeshes.push(meshData.mesh);
+            }
+
+            this.trainMeshes.set(capturedTrain.vehicleKey, meshData);
+
+            if (capturedTrain.status === 'STOPPED_AT') {
+              trainDebug.mesh.info(`STOPPED_AT mesh created: ${capturedTrain.vehicleKey}`, {
+                routeId: capturedTrain.routeId,
+                lineCode: extractLineFromRouteId(capturedTrain.routeId),
+                coords: `${capturedInitial[1].toFixed(5)}, ${capturedInitial[0].toFixed(5)}`,
+                stoppedAtStation: meshData.stoppedAtStationId,
+                stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
+                meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
+                scale: meshData.mesh.scale.x.toExponential(4),
+                snapped: !!capturedTargetSnap,
+              });
+            } else {
+              trainDebug.mesh.debug(`Mesh created: ${capturedTrain.vehicleKey}`, {
+                routeId: capturedTrain.routeId,
+              });
+            }
           }
-
-          // Track in our map
-          this.trainMeshes.set(train.vehicleKey, meshData);
-          createdCount += 1;
-
-          // Use structured logging for mesh creation
-          if (train.status === 'STOPPED_AT') {
-            trainDebug.mesh.info(`STOPPED_AT mesh created: ${train.vehicleKey}`, {
-              routeId: train.routeId,
-              lineCode: extractLineFromRouteId(train.routeId),
-              coords: `${initialLngLat[1].toFixed(5)}, ${initialLngLat[0].toFixed(5)}`,
-              stoppedAtStation: meshData.stoppedAtStationId,
-              stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
-              meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
-              scale: meshData.mesh.scale.x.toExponential(4),
-              snapped: !!targetSnapState,
-            });
-          } else {
-            trainDebug.mesh.debug(`Mesh created: ${train.vehicleKey}`, {
-              routeId: train.routeId,
-            });
-          }
-        }
+        });
       }
 
       // Track this train as active (for removal logic)
@@ -1615,7 +1624,7 @@ export class TrainMeshManager {
       processed: true,
       reason: 'ok',
       trainCount: trains.length,
-      addedCount: createdCount,
+      addedCount: this.creationQueue.length - queueSizeBefore,
       removedCount: toRemove.length,
       stuckCount,
       dataAgeMs,
@@ -2067,6 +2076,14 @@ export class TrainMeshManager {
    *                 and their interpolation is skipped to save CPU.
    */
   animatePositions(bounds?: GeoBounds): void {
+    // Drain creation queue: spread mesh creation across frames to avoid spikes
+    if (this.creationQueue.length > 0) {
+      const batch = this.creationQueue.splice(0, this.MESHES_PER_FRAME);
+      for (const createFn of batch) {
+        createFn();
+      }
+    }
+
     const now = Date.now();
 
     // Log animation stats every 5 seconds (using debug level to reduce noise)
