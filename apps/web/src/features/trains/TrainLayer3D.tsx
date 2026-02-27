@@ -38,6 +38,7 @@ import { TrainErrorDisplay } from './TrainErrorDisplay';
 import { TrainDebugPanel } from './TrainDebugPanel';
 import { trainDebug } from '../../lib/trains/debugLogger';
 import { useHitDetectionMode } from '../../hooks/useHitDetectionMode';
+import { usePageVisibility } from '../../hooks/usePageVisibility';
 import { raycastHitTest } from '../../lib/map/RaycastHitResolver';
 
 export interface TrainLayer3DProps {
@@ -196,6 +197,11 @@ export function TrainLayer3D({
   const { setDataSource } = useTransitActions();
   const { enableTrainParking } = useMapUI();
   const [hitDetectionMode] = useHitDetectionMode();
+  const pageVisible = usePageVisibility();
+
+  // Ref for render loop access (avoids stale closure in Mapbox custom layer)
+  const pageVisibleRef = useRef(pageVisible);
+  pageVisibleRef.current = pageVisible;
 
   const [trains, setTrains] = useState<TrainPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -1177,9 +1183,8 @@ export function TrainLayer3D({
      * Task: T054 - Performance monitoring
      */
     render(_gl: WebGLRenderingContext, matrix: Array<number>) {
-      // Skip rendering entirely when layer is not visible
-      // This prevents unnecessary WebGL state resets and render calls
-      if (!visibleRef.current) {
+      // Skip rendering when layer hidden or tab not visible
+      if (!visibleRef.current || !pageVisibleRef.current) {
         return;
       }
 
@@ -1524,11 +1529,11 @@ export function TrainLayer3D({
 
   /**
    * Effect: Set up polling for train positions
-   * Fetches on mount and every 30 seconds (unless paused)
+   * Fetches on mount and every 30 seconds (unless paused or tab hidden)
    */
   useEffect(() => {
-    // If paused, clear any active timers and do nothing
-    if (isPollingPaused) {
+    // Pause polling when tab hidden or explicitly paused
+    if (isPollingPaused || !pageVisible) {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
@@ -1540,7 +1545,7 @@ export function TrainLayer3D({
       return;
     }
 
-    // Initial fetch
+    // Initial fetch (also fires when tab becomes visible again)
     void fetchTrains();
 
     // Set up polling every 30 seconds
@@ -1559,7 +1564,7 @@ export function TrainLayer3D({
         retryTimeoutRef.current = null;
       }
     };
-  }, [fetchTrains, isPollingPaused]);
+  }, [fetchTrains, isPollingPaused, pageVisible]);
 
   /**
    * Effect: Add custom layer to map when ready
