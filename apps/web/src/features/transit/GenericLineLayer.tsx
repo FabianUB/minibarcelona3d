@@ -8,7 +8,7 @@
  * MetroLineLayer, BusLineLayer, TramLineLayer, and FGCLineLayer.
  */
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import type { MetroLineCollection } from '../../types/metro';
 import { useMapStyleReady } from '../../hooks/useMapStyleReady';
@@ -100,6 +100,34 @@ export function GenericLineLayer({
 
   const { sourceId, lineLayerId, casingLayerId, lineCodeProperty, colorProperty = 'color', lineWidth, casingWidth, opacity } =
     config;
+
+  // Stabilize highlightedLines reference to prevent re-running effects
+  // when parent passes a new array with identical contents
+  const prevHighlightRef = useRef(highlightedLines);
+  const stableHighlightedLines = useMemo(() => {
+    const prev = prevHighlightRef.current;
+    if (
+      prev.length === highlightedLines.length &&
+      prev.every((v, i) => v === highlightedLines[i])
+    ) {
+      return prev;
+    }
+    prevHighlightRef.current = highlightedLines;
+    return highlightedLines;
+  }, [highlightedLines]);
+
+  // Memoize width expression — only recompute when highlight list or config changes
+  const lineWidthExpression = useMemo(
+    () => createWidthExpression(lineWidth),
+    [lineWidth]
+  );
+  const highlightedWidthExpression = useMemo(
+    () =>
+      stableHighlightedLines.length > 0
+        ? createHighlightedWidthExpression(lineWidth, lineCodeProperty, stableHighlightedLines)
+        : null,
+    [lineWidth, lineCodeProperty, stableHighlightedLines]
+  );
 
   // Apply optional filtering to GeoJSON
   const geoJSON = useMemo(() => {
@@ -222,7 +250,7 @@ export function GenericLineLayer({
     if (!map || !layersReady) return;
     if (!map.getLayer(lineLayerId) || !map.getLayer(casingLayerId)) return;
 
-    const hasHighlight = highlightedLines.length > 0;
+    const hasHighlight = stableHighlightedLines.length > 0;
 
     // Build opacity expression based on highlight state
     let lineOpacity: mapboxgl.Expression | number;
@@ -232,24 +260,22 @@ export function GenericLineLayer({
       lineOpacity = 0;
       casingOpacity = 0;
     } else if (hasHighlight && isolateMode) {
-      // In isolate mode, dim non-highlighted lines
       lineOpacity = [
         'case',
-        ['in', ['get', lineCodeProperty], ['literal', highlightedLines]],
+        ['in', ['get', lineCodeProperty], ['literal', stableHighlightedLines]],
         opacity.highlightedLine,
         opacity.dimmedLine,
       ];
       casingOpacity = [
         'case',
-        ['in', ['get', lineCodeProperty], ['literal', highlightedLines]],
+        ['in', ['get', lineCodeProperty], ['literal', stableHighlightedLines]],
         opacity.highlightedCasing,
         opacity.dimmedCasing,
       ];
     } else if (hasHighlight) {
-      // In highlight mode, all lines visible but highlighted are brighter
       lineOpacity = [
         'case',
-        ['in', ['get', lineCodeProperty], ['literal', highlightedLines]],
+        ['in', ['get', lineCodeProperty], ['literal', stableHighlightedLines]],
         opacity.highlightedLine,
         opacity.line * 0.8,
       ];
@@ -262,21 +288,16 @@ export function GenericLineLayer({
     map.setPaintProperty(lineLayerId, 'line-opacity', lineOpacity);
     map.setPaintProperty(casingLayerId, 'line-opacity', casingOpacity);
 
-    // Adjust line width for highlighted lines
-    if (hasHighlight) {
-      const widthExpression = createHighlightedWidthExpression(
-        lineWidth,
-        lineCodeProperty,
-        highlightedLines
-      );
-      map.setPaintProperty(lineLayerId, 'line-width', widthExpression);
+    // Use memoized width expressions to avoid Mapbox style diffs on unchanged values
+    if (hasHighlight && highlightedWidthExpression) {
+      map.setPaintProperty(lineLayerId, 'line-width', highlightedWidthExpression);
     } else {
-      map.setPaintProperty(lineLayerId, 'line-width', createWidthExpression(lineWidth));
+      map.setPaintProperty(lineLayerId, 'line-width', lineWidthExpression);
     }
   }, [
     map,
     visible,
-    highlightedLines,
+    stableHighlightedLines,
     isolateMode,
     layersReady,
     lineLayerId,
@@ -284,6 +305,8 @@ export function GenericLineLayer({
     lineCodeProperty,
     lineWidth,
     opacity,
+    lineWidthExpression,
+    highlightedWidthExpression,
   ]);
 
   return null;
