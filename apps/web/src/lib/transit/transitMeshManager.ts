@@ -18,6 +18,7 @@ import type { PreprocessedRailwayLine } from '../trains/geometry';
 import { sampleRailwayPosition, snapTrainToRailway } from '../trains/geometry';
 import { getCachedModel, loadTrainModel } from '../trains/modelLoader';
 import { ScaleManager } from '../trains/scaleManager';
+import type { GeoBounds } from '../trains/trainMeshManager';
 import { getModelPosition, getModelScale, getLngLatFromModelPosition } from '../map/coordinates';
 import { getPreprocessedMetroLine } from '../metro/positionSimulator';
 import { getPreprocessedBusRoute } from '../bus/positionSimulator';
@@ -149,6 +150,18 @@ export class TransitMeshManager {
   private userScale = 1.0;
   private viewModeScale = 1.0;
   private readonly resolutionScale: number;
+
+  // Staggered mesh creation: queue of pending mesh-create closures
+  private creationQueue: Array<() => void> = [];
+  private readonly MESHES_PER_FRAME = 8;
+
+  // Material pool: keyed by `${sourceUUID}_${opacityBucket}` to reduce GPU state changes
+  private materialPool = new Map<string, THREE.Material>();
+
+  // Projection cache: avoids re-computing screen candidates multiple times per frame
+  private screenCandidatesCache: ScreenSpaceCandidate[] | null = null;
+  private screenCandidatesCacheFrame = -1;
+  private frameCounter = 0;
 
   // Rotation offset: models face -X, we need them to face bearing direction
   private readonly MODEL_FORWARD_OFFSET = Math.PI;
@@ -628,8 +641,13 @@ export class TransitMeshManager {
           }
         }
       } else {
-        // Create new mesh
-        this.createMesh(vehicle, animationMode);
+        // Queue mesh creation to spread across frames and avoid frame spikes
+        const capturedVehicle = vehicle;
+        const capturedMode = animationMode;
+        this.creationQueue.push(() => {
+          if (this.meshes.has(capturedVehicle.vehicleKey)) return;
+          this.createMesh(capturedVehicle, capturedMode);
+        });
         newMeshes++;
       }
     }
@@ -638,7 +656,7 @@ export class TransitMeshManager {
     this.pruneInactiveVehicles(activeKeys);
 
     if (newMeshes > 0) {
-      console.log(`[TransitMeshManager] Created ${newMeshes} new meshes, total: ${this.meshes.size}`);
+      console.log(`[TransitMeshManager] Queued ${newMeshes} new meshes for staggered creation, existing: ${this.meshes.size}`);
     }
   }
 
@@ -700,34 +718,21 @@ export class TransitMeshManager {
     // Set rotation based on bearing
     this.applyBearing(mesh, vehicle.bearing);
 
-    // Clone materials for each mesh to ensure independent opacity control.
-    // This prevents layers sharing the same model type (e.g., FGC and Metro both use 'metro')
-    // from sharing material references - setting opacity on one would affect the other.
-    // Also ensures explicit depth buffer settings for consistent rendering across GPUs.
+    // Use pooled materials instead of per-mesh clones to reduce GPU state changes.
+    // Materials are pooled by (sourceUUID, opacityBucket).
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        const configureMaterial = (m: THREE.Material): THREE.Material => {
-          const cloned = m.clone();
-          // Explicit depth settings to ensure vehicles render on top of map layers
-          // This fixes z-fighting issues that occur on some GPUs/drivers
-          cloned.depthTest = true;
-          cloned.depthWrite = true;
-          // Polygon offset shifts depth values to prevent z-fighting with Mapbox layers
-          // Negative values push geometry "closer" to camera in depth buffer
-          // Using -2 as middle ground: -1 wasn't enough on some GPUs, -4 caused visual issues
-          cloned.polygonOffset = true;
-          cloned.polygonOffsetFactor = -2;
-          cloned.polygonOffsetUnits = -2;
-          return cloned;
-        };
-
         if (Array.isArray(child.material)) {
-          child.material = child.material.map(configureMaterial);
-          cachedMaterials.push(...child.material);
+          child.material = child.material.map((m: THREE.Material) => {
+            const pooled = this.getPooledMaterial(m, 1.0);
+            cachedMaterials.push(pooled);
+            return pooled;
+          });
         } else if (child.material) {
-          child.material = configureMaterial(child.material);
-          cachedMaterials.push(child.material);
+          const pooled = this.getPooledMaterial(child.material, 1.0);
+          child.material = pooled;
+          cachedMaterials.push(pooled);
         }
       }
     });
@@ -817,6 +822,29 @@ export class TransitMeshManager {
   /**
    * Apply bearing rotation to mesh
    */
+  /**
+   * Get or create a pooled material for the given source material and opacity.
+   */
+  private getPooledMaterial(source: THREE.Material, opacity: number): THREE.Material {
+    const bucket = Math.round(opacity * 10) / 10;
+    const sourceId = (source.userData?._poolSourceId as string) ?? source.uuid;
+    const key = `${sourceId}_${bucket}`;
+    let pooled = this.materialPool.get(key);
+    if (!pooled) {
+      pooled = source.clone();
+      pooled.userData = { ...pooled.userData, _poolSourceId: sourceId };
+      pooled.depthTest = true;
+      pooled.depthWrite = true;
+      pooled.polygonOffset = true;
+      pooled.polygonOffsetFactor = -2;
+      pooled.polygonOffsetUnits = -2;
+      (pooled as THREE.MeshStandardMaterial).opacity = bucket;
+      pooled.transparent = bucket < 1;
+      this.materialPool.set(key, pooled);
+    }
+    return pooled;
+  }
+
   private applyBearing(mesh: THREE.Group, bearing: number): void {
     const bearingRad = (bearing * Math.PI) / 180;
     mesh.rotation.z = -bearingRad + this.MODEL_FORWARD_OFFSET;
@@ -883,7 +911,22 @@ export class TransitMeshManager {
    * - continuous: Calculates position based on speed and elapsed time
    * - lerp: Interpolates between start and target position
    */
-  animatePositions(): void {
+  /**
+   * @param bounds - Optional padded geographic bounds. Meshes outside are hidden
+   *                 and their interpolation is skipped to save CPU.
+   */
+  animatePositions(bounds?: GeoBounds): void {
+    // Advance frame counter to invalidate per-frame caches
+    this.frameCounter++;
+
+    // Drain creation queue: spread mesh creation across frames to avoid spikes
+    if (this.creationQueue.length > 0) {
+      const batch = this.creationQueue.splice(0, this.MESHES_PER_FRAME);
+      for (const createFn of batch) {
+        createFn();
+      }
+    }
+
     const now = Date.now();
     const zoomScale = this.scaleManager.computeScale(this.currentZoom);
 
@@ -891,6 +934,16 @@ export class TransitMeshManager {
     this.updateLODState();
 
     for (const [, data] of this.meshes) {
+      // Geographic bounds check — skip interpolation for off-screen meshes
+      if (bounds) {
+        const [lng, lat] = data.currentPosition;
+        if (lng < bounds.west || lng > bounds.east || lat < bounds.south || lat > bounds.north) {
+          data.mesh.visible = false;
+          continue;
+        }
+        data.mesh.visible = true;
+      }
+
       if (data.animationMode === 'continuous') {
         // Continuous motion mode - calculate position from speed and time
         this.animateContinuous(data, now);
@@ -1064,41 +1117,50 @@ export class TransitMeshManager {
   }
 
   /**
-   * Set opacity for all meshes (for visibility toggle)
-   * Uses cached material references for performance
+   * Set opacity for all meshes (for visibility toggle).
+   * Swaps to pooled materials at the new opacity bucket.
    */
   setOpacity(opacity: number): void {
-    const isTransparent = opacity < 1;
     for (const data of this.meshes.values()) {
       data.opacity = opacity;
-      // Use cached materials for O(n) instead of O(n × hierarchy depth)
-      for (const mat of data.cachedMaterials) {
-        (mat as THREE.MeshStandardMaterial).opacity = opacity;
-        mat.transparent = isTransparent;
-      }
+      this.swapMeshMaterials(data, opacity);
     }
   }
 
   /**
-   * Set opacity for multiple vehicles based on line selection
-   * Used for highlight/isolate mode to show only selected lines
-   * Uses cached material references for performance
-   *
-   * @param opacities - Map of vehicleKey to opacity (0.0 - 1.0)
+   * Set opacity for multiple vehicles based on line selection.
+   * Swaps to pooled materials at the appropriate opacity bucket.
    */
   setVehicleOpacities(opacities: Map<string, number>): void {
     opacities.forEach((opacity, vehicleKey) => {
       const data = this.meshes.get(vehicleKey);
       if (!data) return;
-
       data.opacity = opacity;
-      const isTransparent = opacity < 1;
-      // Use cached materials for O(n) instead of O(n × hierarchy depth)
-      for (const mat of data.cachedMaterials) {
-        (mat as THREE.MeshStandardMaterial).opacity = opacity;
-        mat.transparent = isTransparent;
+      this.swapMeshMaterials(data, opacity);
+    });
+  }
+
+  /**
+   * Swap all materials on a mesh to pooled variants at the given opacity.
+   */
+  private swapMeshMaterials(data: TransitMeshData, opacity: number): void {
+    const newCached: THREE.Material[] = [];
+    data.mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map((m: THREE.Material) => {
+            const pooled = this.getPooledMaterial(m, opacity);
+            newCached.push(pooled);
+            return pooled;
+          });
+        } else if (child.material) {
+          const pooled = this.getPooledMaterial(child.material, opacity);
+          child.material = pooled;
+          newCached.push(pooled);
+        }
       }
     });
+    data.cachedMaterials = newCached;
   }
 
   /**
@@ -1127,6 +1189,11 @@ export class TransitMeshManager {
    * metro trains and buses by projecting actual bounding box corners to screen space.
    */
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
+    // Return cached result if already computed this frame
+    if (this.screenCandidatesCacheFrame === this.frameCounter && this.screenCandidatesCache) {
+      return this.screenCandidatesCache;
+    }
+
     const candidates: ScreenSpaceCandidate[] = [];
 
     for (const [, data] of this.meshes) {
@@ -1213,6 +1280,9 @@ export class TransitMeshManager {
       });
     }
 
+    // Cache for this frame
+    this.screenCandidatesCache = candidates;
+    this.screenCandidatesCacheFrame = this.frameCounter;
     return candidates;
   }
 

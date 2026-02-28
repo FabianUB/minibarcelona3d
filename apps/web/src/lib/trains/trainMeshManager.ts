@@ -70,6 +70,14 @@ interface LateralOffsetConfig {
   highZoomMultiplier: number; // Offset multiplier at high zoom (default: 1.5)
 }
 
+/** Padded geographic bounds for frustum-aware animation skip */
+export interface GeoBounds {
+  west: number;
+  east: number;
+  south: number;
+  north: number;
+}
+
 interface TrainMeshData {
   mesh: THREE.Group;
   vehicleKey: string;
@@ -199,6 +207,21 @@ export class TrainMeshManager {
 
   private highlightedVehicleKey: string | null = null;
 
+  // Staggered mesh creation: queue of pending mesh-create closures
+  private creationQueue: Array<() => void> = [];
+  private readonly MESHES_PER_FRAME = 6;
+
+  // Material pool: keyed by `${sourceUUID}_${opacityBucket}` to reduce GPU state changes.
+  // Instead of cloning a new material per mesh, multiple meshes share the same material
+  // instance when they have the same source material and opacity bucket.
+  private materialPool = new Map<string, THREE.Material>();
+
+  // Projection cache: avoids re-computing screen candidates multiple times per frame.
+  // Invalidated each frame when animatePositions increments the counter.
+  private screenCandidatesCache: ScreenSpaceCandidate[] | null = null;
+  private screenCandidatesCacheFrame = -1;
+  private frameCounter = 0;
+
   // User-controlled model scale (from control panel slider)
   private userScale: number = 1.0;
 
@@ -235,6 +258,34 @@ export class TrainMeshManager {
   }
 
   /**
+   * Get or create a pooled material for the given source material and opacity.
+   * Opacity is bucketed to nearest 0.1 to keep pool small.
+   *
+   * Materials in the pool are keyed by their *original* GLB source UUID so that
+   * repeated opacity swaps don't create new pool entries.
+   */
+  private getPooledMaterial(source: THREE.Material, opacity: number): THREE.Material {
+    const bucket = Math.round(opacity * 10) / 10;
+    // Track the original UUID through swaps (pooled mats inherit it via userData)
+    const sourceId = (source.userData?._poolSourceId as string) ?? source.uuid;
+    const key = `${sourceId}_${bucket}`;
+    let pooled = this.materialPool.get(key);
+    if (!pooled) {
+      pooled = source.clone();
+      pooled.userData = { ...pooled.userData, _poolSourceId: sourceId };
+      pooled.depthTest = true;
+      pooled.depthWrite = true;
+      pooled.polygonOffset = true;
+      pooled.polygonOffsetFactor = -2;
+      pooled.polygonOffsetUnits = -2;
+      (pooled as THREE.MeshStandardMaterial).opacity = bucket;
+      pooled.transparent = bucket < 1;
+      this.materialPool.set(key, pooled);
+    }
+    return pooled;
+  }
+
+  /**
    * Deterministic variation per train to reduce visual overlaps
    */
   private getScaleVariation(vehicleKey: string): number {
@@ -256,7 +307,6 @@ export class TrainMeshManager {
   private readonly Z_OFFSET_FACTOR = 0.5;
 
   /** Debug flag to log material settings only once */
-  private hasLoggedMaterialSettings = false;
 
   constructor(
     scene: THREE.Scene,
@@ -1069,45 +1119,22 @@ export class TrainMeshManager {
     const boundingSphere = new THREE.Sphere();
     centerBox.getBoundingSphere(boundingSphere);
 
-    // Clone materials for each mesh to ensure independent opacity control.
-    // This prevents trains sharing the same model type (e.g., R1 and R2 both using 'civia')
-    // from sharing material references - setting opacity on one would affect the other.
-    // Also ensures explicit depth buffer settings for consistent rendering across GPUs.
+    // Use pooled materials instead of per-mesh clones to reduce GPU state changes.
+    // Materials are pooled by (sourceUUID, opacityBucket) — vehicles at the same opacity
+    // share the same material instance. Depth settings are applied in getPooledMaterial().
     const cachedMaterials: THREE.Material[] = [];
     mesh.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        const configureMaterial = (m: THREE.Material): THREE.Material => {
-          const cloned = m.clone();
-          // Explicit depth settings to ensure trains render on top of map layers
-          // This fixes z-fighting issues that occur on some GPUs/drivers
-          cloned.depthTest = true;
-          cloned.depthWrite = true;
-          // Polygon offset shifts depth values to prevent z-fighting with Mapbox layers
-          // Negative values push geometry "closer" to camera in depth buffer
-          cloned.polygonOffset = true;
-          cloned.polygonOffsetFactor = -2;
-          cloned.polygonOffsetUnits = -2;
-          // Debug: Log material settings once per model to verify they're applied
-          if (!this.hasLoggedMaterialSettings) {
-            console.log('🔧 [TrainMeshManager] Material settings applied:', {
-              depthTest: cloned.depthTest,
-              depthWrite: cloned.depthWrite,
-              polygonOffset: cloned.polygonOffset,
-              polygonOffsetFactor: cloned.polygonOffsetFactor,
-              polygonOffsetUnits: cloned.polygonOffsetUnits,
-              zOffsetFactor: this.Z_OFFSET_FACTOR,
-            });
-            this.hasLoggedMaterialSettings = true;
-          }
-          return cloned;
-        };
-
         if (Array.isArray(child.material)) {
-          child.material = child.material.map(configureMaterial);
-          cachedMaterials.push(...child.material);
+          child.material = child.material.map((m: THREE.Material) => {
+            const pooled = this.getPooledMaterial(m, 1.0);
+            cachedMaterials.push(pooled);
+            return pooled;
+          });
         } else if (child.material) {
-          child.material = configureMaterial(child.material);
-          cachedMaterials.push(child.material);
+          const pooled = this.getPooledMaterial(child.material, 1.0);
+          child.material = pooled;
+          cachedMaterials.push(pooled);
         }
       }
     });
@@ -1197,7 +1224,7 @@ export class TrainMeshManager {
 
     const activeTrainKeys = new Set<string>();
     const now = Date.now();
-    let createdCount = 0;
+    const queueSizeBefore = this.creationQueue.length;
 
     // Track how often updateTrainMeshes is called to detect double-calls that cause teleportation
     this.updateCallCount++;
@@ -1427,7 +1454,7 @@ export class TrainMeshManager {
             processed: true,
             reason: 'ok',
             trainCount: trains.length,
-            addedCount: createdCount,
+            addedCount: this.creationQueue.length - queueSizeBefore,
             removedCount: 0,
             stuckCount: 0,
             dataAgeMs:
@@ -1493,80 +1520,85 @@ export class TrainMeshManager {
           this.applyRailwayBearing(existing.mesh, existing.targetSnap.bearing, !travellingForward, train.vehicleKey);
         }
       } else {
-        // Create new mesh for this train
-        const meshData = this.createTrainMesh(
-          train,
-          initialLngLat,
-          targetLngLat,
-          previousSnapState,
-          targetSnapState,
-          baseLastUpdate,
-          interpolationDuration
-        );
+        // Queue mesh creation to spread across frames and avoid frame spikes
+        // Capture loop variables in closure scope
+        const capturedTrain = train;
+        const capturedInitial = initialLngLat;
+        const capturedTarget = targetLngLat;
+        const capturedPrevSnap = previousSnapState;
+        const capturedTargetSnap = targetSnapState;
+        const capturedLastUpdate = baseLastUpdate;
+        const capturedInterpDuration = interpolationDuration;
 
-        if (meshData) {
-          // Leave prevStatus undefined on first render so parking animation can run for initial STOPPED_AT
-          meshData.prevStatus = undefined;
-          const nextStationBearing = this.calculateBearingToNextStation(train);
-          // T052g, T052j: Position using correct coordinate system with Z-offset
-          // getModelPosition returns position relative to model origin with Y negated
-          const position = getModelPosition(initialLngLat[0], initialLngLat[1], 0);
+        this.creationQueue.push(() => {
+          // Skip if this train was already created (e.g. by a newer poll)
+          if (this.trainMeshes.has(capturedTrain.vehicleKey)) return;
 
-          // Calculate Z-offset elevation to prevent z-fighting with map surface
-          // Based on Mini Tokyo 3D: trains "float" 0.44 * scale above ground
-          const modelScale = getModelScale();
-          const baseScale = this.TRAIN_SIZE_METERS * modelScale;
-          const zOffset = this.Z_OFFSET_FACTOR * baseScale;
+          const meshData = this.createTrainMesh(
+            capturedTrain,
+            capturedInitial,
+            capturedTarget,
+            capturedPrevSnap,
+            capturedTargetSnap,
+            capturedLastUpdate,
+            capturedInterpDuration
+          );
 
-          const lateralBearingInfo = targetSnapState
-            ? {
-                bearing: targetSnapState.bearing,
-                reversed: Boolean(
-                  previousSnapState &&
-                    targetSnapState &&
-                    previousSnapState.lineId === targetSnapState.lineId &&
-                    targetSnapState.distance < previousSnapState.distance
-                ),
-              }
-            : previousSnapState
-              ? { bearing: previousSnapState.bearing, reversed: false }
-              : nextStationBearing !== null
-                ? { bearing: nextStationBearing, reversed: false }
-                : null;
+          if (meshData) {
+            meshData.prevStatus = undefined;
+            const nextStationBearing = this.calculateBearingToNextStation(capturedTrain);
+            const position = getModelPosition(capturedInitial[0], capturedInitial[1], 0);
 
-          this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex, meshData.boundingRadius, train.status);
+            const modelScale = getModelScale();
+            const baseScale = this.TRAIN_SIZE_METERS * modelScale;
+            const zOffset = this.Z_OFFSET_FACTOR * baseScale;
 
-          meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+            const lateralBearingInfo = capturedTargetSnap
+              ? {
+                  bearing: capturedTargetSnap.bearing,
+                  reversed: Boolean(
+                    capturedPrevSnap &&
+                      capturedTargetSnap &&
+                      capturedPrevSnap.lineId === capturedTargetSnap.lineId &&
+                      capturedTargetSnap.distance < capturedPrevSnap.distance
+                  ),
+                }
+              : capturedPrevSnap
+                ? { bearing: capturedPrevSnap.bearing, reversed: false }
+                : nextStationBearing !== null
+                  ? { bearing: nextStationBearing, reversed: false }
+                  : null;
 
-          // Add to scene
-          this.scene.add(meshData.mesh);
+            this.applyLateralOffset(position, lateralBearingInfo, meshData.lateralOffsetIndex, meshData.boundingRadius, capturedTrain.status);
 
-          if (this.debugCount < this.DEBUG_LIMIT) {
-            this.debugMeshes.push(meshData.mesh);
+            meshData.mesh.position.set(position.x, position.y, position.z + zOffset);
+
+            this.scene.add(meshData.mesh);
+
+            if (this.debugCount < this.DEBUG_LIMIT) {
+              this.debugMeshes.push(meshData.mesh);
+            }
+
+            this.trainMeshes.set(capturedTrain.vehicleKey, meshData);
+
+            if (capturedTrain.status === 'STOPPED_AT') {
+              trainDebug.mesh.info(`STOPPED_AT mesh created: ${capturedTrain.vehicleKey}`, {
+                routeId: capturedTrain.routeId,
+                lineCode: extractLineFromRouteId(capturedTrain.routeId),
+                coords: `${capturedInitial[1].toFixed(5)}, ${capturedInitial[0].toFixed(5)}`,
+                stoppedAtStation: meshData.stoppedAtStationId,
+                stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
+                meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
+                scale: meshData.mesh.scale.x.toExponential(4),
+                snapped: !!capturedTargetSnap,
+              });
+            } else {
+              trainDebug.mesh.debug(`Mesh created: ${capturedTrain.vehicleKey}`, {
+                routeId: capturedTrain.routeId,
+              });
+            }
           }
-
-          // Track in our map
-          this.trainMeshes.set(train.vehicleKey, meshData);
-          createdCount += 1;
-
-          // Use structured logging for mesh creation
-          if (train.status === 'STOPPED_AT') {
-            trainDebug.mesh.info(`STOPPED_AT mesh created: ${train.vehicleKey}`, {
-              routeId: train.routeId,
-              lineCode: extractLineFromRouteId(train.routeId),
-              coords: `${initialLngLat[1].toFixed(5)}, ${initialLngLat[0].toFixed(5)}`,
-              stoppedAtStation: meshData.stoppedAtStationId,
-              stationFound: !!this.stationMap.get(meshData.stoppedAtStationId ?? ''),
-              meshPos: `${meshData.mesh.position.x.toExponential(4)}, ${meshData.mesh.position.y.toExponential(4)}, ${meshData.mesh.position.z.toExponential(4)}`,
-              scale: meshData.mesh.scale.x.toExponential(4),
-              snapped: !!targetSnapState,
-            });
-          } else {
-            trainDebug.mesh.debug(`Mesh created: ${train.vehicleKey}`, {
-              routeId: train.routeId,
-            });
-          }
-        }
+        });
       }
 
       // Track this train as active (for removal logic)
@@ -1607,7 +1639,7 @@ export class TrainMeshManager {
       processed: true,
       reason: 'ok',
       trainCount: trains.length,
-      addedCount: createdCount,
+      addedCount: this.creationQueue.length - queueSizeBefore,
       removedCount: toRemove.length,
       stuckCount,
       dataAgeMs,
@@ -1692,15 +1724,7 @@ export class TrainMeshManager {
     opacities.forEach((opacity, vehicleKey) => {
       const meshData = this.trainMeshes.get(vehicleKey);
       if (!meshData) return;
-
-      // Use cached materials if available (performance optimization)
-      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
-        const isTransparent = opacity < 1.0;
-        for (const mat of meshData.cachedMaterials) {
-          mat.transparent = isTransparent;
-          mat.opacity = opacity;
-        }
-      }
+      this.swapMeshMaterials(meshData, opacity);
     });
   }
 
@@ -1710,13 +1734,33 @@ export class TrainMeshManager {
    */
   resetAllOpacities(): void {
     this.trainMeshes.forEach((meshData) => {
-      if (meshData.cachedMaterials && meshData.cachedMaterials.length > 0) {
-        for (const mat of meshData.cachedMaterials) {
-          mat.transparent = false;
-          mat.opacity = 1.0;
+      this.swapMeshMaterials(meshData, 1.0);
+    });
+  }
+
+  /**
+   * Swap all materials on a mesh to pooled variants at the given opacity.
+   * This avoids mutating shared materials — instead each mesh references
+   * the pool entry for the appropriate opacity bucket.
+   */
+  private swapMeshMaterials(meshData: TrainMeshData, opacity: number): void {
+    const newCached: THREE.Material[] = [];
+    meshData.mesh.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map((m: THREE.Material) => {
+            const pooled = this.getPooledMaterial(m, opacity);
+            newCached.push(pooled);
+            return pooled;
+          });
+        } else if (child.material) {
+          const pooled = this.getPooledMaterial(child.material, opacity);
+          child.material = pooled;
+          newCached.push(pooled);
         }
       }
     });
+    meshData.cachedMaterials = newCached;
   }
 
   setHighlightedTrain(vehicleKey?: string): void {
@@ -1856,11 +1900,11 @@ export class TrainMeshManager {
   }
 
   getScreenCandidates(map: mapboxgl.Map): ScreenSpaceCandidate[] {
-    // NOTE: Caching disabled - screen positions change on every camera move (pan/rotate/pitch)
-    // Previously cached only on zoom, but that caused stale positions during camera movement
-    // TODO: Re-enable with proper camera position tracking if performance becomes an issue
+    // Return cached result if already computed this frame (e.g. debug overlay + hover handler)
+    if (this.screenCandidatesCacheFrame === this.frameCounter && this.screenCandidatesCache) {
+      return this.screenCandidatesCache;
+    }
 
-    // Recalculate candidates
     const candidates: ScreenSpaceCandidate[] = [];
 
     this.trainMeshes.forEach((meshData) => {
@@ -1949,6 +1993,9 @@ export class TrainMeshManager {
       });
     });
 
+    // Cache for this frame
+    this.screenCandidatesCache = candidates;
+    this.screenCandidatesCacheFrame = this.frameCounter;
     return candidates;
   }
 
@@ -2054,7 +2101,22 @@ export class TrainMeshManager {
   private lastUpdateCallTime = 0;
   private updateCallsThisSecond = 0;
 
-  animatePositions(): void {
+  /**
+   * @param bounds - Optional padded geographic bounds. Meshes outside are hidden
+   *                 and their interpolation is skipped to save CPU.
+   */
+  animatePositions(bounds?: GeoBounds): void {
+    // Advance frame counter to invalidate per-frame caches (e.g. screen candidates)
+    this.frameCounter++;
+
+    // Drain creation queue: spread mesh creation across frames to avoid spikes
+    if (this.creationQueue.length > 0) {
+      const batch = this.creationQueue.splice(0, this.MESHES_PER_FRAME);
+      for (const createFn of batch) {
+        createFn();
+      }
+    }
+
     const now = Date.now();
 
     // Log animation stats every 5 seconds (using debug level to reduce noise)
@@ -2072,6 +2134,15 @@ export class TrainMeshManager {
     const zOffset = this.Z_OFFSET_FACTOR * this.TRAIN_SIZE_METERS * modelScale;
 
     this.trainMeshes.forEach((meshData) => {
+      // Geographic bounds check — skip interpolation for off-screen meshes
+      if (bounds) {
+        const [lng, lat] = meshData.targetPosition;
+        if (lng < bounds.west || lng > bounds.east || lat < bounds.south || lat > bounds.north) {
+          meshData.mesh.visible = false;
+          return;
+        }
+        meshData.mesh.visible = true;
+      }
       const { currentPosition, targetPosition, lastUpdate } = meshData;
 
       // Check if we need to interpolate

@@ -14,6 +14,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { TransportType } from '../../types/rodalies';
 import type { VehiclePosition } from '../../types/transit';
 import { TransitMeshManager } from '../../lib/transit/transitMeshManager';
+import type { GeoBounds } from '../../lib/trains/trainMeshManager';
 import { getModelOrigin, setModelOrigin } from '../../lib/map/coordinates';
 import { useMetroPositions } from './hooks/useMetroPositions';
 import { useBusPositions } from './hooks/useBusPositions';
@@ -24,6 +25,7 @@ import { useTransitActions, type DataSourceType } from '../../state/transit';
 import { useMapNetwork, useMapActions } from '../../state/map';
 import type { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 import { useHitDetectionMode } from '../../hooks/useHitDetectionMode';
+import { usePageVisibility } from '../../hooks/usePageVisibility';
 import { raycastHitTest } from '../../lib/map/RaycastHitResolver';
 
 export interface TransitVehicleLayer3DProps {
@@ -73,6 +75,11 @@ export function TransitVehicleLayer3D({
   const [modelLoaded, setModelLoaded] = useState(false);
   const styleReady = useMapStyleReady(map);
   const [hitDetectionMode] = useHitDetectionMode();
+  const pageVisible = usePageVisibility();
+
+  // Ref for render loop access (avoids stale closure in Mapbox custom layer)
+  const pageVisibleRef = useRef(pageVisible);
+  pageVisibleRef.current = pageVisible;
 
   // Track visibility in a ref for use in render loop
   const visibleRef = useRef(visible);
@@ -118,13 +125,16 @@ export function TransitVehicleLayer3D({
   const layerId = `transit-${networkType}-layer-3d`;
 
   // Get positions based on network type
+  // Pause data fetching when tab is hidden to save network/CPU
+  const isActive = visible && pageVisible;
+
   const {
     positions: metroPositions,
     isReady: metroReady,
     isLoading: metroLoading,
     isSimulationFallback: metroSimulation,
   } = useMetroPositions({
-    enabled: networkType === 'metro' && visible,
+    enabled: networkType === 'metro' && isActive,
   });
 
   const {
@@ -133,7 +143,7 @@ export function TransitVehicleLayer3D({
     isLoading: busLoading,
     isSimulationFallback: busSimulation,
   } = useBusPositions({
-    enabled: networkType === 'bus' && visible,
+    enabled: networkType === 'bus' && isActive,
     filterTopLinesOnly: showOnlyTopBusLines,
   });
 
@@ -143,7 +153,7 @@ export function TransitVehicleLayer3D({
     isLoading: tramLoading,
     isSimulationFallback: tramSimulation,
   } = useTramPositions({
-    enabled: networkType === 'tram' && visible,
+    enabled: networkType === 'tram' && isActive,
   });
 
   const {
@@ -152,7 +162,7 @@ export function TransitVehicleLayer3D({
     isLoading: fgcLoading,
     isSimulationFallback: fgcSimulation,
   } = useFgcPositions({
-    enabled: networkType === 'fgc' && visible,
+    enabled: networkType === 'fgc' && isActive,
   });
 
   // Use appropriate positions based on network type
@@ -355,9 +365,8 @@ export function TransitVehicleLayer3D({
       },
 
       render(_gl: WebGLRenderingContext, matrix: number[]) {
-        // Skip rendering entirely when layer is not visible
-        // This prevents unnecessary WebGL state resets and render calls
-        if (!visibleRef.current) {
+        // Skip rendering when layer hidden or tab not visible
+        if (!visibleRef.current || !pageVisibleRef.current) {
           return;
         }
 
@@ -371,7 +380,19 @@ export function TransitVehicleLayer3D({
         // Update zoom for scale calculations
         if (meshManagerRef.current) {
           meshManagerRef.current.setZoom(map.getZoom());
-          meshManagerRef.current.animatePositions();
+          // Compute padded geographic bounds for frustum-aware animation skip
+          const mapBounds = map.getBounds();
+          let geoBounds: GeoBounds | undefined;
+          if (mapBounds) {
+            const pad = 0.01; // ~1km padding to avoid pop-in at edges
+            geoBounds = {
+              west: mapBounds.getWest() - pad,
+              east: mapBounds.getEast() + pad,
+              south: mapBounds.getSouth() - pad,
+              north: mapBounds.getNorth() + pad,
+            };
+          }
+          meshManagerRef.current.animatePositions(geoBounds);
         }
 
         // Reuse matrix instances for performance (avoid allocations per frame)
