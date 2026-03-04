@@ -8,51 +8,53 @@ describe('ScaleManager', () => {
     manager = new ScaleManager();
   });
 
-  describe('computeScale', () => {
-    it('should return 0.7 for zoom level 10 (standard size bucket)', () => {
-      const scale = manager.computeScale(10);
-      expect(scale).toBeCloseTo(0.7, 10);
+  describe('computeScale — continuous zoom compensation', () => {
+    it('should return 0.7 at reference zoom 14', () => {
+      expect(manager.computeScale(14)).toBeCloseTo(0.7, 2);
     });
 
-    it('should return 0.7 for zoom level 5 (standard size bucket)', () => {
-      const scale = manager.computeScale(5);
-      expect(scale).toBeCloseTo(0.7, 10);
-    });
-
-    it('should return 0.7 for zoom level 14 (within standard bucket)', () => {
-      const scale = manager.computeScale(14);
-      expect(scale).toBeCloseTo(0.7, 10);
-    });
-
-    it('should return 0.7 for zoom level 15 (within standard bucket, threshold at 15.5)', () => {
-      const scale = manager.computeScale(15);
-      expect(scale).toBeCloseTo(0.7, 10);
-    });
-
-    it('should return 0.5 for zoom level 20 (high zoom bucket)', () => {
-      const scale = manager.computeScale(20);
-      expect(scale).toBeCloseTo(0.5, 10);
-    });
-
-    it('should return 0.7 for zoom level 0 (standard size bucket)', () => {
-      const scale = manager.computeScale(0);
-      expect(scale).toBeCloseTo(0.7, 10);
-    });
-
-    it('should use discrete buckets: zoom 0-15.5 = 0.7x, zoom 15.5+ = 0.5x', () => {
+    it('should increase as zoom decreases (zooming out)', () => {
+      const scale14 = manager.computeScale(14);
+      const scale12 = manager.computeScale(12);
       const scale10 = manager.computeScale(10);
-      const scale11 = manager.computeScale(11);
+      expect(scale12).toBeGreaterThan(scale14);
+      expect(scale10).toBeGreaterThan(scale12);
+    });
+
+    it('should decrease as zoom increases (zooming in)', () => {
       const scale14 = manager.computeScale(14);
       const scale15 = manager.computeScale(15);
       const scale16 = manager.computeScale(16);
+      expect(scale15).toBeLessThan(scale14);
+      expect(scale16).toBeLessThan(scale15);
+    });
 
-      // Same bucket (0-15.5) = same scale
-      expect(scale10).toBe(scale11);
-      expect(scale11).toBe(scale14);
-      expect(scale14).toBe(scale15);
+    it('should be roughly 1.0 at zoom 13 (one level out from reference)', () => {
+      const scale = manager.computeScale(13);
+      expect(scale).toBeCloseTo(0.99, 1);
+    });
 
-      // Different bucket (15.5+) = different scale
-      expect(scale15).toBeGreaterThan(scale16);
+    it('should be roughly 1.4 at zoom 12', () => {
+      const scale = manager.computeScale(12);
+      expect(scale).toBeCloseTo(1.4, 1);
+    });
+
+    it('should clamp to minimum 0.35 at very high zoom', () => {
+      const scale = manager.computeScale(20);
+      expect(scale).toBe(0.35);
+    });
+
+    it('should clamp to maximum 3.0 at very low zoom', () => {
+      const scale = manager.computeScale(5);
+      expect(scale).toBe(3.0);
+    });
+
+    it('should decrease monotonically across the full zoom range', () => {
+      const zooms = [8, 9, 10, 11, 12, 13, 14, 15, 16];
+      const scales = zooms.map(z => manager.computeScale(z));
+      for (let i = 1; i < scales.length; i++) {
+        expect(scales[i]).toBeLessThanOrEqual(scales[i - 1]);
+      }
     });
   });
 
@@ -72,14 +74,6 @@ describe('ScaleManager', () => {
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(2);
       expect(stats.size).toBe(2);
-    });
-
-    it('should treat different zoom buckets as cache misses', () => {
-      manager.computeScale(10.0);
-      manager.computeScale(10.1);
-      const stats = manager.getCacheStats();
-      expect(stats.hits).toBe(0);
-      expect(stats.misses).toBe(2);
     });
 
     it('should calculate correct hit rate', () => {
@@ -125,28 +119,6 @@ describe('ScaleManager', () => {
       const stats = manager.getCacheStats();
       expect(stats.misses).toBe(1);
       expect(stats.hits).toBe(0);
-    });
-  });
-
-  describe('custom configuration', () => {
-    it('should accept custom configuration (discrete buckets override config)', () => {
-      const customManager = new ScaleManager({ minHeightPx: 20, maxHeightPx: 50 });
-      // Discrete bucket system ignores config values and uses fixed buckets
-      const scale0 = customManager.computeScale(0);
-      const scale16 = customManager.computeScale(16);
-
-      expect(scale0).toBeCloseTo(0.7, 10); // Standard bucket
-      expect(scale16).toBeCloseTo(0.5, 10); // High zoom bucket
-    });
-
-    it('should maintain discrete bucket behavior with custom referenceZoom', () => {
-      const customManager = new ScaleManager({ referenceZoom: 12 });
-      // Discrete buckets remain: 0-15.5 = 0.7x, 15.5+ = 0.5x
-      const scale12 = customManager.computeScale(12);
-      const scale16 = customManager.computeScale(16);
-
-      expect(scale12).toBeCloseTo(0.7, 10);
-      expect(scale16).toBeCloseTo(0.5, 10);
     });
   });
 });

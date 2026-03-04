@@ -41,18 +41,6 @@ export interface IScaleManager {
 }
 
 /**
- * Discrete zoom range with associated scale multiplier
- */
-interface ZoomScaleBucket {
-  /** Minimum zoom level (inclusive) */
-  minZoom: number;
-  /** Maximum zoom level (exclusive) */
-  maxZoom: number;
-  /** Scale multiplier to apply within this zoom range */
-  scale: number;
-}
-
-/**
  * Manages zoom-responsive scaling for train meshes
  *
  * Uses discrete zoom buckets to ensure trains maintain appropriate screen-space size
@@ -79,8 +67,6 @@ export class ScaleManager implements IScaleManager {
   private scaleCache: Map<number, number>;
   private cacheHits: number = 0;
   private cacheMisses: number = 0;
-  private zoomBuckets: ZoomScaleBucket[];
-
   /**
    * Creates a new ScaleManager instance
    *
@@ -100,30 +86,16 @@ export class ScaleManager implements IScaleManager {
       zoomBucketSize: config?.zoomBucketSize ?? 0.1,
     };
     this.scaleCache = new Map();
-
-    // Discrete zoom buckets for simplified scale computation
-    // Zoom 0-15.5: Reduced size (0.7x) to match visual proportion at zoom 15
-    // Zoom 15.5+: Further reduced (0.5x) to prevent trains becoming too large
-    this.zoomBuckets = [
-      { minZoom: 0, maxZoom: 15.5, scale: 0.7 },
-      { minZoom: 15.5, maxZoom: 100, scale: 0.5 },
-    ];
   }
 
   /**
-   * Compute scale multiplier for given zoom level
+   * Compute scale multiplier for given zoom level.
    *
-   * Uses discrete zoom buckets to determine appropriate scale. Results are cached
-   * using quantized zoom levels to maximize cache hits during map interactions.
+   * Uses a continuous formula: partial (square-root) compensation for zoom
+   * changes around a reference zoom of 14.  This keeps models visible when
+   * zooming out while preventing them from dominating at close zoom.
    *
-   * @param zoom - Current map zoom level
-   * @returns Scale multiplier (applied to base mesh scale)
-   *
-   * @example
-   * ```typescript
-   * const scale = scaleManager.computeScale(14.0); // Returns 1.0
-   * const scale2 = scaleManager.computeScale(16.5); // Returns 0.5
-   * ```
+   * Clamped to [0.35, 3.0] and cached per 0.1-zoom increment.
    */
   computeScale(zoom: number): number {
     const zoomBucket = this.quantizeZoom(zoom);
@@ -136,11 +108,11 @@ export class ScaleManager implements IScaleManager {
 
     this.cacheMisses++;
 
-    const bucket = this.zoomBuckets.find(
-      b => zoom >= b.minZoom && zoom < b.maxZoom
-    );
-
-    const scale = bucket ? bucket.scale : 0.6;
+    // 0.7 at reference zoom 14, grows/shrinks by sqrt(2) per zoom level
+    const REFERENCE_ZOOM = 14;
+    const REFERENCE_SCALE = 0.7;
+    const raw = REFERENCE_SCALE * Math.pow(2, (REFERENCE_ZOOM - zoom) * 0.5);
+    const scale = Math.max(0.35, Math.min(3.0, raw));
 
     this.scaleCache.set(zoomBucket, scale);
     return scale;
