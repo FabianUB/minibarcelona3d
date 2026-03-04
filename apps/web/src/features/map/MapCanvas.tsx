@@ -28,7 +28,7 @@ import { FGCLineLayer, FGCStationLayer } from '../fgc';
 import { TransitVehicleLayer3D } from '../transit';
 import { DataFreshnessIndicator } from '../status';
 import { AlertBadge } from './AlertBadge';
-import { NETWORK_VIEWPORTS } from './networkViewports';
+import { NETWORK_VIEWPORTS, isPresetVisibleInViewport } from './networkViewports';
 import type { MapActions as MapActionsType } from '../../state/map/types';
 import { VehicleClickCoordinator } from '../../lib/map/VehicleClickCoordinator';
 
@@ -257,7 +257,7 @@ export function MapCanvas() {
           map.touchPitch.disable();
         });
       } else {
-        setViewModeScale(1.0);
+        setViewModeScale(networkPreset.free3D.scaleBoost);
         map.dragRotate.enable();
         map.touchPitch.enable();
         // easeTo for returning to 3D — no arc, just pitch/zoom change at current center
@@ -276,24 +276,33 @@ export function MapCanvas() {
     [],
   );
 
-  // Auto-fly to the new network's bird's eye preset when switching tabs in bird's eye mode
+  // Fly to the network's preset only when the destination isn't already on screen
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || currentViewMode !== 'birdsEye') return;
-    map.stop();
-    const preset = NETWORK_VIEWPORTS[activeControlTab].birdsEye;
+    if (!map) return;
+
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    const config = NETWORK_VIEWPORTS[activeControlTab];
+    const preset = currentViewMode === 'birdsEye' ? config.birdsEye : config.free3D;
+    const alreadyVisible = isPresetVisibleInViewport({ lng: center.lng, lat: center.lat }, zoom, preset.center);
+
     setViewModeScale(preset.scaleBoost);
-    map.flyTo({
-      center: preset.center,
-      zoom: preset.zoom,
-      pitch: preset.pitch,
-      bearing: preset.bearing,
-      speed: 1.4,
-      curve: 1.42,
-      maxDuration: 2000,
-      essential: true,
-    });
-  }, [activeControlTab, currentViewMode]);
+
+    if (!alreadyVisible) {
+      map.stop();
+      map.flyTo({
+        center: preset.center,
+        zoom: preset.zoom,
+        pitch: preset.pitch,
+        bearing: preset.bearing,
+        speed: 1.4,
+        curve: 1.42,
+        maxDuration: 2000,
+        essential: true,
+      });
+    }
+  }, [activeControlTab, currentViewMode, isMapLoaded]);
 
   if (!initialViewportRef.current) {
     initialViewportRef.current = effectiveViewport;
@@ -502,7 +511,7 @@ export function MapCanvas() {
     const recenterControl = new RecenterControl(() => {
       map.dragRotate.enable();
       map.touchPitch.enable();
-      setViewModeScale(1.0);
+      setViewModeScale(NETWORK_VIEWPORTS[activeControlTabRef.current].free3D.scaleBoost);
       setCurrentViewMode('free');
       latestRecenterRef.current();
     });

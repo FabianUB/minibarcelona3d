@@ -318,9 +318,9 @@ export function TransitVehicleLayer3D({
         // Vehicle sizes in meters (visual scale, not actual vehicle length)
         const vehicleSizes: Record<TransportType, number> = {
           metro: 10,
-          fgc: 10,
-          tram: 10,
-          bus: 8,
+          fgc: 12,
+          tram: 14,
+          bus: 12,
           rodalies: 25, // Not used here but needed for type completeness
         };
         // Model types for each network
